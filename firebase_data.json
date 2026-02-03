@@ -1,0 +1,91 @@
+{
+    "Plans": {
+        "plan_starter": {
+            "planName": "Starter",
+            "price": 299,
+            "billingCycle": "Monthly",
+            "maxCustomers": 100,
+            "features": {
+                "whatsappReceipt": false,
+                "analytics": false,
+                "prioritySupport": false
+            }
+        },
+        "plan_pro": {
+            "planName": "Pro",
+            "price": 599,
+            "billingCycle": "Monthly",
+            "maxCustomers": -1,
+            "features": {
+                "whatsappReceipt": true,
+                "analytics": true,
+                "prioritySupport": false
+            }
+        },
+        "plan_annual": {
+            "planName": "Annual",
+            "price": 5500,
+            "billingCycle": "Yearly",
+            "maxCustomers": -1,
+            "features": {
+                "whatsappReceipt": true,
+                "analytics": true,
+                "prioritySupport": true
+            }
+        }
+    },
+    "Salesmen": {
+        "S001": {
+            "name": "Arjun Kumar",
+            "username": "arjun_water",
+            "password": "login_pass_123",
+            "isActive": true,
+            "planId": "plan_pro",
+            "subscriptionExpiry": "2026-12-31T23:59:59Z",
+            "currentStock": 45,
+            "totalDepositsHeld": 5000,
+            "customerCount": 42,
+            "lastNotification": "Welcome back, Arjun!"
+        }
+    },
+    "Customers": {
+        "C001": {
+            "salesmanId": "S001",
+            "name": "Rahul Sharma",
+            "phone": "9876543210",
+            "address": "Flat 4B, Skyview",
+            "status": "Active",
+            "securityDeposit": 500,
+            "pendingBalance": 120,
+            "bottleBalance": 5,
+            "isRefunded": false
+        }
+    },
+    "Transactions": {
+        "T_998877": {
+            "salesmanId": "S001",
+            "customerId": "C001",
+            "timestamp": "2026-02-03T10:30:00Z",
+            "type": "Sale",
+            "amount": 200,
+            "paymentMode": "Online",
+            "cansDelivered": 4,
+            "emptyCollected": 2,
+            "whatsappReceiptSent": true,
+            "notes": "Delivered to security desk"
+        }
+    },
+    "Stock_logs": {
+        "LOG_2026_02_03_S001": {
+            "salesmanId": "S001",
+            "date": "2026-02-03",
+            "openingStock": 100,
+            "totalDelivered": 53,
+            "totalEmptyCollected": 48,
+            "damaged": 2,
+            "closingStock": 45,
+            "cashCollected": 2500,
+            "onlineCollected": 3200
+        }
+    }
+}
