@@ -50,16 +50,16 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     AuthLoginRequested event,
     Emitter<AuthState> emit,
   ) async {
-    print('AuthBloc: Login requested');
+
     emit(AuthLoading());
     try {
       await _authRepository.signIn(
         username: event.username,
         password: event.password,
       );
-      print('AuthBloc: Valid credentials confirmed via Repository');
+
     } catch (e) {
-      print('AuthBloc: Login error: $e');
+
       emit(AuthFailure(e.toString()));
     }
   }

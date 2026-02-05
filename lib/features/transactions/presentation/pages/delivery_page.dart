@@ -1,45 +1,24 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
-import 'package:hydroflow/core/service_locator.dart';
+import 'package:uuid/uuid.dart';
+import 'package:hydroflow/core/widgets/app_bottom_bar.dart';
+import 'package:hydroflow/core/widgets/hydro_flow_app_bar.dart';
+import 'package:dropdown_search/dropdown_search.dart';
 import 'package:hydroflow/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:hydroflow/features/auth/presentation/bloc/auth_state.dart';
+import 'package:hydroflow/features/customers/domain/entities/customer.dart';
 import 'package:hydroflow/features/transactions/domain/entities/transaction_entity.dart';
 import 'package:hydroflow/features/transactions/presentation/bloc/delivery_bloc.dart';
 import 'package:hydroflow/features/transactions/presentation/bloc/delivery_event.dart';
 import 'package:hydroflow/features/transactions/presentation/bloc/delivery_state.dart';
-import 'package:hydroflow/features/customers/domain/entities/customer.dart';
-import 'package:uuid/uuid.dart';
-import 'package:hydroflow/core/widgets/app_bottom_bar.dart';
 import 'package:hydroflow/features/transactions/presentation/widgets/transaction_receipt_dialog.dart';
-import 'package:hydroflow/core/widgets/hydro_flow_app_bar.dart';
 
 class DeliveryPage extends StatelessWidget {
   const DeliveryPage({super.key});
 
   @override
   Widget build(BuildContext context) {
-    // We need the Salesman ID. Access it from AuthBloc.
-    final authState = context.read<AuthBloc>().state;
-    String salesmanId = '';
-    if (authState is AuthAuthenticated) {
-      salesmanId = authState.salesman.id;
-    }
-
-    // We can trigger load here or assume Dashboard did it? 
-    // If user goes directly to /delivery (deep link), we need load.
-    // Safe to trigger load again? 
-    // If we use 'create' in main, it's lazy.
-    // If we trigger load here, we ensure it's loaded.
-    // But we are in build. 
-    // Best: Use BlocProvider.value if we wanted to pass it, but it's in context.
-    // Just trigger load in the View's initState? 
-    // Or just `..add`? 
-    // We can't do `..add` on lookup easily in build without side effects.
-    // Let's rely on the View to load data if empty or stale.
-    // Or, we can keep BlocProvider here? NO, that creates a NEW instance.
-    // We want the SHARED instance.
-    
     return const DeliveryView();
   }
 }
@@ -58,6 +37,7 @@ class _DeliveryViewState extends State<DeliveryView> {
   final TextEditingController _fullCansController = TextEditingController(text: '0');
   final TextEditingController _emptyCansController = TextEditingController(text: '0');
   final TextEditingController _priceController = TextEditingController(text: '60'); // Default price
+  final TextEditingController _amountReceivedController = TextEditingController(text: '0');
   
   String _paymentMode = 'Cash'; // Default
   Customer? _selectedCustomer;
@@ -77,13 +57,32 @@ class _DeliveryViewState extends State<DeliveryView> {
     _fullCansController.dispose();
     _emptyCansController.dispose();
     _priceController.dispose();
+    _amountReceivedController.dispose();
     super.dispose();
   }
 
   void _calculateTotal() {
-    // Logic to update total text if needed dynamically, 
-    // for now we just compute on submit or use setState if we show live total.
+    // 1. Calculate price if standard (e.g., 60 per can) - logic mostly manual for now based on user edit
+    // But if we want auto-calc:
+    // int quantity = int.tryParse(_fullCansController.text) ?? 0;
+    // double price = quantity * 60.0;
+    // _priceController.text = price.toStringAsFixed(0);
+    
+    // 2. Auto-fill Amount Received based on Mode
+    _updateAmountReceived();
     setState(() {});
+  }
+  
+  void _updateAmountReceived() {
+    final total = double.tryParse(_priceController.text) ?? 0;
+    if (_paymentMode == 'Cash' || _paymentMode == 'UPI') {
+       // Default to full payment
+       // Only update if it seems "untouched" or we enforce rule?
+       // Better to just set it equal to total for convenience, user can edit if partial.
+       _amountReceivedController.text = total.toStringAsFixed(0);
+    } else if (_paymentMode == 'Credit') {
+       _amountReceivedController.text = '0';
+    }
   }
 
   @override
@@ -95,17 +94,13 @@ class _DeliveryViewState extends State<DeliveryView> {
             SnackBar(content: Text(state.errorMessage ?? 'An error occurred')),
           );
         } else if (state.status == DeliveryStatus.submissionSuccess) {
-            // Find the submitted transaction. Assuming it's the first in todayTransactions.
-            // If empty, fallback or do nothing.
+            FocusScope.of(context).unfocus();
             if (state.todayTransactions.isNotEmpty) {
-               // We need the customer too. 
-               // selectedCustomer is null/cleared in state now, but we can find customer by ID from the transaction.
                final tx = state.todayTransactions.first;
                final customer = state.customers.firstWhere(
                  (c) => c.id == tx.customerId,
                  orElse: () => const Customer(id: '', salesmanId: '', name: 'Unknown', phone: '', address: '', status: '', securityDeposit: 0, pendingBalance: 0, bottleBalance: 0),
                );
-               
                showDialog(
                  context: context,
                  builder: (_) => TransactionReceiptDialog(
@@ -114,14 +109,13 @@ class _DeliveryViewState extends State<DeliveryView> {
                  ),
                );
             }
-             // Reset form on successful submission (selectedCustomer becomes null)
             _resetForm();
         }
       },
       builder: (context, state) {
-        final authState = context.read<AuthBloc>().state;
-        final salesmanName = (authState is AuthAuthenticated) ? authState.salesman.name : 'Salesman';
-        final salesmanId = (authState is AuthAuthenticated) ? authState.salesman.id : '';
+        final authState = context.watch<AuthBloc>().state; // Use watch for updates
+        final salesman = (authState is AuthAuthenticated) ? authState.salesman : null;
+        final salesmanId = salesman?.id ?? '';
 
         return Scaffold(
           backgroundColor: Colors.grey[50],
@@ -228,26 +222,45 @@ class _DeliveryViewState extends State<DeliveryView> {
              const SizedBox(height: 16),
              
              // Customer Dropdown
-             DropdownButtonFormField<Customer>(
-               // Safety: Ensure selectedCustomer is actually in the list of items
-               value: state.customers.any((c) => c == state.selectedCustomer) 
+             // Customer Dropdown with Search
+             DropdownSearch<Customer>(
+               items: (filter, loadProps) => state.customers,
+               itemAsString: (Customer c) => c.name,
+               compareFn: (i, s) => i.id == s.id,
+               decoratorProps: DropDownDecoratorProps(
+                 decoration: InputDecoration(
+                   labelText: 'Select Customer',
+                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                   filled: true,
+                   fillColor: Colors.grey[50],
+                 ),
+               ),
+               popupProps: PopupProps.menu(
+                 showSearchBox: true,
+                 searchFieldProps: const TextFieldProps(
+                   decoration: InputDecoration(
+                     hintText: "Search customer...",
+                     prefixIcon: Icon(Icons.search),
+                     contentPadding: EdgeInsets.symmetric(horizontal: 12),
+                     border: OutlineInputBorder(),
+                   ),
+                 ),
+                 itemBuilder: (context, item, isSelected, isHovered) {
+                   return ListTile(
+                     title: Text(item.name),
+                     subtitle: Text(item.address, maxLines: 1, overflow: TextOverflow.ellipsis),
+                     selected: isSelected,
+                   );
+                 },
+               ),
+               selectedItem: state.customers.any((c) => c == state.selectedCustomer) 
                    ? state.selectedCustomer 
                    : null,
-               decoration: InputDecoration(
-                 labelText: 'Select Customer',
-                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-                 filled: true,
-                 fillColor: Colors.grey[50],
-               ),
-               items: state.customers.map((c) {
-                 return DropdownMenuItem(value: c, child: Text(c.name));
-               }).toList(),
-               onChanged: (value) {
+               onChanged: (Customer? value) {
                  if (value != null) {
                    context.read<DeliveryBloc>().add(SelectCustomer(value));
                  }
                },
-               validator: (value) => value == null ? 'Please select a customer' : null,
              ),
              
              const SizedBox(height: 16),
@@ -298,6 +311,20 @@ class _DeliveryViewState extends State<DeliveryView> {
              
              const SizedBox(height: 16),
              
+             // Amount Received (Partial Payment)
+             TextFormField(
+               controller: _amountReceivedController,
+               keyboardType: TextInputType.number,
+               decoration: const InputDecoration(
+                 labelText: 'Amount Received (₹)',
+                 prefixText: '₹ ',
+                 border: OutlineInputBorder(),
+                 helperText: "Enter 0 for Credit, equals Total for Cash"
+               ),
+             ),
+             
+             const SizedBox(height: 16),
+             
              // Payment Mode
              const Text("Payment Mode", style: TextStyle(fontWeight: FontWeight.w500)),
              const SizedBox(height: 8),
@@ -341,6 +368,7 @@ class _DeliveryViewState extends State<DeliveryView> {
         onTap: () {
           setState(() {
             _paymentMode = mode;
+            _updateAmountReceived();
           });
         },
         child: Container(
@@ -459,6 +487,7 @@ class _DeliveryViewState extends State<DeliveryView> {
         timestamp: DateTime.now(),
         type: 'delivery',
         amount: double.tryParse(_priceController.text) ?? 0,
+        amountReceived: double.tryParse(_amountReceivedController.text) ?? 0,
         paymentMode: _paymentMode,
         cansDelivered: int.tryParse(_fullCansController.text) ?? 0,
         emptyCollected: int.tryParse(_emptyCansController.text) ?? 0,
@@ -473,6 +502,7 @@ class _DeliveryViewState extends State<DeliveryView> {
     _fullCansController.text = '0';
     _emptyCansController.text = '0';
     _priceController.text = '60'; // Updated to 60 as per user default change
+    _amountReceivedController.text = '60'; 
     setState(() {
       _paymentMode = 'Cash';
       // Selected customer is reset by BLoC state change

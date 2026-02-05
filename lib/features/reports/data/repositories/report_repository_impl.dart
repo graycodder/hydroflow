@@ -57,18 +57,25 @@ class ReportRepositoryImpl implements ReportRepository {
       // 5. Calculate Metrics
       
       // Transaction Aggregates
-      double salesRevenue = 0;
-      double cashSales = 0;
-      double onlineSales = 0;
+      double salesRevenue = 0; // Bill Value
+      double totalCollected = 0; // Actual Received
+      double totalCreditPending = 0; // Bill - Received
+      
+      double cashSales = 0; // Actual Cash
+      double onlineSales = 0; // Actual Online
+      
       int delivered = 0;
       int returned = 0;
       
       for (var tx in transactions) {
         salesRevenue += tx.amount;
+        totalCollected += tx.amountReceived;
+        totalCreditPending += (tx.amount - tx.amountReceived);
+        
         if (tx.paymentMode == 'Cash') {
-          cashSales += tx.amount;
+          cashSales += tx.amountReceived; // Use Received amount, not Bill amount
         } else if (tx.paymentMode == 'Online' || tx.paymentMode == 'UPI') {
-          onlineSales += tx.amount;
+          onlineSales += tx.amountReceived; // Use Received amount
         }
         
         delivered += tx.cansDelivered;
@@ -110,6 +117,8 @@ class ReportRepositoryImpl implements ReportRepository {
         netBottlesOut: delivered - returned,
         totalBottlesWithCustomers: totalBottlesWithCustomers,
         salesRevenue: salesRevenue,
+        totalCollected: totalCollected,
+        totalCreditPending: totalCreditPending,
         cashSales: cashSales,
         onlineSales: onlineSales,
         securityDepositsCollected: securityDepositsCollected,

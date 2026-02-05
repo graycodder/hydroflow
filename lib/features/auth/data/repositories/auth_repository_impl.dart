@@ -41,17 +41,17 @@ class AuthRepositoryImpl implements AuthRepository {
   Future<void> restoreSession() async {
     final uid = _prefs.getString(_userKey);
     if (uid != null) {
-      print('AuthRepo: Restored session for UID: $uid');
+
       _authStateController.add(uid);
     } else {
-      print('AuthRepo: No session found.');
+
       _authStateController.add(null);
     }
   }
 
   @override
   Future<void> signIn({required String username, required String password}) async {
-    print('AuthRepo: Attempting sign in for "$username" (RTDB)');
+
 
     // Query Salesmen node ordering by 'username'
     final ref = _database.ref().child('Salesmen');
@@ -71,23 +71,23 @@ class AuthRepositoryImpl implements AuthRepository {
 
         final storedPassword = userData['password'];
         
-        print('AuthRepo: Found user. Verifying password...');
+
         
         if (storedPassword == password) {
              final uid = userNode.key!;
-             print('AuthRepo: Login success. UID: $uid');
+
              await _prefs.setString(_userKey, uid);
              _authStateController.add(uid);
         } else {
-             print('AuthRepo: Password mismatch.');
+
              throw Exception('Invalid username or password');
         }
       } else {
-        print('AuthRepo: User not found.');
+
         throw Exception('Invalid username or password');
       }
     } catch (e) {
-      print('AuthRepo: Error during sign in: $e');
+
       rethrow;
     }
   }

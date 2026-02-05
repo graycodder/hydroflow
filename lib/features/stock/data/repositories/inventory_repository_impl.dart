@@ -29,10 +29,38 @@ class InventoryRepositoryImpl implements InventoryRepository {
     final logRef = _database.ref().child('Stock_logs').child('LOG_${dateKey}_$salesmanId');
     final salesmanStockRef = _database.ref().child('Salesmen').child(salesmanId).child('currentStock');
 
-    // 1. Update 'loaded' count in log
-    await logRef.child('loaded').runTransaction((Object? currentData) {
-      final currentLoaded = (currentData as num?)?.toInt() ?? 0;
-      return Transaction.success(currentLoaded + quantity);
+    // 1. Update 'openingStock' count in log (treating morning load as opening stock)
+    await logRef.runTransaction((Object? post) {
+      final logMap = post == null 
+          ? <String, dynamic>{} 
+          : Map<String, dynamic>.from(post as Map);
+
+      // Initialize if new
+      if (!logMap.containsKey('date')) {
+         logMap['salesmanId'] = salesmanId;
+         logMap['date'] = DateTime.now().toIso8601String().substring(0, 10);
+         logMap['openingStock'] = 0;
+         logMap['loaded'] = 0;
+         logMap['totalDelivered'] = 0;
+         logMap['damaged'] = 0;
+         logMap['closingStock'] = 0;
+         logMap['actualClosingStock'] = 0;
+         logMap['mismatchCount'] = 0;
+         logMap['isReconciled'] = false;
+      }
+      
+      final currentLoaded = (logMap['loaded'] as num?)?.toInt() ?? 0;
+      final newLoaded = currentLoaded + quantity;
+      logMap['loaded'] = newLoaded;
+      
+      // Update closing stock: opening + loaded - delivered - damaged
+      final opening = (logMap['openingStock'] as num?)?.toInt() ?? 0;
+      final delivered = (logMap['totalDelivered'] as num?)?.toInt() ?? 0;
+      final damaged = (logMap['damaged'] as num?)?.toInt() ?? 0;
+      
+      logMap['closingStock'] = opening + newLoaded - delivered - damaged;
+
+      return Transaction.success(logMap);
     });
 
     // 2. Increment currentStock
@@ -79,50 +107,51 @@ class InventoryRepositoryImpl implements InventoryRepository {
     final dateKey = DateTime.now().toIso8601String().substring(0, 10).replaceAll('-', '_');
     final logRef = _database.ref().child('Stock_logs').child('LOG_${dateKey}_$salesmanId');
     
-
-
-    // 2. We should also recalculate closingStock in log if it exists? 
-    // For now let's just sync currentStock.
-
-    // 3. Update Salesmen currentStock
-
-    
-    // We update currentStock to effectively be: openingStock + loaded - delivered - damaged
-    // But if the user is "setting opening stock", they might mean they want the inventory to START at this value.
-    // If they already delivered some, maybe it should be adjusted.
-    // HOWEVER, the simplest and most "expected" behavior when someone fixes the "Opening Stock" 
-    // is that it sets the baseline.
-    
-    // Let's use a transaction to be safe for the entire log update.
     await logRef.runTransaction((Object? post) {
       final logMap = post == null 
           ? <String, dynamic>{} 
           : Map<String, dynamic>.from(post as Map);
+
+      // Initialize if new
+      if (!logMap.containsKey('date')) {
+         logMap['salesmanId'] = salesmanId;
+         logMap['date'] = DateTime.now().toIso8601String().substring(0, 10);
+         logMap['loaded'] = 0;
+         logMap['totalDelivered'] = 0;
+         logMap['damaged'] = 0;
+         logMap['actualClosingStock'] = 0;
+         logMap['mismatchCount'] = 0;
+         logMap['isReconciled'] = false;
+      }
       
       final loaded = (logMap['loaded'] as num?)?.toInt() ?? 0;
       final delivered = (logMap['totalDelivered'] as num?)?.toInt() ?? 0;
       final damaged = (logMap['damaged'] as num?)?.toInt() ?? 0;
       
-      final calculatedCurrent = quantity + loaded - delivered - damaged;
+      final expectedClosing = quantity + loaded - delivered - damaged;
       
-      // Update fields
-      logMap['salesmanId'] = salesmanId;
-      logMap['date'] = DateTime.now().toIso8601String().substring(0, 10);
       logMap['openingStock'] = quantity;
-      logMap['closingStock'] = calculatedCurrent; // Update closing for consistency
-      
+      logMap['closingStock'] = expectedClosing;
+
       return Transaction.success(logMap);
     });
-
-    final logSnapshot = await logRef.get();
-    if (logSnapshot.exists) {
-      final data = Map<String, dynamic>.from(logSnapshot.value as Map);
-      final loaded = (data['loaded'] as num?)?.toInt() ?? 0;
-      final delivered = (data['totalDelivered'] as num?)?.toInt() ?? 0;
-      final damaged = (data['damaged'] as num?)?.toInt() ?? 0;
-      
-      final newCurrentStock = quantity + loaded - delivered - damaged;
-      await _database.ref().child('Salesmen').child(salesmanId).child('currentStock').set(newCurrentStock);
+    
+    // Recalculate solely for the purpose of updating Salesman currentStock mostly accurately
+    // We can just rely on the same calculation as above.
+    // Fetch fresh or just blindly trust the recent calc? 
+    // Ideally we trust the transaction result but we are in a separate one for Salesmen.
+    // Let's just update Salesman currentStock.
+    // To be perfectly safe, we could read the log again, but given we just set it...
+    // Let's assume the transaction succeeded. 
+    
+    // We need 'loaded' etc to calc currentStock for Salesman update.
+    // The transaction above updated the log. Let's read it back or re-calc.
+    // Re-reading is safer.
+    final snapshot = await logRef.get();
+    if (snapshot.exists) {
+       final data = Map<String, dynamic>.from(snapshot.value as Map);
+       final closing = (data['closingStock'] as num?)?.toInt() ?? quantity;
+       await _database.ref().child('Salesmen').child(salesmanId).child('currentStock').set(closing);
     }
   }
 

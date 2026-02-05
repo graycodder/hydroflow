@@ -75,6 +75,10 @@ class DeliveryBloc extends Bloc<DeliveryEvent, DeliveryState> {
   ) async {
     // Merge new data with current state data
     var customers = event.customers ?? state.customers;
+    
+    // Filter for Active customers only
+    customers = customers.where((c) => c.status == 'Active').toList();
+
     final transactions = event.transactions ?? state.todayTransactions;
     
     // Fix Dropdown Crash: If customers updated, sync selectedCustomer reference
@@ -109,7 +113,7 @@ class DeliveryBloc extends Bloc<DeliveryEvent, DeliveryState> {
     SubmitTransaction event,
     Emitter<DeliveryState> emit,
   ) async {
-    emit(state.copyWith(status: DeliveryStatus.loading));
+    emit(state.copyWith(status: DeliveryStatus.submitting));
     try {
       await _addTransactionUseCase(event.transaction);
       
@@ -161,7 +165,7 @@ class DeliveryBloc extends Bloc<DeliveryEvent, DeliveryState> {
     }
 
     emit(state.copyWith(
-      status: DeliveryStatus.success,
+      status: state.status == DeliveryStatus.submitting ? DeliveryStatus.submitting : DeliveryStatus.success,
       customers: customers.cast(),
       todayTransactions: txList.cast(),
       selectedCustomer: updatedSelectedCustomer, // Sync the reference

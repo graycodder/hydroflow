@@ -3,6 +3,7 @@ import 'package:hydroflow/features/transactions/domain/entities/transaction_enti
 import 'package:hydroflow/features/customers/domain/entities/customer.dart';
 import 'package:intl/intl.dart';
 import 'package:hydroflow/core/utils/whatsapp_helper.dart';
+import 'package:hydroflow/features/transactions/presentation/utils/receipt_pdf_generator.dart';
 
 class TransactionReceiptDialog extends StatelessWidget {
   final TransactionEntity transaction;
@@ -312,9 +313,64 @@ class TransactionReceiptDialog extends StatelessWidget {
                         ),
                       ],
                     ),
+                    const SizedBox(height: 16),
+                    const Divider(height: 1),
+                    const SizedBox(height: 16),
+                    
+                    Text(
+                      'BALANCE SUMMARY',
+                      style: TextStyle(
+                        color: Colors.grey[600],
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    
+                    _buildBalanceRow(
+                      'Previous Balance:',
+                      '₹${(customer.pendingBalance - (transaction.amount - transaction.amountReceived)).toStringAsFixed(0)}',
+                      color: Colors.grey[700]!,
+                    ),
+                    const SizedBox(height: 4),
+                    _buildBalanceRow(
+                      'Amount Received:',
+                      '- ₹${transaction.amountReceived.toStringAsFixed(0)}',
+                      color: Colors.green[700]!,
+                    ),
+                    const SizedBox(height: 8),
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: Colors.red[50],
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          const Text(
+                            'NEW PENDING:',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 14,
+                              color: Color(0xFFD32F2F),
+                            ),
+                          ),
+                          Text(
+                            '₹${customer.pendingBalance.toStringAsFixed(0)}',
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
+                              color: Color(0xFFD32F2F),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
 
                     const SizedBox(height: 24),
 
+                    if (transaction.amountReceived > 0)
                     Center(
                       child: Container(
                         padding: const EdgeInsets.symmetric(
@@ -375,14 +431,14 @@ class TransactionReceiptDialog extends StatelessWidget {
                             customerName: customer.name,
                             delivered: transaction.cansDelivered,
                             returned: transaction.emptyCollected,
-                            bottleBalance: customer
-                                .bottleBalance, // This is current balance.
+                            bottleBalance: customer.bottleBalance, // Current balance
                             amount: transaction.amount,
-                            isPaid: transaction.paymentMode != 'Credit',
+                            amountReceived: transaction.amountReceived,
+                            isPaid: transaction.amountReceived >= transaction.amount,
                           );
                         },
-                        icon: const Icon(Icons.share),
-                        label: const Text('Send Receipt via WhatsApp'),
+                        icon: const Icon(Icons.send), // Changed icon to send for text
+                        label: const Text('Send Text Receipt via WhatsApp'),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: const Color(0xFF00C853),
                           foregroundColor: Colors.white,
@@ -394,40 +450,50 @@ class TransactionReceiptDialog extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 12),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: OutlinedButton.icon(
-                            onPressed: () {},
-                            icon: const Icon(Icons.print, size: 18),
-                            label: const Text('Print'),
-                            style: OutlinedButton.styleFrom(
-                              foregroundColor: Colors.black,
-                              padding: const EdgeInsets.symmetric(vertical: 12),
-                              side: const BorderSide(color: Colors.grey),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                            ),
+                    SizedBox(
+                      width: double.infinity,
+                      child: OutlinedButton.icon(
+                        onPressed: () async {
+                           final isCredit = transaction.paymentMode == 'Credit';
+                           final currentVisibleBalance = customer.pendingBalance; // This might be pre-update state
+                           
+                           // Logic for PDF Balance:
+                           // We assume customer.pendingBalance is UPDATED (New Balance) because BLoC stream updates state.
+                           // So New Balance = customer.pendingBalance
+                           // Old Balance = New Balance - Change
+                           
+                           final bill = (transaction.cansDelivered > 0) ? transaction.amount : 0.0;
+                           final paid = transaction.amountReceived;
+                           final change = bill - paid;
+                           
+                           final newBal = customer.pendingBalance; // Current state is likely New
+                           final oldBal = newBal - change;
+                           
+                           await ReceiptPdfGenerator.generateAndShare(
+                             customerName: customer.name,
+                             phone: customer.phone,
+                             address: customer.address,
+                             delivered: transaction.cansDelivered,
+                             emptyCollected: transaction.emptyCollected,
+                             paymentAmount: transaction.amount, // Total Bill
+                             amountReceived: transaction.amountReceived, // Actual Paid
+                             paymentMode: transaction.paymentMode,
+                             oldBalance: oldBal,
+                             newBalance: newBal,
+                             date: transaction.timestamp,
+                           );
+                        },
+                        icon: const Icon(Icons.picture_as_pdf),
+                        label: const Text('Share PDF Receipt'),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: Colors.black,
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          side: const BorderSide(color: Colors.grey),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
                           ),
                         ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: OutlinedButton.icon(
-                            onPressed: () {},
-                            icon: const Icon(Icons.download, size: 18),
-                            label: const Text('Download'),
-                            style: OutlinedButton.styleFrom(
-                              foregroundColor: Colors.black,
-                              padding: const EdgeInsets.symmetric(vertical: 12),
-                              side: const BorderSide(color: Colors.grey),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
+                      ),
                     ),
                     const SizedBox(height: 16),
                     TextButton(
@@ -454,7 +520,7 @@ class TransactionReceiptDialog extends StatelessWidget {
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
-                        'Tip: Sending receipts via WhatsApp improves customer trust and reduces paper costs.',
+                        'Tip: You can now share professional PDF receipts directly via WhatsApp.',
                         style: TextStyle(color: Colors.blue[900], fontSize: 12),
                       ),
                     ),
@@ -466,6 +532,19 @@ class TransactionReceiptDialog extends StatelessWidget {
         ), // SingleChildScrollView
       ), // ClipRRect
     ); // Dialog
+  }
+
+  Widget _buildBalanceRow(String label, String value, {required Color color}) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(label, style: TextStyle(color: Colors.grey[600], fontSize: 13)),
+        Text(
+          value,
+          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: color),
+        ),
+      ],
+    );
   }
 
   Widget _buildRow(String label, String value) {

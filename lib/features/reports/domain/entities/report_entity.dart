@@ -23,9 +23,12 @@ class ReportEntity extends Equatable {
   final int totalBottlesWithCustomers; // All-time outstanding
   
   // Financial Summary
-  final double salesRevenue;
-  final double cashSales;
-  final double onlineSales;
+  final double salesRevenue; // Total Bill Value
+  final double totalCollected; // Actual Cash/UPI Received
+  final double totalCreditPending; // Bill - Received
+  
+  final double cashSales; // Actual Cash Received
+  final double onlineSales; // Actual Online Received
   
   final double securityDepositsCollected;
   final double securityDepositsRefunded;
@@ -54,6 +57,8 @@ class ReportEntity extends Equatable {
     required this.netBottlesOut,
     required this.totalBottlesWithCustomers,
     required this.salesRevenue,
+    required this.totalCollected,
+    required this.totalCreditPending,
     required this.cashSales,
     required this.onlineSales,
     required this.securityDepositsCollected,
@@ -82,6 +87,8 @@ class ReportEntity extends Equatable {
         netBottlesOut,
         totalBottlesWithCustomers,
         salesRevenue,
+        totalCollected,
+        totalCreditPending,
         cashSales,
         onlineSales,
         securityDepositsCollected,

@@ -103,27 +103,55 @@ class ReportsPage extends StatelessWidget {
   }
 
   Widget _buildSummaryCards(ReportEntity report) {
-    return Row(
+    return Column(
       children: [
-        Expanded(
-          child: _buildSummaryCard(
-            title: "Total Revenue",
-            value: "₹${report.totalRevenue.toStringAsFixed(0)}",
-            subtitle: "Sales + Net Deposits",
-            color: const Color(0xFF00C853), // Green
-            textColor: Colors.white,
-          ),
+        Row(
+          children: [
+            Expanded(
+              child: _buildSummaryCard(
+                title: "Total Sales",
+                value: "₹${report.totalRevenue.toStringAsFixed(0)}",
+                subtitle: "Total Bill Value",
+                color: const Color(0xFF2962FF), // Blue
+                textColor: Colors.white,
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: _buildSummaryCard(
+                title: "Collected",
+                value: "₹${report.totalCollected.toStringAsFixed(0)}",
+                subtitle: "Cash + UPI Received",
+                color: const Color(0xFF00C853), // Green
+                textColor: Colors.white,
+              ),
+            ),
+          ],
         ),
-        const SizedBox(width: 16),
-        Expanded(
-          child: _buildSummaryCard(
-            title: "Deliveries",
-            value: "${report.totalDeliveries}",
-            subtitle: "Cans Delivered",
-            color: const Color(0xFF2962FF), // Blue
-            textColor: Colors.white,
-          ),
-        ),
+        const SizedBox(height: 16),
+        Row(
+          children: [
+             Expanded(
+              child: _buildSummaryCard(
+                title: "Credit Given",
+                value: "₹${report.totalCreditPending.toStringAsFixed(0)}",
+                subtitle: "Pending Payment",
+                color: Colors.orange,
+                textColor: Colors.white,
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: _buildSummaryCard(
+                title: "Deliveries",
+                value: "${report.totalDeliveries}",
+                subtitle: "Cans Delivered",
+                color: Colors.teal, 
+                textColor: Colors.white,
+              ),
+            ),
+          ],
+        )
       ],
     );
   }
@@ -250,9 +278,10 @@ class ReportsPage extends StatelessWidget {
       subtitle: "Revenue breakdown by payment mode",
       child: Column(
         children: [
-          _buildRow("Sales Revenue", "₹${report.salesRevenue.toStringAsFixed(0)}", isBold: true, valueColor: Colors.blue),
+          _buildRow("Total Sales Value", "₹${report.salesRevenue.toStringAsFixed(0)}", isBold: true, valueColor: Colors.blue),
+          _buildRow("Total Collected", "₹${report.totalCollected.toStringAsFixed(0)}", isBold: true, valueColor: Colors.green),
           Padding(
-            padding: const EdgeInsets.only(left: 16, top: 8),
+            padding: const EdgeInsets.only(left: 16, top: 2),
             child: Column(
               children: [
                 _buildRow("• Cash", "₹${report.cashSales.toStringAsFixed(0)}"),
@@ -260,6 +289,7 @@ class ReportsPage extends StatelessWidget {
               ],
             ),
           ),
+          _buildRow("Credit Given", "₹${report.totalCreditPending.toStringAsFixed(0)}", isBold: true, valueColor: Colors.orange),
           const SizedBox(height: 16),
            _buildRow("Security Deposits", ""),
            Padding(

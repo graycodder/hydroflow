@@ -2,7 +2,7 @@ import 'package:equatable/equatable.dart';
 import 'package:hydroflow/features/transactions/domain/entities/transaction_entity.dart';
 import 'package:hydroflow/features/customers/domain/entities/customer.dart';
 
-enum DeliveryStatus { initial, loading, success, failure, submissionSuccess }
+enum DeliveryStatus { initial, loading, submitting, success, failure, submissionSuccess }
 
 class DeliveryState extends Equatable {
   final DeliveryStatus status;

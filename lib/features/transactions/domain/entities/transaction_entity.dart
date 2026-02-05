@@ -7,6 +7,7 @@ class TransactionEntity extends Equatable {
   final DateTime timestamp;
   final String type;
   final double amount;
+  final double amountReceived;
   final String paymentMode;
   final int cansDelivered;
   final int emptyCollected;
@@ -20,6 +21,7 @@ class TransactionEntity extends Equatable {
     required this.timestamp,
     required this.type,
     required this.amount,
+    this.amountReceived = 0,
     required this.paymentMode,
     this.cansDelivered = 0,
     this.emptyCollected = 0,
@@ -35,6 +37,7 @@ class TransactionEntity extends Equatable {
     timestamp,
     type,
     amount,
+    amountReceived,
     paymentMode,
     cansDelivered,
     emptyCollected,

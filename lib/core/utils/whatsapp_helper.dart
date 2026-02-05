@@ -8,6 +8,7 @@ class WhatsappHelper {
     required int returned,
     required int bottleBalance,
     required double amount,
+    required double amountReceived,
     required bool isPaid,
   }) async {
     // Sanitize phone number (remove +, spaces, dashes)
@@ -18,8 +19,12 @@ class WhatsappHelper {
       sanitizedPhone = '91$sanitizedPhone';
     }
 
-    final String status = isPaid ? "PAID" : "PENDING";
+    final String status = isPaid ? "PAID" : "PARTIAL/CREDIT";
     
+    final String paymentDetails = amountReceived >= amount
+        ? "💰 *Total: ₹${amount.toStringAsFixed(0)}*"
+        : "💰 *Total: ₹${amount.toStringAsFixed(0)}*\n💵 *Paid: ₹${amountReceived.toStringAsFixed(0)}*\n⚠️ *Due: ₹${(amount - amountReceived).toStringAsFixed(0)}*";
+
     final String message = '''
 🧾 *HydroFlow Pro Receipt*
 To: $customerName
@@ -28,7 +33,7 @@ To: $customerName
 🔹 Returned: $returned cans
 🔹 Bottle Balance: $bottleBalance
 
-💰 *Total: ₹${amount.toStringAsFixed(0)}*
+$paymentDetails
 ✅ Status: $status
 
 Thank you for your business!
