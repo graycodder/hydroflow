@@ -1,7 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:hydroflow/features/profile/domain/entities/subscription_record.dart';
+import 'package:intl/intl.dart';
 
 class SubscriptionHistoryList extends StatelessWidget {
-  const SubscriptionHistoryList({super.key});
+  final List<SubscriptionRecord> history;
+
+  const SubscriptionHistoryList({
+    super.key,
+    required this.history,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -46,41 +53,39 @@ class SubscriptionHistoryList extends StatelessWidget {
           ),
           const SizedBox(height: 24),
           
-          _buildUsageItem(
-            isActive: true,
-            planName: '30 Days Plan',
-            txnId: '#TXN20260128001',
-            paymentDate: '28 Jan 2026',
-            amount: '₹999',
-            startDate: '29 Jan',
-            endDate: '28 Feb',
-            duration: '30 days',
-          ),
-          const SizedBox(height: 16),
-          _buildUsageItem(
-            isActive: false,
-            planName: '30 Days Plan',
-            txnId: '#TXN20251229001',
-            paymentDate: '29 Dec 2025',
-            amount: '₹999',
-            startDate: '30 Dec',
-            endDate: '28 Jan',
-            duration: '30 days',
-          ),
-          const SizedBox(height: 16),
-           _buildUsageItem(
-            isActive: false,
-            planName: '30 Days Plan',
-            txnId: '#TXN20251129001',
-            paymentDate: '29 Nov 2025',
-            amount: '₹999',
-            startDate: '30 Nov',
-            endDate: '29 Dec',
-            duration: '30 days',
-          ),
+          if (history.isEmpty)
+            const Center(
+              child: Padding(
+                padding: EdgeInsets.symmetric(vertical: 32.0),
+                child: Text('No subscription history found.'),
+              ),
+            ),
+
+          ...history.map((item) => Padding(
+            padding: const EdgeInsets.only(bottom: 16.0),
+            child: _buildUsageItem(
+              isActive: item.isActive,
+              planName: item.planName,
+              txnId: item.transactionId,
+              paymentDate: DateFormat('dd MMM yyyy').format(item.paymentDate),
+              amount: '₹${item.amount.toStringAsFixed(0)}',
+              startDate: DateFormat('dd MMM').format(item.startDate),
+              endDate: DateFormat('dd MMM').format(item.endDate),
+              duration: item.duration,
+              progress: _calculateProgress(item.startDate, item.endDate, item.isActive),
+            ),
+          )).toList(),
         ],
       ),
     );
+  }
+
+  double _calculateProgress(DateTime start, DateTime end, bool isActive) {
+    if (!isActive) return 1.0;
+    final total = end.difference(start).inSeconds;
+    final elapsed = DateTime.now().difference(start).inSeconds;
+    if (total <= 0) return 1.0;
+    return (elapsed / total).clamp(0.0, 1.0);
   }
 
   Widget _buildUsageItem({
@@ -92,12 +97,9 @@ class SubscriptionHistoryList extends StatelessWidget {
     required String startDate,
     required String endDate,
     required String duration,
+    required double progress,
   }) {
-    final bgColor = isActive ? const Color(0xFFE8F5E9) : const Color(0xFFF5F5F5); // Light green or light grey
-    final iconColor = isActive ? const Color(0xFF2E7D32) : Colors.grey;
-    final iconBg = isActive ? Colors.white : Colors.grey[400];
-    final activePillColor = isActive ? Colors.black : Colors.grey[300];
-    final activePillText = isActive ? Colors.white : Colors.black54;
+    final bgColor = isActive ? const Color(0xFFE8F5E9) : const Color(0xFFF5F5F5);
     final statusText = isActive ? 'active' : 'expired';
 
     return Container(
@@ -179,8 +181,7 @@ class SubscriptionHistoryList extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 16),
-          const Divider(height: 1, color: Colors.grey), // Actually it seems to be just space or a thin line? Image 3 shows a progress bar at bottom?
-          // "Plan Duration" text and a bar.
+          const Divider(height: 1, color: Colors.grey),
           const SizedBox(height: 12),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -193,7 +194,7 @@ class SubscriptionHistoryList extends StatelessWidget {
           ClipRRect(
             borderRadius: BorderRadius.circular(4),
             child: LinearProgressIndicator(
-              value: isActive ? 0.8 : 1.0, // 80% if active, 100% if expired? Or maybe just grey bar.
+              value: progress, 
               backgroundColor: Colors.grey[300],
               valueColor: AlwaysStoppedAnimation<Color>(isActive ? const Color(0xFF00C853) : Colors.grey),
               minHeight: 6,

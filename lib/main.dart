@@ -11,6 +11,8 @@ import 'package:hydroflow/features/stock/presentation/bloc/stock_bloc.dart';
 import 'package:hydroflow/features/bottles/presentation/bloc/bottle_bloc.dart';
 import 'package:hydroflow/features/customers/presentation/bloc/customer_bloc.dart';
 import 'package:hydroflow/features/transactions/presentation/bloc/delivery_bloc.dart';
+import 'package:hydroflow/features/notifications/presentation/bloc/notification_bloc.dart';
+import 'package:hydroflow/features/auth/presentation/bloc/auth_state.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -47,12 +49,20 @@ class HydroFlowApp extends StatelessWidget {
         BlocProvider<BottleBloc>(create: (_) => di.sl<BottleBloc>()),
         BlocProvider<CustomerBloc>(create: (_) => di.sl<CustomerBloc>()),
         BlocProvider<DeliveryBloc>(create: (_) => di.sl<DeliveryBloc>()),
+        BlocProvider<NotificationBloc>(create: (_) => di.sl<NotificationBloc>()),
       ],
-      child: MaterialApp.router(
-        title: 'HydroFlow Pro',
-        debugShowCheckedModeBanner: false,
-        theme: CodeTheme.lightTheme,
-        routerConfig: router,
+      child: BlocListener<AuthBloc, AuthState>(
+        listener: (context, state) {
+          if (state is AuthAuthenticated) {
+            context.read<NotificationBloc>().add(LoadNotifications(state.salesman.id));
+          }
+        },
+        child: MaterialApp.router(
+          title: 'HydroFlow Pro',
+          debugShowCheckedModeBanner: false,
+          theme: CodeTheme.lightTheme,
+          routerConfig: router,
+        ),
       ),
     );
   }

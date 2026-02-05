@@ -1,7 +1,16 @@
 import 'package:flutter/material.dart';
 
 class ContactInfoCard extends StatelessWidget {
-  const ContactInfoCard({super.key});
+  final String phone;
+  final String email;
+  final String address;
+
+  const ContactInfoCard({
+    super.key,
+    required this.phone,
+    required this.email,
+    required this.address,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -35,19 +44,19 @@ class ContactInfoCard extends StatelessWidget {
           _buildInfoRow(
             icon: Icons.phone_outlined,
             label: 'Phone Number',
-            value: '+91 98765 43210',
+            value: phone,
           ),
           const Divider(height: 32, color: Color(0xFFEEEEEE)),
           _buildInfoRow(
             icon: Icons.email_outlined,
             label: 'Email Address',
-            value: 'john.doe@example.com',
+            value: email,
           ),
           const Divider(height: 32, color: Color(0xFFEEEEEE)),
           _buildInfoRow(
             icon: Icons.location_on_outlined,
             label: 'Address',
-            value: 'Shop #10, MG Road, Bangalore - \n560001',
+            value: address,
           ),
         ],
       ),

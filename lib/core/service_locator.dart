@@ -28,6 +28,18 @@ import 'package:hydroflow/features/subscription/data/repositories/subscription_r
 import 'package:hydroflow/features/subscription/domain/repositories/subscription_repository.dart';
 import 'package:hydroflow/features/subscription/domain/usecases/get_plans_usecase.dart';
 import 'package:hydroflow/features/subscription/presentation/bloc/subscription_bloc.dart';
+import 'package:hydroflow/features/profile/data/repositories/profile_repository_impl.dart';
+import 'package:hydroflow/features/profile/domain/repositories/profile_repository.dart';
+import 'package:hydroflow/features/profile/domain/usecases/get_profile_usecase.dart';
+import 'package:hydroflow/features/profile/domain/usecases/get_subscription_history_usecase.dart';
+import 'package:hydroflow/features/profile/presentation/bloc/profile_bloc.dart';
+import 'package:hydroflow/features/notifications/data/repositories/notification_repository_impl.dart';
+import 'package:hydroflow/features/notifications/domain/repositories/notification_repository.dart';
+import 'package:hydroflow/features/notifications/domain/usecases/get_notifications_usecase.dart';
+import 'package:hydroflow/features/notifications/domain/usecases/mark_notification_read_usecase.dart';
+import 'package:hydroflow/features/notifications/domain/usecases/mark_all_read_usecase.dart';
+import 'package:hydroflow/features/notifications/presentation/bloc/notification_bloc.dart';
+
 
 final sl = GetIt.instance;
 
@@ -98,4 +110,32 @@ Future<void> init() async {
     ),
   );
   sl.registerFactory(() => SubscriptionBloc(getPlans: sl()));
+
+  // Profile Feature
+  sl.registerLazySingleton<ProfileRepository>(
+    () => ProfileRepositoryImpl(database: sl()),
+  );
+  sl.registerLazySingleton(() => GetProfileUseCase(sl()));
+  sl.registerLazySingleton(() => GetSubscriptionHistoryUseCase(sl()));
+  sl.registerFactory(
+    () => ProfileBloc(
+      getProfile: sl(),
+      getSubscriptionHistory: sl(),
+    ),
+  );
+
+  // Notifications Feature
+  sl.registerLazySingleton<NotificationRepository>(
+    () => NotificationRepositoryImpl(database: sl()),
+  );
+  sl.registerLazySingleton(() => GetNotificationsUseCase(sl()));
+  sl.registerLazySingleton(() => MarkNotificationReadUseCase(sl()));
+  sl.registerLazySingleton(() => MarkAllReadUseCase(sl()));
+  sl.registerFactory(
+    () => NotificationBloc(
+      getNotifications: sl(),
+      markRead: sl(),
+      markAllRead: sl(),
+    ),
+  );
 }
