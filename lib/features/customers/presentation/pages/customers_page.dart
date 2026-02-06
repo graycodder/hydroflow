@@ -113,9 +113,13 @@ class _CustomersPageState extends State<CustomersPage> {
                          child: SizedBox(
                            width: double.infinity,
                            child: ElevatedButton.icon(
-                             onPressed: () {
-                               _showAddCustomerDialog(context, salesman.id);
-                             },
+                              onPressed: () {
+                                if (salesman.customerCount >= salesman.maxCustomers) {
+                                  _showLimitExceededDialog(context);
+                                } else {
+                                  _showAddCustomerDialog(context, salesman.id);
+                                }
+                              },
                              icon: const Icon(Icons.add),
                              label: const Text('Add New Customer'),
                              style: ElevatedButton.styleFrom(
@@ -277,6 +281,52 @@ class _CustomersPageState extends State<CustomersPage> {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  void _showLimitExceededDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Row(
+          children: [
+            Icon(Icons.warning_amber_rounded, color: Colors.orange, size: 28),
+            SizedBox(width: 12),
+            Text('Limit Reached'),
+          ],
+        ),
+        content: const Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Your plan limit is over.',
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+            ),
+            SizedBox(height: 8),
+            Text(
+              'Please contact customer support to upgrade your plan and add more customers.',
+              style: TextStyle(color: Colors.black87),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Maybe Later', style: TextStyle(color: Colors.grey)),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF0D1117),
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            ),
+            child: const Text('Contact Support'),
+          ),
+        ],
       ),
     );
   }
