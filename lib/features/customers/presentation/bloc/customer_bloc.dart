@@ -113,7 +113,7 @@ class CustomerBloc extends Bloc<CustomerEvent, CustomerState> {
   ) async {
     // Optimistic update could be done here, but for simplicity/reliability reusing load
     try {
-      await updateCustomerStatus(event.customerId, event.status);
+      await updateCustomerStatus(event.customerId, event.status, event.salesmanId);
       // add(LoadCustomers(event.salesmanId)); // Stream handles update automatically
     } catch (e) {
        emit(state.copyWith(

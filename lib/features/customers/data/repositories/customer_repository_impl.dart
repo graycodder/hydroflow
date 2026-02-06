@@ -43,16 +43,35 @@ class CustomerRepositoryImpl implements CustomerRepository {
       );
       
       await ref.set(customerModel.toMap());
+
+      // Increment salesman's customer count and active customer count
+      final salesmanRef = _database.ref().child('Salesmen').child(customer.salesmanId);
+      await salesmanRef.update({
+        'customerCount': ServerValue.increment(1),
+        'activeCustomers': ServerValue.increment(1),
+      });
     } catch (e) {
       throw Exception('Failed to add customer: $e');
     }
   }
 
   @override
-  Future<void> updateCustomerStatus(String id, String status) async {
+  Future<void> updateCustomerStatus(String id, String status, String salesmanId) async {
     try {
-      final ref = _database.ref().child('Customers/$id');
-      await ref.update({'status': status});
+      final customerRef = _database.ref().child('Customers/$id');
+      final snapshot = await customerRef.child('status').get();
+      final oldStatus = snapshot.value as String?;
+
+      if (oldStatus != status) {
+        await customerRef.update({'status': status});
+
+        final salesmanRef = _database.ref().child('Salesmen').child(salesmanId);
+        if (status == 'Active') {
+          await salesmanRef.update({'activeCustomers': ServerValue.increment(1)});
+        } else if (status == 'Inactive') {
+          await salesmanRef.update({'activeCustomers': ServerValue.increment(-1)});
+        }
+      }
     } catch (e) {
       throw Exception('Failed to update customer status: $e');
     }

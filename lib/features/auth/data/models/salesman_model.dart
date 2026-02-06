@@ -13,6 +13,15 @@ class SalesmanModel extends Salesman {
     super.totalDepositsHeld = 0.0,
     super.planId,
     super.customerCount = 0,
+    super.activeCustomers = 0,
+    super.maxCustomers = 0,
+    super.address = '',
+    super.phoneNumber = '',
+    super.zone = '',
+    super.subId,
+    super.subStartDate,
+    super.subEndDate,
+    super.joinDate,
     super.lastNotification,
   });
 
@@ -35,7 +44,24 @@ class SalesmanModel extends Salesman {
       totalDepositsHeld: (data['totalDepositsHeld'] as num?)?.toDouble() ?? 0.0,
       planId: data['planId'] as String?,
       customerCount: (data['customerCount'] as num?)?.toInt() ?? 0,
-      lastNotification: data['lastNotification'] as String?,
+      activeCustomers: (data['activeCustomers'] as num?)?.toInt() ?? 0,
+      maxCustomers: (data['maxCustomers'] as num?)?.toInt() ?? 0,
+      address: data['address'] as String? ?? '',
+      phoneNumber: data['phoneNumber'] as String? ?? '',
+      zone: data['zone'] as String? ?? '',
+      subId: data['subId'] as String?,
+      subStartDate: data['subStartDate'] != null 
+          ? DateTime.tryParse(data['subStartDate'].toString())
+          : null,
+      subEndDate: data['subEndDate'] != null 
+          ? DateTime.tryParse(data['subEndDate'].toString())
+          : null,
+      joinDate: data['joinDate'] != null 
+          ? DateTime.tryParse(data['joinDate'].toString())
+          : null,
+      lastNotification: data['lastNotification'] != null 
+          ? DateTime.tryParse(data['lastNotification'].toString())
+          : null,
     );
   }
 
@@ -50,7 +76,16 @@ class SalesmanModel extends Salesman {
       'totalDepositsHeld': totalDepositsHeld,
       'planId': planId,
       'customerCount': customerCount,
-      'lastNotification': lastNotification,
+      'activeCustomers': activeCustomers,
+      'maxCustomers': maxCustomers,
+      'address': address,
+      'phoneNumber': phoneNumber,
+      'zone': zone,
+      'subId': subId,
+      'subStartDate': subStartDate?.toIso8601String(),
+      'subEndDate': subEndDate?.toIso8601String(),
+      'joinDate': joinDate?.toIso8601String(),
+      'lastNotification': lastNotification?.toIso8601String(),
     };
   }
 }

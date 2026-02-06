@@ -5,7 +5,7 @@ class UpdateCustomerStatusUseCase {
 
   UpdateCustomerStatusUseCase(this.repository);
 
-  Future<void> call(String id, String status) {
-    return repository.updateCustomerStatus(id, status);
+  Future<void> call(String id, String status, String salesmanId) {
+    return repository.updateCustomerStatus(id, status, salesmanId);
   }
 }
