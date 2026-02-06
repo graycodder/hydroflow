@@ -29,6 +29,7 @@ import 'package:hydroflow/features/subscription/data/repositories/subscription_r
 import 'package:hydroflow/features/subscription/domain/repositories/subscription_repository.dart';
 import 'package:hydroflow/features/subscription/domain/usecases/get_plans_usecase.dart';
 import 'package:hydroflow/features/subscription/presentation/bloc/subscription_bloc.dart';
+import 'package:hydroflow/features/profile/data/datasources/profile_remote_data_source.dart';
 import 'package:hydroflow/features/profile/data/repositories/profile_repository_impl.dart';
 import 'package:hydroflow/features/profile/domain/repositories/profile_repository.dart';
 import 'package:hydroflow/features/profile/domain/usecases/get_profile_usecase.dart';
@@ -115,8 +116,11 @@ Future<void> init() async {
   sl.registerFactory(() => SubscriptionBloc(getPlans: sl()));
 
   // Profile Feature
+  sl.registerLazySingleton<ProfileRemoteDataSource>(
+    () => ProfileRemoteDataSourceImpl(database: sl()),
+  );
   sl.registerLazySingleton<ProfileRepository>(
-    () => ProfileRepositoryImpl(database: sl()),
+    () => ProfileRepositoryImpl(remoteDataSource: sl()),
   );
   sl.registerLazySingleton(() => GetProfileUseCase(sl()));
   sl.registerLazySingleton(() => GetSubscriptionHistoryUseCase(sl()));

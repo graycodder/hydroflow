@@ -55,6 +55,10 @@ class HydroFlowApp extends StatelessWidget {
         listener: (context, state) {
           if (state is AuthAuthenticated) {
             context.read<NotificationBloc>().add(LoadNotifications(state.salesman.id));
+          } else if (state is AuthSubscriptionExpired) {
+            router.go('/lock', extra: state.salesman);
+          } else if (state is AuthUnauthenticated) {
+             router.go('/login');
           }
         },
         child: MaterialApp.router(

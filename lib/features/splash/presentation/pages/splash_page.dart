@@ -25,6 +25,8 @@ class _SplashPageState extends State<SplashPage> {
            context.go('/home'); // Dashboard
         } else if (state is AuthUnauthenticated) {
            context.go('/login');
+        } else if (state is AuthSubscriptionExpired) {
+           context.go('/lock', extra: state.salesman);
         }
       },
       child: Scaffold(

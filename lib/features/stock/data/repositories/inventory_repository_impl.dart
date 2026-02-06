@@ -29,36 +29,47 @@ class InventoryRepositoryImpl implements InventoryRepository {
     final logRef = _database.ref().child('Stock_logs').child('LOG_${dateKey}_$salesmanId');
     final salesmanStockRef = _database.ref().child('Salesmen').child(salesmanId).child('currentStock');
 
-    // 1. Update 'openingStock' count in log (treating morning load as opening stock)
+    // Get current stock for carry forward calculation
+    final salesmanSnapshot = await _database.ref().child('Salesmen').child(salesmanId).child('currentStock').get();
+    final currentStockInVan = (salesmanSnapshot.value as num?)?.toInt() ?? 0;
+
+    // 1. Update log
     await logRef.runTransaction((Object? post) {
       final logMap = post == null 
           ? <String, dynamic>{} 
           : Map<String, dynamic>.from(post as Map);
 
-      // Initialize if new
+      // Initialize if new log for today
       if (!logMap.containsKey('date')) {
          logMap['salesmanId'] = salesmanId;
          logMap['date'] = DateTime.now().toIso8601String().substring(0, 10);
-         logMap['openingStock'] = 0;
+         
+         // First load of the day: openingStock = currentStockInVan + quantity
+         // This handles the user request: if currentStock is 0, openingStock = quantity
+         logMap['openingStock'] = currentStockInVan + quantity;
          logMap['loaded'] = 0;
+         
          logMap['totalDelivered'] = 0;
+         logMap['totalEmptyCollected'] = 0;
          logMap['damaged'] = 0;
-         logMap['closingStock'] = 0;
+         logMap['closingStock'] = currentStockInVan + quantity;
          logMap['actualClosingStock'] = 0;
          logMap['mismatchCount'] = 0;
          logMap['isReconciled'] = false;
+         logMap['cashCollected'] = 0.0;
+         logMap['onlineCollected'] = 0.0;
+      } else {
+         // Subsequent loads are refills (update loaded)
+         final currentLoaded = (logMap['loaded'] as num?)?.toInt() ?? 0;
+         final newLoaded = currentLoaded + quantity;
+         logMap['loaded'] = newLoaded;
+         
+         final opening = (logMap['openingStock'] as num?)?.toInt() ?? 0;
+         final delivered = (logMap['totalDelivered'] as num?)?.toInt() ?? 0;
+         final damaged = (logMap['damaged'] as num?)?.toInt() ?? 0;
+         
+         logMap['closingStock'] = opening + newLoaded - delivered - damaged;
       }
-      
-      final currentLoaded = (logMap['loaded'] as num?)?.toInt() ?? 0;
-      final newLoaded = currentLoaded + quantity;
-      logMap['loaded'] = newLoaded;
-      
-      // Update closing stock: opening + loaded - delivered - damaged
-      final opening = (logMap['openingStock'] as num?)?.toInt() ?? 0;
-      final delivered = (logMap['totalDelivered'] as num?)?.toInt() ?? 0;
-      final damaged = (logMap['damaged'] as num?)?.toInt() ?? 0;
-      
-      logMap['closingStock'] = opening + newLoaded - delivered - damaged;
 
       return Transaction.success(logMap);
     });

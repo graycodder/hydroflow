@@ -75,7 +75,7 @@ class ProfilePage extends StatelessWidget {
                                       ),
                                       const SizedBox(height: 4),
                                       Text(
-                                        profile.role,
+                                        '${profile.role} • ${profile.zone}',
                                         style: const TextStyle(
                                           color: Colors.white70,
                                           fontSize: 14,
@@ -105,7 +105,6 @@ class ProfilePage extends StatelessWidget {
                         children: [
                           ContactInfoCard(
                             phone: profile.phone,
-                            email: profile.email,
                             address: profile.address,
                           ),
                           const SizedBox(height: 16),
@@ -123,6 +122,34 @@ class ProfilePage extends StatelessWidget {
                       padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16),
                       child: Column(
                         children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              const Text(
+                                'Active Customers',
+                                style: TextStyle(color: Colors.grey),
+                              ),
+                              Text(
+                                '${profile.activeCustomers}',
+                                style: const TextStyle(fontWeight: FontWeight.bold),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              const Text(
+                                'Total Customers',
+                                style: TextStyle(color: Colors.grey),
+                              ),
+                              Text(
+                                '${profile.customerCount}',
+                                style: const TextStyle(fontWeight: FontWeight.bold),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [

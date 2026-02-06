@@ -27,9 +27,11 @@ class SalesmanModel extends Salesman {
       password: data['password'] as String? ?? '',
       currentStock: (data['currentStock'] as num?)?.toInt() ?? 0,
       isActive: data['isActive'] as bool? ?? false,
-      subscriptionExpiry: data['subscriptionExpiry'] != null 
-          ? DateTime.tryParse(data['subscriptionExpiry'].toString())
-          : null,
+      subscriptionExpiry: data['subEndDate'] != null 
+          ? DateTime.tryParse(data['subEndDate'].toString())
+          : (data['subscriptionExpiry'] != null 
+              ? DateTime.tryParse(data['subscriptionExpiry'].toString())
+              : null),
       totalDepositsHeld: (data['totalDepositsHeld'] as num?)?.toDouble() ?? 0.0,
       planId: data['planId'] as String?,
       customerCount: (data['customerCount'] as num?)?.toInt() ?? 0,

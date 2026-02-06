@@ -23,6 +23,15 @@ class AuthAuthenticated extends AuthState {
 
 class AuthUnauthenticated extends AuthState {}
 
+class AuthSubscriptionExpired extends AuthState {
+  final Salesman salesman;
+
+  const AuthSubscriptionExpired(this.salesman);
+
+  @override
+  List<Object?> get props => [salesman];
+}
+
 class AuthFailure extends AuthState {
   final String message;
 

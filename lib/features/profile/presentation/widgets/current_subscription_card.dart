@@ -20,7 +20,7 @@ class CurrentSubscriptionCard extends StatelessWidget {
     }
 
     final hasActive = activeSub != null;
-    final expiryDate = hasActive ? activeSub.endDate : null;
+    final expiryDate = hasActive ? activeSub.expiryDate : null;
     final daysRemaining = expiryDate != null ? expiryDate.difference(DateTime.now()).inDays : 0;
 
     return Container(

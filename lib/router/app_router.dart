@@ -9,7 +9,9 @@ import 'package:hydroflow/features/transactions/presentation/pages/delivery_page
 import 'package:hydroflow/features/reports/presentation/pages/reports_page.dart';
 import 'package:hydroflow/features/splash/presentation/pages/splash_page.dart';
 import 'package:hydroflow/features/notifications/presentation/pages/notifications_page.dart';
+import 'package:hydroflow/features/profile/presentation/pages/subscription_lock_page.dart';
 import 'package:hydroflow/features/profile/presentation/pages/profile_page.dart';
+import 'package:hydroflow/features/auth/domain/entities/salesman.dart';
 
 final router = GoRouter(
   initialLocation: '/splash',
@@ -19,6 +21,13 @@ final router = GoRouter(
       builder: (context, state) => const SplashPage(),
     ),
     GoRoute(path: '/login', builder: (context, state) => const LoginPage()),
+    GoRoute(
+      path: '/lock',
+      builder: (context, state) {
+        final salesman = state.extra as Salesman;
+        return SubscriptionLockPage(salesman: salesman);
+      },
+    ),
     GoRoute(
       path: '/home',
       builder: (context, state) => const DashboardPage(),

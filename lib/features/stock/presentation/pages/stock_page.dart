@@ -131,263 +131,268 @@ class _StockPageState extends State<StockPage> {
                       ),
                       const SizedBox(height: 24),
 
-                      // // Today's Summary Card
-                      // BlocBuilder<StockBloc, StockState>(
-                      //   builder: (context, state) {
-                      //     final log = state.todayLog;
-                      //     return Container(
-                      //       padding: const EdgeInsets.all(20),
-                      //       decoration: BoxDecoration(
-                      //         color: Colors.white,
-                      //         borderRadius: BorderRadius.circular(16),
-                      //         boxShadow: [
-                      //           BoxShadow(
-                      //             color: Colors.grey.withOpacity(0.1),
-                      //             blurRadius: 10,
-                      //             offset: const Offset(0, 4),
-                      //           ),
-                      //         ],
-                      //       ),
-                      //       child: Column(
-                      //         crossAxisAlignment: CrossAxisAlignment.start,
-                      //         children: [
-                      //           const Text(
-                      //             "Today's Summary",
-                      //             style: TextStyle(
-                      //               fontSize: 18,
-                      //               fontWeight: FontWeight.bold,
-                      //             ),
-                      //           ),
-                      //           const SizedBox(height: 20),
-                      //           GridView.count(
-                      //             crossAxisCount: 3,
-                      //             shrinkWrap: true,
-                      //             physics: const NeverScrollableScrollPhysics(),
-                      //             mainAxisSpacing: 20,
-                      //             crossAxisSpacing: 10,
-                      //             childAspectRatio: 0.85,
-                      //             children: [
-                      //               _buildSummaryItem(
-                      //                 'Opening',
-                      //                 '${log?.openingStock ?? 0}',
-                      //                 Icons.start,
-                      //                 Colors.purple,
-                      //                 onTap: () => _showOpeningStockDialog(context, salesman.id, log?.openingStock ?? 0),
-                      //               ),
-                      //               _buildSummaryItem(
-                      //                 'Loaded',
-                      //                 '${log?.loaded ?? 0}',
-                      //                 Icons.add_circle_outline,
-                      //                 Colors.blueGrey,
-                      //               ),
-                      //               _buildSummaryItem(
-                      //                 'Delivered',
-                      //                 '${log?.totalDelivered ?? 0}',
-                      //                 Icons.local_shipping_outlined,
-                      //                 Colors.green,
-                      //               ),
-                      //               _buildSummaryItem(
-                      //                 'Damaged',
-                      //                 '${log?.damaged ?? 0}',
-                      //                 Icons.error_outline,
-                      //                 Colors.orange,
-                      //               ),
-                      //               _buildSummaryItem(
-                      //                 'Empties',
-                      //                 '${log?.totalEmptyCollected ?? 0}',
-                      //                 Icons.recycling,
-                      //                 Colors.teal,
-                      //               ),
-                      //               _buildSummaryItem(
-                      //                 'Expected',
-                      //                 '${(log?.openingStock ?? 0) + (log?.loaded ?? 0) - (log?.totalDelivered ?? 0) - (log?.damaged ?? 0)}',
-                      //                 Icons.inventory,
-                      //                 Colors.blue,
-                      //               ),
-                      //             ],
-                      //           ),
-                      //           if (log != null && !log.isReconciled) ...[
-                      //             const SizedBox(height: 24),
-                      //             SizedBox(
-                      //               width: double.infinity,
-                      //               child: OutlinedButton.icon(
-                      //                 onPressed: () => _showReconciliationDialog(context, salesman.id, (log.openingStock + log.loaded - log.totalDelivered - log.damaged)),
-                      //                 icon: const Icon(Icons.fact_check),
-                      //                 label: const Text('Evening Reconciliation'),
-                      //                 style: OutlinedButton.styleFrom(
-                      //                   padding: const EdgeInsets.symmetric(vertical: 16),
-                      //                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                      //                 ),
-                      //               ),
-                      //             ),
-                      //           ] else if (log != null && log.isReconciled) ...[
-                      //             const SizedBox(height: 16),
-                      //             Container(
-                      //               padding: const EdgeInsets.all(12),
-                      //               decoration: BoxDecoration(
-                      //                 color: log.mismatchCount == 0 ? Colors.green[50] : Colors.orange[50],
-                      //                 borderRadius: BorderRadius.circular(8),
-                      //               ),
-                      //               child: Row(
-                      //                 children: [
-                      //                   Icon(
-                      //                     log.mismatchCount == 0 ? Icons.check_circle : Icons.warning, 
-                      //                     color: log.mismatchCount == 0 ? Colors.green : Colors.orange,
-                      //                   ),
-                      //                   const SizedBox(width: 12),
-                      //                   Expanded(
-                      //                     child: Text(
-                      //                       log.mismatchCount == 0 
-                      //                         ? 'Stock Reconciled: Perfect Match' 
-                      //                         : 'Reconciled with mismatch: ${log.mismatchCount}',
-                      //                       style: TextStyle(
-                      //                         fontWeight: FontWeight.bold,
-                      //                         color: log.mismatchCount == 0 ? Colors.green[800] : Colors.orange[800],
-                      //                       ),
-                      //                     ),
-                      //                   ),
-                      //                   TextButton(
-                      //                     onPressed: () => _showReconciliationDialog(context, salesman.id, (log.openingStock + log.loaded - log.totalDelivered - log.damaged)),
-                      //                     child: const Text('Recount'),
-                      //                   ),
-                      //                 ],
-                      //               ),
-                      //             ),
-                      //           ],
-                      //         ],
-                      //       ),
-                      //     );
-                      //   },
-                      // ),
-                      // const SizedBox(height: 24),
+                      // Today's Summary Card
+                      BlocBuilder<StockBloc, StockState>(
+                        builder: (context, state) {
+                          final log = state.todayLog;
+                          return Container(
+                            padding: const EdgeInsets.all(20),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(16),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.grey.withOpacity(0.1),
+                                  blurRadius: 10,
+                                  offset: const Offset(0, 4),
+                                ),
+                              ],
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text(
+                                  "Today's Summary",
+                                  style: TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                const SizedBox(height: 20),
+                                GridView.count(
+                                  crossAxisCount: 3,
+                                  shrinkWrap: true,
+                                  physics: const NeverScrollableScrollPhysics(),
+                                  mainAxisSpacing: 20,
+                                  crossAxisSpacing: 10,
+                                  childAspectRatio: 0.85,
+                                  children: [
+                                    _buildSummaryItem(
+                                      'Opening',
+                                      '${log?.openingStock ?? 0}',
+                                      Icons.start,
+                                      Colors.purple,
+                                      onTap: () => _showOpeningStockDialog(context, salesman.id, log?.openingStock ?? 0),
+                                    ),
+                                    _buildSummaryItem(
+                                      'Loaded',
+                                      '${log?.loaded ?? 0}',
+                                      Icons.add_circle_outline,
+                                      Colors.blueGrey,
+                                    ),
+                                    _buildSummaryItem(
+                                      'Delivered',
+                                      '${log?.totalDelivered ?? 0}',
+                                      Icons.local_shipping_outlined,
+                                      Colors.green,
+                                    ),
+                                    _buildSummaryItem(
+                                      'Damaged',
+                                      '${log?.damaged ?? 0}',
+                                      Icons.error_outline,
+                                      Colors.orange,
+                                    ),
+                                    _buildSummaryItem(
+                                      'Empties',
+                                      '${log?.totalEmptyCollected ?? 0}',
+                                      Icons.recycling,
+                                      Colors.teal,
+                                    ),
+                                    _buildSummaryItem(
+                                      'Expected',
+                                      '${(log?.openingStock ?? 0) + (log?.loaded ?? 0) - (log?.totalDelivered ?? 0) - (log?.damaged ?? 0)}',
+                                      Icons.inventory,
+                                      Colors.blue,
+                                    ),
+                                  ],
+                                ),
+                                if (log != null && !log.isReconciled) ...[
+                                  const SizedBox(height: 24),
+                                  SizedBox(
+                                    width: double.infinity,
+                                    child: OutlinedButton.icon(
+                                      onPressed: () => _showReconciliationDialog(context, salesman.id, (log.openingStock + log.loaded - log.totalDelivered - log.damaged)),
+                                      icon: const Icon(Icons.fact_check),
+                                      label: const Text('Evening Reconciliation'),
+                                      style: OutlinedButton.styleFrom(
+                                        padding: const EdgeInsets.symmetric(vertical: 16),
+                                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                      ),
+                                    ),
+                                  ),
+                                ] else if (log != null && log.isReconciled) ...[
+                                  const SizedBox(height: 16),
+                                  Container(
+                                    padding: const EdgeInsets.all(12),
+                                    decoration: BoxDecoration(
+                                      color: log.mismatchCount == 0 ? Colors.green[50] : Colors.orange[50],
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                    child: Row(
+                                      children: [
+                                        Icon(
+                                          log.mismatchCount == 0 ? Icons.check_circle : Icons.warning, 
+                                          color: log.mismatchCount == 0 ? Colors.green : Colors.orange,
+                                        ),
+                                        const SizedBox(width: 12),
+                                        Expanded(
+                                          child: Text(
+                                            log.mismatchCount == 0 
+                                              ? 'Stock Reconciled: Perfect Match' 
+                                              : 'Reconciled with mismatch: ${log.mismatchCount}',
+                                            style: TextStyle(
+                                              fontWeight: FontWeight.bold,
+                                              color: log.mismatchCount == 0 ? Colors.green[800] : Colors.orange[800],
+                                            ),
+                                          ),
+                                        ),
+                                        TextButton(
+                                          onPressed: () => _showReconciliationDialog(context, salesman.id, (log.openingStock + log.loaded - log.totalDelivered - log.damaged)),
+                                          child: const Text('Recount'),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ],
+                            ),
+                          );
+                        },
+                      ),
+                      const SizedBox(height: 24),
 
                       // Load Stock Section
-                      AnimatedCrossFade(
-                        firstChild: SizedBox(
-                          width: double.infinity,
-                          child: ElevatedButton.icon(
-                            onPressed: () {
-                              setState(() {
-                                _isLoadStockExpanded = true;
-                              });
-                            },
-                            icon: const Icon(Icons.add),
-                            label: const Text('Morning Stock Load'),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFF0D1117),
-                              foregroundColor: Colors.white,
-                              padding: const EdgeInsets.symmetric(vertical: 16),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              textStyle: const TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                        ),
-                        secondChild: Container(
-                          padding: const EdgeInsets.all(20),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(16),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.grey.withOpacity(0.1),
-                                blurRadius: 10,
-                                offset: const Offset(0, 4),
-                              ),
-                            ],
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const Text(
-                                'Load Stock',
-                                style: TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                'Add cans to your inventory',
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  color: Colors.grey[600],
-                                ),
-                              ),
-                              const SizedBox(height: 16),
-                              const Text(
-                                'Number of Cans',
-                                style: TextStyle(fontWeight: FontWeight.w600),
-                              ),
-                              const SizedBox(height: 8),
-                              TextFormField(
-                                controller: _loadStockController,
-                                keyboardType: TextInputType.number,
-                                decoration: InputDecoration(
-                                  hintText: 'Enter quantity',
-                                  filled: true,
-                                  fillColor: Colors.grey[100],
-                                  border: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(8),
-                                    borderSide: BorderSide.none,
+                      BlocBuilder<StockBloc, StockState>(
+                        builder: (context, state) {
+                          final hasLog = state.todayLog != null;
+                          return AnimatedCrossFade(
+                            firstChild: SizedBox(
+                              width: double.infinity,
+                              child: ElevatedButton.icon(
+                                onPressed: () {
+                                  setState(() {
+                                    _isLoadStockExpanded = true;
+                                  });
+                                },
+                                icon: const Icon(Icons.add),
+                                label: Text(hasLog ? 'Refill Stock' : 'Morning Stock Load'),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: const Color(0xFF0D1117),
+                                  foregroundColor: Colors.white,
+                                  padding: const EdgeInsets.symmetric(vertical: 16),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  textStyle: const TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
                                   ),
                                 ),
                               ),
-                              const SizedBox(height: 16),
-                              Row(
+                            ),
+                            secondChild: Container(
+                              padding: const EdgeInsets.all(20),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(16),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.grey.withOpacity(0.1),
+                                    blurRadius: 10,
+                                    offset: const Offset(0, 4),
+                                  ),
+                                ],
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Expanded(
-                                    flex: 2,
-                                    child: Builder(
-                                      builder: (context) {
-                                        return ElevatedButton(
+                                  Text(
+                                    hasLog ? 'Refill Stock' : 'Morning Load',
+                                    style: const TextStyle(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    hasLog ? 'Add extra cans to your inventory' : 'Start your day by loading initial stock',
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      color: Colors.grey[600],
+                                    ),
+                                  ),
+                                  const SizedBox(height: 16),
+                                  const Text(
+                                    'Number of Cans',
+                                    style: TextStyle(fontWeight: FontWeight.w600),
+                                  ),
+                                  const SizedBox(height: 8),
+                                  TextFormField(
+                                    controller: _loadStockController,
+                                    keyboardType: TextInputType.number,
+                                    decoration: InputDecoration(
+                                      hintText: 'Enter quantity',
+                                      filled: true,
+                                      fillColor: Colors.grey[100],
+                                      border: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(8),
+                                        borderSide: BorderSide.none,
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 16),
+                                  Row(
+                                    children: [
+                                      Expanded(
+                                        flex: 2,
+                                        child: Builder(
+                                          builder: (context) {
+                                            return ElevatedButton(
+                                              onPressed: () {
+                                                final qty = int.tryParse(_loadStockController.text) ?? 0;
+                                                context.read<StockBloc>().add(StockLoadRequested(salesmanId: salesman.id, quantity: qty));
+                                              },
+                                              style: ElevatedButton.styleFrom(
+                                                backgroundColor: const Color(0xFF0D1117),
+                                                foregroundColor: Colors.white,
+                                                padding: const EdgeInsets.symmetric(vertical: 16),
+                                                shape: RoundedRectangleBorder(
+                                                  borderRadius: BorderRadius.circular(8),
+                                                ),
+                                              ),
+                                              child: Text(hasLog ? 'Refill Cans' : 'Confirm Morning Load'),
+                                            );
+                                          }
+                                        ),
+                                      ),
+                                      const SizedBox(width: 12),
+                                      Expanded(
+                                        child: OutlinedButton(
                                           onPressed: () {
-                                            final qty = int.tryParse(_loadStockController.text) ?? 0;
-                                            context.read<StockBloc>().add(StockLoadRequested(salesmanId: salesman.id, quantity: qty));
+                                            setState(() {
+                                              _isLoadStockExpanded = false;
+                                            });
                                           },
-                                          style: ElevatedButton.styleFrom(
-                                            backgroundColor: const Color(0xFF0D1117),
-                                            foregroundColor: Colors.white,
+                                          style: OutlinedButton.styleFrom(
                                             padding: const EdgeInsets.symmetric(vertical: 16),
                                             shape: RoundedRectangleBorder(
                                               borderRadius: BorderRadius.circular(8),
                                             ),
                                           ),
-                                          child: const Text('Add to Stock'),
-                                        );
-                                      }
-                                    ),
-                                  ),
-                                  const SizedBox(width: 12),
-                                  Expanded(
-                                    child: OutlinedButton(
-                                      onPressed: () {
-                                        setState(() {
-                                          _isLoadStockExpanded = false;
-                                        });
-                                      },
-                                      style: OutlinedButton.styleFrom(
-                                        padding: const EdgeInsets.symmetric(vertical: 16),
-                                        shape: RoundedRectangleBorder(
-                                          borderRadius: BorderRadius.circular(8),
+                                          child: const Text('Cancel'),
                                         ),
                                       ),
-                                      child: const Text('Cancel'),
-                                    ),
+                                    ],
                                   ),
                                 ],
                               ),
-                            ],
-                          ),
-                        ),
-                        crossFadeState: _isLoadStockExpanded
-                            ? CrossFadeState.showSecond
-                            : CrossFadeState.showFirst,
-                        duration: const Duration(milliseconds: 300),
+                            ),
+                            crossFadeState: _isLoadStockExpanded
+                                ? CrossFadeState.showSecond
+                                : CrossFadeState.showFirst,
+                            duration: const Duration(milliseconds: 300),
+                          );
+                        }
                       ),
 
                       const SizedBox(height: 24),
@@ -412,10 +417,10 @@ class _StockPageState extends State<StockPage> {
                                   style: TextStyle(
                                     fontSize: 18,
                                     fontWeight: FontWeight.bold,
+                                    ),
                                   ),
-                                ),
-                              ],
-                            ),
+                                ],
+                              ),
                             const SizedBox(height: 4),
                             Text(
                               'Log damaged cans or returns',

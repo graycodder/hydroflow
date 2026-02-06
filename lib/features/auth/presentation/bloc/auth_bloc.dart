@@ -79,7 +79,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       final salesman = event.salesman as Salesman;
       if (salesman.subscriptionExpiry != null && 
           salesman.subscriptionExpiry!.isBefore(DateTime.now())) {
-        emit(const AuthFailure('Subscription Expired. Please contact admin.'));
+        emit(AuthSubscriptionExpired(salesman));
       } else {
         emit(AuthAuthenticated(salesman));
       }

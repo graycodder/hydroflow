@@ -7,8 +7,14 @@ class SubscriptionRecord extends Equatable {
   final DateTime paymentDate;
   final double amount;
   final DateTime startDate;
-  final DateTime endDate;
+  final DateTime expiryDate;
   final String duration;
+  final bool isAutoRenew;
+  final String paymentMethod;
+  final String salesmanId;
+  final String salesmanName;
+  final String salesmanPhone;
+  final String status;
   final bool isActive;
 
   const SubscriptionRecord({
@@ -18,8 +24,14 @@ class SubscriptionRecord extends Equatable {
     required this.paymentDate,
     required this.amount,
     required this.startDate,
-    required this.endDate,
+    required this.expiryDate,
     required this.duration,
+    required this.isAutoRenew,
+    required this.paymentMethod,
+    required this.salesmanId,
+    required this.salesmanName,
+    required this.salesmanPhone,
+    required this.status,
     required this.isActive,
   });
 
@@ -31,8 +43,14 @@ class SubscriptionRecord extends Equatable {
         paymentDate,
         amount,
         startDate,
-        endDate,
+        expiryDate,
         duration,
+        isAutoRenew,
+        paymentMethod,
+        salesmanId,
+        salesmanName,
+        salesmanPhone,
+        status,
         isActive,
       ];
 }
