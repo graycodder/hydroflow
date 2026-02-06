@@ -3,6 +3,7 @@ import 'package:hydroflow/features/customers/domain/entities/customer.dart';
 import 'package:hydroflow/features/customers/domain/usecases/add_customer_usecase.dart';
 import 'package:hydroflow/features/customers/domain/usecases/get_customers_usecase.dart';
 import 'package:hydroflow/features/customers/domain/usecases/update_customer_status_usecase.dart';
+import 'package:hydroflow/features/customers/domain/usecases/update_customer_usecase.dart';
 import 'package:hydroflow/features/customers/presentation/bloc/customer_event.dart';
 import 'package:hydroflow/features/customers/presentation/bloc/customer_state.dart';
 
@@ -10,17 +11,20 @@ class CustomerBloc extends Bloc<CustomerEvent, CustomerState> {
   final GetCustomersUseCase getCustomers;
   final AddCustomerUseCase addCustomer;
   final UpdateCustomerStatusUseCase updateCustomerStatus;
+  final UpdateCustomerUseCase updateCustomer;
 
   CustomerBloc({
     required this.getCustomers,
     required this.addCustomer,
     required this.updateCustomerStatus,
+    required this.updateCustomer,
   }) : super(const CustomerState()) {
     on<LoadCustomers>(_onLoadCustomers);
 
     on<AddCustomer>(_onAddCustomer);
     on<SearchCustomers>(_onSearchCustomers);
     on<UpdateCustomerStatus>(_onUpdateCustomerStatus);
+    on<UpdateCustomer>(_onUpdateCustomer);
   }
 
   Future<void> _onLoadCustomers(
@@ -85,7 +89,7 @@ class CustomerBloc extends Bloc<CustomerEvent, CustomerState> {
         errorMessage: 'Failed to add customer: $e',
       ));
     }
-    }
+  }
 
   void _onSearchCustomers(
     SearchCustomers event,
@@ -115,6 +119,20 @@ class CustomerBloc extends Bloc<CustomerEvent, CustomerState> {
        emit(state.copyWith(
         status: CustomerStatus.failure,
         errorMessage: 'Failed to update status: $e',
+      ));
+    }
+  }
+
+  Future<void> _onUpdateCustomer(
+    UpdateCustomer event,
+    Emitter<CustomerState> emit,
+  ) async {
+    try {
+      await updateCustomer(event.customer);
+    } catch (e) {
+      emit(state.copyWith(
+        status: CustomerStatus.failure,
+        errorMessage: 'Failed to update customer: $e',
       ));
     }
   }

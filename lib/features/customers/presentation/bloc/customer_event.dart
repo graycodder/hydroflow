@@ -1,4 +1,5 @@
 import 'package:equatable/equatable.dart';
+import 'package:hydroflow/features/customers/domain/entities/customer.dart';
 
 abstract class CustomerEvent extends Equatable {
   const CustomerEvent();
@@ -54,4 +55,13 @@ class UpdateCustomerStatus extends CustomerEvent {
 
   @override
   List<Object> get props => [customerId, status, salesmanId];
+}
+
+class UpdateCustomer extends CustomerEvent {
+  final Customer customer;
+
+  const UpdateCustomer(this.customer);
+
+  @override
+  List<Object> get props => [customer];
 }

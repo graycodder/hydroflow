@@ -57,4 +57,26 @@ class CustomerRepositoryImpl implements CustomerRepository {
       throw Exception('Failed to update customer status: $e');
     }
   }
+
+  @override
+  Future<void> updateCustomer(Customer customer) async {
+    try {
+      final ref = _database.ref().child('Customers/${customer.id}');
+      final customerModel = CustomerModel(
+        id: customer.id,
+        salesmanId: customer.salesmanId,
+        name: customer.name,
+        phone: customer.phone,
+        address: customer.address,
+        status: customer.status,
+        securityDeposit: customer.securityDeposit,
+        pendingBalance: customer.pendingBalance,
+        bottleBalance: customer.bottleBalance,
+        isRefunded: customer.isRefunded,
+      );
+      await ref.update(customerModel.toMap());
+    } catch (e) {
+      throw Exception('Failed to update customer: $e');
+    }
+  }
 }
