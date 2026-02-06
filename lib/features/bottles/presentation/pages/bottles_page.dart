@@ -75,32 +75,35 @@ class _BottlesPageState extends State<BottlesPage> {
                             const SizedBox(height: 20),
 
                             // Top Stats Row
-                            Row(
-                              children: [
-                                _buildStatCard(
-                                  context,
-                                  title: 'Total Bottles',
-                                  value: '${state.totalBottles}',
-                                  label: 'In Circulation',
-                                  color: const Color(0xFF2962FF), // Blue
-                                ),
-                                const SizedBox(width: 12),
-                                _buildStatCard(
-                                  context,
-                                  title: 'High Balance',
-                                  value: '${state.highBalanceCount}',
-                                  label: '>5 Bottles',
-                                  color: const Color(0xFFFF6D00), // Orange
-                                ),
-                                const SizedBox(width: 12),
-                                _buildStatCard(
-                                  context,
-                                  title: 'Avg Balance',
-                                  value: state.avgBalance.toStringAsFixed(1),
-                                  label: 'Per Customer',
-                                  color: const Color(0xFF00C853), // Green
-                                ),
-                              ],
+                            IntrinsicHeight(
+                              child: Row(
+                                crossAxisAlignment: CrossAxisAlignment.stretch,
+                                children: [
+                                  _buildStatCard(
+                                    context,
+                                    title: 'Total Bottles',
+                                    value: '${state.totalBottles}',
+                                    label: 'In Circulation',
+                                    color: const Color(0xFF2962FF), // Blue
+                                  ),
+                                  const SizedBox(width: 12),
+                                  _buildStatCard(
+                                    context,
+                                    title: 'High Balance',
+                                    value: '${state.highBalanceCount}',
+                                    label: '>5 Bottles',
+                                    color: const Color(0xFFFF6D00), // Orange
+                                  ),
+                                  const SizedBox(width: 12),
+                                  _buildStatCard(
+                                    context,
+                                    title: 'Avg Balance',
+                                    value: state.avgBalance.toStringAsFixed(1),
+                                    label: 'Per Customer',
+                                    color: const Color(0xFF00C853), // Green
+                                  ),
+                                ],
+                              ),
                             ),
                             const SizedBox(height: 24),
 
@@ -306,14 +309,13 @@ class _BottlesPageState extends State<BottlesPage> {
     return Expanded(
       child: Container(
         padding: const EdgeInsets.all(16),
-        height: 140, // Fixed height to align
         decoration: BoxDecoration(
           color: color,
           borderRadius: BorderRadius.circular(16),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          mainAxisSize: MainAxisSize.min,
           children: [
             Text(
               title,
@@ -322,14 +324,20 @@ class _BottlesPageState extends State<BottlesPage> {
                 fontSize: 13,
               ),
             ),
-            Text(
-              value,
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 32,
-                fontWeight: FontWeight.bold,
+            const SizedBox(height: 8),
+            FittedBox(
+              fit: BoxFit.scaleDown,
+              alignment: Alignment.centerLeft,
+              child: Text(
+                value,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 32,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
             ),
+            const SizedBox(height: 8),
             Text(
               label,
               style: const TextStyle(
