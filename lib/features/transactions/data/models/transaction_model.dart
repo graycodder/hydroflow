@@ -17,11 +17,21 @@ class TransactionModel extends TransactionEntity {
   });
 
   factory TransactionModel.fromMap(Map<String, dynamic> map, String id) {
+    DateTime parsedTimestamp;
+    final rawTimestamp = map['timestamp'];
+    if (rawTimestamp is int) {
+      parsedTimestamp = DateTime.fromMillisecondsSinceEpoch(rawTimestamp);
+    } else if (rawTimestamp is String) {
+      parsedTimestamp = DateTime.tryParse(rawTimestamp) ?? DateTime.now();
+    } else {
+      parsedTimestamp = DateTime.now();
+    }
+
     return TransactionModel(
       id: id,
       salesmanId: map['salesmanId'] as String? ?? '',
       customerId: map['customerId'] as String? ?? '',
-      timestamp: DateTime.tryParse(map['timestamp'].toString()) ?? DateTime.now(),
+      timestamp: parsedTimestamp,
       type: map['type'] as String? ?? '',
       amount: (map['amount'] as num?)?.toDouble() ?? 0.0,
       amountReceived: (map['amountReceived'] as num?)?.toDouble() ?? 0.0,

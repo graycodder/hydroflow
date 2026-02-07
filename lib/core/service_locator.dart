@@ -15,6 +15,7 @@ import 'package:hydroflow/features/customers/domain/usecases/get_customers_useca
 import 'package:hydroflow/features/customers/domain/usecases/add_customer_usecase.dart';
 import 'package:hydroflow/features/customers/domain/usecases/update_customer_status_usecase.dart';
 import 'package:hydroflow/features/customers/domain/usecases/update_customer_usecase.dart';
+import 'package:hydroflow/features/customers/domain/usecases/settle_customer_usecase.dart';
 import 'package:hydroflow/features/customers/presentation/bloc/customer_bloc.dart';
 import 'package:hydroflow/features/transactions/data/repositories/transaction_repository_impl.dart';
 import 'package:hydroflow/features/transactions/domain/repositories/transaction_repository.dart';
@@ -74,6 +75,7 @@ Future<void> init() async {
   sl.registerLazySingleton(() => AddCustomerUseCase(sl()));
   sl.registerLazySingleton(() => UpdateCustomerStatusUseCase(sl()));
   sl.registerLazySingleton(() => UpdateCustomerUseCase(sl()));
+  sl.registerLazySingleton(() => SettleCustomerUseCase(sl()));
   sl.registerLazySingleton(() => GetPlansUseCase(sl()));
 
   // BLoCs
@@ -86,6 +88,7 @@ Future<void> init() async {
       addCustomer: sl(),
       updateCustomerStatus: sl(),
       updateCustomer: sl(),
+      settleCustomer: sl(),
     ),
   );
 

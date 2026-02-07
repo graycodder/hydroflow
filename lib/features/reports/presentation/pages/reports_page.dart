@@ -298,6 +298,9 @@ class ReportsPage extends StatelessWidget {
               children: [
                 _buildRow("• Collected", "+₹${report.securityDepositsCollected.toStringAsFixed(0)}", valueColor: Colors.green),
                 _buildRow("• Refunded", "-₹${report.securityDepositsRefunded.toStringAsFixed(0)}", valueColor: Colors.red),
+                //// Add total held
+                //const SizedBox(height: 4),
+                //_buildRow("• Total Held", "₹${report.totalDepositsHeld.toStringAsFixed(0)}", isBold: true, valueColor: Colors.blue[800]),
               ],
             ),
           ),

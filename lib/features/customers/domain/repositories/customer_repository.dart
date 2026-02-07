@@ -5,4 +5,5 @@ abstract class CustomerRepository {
   Future<void> addCustomer(Customer customer);
   Future<void> updateCustomerStatus(String id, String status, String salesmanId);
   Future<void> updateCustomer(Customer customer);
+  Future<void> settleAndDeactivate(Customer customer);
 }

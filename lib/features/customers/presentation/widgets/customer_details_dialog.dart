@@ -230,61 +230,117 @@ class _CustomerDetailsDialogState extends State<CustomerDetailsDialog> {
                        inactiveThumbColor: Colors.white,
                        inactiveTrackColor: Colors.grey[300],
                        onChanged: (val) {
-                         setState(() {
-                           isActive = val;
-                         });
-                         widget.customerBloc.add(UpdateCustomerStatus(
-                           widget.customer.id, 
-                           val ? 'Active' : 'Inactive',
-                           widget.customer.salesmanId
-                         ));
+                         if (!val) {
+                           // User is turning it OFF (Inactive) -> Trigger Settle Flow
+                            // Calculate potential refund/adjustment
+                             final double deposit = widget.customer.securityDeposit;
+                             final double pending = widget.customer.pendingBalance;
+                             
+                             double refundAmount = 0;
+                             double adjustedPending = 0;
+                             
+                             if (deposit >= pending) {
+                               refundAmount = deposit - pending;
+                               adjustedPending = 0;
+                             } else {
+                               refundAmount = 0;
+                               adjustedPending = pending - deposit;
+                             }
+
+                            showDialog(
+                              context: context,
+                              barrierDismissible: false, // Force choice
+                              builder: (context) => AlertDialog(
+                                title: const Text('Deactivate & Settle?'),
+                                content: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    const Text('This will deactivate the customer and settle their account.'),
+                                    const SizedBox(height: 16),
+                                    Row(
+                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                      children: [
+                                        const Text('Security Deposit:'),
+                                        Text('₹${deposit.toStringAsFixed(0)}', style: const TextStyle(fontWeight: FontWeight.bold)),
+                                      ],
+                                    ),
+                                    Row(
+                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                      children: [
+                                        const Text('Pending Balance:'),
+                                        Text('₹${pending.toStringAsFixed(0)}', style: const TextStyle(fontWeight: FontWeight.bold)),
+                                      ],
+                                    ),
+                                    const Divider(),
+                                    if (refundAmount > 0)
+                                      Row(
+                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          const Text('Refund to Customer:', style: TextStyle(color: Colors.green, fontWeight: FontWeight.bold)),
+                                          Text('₹${refundAmount.toStringAsFixed(0)}', style: const TextStyle(color: Colors.green, fontWeight: FontWeight.bold, fontSize: 16)),
+                                        ],
+                                      )
+                                    else
+                                      Row(
+                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          const Text('Remaining Due:', style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
+                                          Text('₹${adjustedPending.toStringAsFixed(0)}', style: const TextStyle(color: Colors.red, fontWeight: FontWeight.bold, fontSize: 16)),
+                                        ],
+                                      ),
+                                    const SizedBox(height: 8),
+                                    const Text(
+                                      'This action is irreversible.',
+                                      style: TextStyle(fontSize: 12, color: Colors.grey),
+                                    ),
+                                  ],
+                                ),
+                                actions: [
+                                  TextButton(
+                                    onPressed: () {
+                                      // Cancel: Revert toggle visually (it didn't change state yet technically if we didn't setState before, 
+                                      // but Switch might assume it did. Better to enforce 'true'.)
+                                      setState(() {
+                                        isActive = true;
+                                      });
+                                      Navigator.pop(context);
+                                    },
+                                    child: const Text('Cancel'),
+                                  ),
+                                  ElevatedButton(
+                                    onPressed: () {
+                                      setState(() {
+                                        isActive = false;
+                                      });
+                                      widget.customerBloc.add(SettleCustomer(widget.customer));
+                                      Navigator.pop(context); // Close Alert
+                                      // Navigator.pop(context); // Close Details? Maybe keep it open to show updated status?
+                                      // Usually better to close details or show updated 'Inactive' state.
+                                      // Let's keep it open so they see it became inactive.
+                                    },
+                                    style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+                                    child: const Text('Confirm', style: TextStyle(color: Colors.white)),
+                                  ),
+                                ],
+                              ),
+                            );
+                         } else {
+                           // User is turning it ON (Active) -> Normal update
+                           setState(() {
+                             isActive = val;
+                           });
+                           widget.customerBloc.add(UpdateCustomerStatus(
+                             widget.customer.id, 
+                             'Active',
+                             widget.customer.salesmanId
+                           ));
+                         }
                        },
                      ),
                   ],
                 ),
               ),
-              
-              // Refund Warning (if Inactive)
-              if (!isActive) ...[
-                const SizedBox(height: 16),
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFFFF7EF), // Light warning orange
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: const Color(0xFFFFE0B2)),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      RichText(
-                        text: TextSpan(
-                          style: const TextStyle(color: Color(0xFFE65100), fontSize: 15),
-                          children: [
-                            const TextSpan(
-                              text: 'Deposit Refund Pending: ',
-                              style: TextStyle(fontWeight: FontWeight.bold),
-                            ),
-                            TextSpan(
-                              text: '₹${widget.customer.securityDeposit.toStringAsFixed(0)}',
-                              style: const TextStyle(fontWeight: FontWeight.bold),
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      const Text(
-                        'Refund this amount when closing the account',
-                        style: TextStyle(
-                          color: Color(0xFFF57C00),
-                          fontSize: 12,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
               
               const SizedBox(height: 24),
               

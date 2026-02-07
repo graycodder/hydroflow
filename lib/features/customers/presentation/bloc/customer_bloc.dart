@@ -3,7 +3,9 @@ import 'package:hydroflow/features/customers/domain/entities/customer.dart';
 import 'package:hydroflow/features/customers/domain/usecases/add_customer_usecase.dart';
 import 'package:hydroflow/features/customers/domain/usecases/get_customers_usecase.dart';
 import 'package:hydroflow/features/customers/domain/usecases/update_customer_status_usecase.dart';
+import 'package:hydroflow/features/customers/domain/usecases/update_customer_status_usecase.dart';
 import 'package:hydroflow/features/customers/domain/usecases/update_customer_usecase.dart';
+import 'package:hydroflow/features/customers/domain/usecases/settle_customer_usecase.dart';
 import 'package:hydroflow/features/customers/presentation/bloc/customer_event.dart';
 import 'package:hydroflow/features/customers/presentation/bloc/customer_state.dart';
 
@@ -12,12 +14,14 @@ class CustomerBloc extends Bloc<CustomerEvent, CustomerState> {
   final AddCustomerUseCase addCustomer;
   final UpdateCustomerStatusUseCase updateCustomerStatus;
   final UpdateCustomerUseCase updateCustomer;
+  final SettleCustomerUseCase settleCustomer;
 
   CustomerBloc({
     required this.getCustomers,
     required this.addCustomer,
     required this.updateCustomerStatus,
     required this.updateCustomer,
+    required this.settleCustomer,
   }) : super(const CustomerState()) {
     on<LoadCustomers>(_onLoadCustomers);
 
@@ -25,6 +29,7 @@ class CustomerBloc extends Bloc<CustomerEvent, CustomerState> {
     on<SearchCustomers>(_onSearchCustomers);
     on<UpdateCustomerStatus>(_onUpdateCustomerStatus);
     on<UpdateCustomer>(_onUpdateCustomer);
+    on<SettleCustomer>(_onSettleCustomer);
   }
 
   Future<void> _onLoadCustomers(
@@ -133,6 +138,22 @@ class CustomerBloc extends Bloc<CustomerEvent, CustomerState> {
       emit(state.copyWith(
         status: CustomerStatus.failure,
         errorMessage: 'Failed to update customer: $e',
+      ));
+    }
+  }
+
+  Future<void> _onSettleCustomer(
+    SettleCustomer event,
+    Emitter<CustomerState> emit,
+  ) async {
+    try {
+      await settleCustomer(event.customer);
+      // Wait a bit to ensure propagation or just rely on stream update
+      // Optionally emit success message or refresh
+    } catch (e) {
+       emit(state.copyWith(
+        status: CustomerStatus.failure,
+        errorMessage: 'Failed to settle customer: $e',
       ));
     }
   }

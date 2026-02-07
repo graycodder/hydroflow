@@ -51,31 +51,53 @@ class ReportRepositoryImpl implements ReportRepository {
       }
 
       // 4. Fetch Current Stock (Salesman)
-      final salesmanSnapshot = await _database.ref().child('Salesmen').child(salesmanId).child('currentStock').get();
-      final currentStock = (salesmanSnapshot.value as num?)?.toInt() ?? 0;
+      final salesmanSnapshot = await _database.ref().child('Salesmen').child(salesmanId).get();
+      // Ensure we cast correctly
+      final salesmanData = Map<String, dynamic>.from(salesmanSnapshot.value as Map);
+      final currentStock = (salesmanData['currentStock'] as num?)?.toInt() ?? 0;
+      final totalDepositsHeld = (salesmanData['totalDepositsHeld'] as num?)?.toDouble() ?? 0.0;
 
       // 5. Calculate Metrics
       
       // Transaction Aggregates
       double salesRevenue = 0; // Bill Value
-      double totalCollected = 0; // Actual Received
+      double totalCollected = 0; // Total money received (Sales + Deposits)
       double totalCreditPending = 0; // Bill - Received
       
-      double cashSales = 0; // Actual Cash
-      double onlineSales = 0; // Actual Online
+      double cashSales = 0; // Cash from Goods
+      double onlineSales = 0; // Online from Goods
+
+      double securityDepositsCollected = 0;
+      double securityDepositsRefunded = 0;
+      double cashFromDeposits = 0;
+      double onlineFromDeposits = 0;
       
       int delivered = 0;
       int returned = 0;
       
       for (var tx in transactions) {
+        if (tx.type == 'Deposit') {
+          securityDepositsCollected += tx.amountReceived;
+          totalCollected += tx.amountReceived;
+          if (tx.paymentMode == 'Cash') {
+            cashFromDeposits += tx.amountReceived;
+          } else if (tx.paymentMode == 'Online' || tx.paymentMode == 'UPI') {
+            onlineFromDeposits += tx.amountReceived;
+          }
+          continue; 
+        } else if (tx.type == 'Refund') {
+           securityDepositsRefunded += tx.amountReceived;
+           continue; 
+        }
+
         salesRevenue += tx.amount;
         totalCollected += tx.amountReceived;
         totalCreditPending += (tx.amount - tx.amountReceived);
         
         if (tx.paymentMode == 'Cash') {
-          cashSales += tx.amountReceived; // Use Received amount, not Bill amount
+          cashSales += tx.amountReceived; 
         } else if (tx.paymentMode == 'Online' || tx.paymentMode == 'UPI') {
-          onlineSales += tx.amountReceived; // Use Received amount
+          onlineSales += tx.amountReceived;
         }
         
         delivered += tx.cansDelivered;
@@ -91,19 +113,20 @@ class ReportRepositoryImpl implements ReportRepository {
       final finalAvailable = finalOpening + loaded;
 
       // Financials
-      const double securityDepositsCollected = 0;
-      const double securityDepositsRefunded = 0;
-      const double netDeposits = 0;
+      final netDeposits = securityDepositsCollected - securityDepositsRefunded;
       
-      final cashInHand = cashSales + securityDepositsCollected - securityDepositsRefunded;
-      final upiCollections = onlineSales;
+      // Cash In Hand = (Cash from Sales) + (Cash from Deposits) - (Security Deposit Refunds)
+      final cashInHand = cashSales + cashFromDeposits - securityDepositsRefunded;
+      
+      // Online Collections = (Online from Sales) + (Online from Deposits)
+      final upiCollections = onlineSales + onlineFromDeposits;
       
       final avgPrice = delivered > 0 ? salesRevenue / delivered : 0.0;
       final turnover = finalAvailable > 0 ? (delivered / finalAvailable) * 100 : 0.0;
 
       return ReportEntity(
         date: date,
-        totalRevenue: salesRevenue + netDeposits,
+        totalRevenue: salesRevenue, // Strictly goods revenue as per request
         totalDeliveries: delivered,
         openingStock: finalOpening,
         stockLoaded: loaded,
@@ -124,6 +147,7 @@ class ReportRepositoryImpl implements ReportRepository {
         securityDepositsCollected: securityDepositsCollected,
         securityDepositsRefunded: securityDepositsRefunded,
         netDeposits: netDeposits,
+        totalDepositsHeld: totalDepositsHeld,
         cashInHand: cashInHand,
         upiCollections: upiCollections,
         avgPricePerCan: avgPrice,

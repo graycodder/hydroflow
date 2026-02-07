@@ -33,6 +33,7 @@ class ReportEntity extends Equatable {
   final double securityDepositsCollected;
   final double securityDepositsRefunded;
   final double netDeposits;
+  final double totalDepositsHeld;
   
   final double cashInHand; // Cash Sales + Deposits - Refunds
   final double upiCollections;
@@ -64,6 +65,7 @@ class ReportEntity extends Equatable {
     required this.securityDepositsCollected,
     required this.securityDepositsRefunded,
     required this.netDeposits,
+    required this.totalDepositsHeld,
     required this.cashInHand,
     required this.upiCollections,
     required this.avgPricePerCan,
@@ -94,6 +96,7 @@ class ReportEntity extends Equatable {
         securityDepositsCollected,
         securityDepositsRefunded,
         netDeposits,
+        totalDepositsHeld,
         cashInHand,
         upiCollections,
         avgPricePerCan,

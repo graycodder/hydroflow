@@ -65,3 +65,10 @@ class UpdateCustomer extends CustomerEvent {
   @override
   List<Object> get props => [customer];
 }
+
+class SettleCustomer extends CustomerEvent {
+  final Customer customer;
+  const SettleCustomer(this.customer);
+  @override
+  List<Object> get props => [customer];
+}
