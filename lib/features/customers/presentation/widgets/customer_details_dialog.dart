@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:hydroflow/features/customers/domain/entities/customer.dart';
 import 'package:hydroflow/features/customers/presentation/bloc/customer_bloc.dart';
 import 'package:hydroflow/features/customers/presentation/bloc/customer_event.dart';
+import 'package:hydroflow/features/customers/presentation/bloc/customer_state.dart';
 import 'package:hydroflow/features/customers/presentation/widgets/edit_customer_dialog.dart';
 
 class CustomerDetailsDialog extends StatefulWidget {
@@ -29,9 +32,24 @@ class _CustomerDetailsDialogState extends State<CustomerDetailsDialog> {
 
   @override
   Widget build(BuildContext context) {
-    return Dialog(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      child: Container(
+    return BlocListener<CustomerBloc, CustomerState>(
+      bloc: widget.customerBloc,
+      listener: (context, state) {
+        if (state.status == CustomerStatus.submitting) {
+          _showLoadingDialog(context);
+        } else if (state.status == CustomerStatus.failure || 
+                   (state.status == CustomerStatus.success && state.successMessage != null)) {
+          // Dismiss loader if showing
+          if (ModalRoute.of(context)?.isCurrent == false) {
+             Navigator.of(context, rootNavigator: true).pop();
+          }
+          // Optionally close details on success if it was a status update?
+          // For settle, we might want to keep it open to show 'Inactive' but the page usually refreshes.
+        }
+      },
+      child: Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        child: Container(
         padding: const EdgeInsets.all(24),
         constraints: const BoxConstraints(maxWidth: 400),
         child: SingleChildScrollView(
@@ -398,6 +416,25 @@ class _CustomerDetailsDialogState extends State<CustomerDetailsDialog> {
                 ),
             ],
           ),
+        ),
+      ),
+    ),
+  );
+}
+
+  void _showLoadingDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const CircularProgressIndicator(color: Color(0xFF2962FF)),
+            const SizedBox(height: 16),
+            Text('Processing...', 
+              style: GoogleFonts.poppins(fontSize: 14)),
+          ],
         ),
       ),
     );

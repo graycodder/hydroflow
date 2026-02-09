@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:hydroflow/features/customers/domain/entities/customer.dart';
 import 'package:hydroflow/features/customers/presentation/bloc/customer_bloc.dart';
 import 'package:hydroflow/features/customers/presentation/bloc/customer_event.dart';
+import 'package:hydroflow/features/customers/presentation/bloc/customer_state.dart';
 
 class EditCustomerDialog extends StatefulWidget {
   final Customer customer;
@@ -18,13 +21,14 @@ class EditCustomerDialog extends StatefulWidget {
 }
 
 class _EditCustomerDialogState extends State<EditCustomerDialog> {
+  final _formKey = GlobalKey<FormState>();
   late TextEditingController _nameController;
   late TextEditingController _phoneController;
   late TextEditingController _addressController;
   late TextEditingController _depositController;
   //late TextEditingController _balanceController;
   //late TextEditingController _bottleBalanceController;
-  late String _paymentMode;
+  late String? _paymentMode;
 
   @override
   void initState() {
@@ -51,138 +55,284 @@ class _EditCustomerDialogState extends State<EditCustomerDialog> {
 
   @override
   Widget build(BuildContext context) {
-    return Dialog(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      child: Padding(
-        padding: const EdgeInsets.all(20.0),
-        child: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const SizedBox(width: 24),
-                  const Column(
-                    children: [
-                      Text(
-                        'Edit Customer',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
+    return BlocListener<CustomerBloc, CustomerState>(
+      bloc: widget.customerBloc,
+      listener: (context, state) {
+        if (state.status == CustomerStatus.submitting) {
+          _showLoadingDialog(context);
+        } else if (state.status == CustomerStatus.failure || 
+                   (state.status == CustomerStatus.success && state.successMessage != null)) {
+          // Dismiss loader if showing
+          if (ModalRoute.of(context)?.isCurrent == false) {
+             Navigator.of(context, rootNavigator: true).pop();
+          }
+          if (state.status == CustomerStatus.success) {
+            Navigator.of(context).pop(); // Close edit dialog
+          }
+        }
+      },
+      child: Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        child: Padding(
+          padding: const EdgeInsets.all(20.0),
+          child: SingleChildScrollView(
+            child: Form(
+              key: _formKey,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const SizedBox(width: 24),
+                    const Column(
+                      children: [
+                        Text(
+                          'Edit Customer',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
-                      ),
-                      Text(
-                        'Update customer information',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Colors.grey,
+                        Text(
+                          'Update customer information',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.grey,
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.close, color: Colors.grey),
+                      onPressed: () => Navigator.pop(context),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 20),
+                _buildLabel('Customer Name', isMandatory: true),
+                _buildTextFormField(
+                  _nameController, 
+                  'Enter name',
+                  validator: (value) {
+                    if (value == null || value.trim().isEmpty) {
+                      return 'Please enter customer name';
+                    }
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 16),
+                _buildLabel('Phone Number', isMandatory: true),
+                _buildTextFormField(
+                  _phoneController, 
+                  '98765 43212', 
+                  keyboardType: TextInputType.phone,
+                  validator: (value) {
+                    if (value == null || value.trim().isEmpty) {
+                      return 'Please enter phone number';
+                    }
+                    if (value.trim().length != 10) {
+                      return 'Phone number must be exactly 10 digits';
+                    }
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 16),
+                _buildLabel('Address', isMandatory: true),
+                _buildTextFormField(
+                  _addressController, 
+                  'Enter address',
+                  validator: (value) {
+                    if (value == null || value.trim().isEmpty) {
+                      return 'Please enter address';
+                    }
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 16),
+                _buildLabel('Security Deposit (₹)', isMandatory: true),
+                _buildTextFormField(
+                  _depositController, 
+                  '500', 
+                  keyboardType: TextInputType.number,
+                  validator: (value) {
+                    if (value == null || value.trim().isEmpty) {
+                      return 'Please enter security deposit';
+                    }
+                    if (double.tryParse(value) == null) {
+                      return 'Please enter a valid amount';
+                    }
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 16),
+                _buildLabel('Payment Mode', isMandatory: true),
+                DropdownButtonFormField<String>(
+                  value: _paymentMode,
+                  icon: const Icon(Icons.keyboard_arrow_down, color: Colors.grey),
+                  decoration: InputDecoration(
+                    filled: true,
+                    fillColor: Colors.grey[100],
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: BorderSide(color: Colors.grey.shade300),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: BorderSide(color: Colors.grey.shade300),
+                    ),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                   ),
-                  IconButton(
-                    icon: const Icon(Icons.close, color: Colors.grey),
-                    onPressed: () => Navigator.pop(context),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 20),
-              _buildLabel('Customer Name'),
-              _buildTextField(_nameController, 'Enter name'),
-              const SizedBox(height: 16),
-              _buildLabel('Phone Number'),
-              _buildTextField(_phoneController, '+91 98765 43212', keyboardType: TextInputType.phone),
-              const SizedBox(height: 16),
-              _buildLabel('Address'),
-              _buildTextField(_addressController, 'Enter address'),
-              const SizedBox(height: 16),
-              _buildLabel('Security Deposit (₹)'),
-              _buildTextField(_depositController, '500', keyboardType: TextInputType.number),
-              const SizedBox(height: 16),
-            _buildLabel('Payment Mode'),
-            Container(
-             width: double.infinity,
-             padding: const EdgeInsets.symmetric(horizontal: 12),
-             decoration: BoxDecoration(
-               color: Colors.grey[50],
-               borderRadius: BorderRadius.circular(8),
-               border: Border.all(color: Colors.grey.shade200),
-             ),
-             child: DropdownButtonHideUnderline(
-               child: DropdownButton<String>(
-                 value: _paymentMode,
-                 icon: const Icon(Icons.keyboard_arrow_down, color: Colors.grey),
-                 items: ['Cash', 'Online', 'UPI'].map((String value) {
-                   return DropdownMenuItem<String>(
-                     value: value,
-                     child: Text(value),
-                   );
-                 }).toList(),
-                 onChanged: (newValue) {
-                   setState(() {
-                     _paymentMode = newValue!;
-                   });
-                 },
-               ),
-             ),
-            ),
+                  items: ['Cash', 'Online', 'UPI'].map((String value) {
+                    return DropdownMenuItem<String>(
+                      value: value,
+                      child: Text(value),
+                    );
+                  }).toList(),
+                  onChanged: (newValue) {
+                    setState(() {
+                      _paymentMode = newValue!;
+                    });
+                  },
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Please select payment mode';
+                    }
+                    return null;
+                  },
+                ),
              // const SizedBox(height: 16),
              // _buildLabel('Pending Balance (₹)'),
              // _buildTextField(_balanceController, '100', keyboardType: TextInputType.number),
              // const SizedBox(height: 16),
              // _buildLabel('Bottle Balance'),
              // _buildTextField(_bottleBalanceController, '2', keyboardType: TextInputType.number),
-              const SizedBox(height: 24),
-              Row(
-                children: [
-                  Expanded(
-                    child: ElevatedButton(
-                      onPressed: () {
-                        final updatedCustomer = Customer(
-                          id: widget.customer.id,
-                          salesmanId: widget.customer.salesmanId,
-                          name: _nameController.text,
-                          phone: _phoneController.text,
-                          address: _addressController.text,
-                          status: widget.customer.status,
-                          securityDeposit: double.tryParse(_depositController.text) ?? 0.0,
-                          pendingBalance: widget.customer.pendingBalance,
-                          bottleBalance: widget.customer.bottleBalance,
-                          isRefunded: widget.customer.isRefunded,
-                          paymentMode: _paymentMode,
-                        );
-                        widget.customerBloc.add(UpdateCustomer(updatedCustomer));
-                        Navigator.pop(context);
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF0D1117),
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
+                const SizedBox(height: 24),
+                Row(
+                  children: [
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: () {
+                          if (_formKey.currentState!.validate()) {
+                            final name = _nameController.text.trim();
+                            final phone = _phoneController.text.trim();
+                            final address = _addressController.text.trim();
+                            final deposit = double.parse(_depositController.text.trim());
+
+                            showDialog(
+                              context: context,
+                              builder: (confirmContext) => AlertDialog(
+                                title: const Text('Confirm Changes'),
+                                content: Text('Are you sure you want to update the details for "$name"?'),
+                                actions: [
+                                  TextButton(
+                                    onPressed: () => Navigator.pop(confirmContext),
+                                    child: const Text('Cancel'),
+                                  ),
+                                  ElevatedButton(
+                                    onPressed: () {
+                                      Navigator.pop(confirmContext); // Close confirmation
+                                      final updatedCustomer = Customer(
+                                        id: widget.customer.id,
+                                        salesmanId: widget.customer.salesmanId,
+                                        name: name,
+                                        phone: phone,
+                                        address: address,
+                                        status: widget.customer.status,
+                                        securityDeposit: deposit,
+                                        pendingBalance: widget.customer.pendingBalance,
+                                        bottleBalance: widget.customer.bottleBalance,
+                                        isRefunded: widget.customer.isRefunded,
+                                        paymentMode: _paymentMode!,
+                                      );
+                                      widget.customerBloc.add(UpdateCustomer(updatedCustomer));
+                                      // Navigator.pop(context); // Handled by listener
+                                    },
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: Colors.grey[700],
+                                      foregroundColor: Colors.white,
+                                    ),
+                                    child: const Text('Confirm'),
+                                  ),
+                                ],
+                              ),
+                            );
+                          }
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.grey[700],
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
                         ),
+                        child: const Text('Save Changes'),
                       ),
-                      child: const Text('Save Changes'),
                     ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: OutlinedButton(
-                      onPressed: () => Navigator.pop(context),
-                      style: OutlinedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        side: BorderSide(color: Colors.grey.shade300),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: () => Navigator.pop(context),
+                        style: OutlinedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          side: BorderSide(color: Colors.grey.shade300),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          foregroundColor: Colors.black,
                         ),
-                        foregroundColor: Colors.black,
+                        child: const Text('Cancel'),
                       ),
-                      child: const Text('Cancel'),
                     ),
-                  ),
-                ],
-              ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    ),
+  );
+}
+
+  void _showLoadingDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const CircularProgressIndicator(color: Color(0xFF2962FF)),
+            const SizedBox(height: 16),
+            Text('Processing...', 
+              style: GoogleFonts.poppins(fontSize: 14)),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildLabel(String text, {bool isMandatory = false}) {
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: Padding(
+        padding: const EdgeInsets.only(bottom: 8.0),
+        child: RichText(
+          text: TextSpan(
+            text: text,
+            style: const TextStyle(
+              fontWeight: FontWeight.w600,
+              fontSize: 14,
+              color: Colors.black,
+            ),
+            children: [
+              if (isMandatory)
+                const TextSpan(
+                  text: ' *',
+                  style: TextStyle(color: Colors.red),
+                ),
             ],
           ),
         ),
@@ -190,42 +340,42 @@ class _EditCustomerDialogState extends State<EditCustomerDialog> {
     );
   }
 
-  Widget _buildLabel(String text) {
-    return Align(
-      alignment: Alignment.centerLeft,
-      child: Padding(
-        padding: const EdgeInsets.only(bottom: 8.0),
-        child: Text(
-          text,
-          style: const TextStyle(
-            fontWeight: FontWeight.w600,
-            fontSize: 14,
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildTextField(TextEditingController controller, String hint, {TextInputType keyboardType = TextInputType.text}) {
-    return TextField(
+  Widget _buildTextFormField(
+    TextEditingController controller, 
+    String hint, 
+    {
+      TextInputType keyboardType = TextInputType.text,
+      String? Function(String?)? validator,
+    }
+  ) {
+    return TextFormField(
       controller: controller,
       keyboardType: keyboardType,
+      validator: validator,
       decoration: InputDecoration(
         hintText: hint,
         hintStyle: const TextStyle(color: Colors.grey, fontSize: 14),
         filled: true,
-        fillColor: Colors.grey[50],
+        fillColor: Colors.grey[100],
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
-          borderSide: BorderSide(color: Colors.grey.shade200),
+          borderSide: BorderSide(color: Colors.grey.shade300),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
-          borderSide: BorderSide(color: Colors.grey.shade200),
+          borderSide: BorderSide(color: Colors.grey.shade300),
+        ),
+        errorBorder: OutlineInputBorder(
+           borderRadius: BorderRadius.circular(8),
+           borderSide: const BorderSide(color: Colors.red),
+        ),
+        focusedErrorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(8),
+          borderSide: const BorderSide(color: Colors.red, width: 2),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
-          borderSide: const BorderSide(color: Color(0xFF0D1117)),
+          borderSide: const BorderSide(color: Color(0xFF2962FF)),
         ),
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       ),

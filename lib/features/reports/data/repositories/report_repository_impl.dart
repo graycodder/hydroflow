@@ -85,11 +85,14 @@ class ReportRepositoryImpl implements ReportRepository {
           continue; 
         } else if (tx.type == 'Refund') {
            securityDepositsRefunded += tx.amountReceived;
+           totalCollected -= tx.amountReceived; // Deduct from net collection
            continue; 
         }
 
         salesRevenue += tx.amount;
-        totalCollected += tx.amountReceived;
+        if (tx.paymentMode != 'Deposit Adjustment') {
+          totalCollected += tx.amountReceived;
+        }
         totalCreditPending += (tx.amount - tx.amountReceived);
         
         if (tx.paymentMode == 'Cash') {
@@ -228,11 +231,14 @@ class ReportRepositoryImpl implements ReportRepository {
           continue;
         } else if (tx.type == 'Refund') {
           securityDepositsRefunded += tx.amountReceived;
+          totalCollected -= tx.amountReceived; // Deduct from net collection
           continue;
         }
 
         salesRevenue += tx.amount;
-        totalCollected += tx.amountReceived;
+        if (tx.paymentMode != 'Deposit Adjustment') {
+          totalCollected += tx.amountReceived;
+        }
         totalCreditPending += (tx.amount - tx.amountReceived);
         
         if (tx.paymentMode == 'Cash') {

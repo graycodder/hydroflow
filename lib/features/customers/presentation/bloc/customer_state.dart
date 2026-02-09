@@ -1,13 +1,14 @@
 import 'package:equatable/equatable.dart';
 import 'package:hydroflow/features/customers/domain/entities/customer.dart';
 
-enum CustomerStatus { initial, loading, success, failure }
+enum CustomerStatus { initial, loading, submitting, success, failure }
 
 class CustomerState extends Equatable {
   final CustomerStatus status;
   final List<Customer> customers;
   final List<Customer> filteredCustomers;
   final String? errorMessage;
+  final String? successMessage;
   final int totalCustomers;
   final int activeCustomers;
   final int inactiveCustomers;
@@ -17,6 +18,7 @@ class CustomerState extends Equatable {
     this.customers = const [],
     this.filteredCustomers = const [],
     this.errorMessage,
+    this.successMessage,
     this.totalCustomers = 0,
     this.activeCustomers = 0,
     this.inactiveCustomers = 0,
@@ -27,6 +29,7 @@ class CustomerState extends Equatable {
     List<Customer>? customers,
     List<Customer>? filteredCustomers,
     String? errorMessage,
+    String? successMessage,
     int? totalCustomers,
     int? activeCustomers,
     int? inactiveCustomers,
@@ -36,6 +39,7 @@ class CustomerState extends Equatable {
       customers: customers ?? this.customers,
       filteredCustomers: filteredCustomers ?? this.filteredCustomers,
       errorMessage: errorMessage ?? this.errorMessage,
+      successMessage: successMessage ?? this.successMessage,
       totalCustomers: totalCustomers ?? this.totalCustomers,
       activeCustomers: activeCustomers ?? this.activeCustomers,
       inactiveCustomers: inactiveCustomers ?? this.inactiveCustomers,
@@ -48,6 +52,7 @@ class CustomerState extends Equatable {
     customers,
     filteredCustomers,
     errorMessage,
+    successMessage,
     totalCustomers,
     activeCustomers,
     inactiveCustomers,

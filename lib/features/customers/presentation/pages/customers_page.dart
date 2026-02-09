@@ -31,23 +31,50 @@ class _CustomersPageState extends State<CustomersPage> {
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (_) => sl<CustomerBloc>(), // Ideally create in top-level or ensure existing context is used if provided above
+      create: (context) => sl<CustomerBloc>(),
       child: BlocBuilder<AuthBloc, AuthState>(
         builder: (context, authState) {
           if (authState is AuthAuthenticated) {
             final salesman = authState.salesman;
-            // Trigger load if using new bloc instance provided by BlocProvider above
-            // Best practice: Create bloc with event.
-             return BlocProvider(
-              create: (_) => sl<CustomerBloc>()..add(LoadCustomers(salesman.id)),
-              child: Scaffold(
-                backgroundColor: Colors.grey[50], // Match design background
-                appBar: const HydroFlowAppBar(),
-                body: BlocConsumer<CustomerBloc, CustomerState>(
+            // Use the already created bloc and trigger load
+            context.read<CustomerBloc>().add(LoadCustomers(salesman.id));
+            
+            return Scaffold(
+              backgroundColor: Colors.grey[50], 
+              appBar: const HydroFlowAppBar(),
+              body: BlocConsumer<CustomerBloc, CustomerState>(
                   listener: (context, state) {
-                    if (state.status == CustomerStatus.failure) {
+                    if (state.status == CustomerStatus.submitting) {
+                      _showLoadingDialog(context);
+                    } else if (state.status == CustomerStatus.failure) {
+                      // Dismiss loader if showing
+                      if (ModalRoute.of(context)?.isCurrent == false) {
+                        Navigator.of(context, rootNavigator: true).pop();
+                      }
                       ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text(state.errorMessage ?? 'Error')),
+                        SnackBar(
+                          content: Text(state.errorMessage ?? 'Error'),
+                          backgroundColor: Colors.red,
+                        ),
+                      );
+                    } else if (state.status == CustomerStatus.success && state.successMessage != null) {
+                      // Dismiss loader if showing
+                      if (ModalRoute.of(context)?.isCurrent == false) {
+                        Navigator.of(context, rootNavigator: true).pop();
+                      }
+                      
+                      // Close the Add/Edit dialog if success
+                      // Note: We need to be careful not to pop the main page.
+                      // Usually we are coming from a dialog.
+                      if (Navigator.of(context).canPop()) {
+                        Navigator.of(context).pop();
+                      }
+
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(state.successMessage!),
+                          backgroundColor: Colors.green,
+                        ),
                       );
                     }
                   },
@@ -138,14 +165,13 @@ class _CustomersPageState extends State<CustomersPage> {
                     );
                   },
                 ),
-                bottomNavigationBar: const AppBottomBar(currentIndex: 3), // Index 3 for Customers
-              ),
-            );
-          }
-          return const Scaffold(body: Center(child: CircularProgressIndicator()));
-        },
-      ),
-    );
+                bottomNavigationBar: const AppBottomBar(currentIndex: 3),
+              );
+            }
+            return const Scaffold(body: Center(child: CircularProgressIndicator()));
+          },
+        ),
+      );
   }
 
   Widget _buildStatItem(String value, String label, Color color) {
@@ -337,6 +363,24 @@ class _CustomersPageState extends State<CustomersPage> {
       builder: (context) => _AddCustomerDialog(salesmanId: salesmanId, bloc: pageContext.read<CustomerBloc>()),
     );
   }
+
+  void _showLoadingDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const CircularProgressIndicator(color: Color(0xFF2962FF)),
+            const SizedBox(height: 16),
+            Text('Processing...', 
+              style: GoogleFonts.poppins(fontSize: 14)),
+          ],
+        ),
+      ),
+    );
+  }
 }
 
 class _AddCustomerDialog extends StatefulWidget {
@@ -350,11 +394,12 @@ class _AddCustomerDialog extends StatefulWidget {
 }
 
 class _AddCustomerDialogState extends State<_AddCustomerDialog> {
+  final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
   final _phoneController = TextEditingController();
   final _addressController = TextEditingController();
-  final _depositController = TextEditingController(text: '500'); // Default
-  String _paymentMode = 'Cash';
+  final _depositController = TextEditingController(); // Empty default
+  String? _paymentMode; // Nullable for explicit selection
 
   @override
   void dispose() {
@@ -372,130 +417,229 @@ class _AddCustomerDialogState extends State<_AddCustomerDialog> {
       child: Padding(
         padding: const EdgeInsets.all(20.0),
         child: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start, // Align labels left
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const SizedBox(width: 24), // Spacer for centering
-                  const Text(
-                    'Add New Customer',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
+          child: Form(
+            key: _formKey,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start, // Align labels left
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const SizedBox(width: 24), // Spacer for centering
+                    const Text(
+                      'Add New Customer',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.close, color: Colors.grey),
-                    onPressed: () => Navigator.pop(context),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 20),
-              
-              _buildLabel('Customer Name'),
-              _buildTextField(_nameController, 'Enter name'),
-              const SizedBox(height: 16),
-              
-              _buildLabel('Phone Number'),
-              _buildTextField(_phoneController, '+91 98765 43210', keyboardType: TextInputType.phone),
-              const SizedBox(height: 16),
-              
-              _buildLabel('Address'),
-              _buildTextField(_addressController, 'Enter address'),
-               const SizedBox(height: 16),
-
-              _buildLabel('Security Deposit (₹)'),
-              _buildTextField(_depositController, '500', keyboardType: TextInputType.number),
-               const SizedBox(height: 16),
-
-              _buildLabel('Payment Mode'),
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.symmetric(horizontal: 12),
-                decoration: BoxDecoration(
-                  color: Colors.grey[100],
-                  borderRadius: BorderRadius.circular(8),
+                    IconButton(
+                      icon: const Icon(Icons.close, color: Colors.grey),
+                      onPressed: () => Navigator.pop(context),
+                    ),
+                  ],
                 ),
-                child: DropdownButtonHideUnderline(
-                  child: DropdownButton<String>(
-                    value: _paymentMode,
-                    icon: const Icon(Icons.keyboard_arrow_down),
-                    items: ['Cash', 'Online', 'UPI'].map((String value) {
-                      return DropdownMenuItem<String>(
-                        value: value,
-                        child: Text(value),
-                      );
-                    }).toList(),
-                    onChanged: (newValue) {
-                      setState(() {
-                         _paymentMode = newValue!;
-                      });
-                    },
-                  ),
-                ),
-              ),
-
-              const SizedBox(height: 24),
-              
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: () {
-                    final name = _nameController.text;
-                    final phone = _phoneController.text;
-                    final address = _addressController.text;
-                    final deposit = double.tryParse(_depositController.text) ?? 0.0;
-                    
-                    if (name.isNotEmpty && phone.isNotEmpty) {
-                      widget.bloc.add(AddCustomer(
-                        salesmanId: widget.salesmanId,
-                        name: name,
-                        phone: phone,
-                        address: address,
-                        securityDeposit: deposit,
-                        paymentMode: _paymentMode,
-                      ));
-                      Navigator.pop(context);
+                const SizedBox(height: 20),
+                
+                _buildLabel('Customer Name', isMandatory: true),
+                _buildTextFormField(
+                  _nameController, 
+                  'Enter name',
+                  validator: (value) {
+                    if (value == null || value.trim().isEmpty) {
+                      return 'Please enter customer name';
                     }
+                    return null;
                   },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.grey[700], // Dark grey button from screenshot
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    shape: RoundedRectangleBorder(
+                ),
+                const SizedBox(height: 16),
+                
+                _buildLabel('Phone Number', isMandatory: true),
+                _buildTextFormField(
+                  _phoneController, 
+                  'Enter 10 digit number', 
+                  keyboardType: TextInputType.phone,
+                  validator: (value) {
+                    if (value == null || value.trim().isEmpty) {
+                      return 'Please enter phone number';
+                    }
+                    if (value.trim().length != 10) {
+                      return 'Phone number must be exactly 10 digits';
+                    }
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 16),
+                
+                _buildLabel('Address', isMandatory: true),
+                _buildTextFormField(
+                  _addressController, 
+                  'Enter address',
+                  validator: (value) {
+                    if (value == null || value.trim().isEmpty) {
+                      return 'Please enter address';
+                    }
+                    return null;
+                  },
+                ),
+                 const SizedBox(height: 16),
+  
+                _buildLabel('Security Deposit (₹)', isMandatory: true),
+                _buildTextFormField(
+                  _depositController, 
+                  'Enter deposit amount', 
+                  keyboardType: TextInputType.number,
+                  validator: (value) {
+                    if (value == null || value.trim().isEmpty) {
+                      return 'Please enter security deposit';
+                    }
+                    if (double.tryParse(value) == null) {
+                      return 'Please enter a valid amount';
+                    }
+                    return null;
+                  },
+                ),
+                 const SizedBox(height: 16),
+  
+                _buildLabel('Payment Mode', isMandatory: true),
+                DropdownButtonFormField<String>(
+                  value: _paymentMode,
+                  hint: const Text('Select Payment Mode'),
+                  icon: const Icon(Icons.keyboard_arrow_down),
+                  decoration: InputDecoration(
+                    filled: true,
+                    fillColor: Colors.grey[100],
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                    border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(8),
+                      borderSide: BorderSide(color: Colors.grey.shade300),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: BorderSide(color: Colors.grey.shade300),
                     ),
                   ),
-                  child: const Text('Add Customer'),
+                  items: ['Cash', 'Online', 'UPI'].map((String value) {
+                    return DropdownMenuItem<String>(
+                      value: value,
+                      child: Text(value),
+                    );
+                  }).toList(),
+                  onChanged: (newValue) {
+                    setState(() {
+                       _paymentMode = newValue;
+                    });
+                  },
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Please select payment mode';
+                    }
+                    return null;
+                  },
                 ),
-              ),
-            ],
+  
+                const SizedBox(height: 24),
+                
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: () {
+                      if (_formKey.currentState!.validate()) {
+                        final name = _nameController.text.trim();
+                        final phone = _phoneController.text.trim();
+                        final address = _addressController.text.trim();
+                        final deposit = double.parse(_depositController.text.trim());
+                        
+                        // Show Confirmation Dialog
+                        showDialog(
+                          context: context,
+                          builder: (confirmContext) => AlertDialog(
+                            title: const Text('Confirm Addition'),
+                            content: Text('Are you sure you want to add "$name" as a new customer?'),
+                            actions: [
+                              TextButton(
+                                onPressed: () => Navigator.pop(confirmContext),
+                                child: const Text('Cancel'),
+                              ),
+                              ElevatedButton(
+                                onPressed: () {
+                                  Navigator.pop(confirmContext); // Close confirmation
+                                  widget.bloc.add(AddCustomer(
+                                    salesmanId: widget.salesmanId,
+                                    name: name,
+                                    phone: phone,
+                                    address: address,
+                                    securityDeposit: deposit,
+                                    paymentMode: _paymentMode!,
+                                  ));
+                                  // Navigator.pop(context); // REMOVED: Handled by listener on success
+                                },
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: const Color(0xFF0D1117),
+                                  foregroundColor: Colors.white,
+                                ),
+                                child: const Text('Confirm'),
+                              ),
+                            ],
+                          ),
+                        );
+                      }
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.grey[700], // Dark grey button from screenshot
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                    child: const Text('Add Customer'),
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
     );
   }
 
-  Widget _buildLabel(String text) {
+  Widget _buildLabel(String text, {bool isMandatory = false}) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 8.0),
-      child: Text(
-        text,
-        style: const TextStyle(
-          fontWeight: FontWeight.w600,
-          fontSize: 14,
+      child: RichText(
+        text: TextSpan(
+          text: text,
+          style: const TextStyle(
+            fontWeight: FontWeight.w600,
+            fontSize: 14,
+            color: Colors.black, // Form labels usually black
+          ),
+          children: [
+            if (isMandatory)
+              const TextSpan(
+                text: ' *',
+                style: TextStyle(color: Colors.red),
+              ),
+          ],
         ),
       ),
     );
   }
 
-  Widget _buildTextField(TextEditingController controller, String hint, {TextInputType keyboardType = TextInputType.text}) {
-    return TextField(
+  Widget _buildTextFormField(
+    TextEditingController controller, 
+    String hint, 
+    {
+      TextInputType keyboardType = TextInputType.text,
+      String? Function(String?)? validator,
+    }
+  ) {
+    return TextFormField(
       controller: controller,
       keyboardType: keyboardType,
+      validator: validator,
       decoration: InputDecoration(
         hintText: hint,
         filled: true,
@@ -507,6 +651,14 @@ class _AddCustomerDialogState extends State<_AddCustomerDialog> {
         enabledBorder: OutlineInputBorder(
            borderRadius: BorderRadius.circular(8),
            borderSide: BorderSide(color: Colors.grey.shade300),
+        ),
+        errorBorder: OutlineInputBorder(
+           borderRadius: BorderRadius.circular(8),
+           borderSide: const BorderSide(color: Colors.red),
+        ),
+        focusedErrorBorder: OutlineInputBorder(
+           borderRadius: BorderRadius.circular(8),
+           borderSide: const BorderSide(color: Colors.red, width: 2),
         ),
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       ),

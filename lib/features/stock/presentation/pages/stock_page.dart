@@ -351,8 +351,31 @@ class _StockPageState extends State<StockPage> {
                                           builder: (context) {
                                             return ElevatedButton(
                                               onPressed: () {
-                                                final qty = int.tryParse(_loadStockController.text) ?? 0;
-                                                context.read<StockBloc>().add(StockLoadRequested(salesmanId: salesman.id, quantity: qty));
+                                                final qtyText = _loadStockController.text;
+                                                final qty = int.tryParse(qtyText) ?? 0;
+                                                if (qty <= 0) return;
+
+                                                showDialog(
+                                                  context: context,
+                                                  builder: (dialogContext) => AlertDialog(
+                                                    title: const Text('Confirm Refill'),
+                                                    content: Text('Are you sure you want to add $qty cans to your stock?'),
+                                                    actions: [
+                                                      TextButton(
+                                                        onPressed: () => Navigator.pop(dialogContext),
+                                                        child: const Text('Cancel'),
+                                                      ),
+                                                      ElevatedButton(
+                                                        onPressed: () {
+                                                          context.read<StockBloc>().add(StockLoadRequested(salesmanId: salesman.id, quantity: qty));
+                                                          Navigator.pop(dialogContext);
+                                                        },
+                                                        style: ElevatedButton.styleFrom(backgroundColor: Colors.black),
+                                                        child: const Text('Confirm', style: TextStyle(color: Colors.white)),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                );
                                               },
                                               style: ElevatedButton.styleFrom(
                                                 backgroundColor: const Color(0xFF0D1117),
@@ -362,7 +385,7 @@ class _StockPageState extends State<StockPage> {
                                                   borderRadius: BorderRadius.circular(8),
                                                 ),
                                               ),
-                                              child: Text('Refill Cans'),
+                                              child: const Text('Refill Cans'),
                                             );
                                           }
                                         ),
@@ -438,6 +461,7 @@ class _StockPageState extends State<StockPage> {
                             ),
                             const SizedBox(height: 8),
                             TextFormField(
+                               autofocus: false,
                               controller: _damagedStockController,
                               keyboardType: TextInputType.number,
                               decoration: InputDecoration(
@@ -457,8 +481,31 @@ class _StockPageState extends State<StockPage> {
                                 builder: (context) {
                                   return ElevatedButton.icon(
                                     onPressed: () {
-                                      final qty = int.tryParse(_damagedStockController.text) ?? 0;
-                                      context.read<StockBloc>().add(StockDamagedReported(salesmanId: salesman.id, quantity: qty));
+                                      final qtyText = _damagedStockController.text;
+                                      final qty = int.tryParse(qtyText) ?? 0;
+                                      if (qty <= 0) return;
+
+                                      showDialog(
+                                        context: context,
+                                        builder: (dialogContext) => AlertDialog(
+                                          title: const Text('Confirm Removal'),
+                                          content: Text('Are you sure you want to remove $qty cans from your stock (Damaged/Return)?'),
+                                          actions: [
+                                            TextButton(
+                                              onPressed: () => Navigator.pop(dialogContext),
+                                              child: const Text('Cancel'),
+                                            ),
+                                            ElevatedButton(
+                                              onPressed: () {
+                                                context.read<StockBloc>().add(StockDamagedReported(salesmanId: salesman.id, quantity: qty));
+                                                Navigator.pop(dialogContext);
+                                              },
+                                              style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+                                              child: const Text('Confirm', style: TextStyle(color: Colors.white)),
+                                            ),
+                                          ],
+                                        ),
+                                      );
                                     },
                                     icon: const Icon(Icons.remove),
                                     label: const Text('Remove from Stock'),
