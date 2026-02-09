@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:firebase_database/firebase_database.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:hydroflow/features/auth/domain/repositories/auth_repository.dart';
 import 'package:hydroflow/features/auth/domain/entities/salesman.dart';
@@ -96,5 +97,55 @@ class AuthRepositoryImpl implements AuthRepository {
   Future<void> signOut() async {
     await _prefs.remove(_userKey);
     _authStateController.add(null);
+  }
+
+  @override
+  Future<Map<String, dynamic>?> checkVersionUpdate() async {
+    try {
+      final info = await PackageInfo.fromPlatform();
+      final currentVersion = info.version;
+      print('FORCE_UPDATE_DEBUG: Current App Version: $currentVersion');
+      
+      final snapshot = await _database.ref().child('app_config').child('force_update').get();
+      if (snapshot.exists) {
+        final data = Map<String, dynamic>.from(snapshot.value as Map);
+        print('FORCE_UPDATE_DEBUG: Firebase Data: $data');
+        
+        final minVersion = data['min_version']?.toString() ?? '1.0.0';
+        final updateUrl = data['update_url']?.toString() ?? '';
+        
+        print('FORCE_UPDATE_DEBUG: Min Version Required: $minVersion');
+        final isLower = _isVersionLower(currentVersion, minVersion);
+        print('FORCE_UPDATE_DEBUG: Is Current Lower? $isLower');
+
+        if (isLower) {
+           return {
+             'update_required': true, 
+             'update_url': updateUrl,
+             'current_version': currentVersion,
+             'min_version': minVersion,
+           };
+        }
+      } else {
+        print('FORCE_UPDATE_DEBUG: No force_update config found in Firebase at app_config/force_update');
+      }
+    } catch (e) {
+      print('FORCE_UPDATE_DEBUG: Error during version check: $e');
+    }
+    return null;
+  }
+
+  bool _isVersionLower(String current, String target) {
+    final currentParts = current.split('.').map(int.parse).toList();
+    final targetParts = target.split('.').map(int.parse).toList();
+    
+    for (int i = 0; i < 3; i++) {
+      final currentVal = i < currentParts.length ? currentParts[i] : 0;
+      final targetVal = i < targetParts.length ? targetParts[i] : 0;
+      
+      if (currentVal < targetVal) return true;
+      if (currentVal > targetVal) return false;
+    }
+    return false;
   }
 }

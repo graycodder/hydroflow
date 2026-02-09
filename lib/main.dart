@@ -69,6 +69,8 @@ class HydroFlowApp extends StatelessWidget {
             router.go('/lock', extra: state.salesman);
           } else if (state is AuthUnauthenticated) {
              router.go('/login');
+          } else if (state is AuthUpdateRequired) {
+             router.go('/update');
           }
         },
         child: MaterialApp.router(

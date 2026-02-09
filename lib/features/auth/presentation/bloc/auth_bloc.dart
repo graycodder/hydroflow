@@ -20,6 +20,13 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   }
 
   Future<void> _onAppStarted(AppStarted event, Emitter<AuthState> emit) async {
+    // 1. Check for mandatory updates
+    final updateInfo = await _authRepository.checkVersionUpdate();
+    if (updateInfo != null && updateInfo['update_required'] == true) {
+      emit(AuthUpdateRequired(updateInfo['update_url'] as String));
+      return; // Stop further initialization
+    }
+
     _authSubscription?.cancel();
     _authSubscription = _authRepository.onAuthStateChanged.listen((uid) {
       if (uid != null) {

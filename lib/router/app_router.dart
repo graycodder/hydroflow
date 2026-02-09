@@ -14,6 +14,7 @@ import 'package:hydroflow/features/splash/presentation/pages/splash_page.dart';
 import 'package:hydroflow/features/notifications/presentation/pages/notifications_page.dart';
 import 'package:hydroflow/features/profile/presentation/pages/subscription_lock_page.dart';
 import 'package:hydroflow/features/profile/presentation/pages/profile_page.dart';
+import 'package:hydroflow/features/auth/presentation/pages/force_update_page.dart';
 import 'package:hydroflow/features/auth/domain/entities/salesman.dart';
 
 final router = GoRouter(
@@ -23,9 +24,15 @@ final router = GoRouter(
     final bool loggingIn = state.matchedLocation == '/login';
     final bool locking = state.matchedLocation == '/lock';
     final bool splashing = state.matchedLocation == '/splash';
+    final bool updating = state.matchedLocation == '/update';
+
+    if (authState is AuthUpdateRequired) {
+      if (updating) return null;
+      return '/update';
+    }
 
     if (authState is AuthUnauthenticated) {
-      if (loggingIn || splashing) return null;
+      if (loggingIn || splashing || updating) return null;
       return '/login';
     }
 
@@ -35,7 +42,7 @@ final router = GoRouter(
     }
 
     if (authState is AuthAuthenticated) {
-      if (loggingIn || locking || splashing) return '/home';
+      if (loggingIn || locking || splashing || updating) return '/home';
     }
 
     return null;
@@ -44,6 +51,16 @@ final router = GoRouter(
     GoRoute(
       path: '/splash',
       builder: (context, state) => const SplashPage(),
+    ),
+    GoRoute(
+      path: '/update',
+      builder: (context, state) {
+        final authState = context.read<AuthBloc>().state;
+        if (authState is AuthUpdateRequired) {
+          return ForceUpdatePage(updateUrl: authState.updateUrl);
+        }
+        return const Scaffold(body: Center(child: CircularProgressIndicator()));
+      },
     ),
     GoRoute(path: '/login', builder: (context, state) => const LoginPage()),
     GoRoute(
