@@ -11,6 +11,7 @@ class Customer extends Equatable {
   final double pendingBalance;
   final int bottleBalance;
   final bool isRefunded;
+  final String paymentMode;
 
   const Customer({
     required this.id,
@@ -23,6 +24,7 @@ class Customer extends Equatable {
     this.pendingBalance = 0.0,
     this.bottleBalance = 0,
     this.isRefunded = false,
+    this.paymentMode = 'Cash',
   });
 
   @override
@@ -37,5 +39,6 @@ class Customer extends Equatable {
     pendingBalance,
     bottleBalance,
     isRefunded,
+    paymentMode,
   ];
 }

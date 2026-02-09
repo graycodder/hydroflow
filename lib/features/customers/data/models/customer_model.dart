@@ -12,6 +12,7 @@ class CustomerModel extends Customer {
     super.pendingBalance = 0.0,
     super.bottleBalance = 0,
     super.isRefunded = false,
+    super.paymentMode = 'Cash',
   });
 
   factory CustomerModel.fromMap(Map<String, dynamic> data) {
@@ -26,6 +27,7 @@ class CustomerModel extends Customer {
       pendingBalance: (data['pendingBalance'] as num?)?.toDouble() ?? 0.0,
       bottleBalance: (data['bottleBalance'] as num?)?.toInt() ?? 0,
       isRefunded: data['isRefunded'] as bool? ?? false,
+      paymentMode: data['paymentMode'] as String? ?? 'Cash',
     );
   }
 
@@ -40,6 +42,7 @@ class CustomerModel extends Customer {
       'pendingBalance': pendingBalance,
       'bottleBalance': bottleBalance,
       'isRefunded': isRefunded,
+      'paymentMode': paymentMode,
     };
   }
 }

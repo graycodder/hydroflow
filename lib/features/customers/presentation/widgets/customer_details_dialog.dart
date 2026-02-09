@@ -326,15 +326,40 @@ class _CustomerDetailsDialogState extends State<CustomerDetailsDialog> {
                               ),
                             );
                          } else {
-                           // User is turning it ON (Active) -> Normal update
-                           setState(() {
-                             isActive = val;
-                           });
-                           widget.customerBloc.add(UpdateCustomerStatus(
-                             widget.customer.id, 
-                             'Active',
-                             widget.customer.salesmanId
-                           ));
+                           // User is turning it ON (Active) -> Show Confirmation
+                           showDialog(
+                             context: context,
+                             builder: (context) => AlertDialog(
+                               title: const Text('Reactivate Customer?'),
+                               content: const Text('Are you sure you want to change this customer status back to Active?'),
+                               actions: [
+                                 TextButton(
+                                   onPressed: () {
+                                     setState(() {
+                                       isActive = false;
+                                     });
+                                     Navigator.pop(context);
+                                   },
+                                   child: const Text('Cancel'),
+                                 ),
+                                 ElevatedButton(
+                                   onPressed: () {
+                                     setState(() {
+                                       isActive = true;
+                                     });
+                                     widget.customerBloc.add(UpdateCustomerStatus(
+                                       widget.customer.id, 
+                                       'Active',
+                                       widget.customer.salesmanId
+                                     ));
+                                     Navigator.pop(context);
+                                   },
+                                   style: ElevatedButton.styleFrom(backgroundColor: Colors.black),
+                                   child: const Text('Confirm', style: TextStyle(color: Colors.white)),
+                                 ),
+                               ],
+                             ),
+                           );
                          }
                        },
                      ),
@@ -345,31 +370,32 @@ class _CustomerDetailsDialogState extends State<CustomerDetailsDialog> {
               const SizedBox(height: 24),
               
               // Edit Button
-              SizedBox(
-                width: double.infinity,
-                child: OutlinedButton.icon(
-                  onPressed: () {
-                    Navigator.pop(context);
-                    showDialog(
-                      context: context,
-                      builder: (context) => EditCustomerDialog(
-                        customer: widget.customer,
-                        customerBloc: widget.customerBloc,
+              if (isActive)
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton.icon(
+                    onPressed: () {
+                      Navigator.pop(context);
+                      showDialog(
+                        context: context,
+                        builder: (context) => EditCustomerDialog(
+                          customer: widget.customer,
+                          customerBloc: widget.customerBloc,
+                        ),
+                      );
+                    },
+                    icon: const Icon(Icons.edit_outlined, size: 20),
+                    label: const Text('Edit Customer'),
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      side: BorderSide(color: Colors.grey.shade300),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
                       ),
-                    );
-                  },
-                  icon: const Icon(Icons.edit_outlined, size: 20),
-                  label: const Text('Edit Customer'),
-                  style: OutlinedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    side: BorderSide(color: Colors.grey.shade300),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
+                      foregroundColor: Colors.black,
                     ),
-                    foregroundColor: Colors.black,
                   ),
                 ),
-              ),
             ],
           ),
         ),

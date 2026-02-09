@@ -40,6 +40,7 @@ class CustomerRepositoryImpl implements CustomerRepository {
         pendingBalance: customer.pendingBalance,
         bottleBalance: customer.bottleBalance,
         isRefunded: customer.isRefunded,
+        paymentMode: customer.paymentMode,
       );
       
       await ref.set(customerModel.toMap());
@@ -62,7 +63,7 @@ class CustomerRepositoryImpl implements CustomerRepository {
           'type': 'Deposit',
           'amount': customer.securityDeposit,
           'amountReceived': customer.securityDeposit,
-          'paymentMode': 'Cash', // Default for initial deposit
+          'paymentMode': customer.paymentMode, // Use selected payment mode
           'cansDelivered': 0,
           'emptyCollected': 0,
           'whatsappReceiptSent': false,
@@ -124,6 +125,7 @@ class CustomerRepositoryImpl implements CustomerRepository {
         pendingBalance: customer.pendingBalance,
         bottleBalance: customer.bottleBalance,
         isRefunded: customer.isRefunded,
+        paymentMode: customer.paymentMode,
       );
       await ref.update(customerModel.toMap());
       
@@ -147,7 +149,7 @@ class CustomerRepositoryImpl implements CustomerRepository {
             'type': 'Deposit',
             'amount': depositDiff,
             'amountReceived': depositDiff,
-            'paymentMode': 'Cash', 
+            'paymentMode': customer.paymentMode, 
             'cansDelivered': 0,
             'emptyCollected': 0,
             'whatsappReceiptSent': false,
@@ -163,7 +165,7 @@ class CustomerRepositoryImpl implements CustomerRepository {
             'type': 'Refund',
             'amount': refundAmt,
             'amountReceived': refundAmt,
-            'paymentMode': 'Cash', 
+            'paymentMode': customer.paymentMode, 
             'cansDelivered': 0,
             'emptyCollected': 0,
             'whatsappReceiptSent': false,

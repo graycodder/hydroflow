@@ -24,7 +24,7 @@ class _EditCustomerDialogState extends State<EditCustomerDialog> {
   late TextEditingController _depositController;
   //late TextEditingController _balanceController;
   //late TextEditingController _bottleBalanceController;
-  //late String _paymentMode;
+  late String _paymentMode;
 
   @override
   void initState() {
@@ -35,7 +35,7 @@ class _EditCustomerDialogState extends State<EditCustomerDialog> {
     _depositController = TextEditingController(text: widget.customer.securityDeposit.toStringAsFixed(0));
     //_balanceController = TextEditingController(text: widget.customer.pendingBalance.toStringAsFixed(0));
     //_bottleBalanceController = TextEditingController(text: widget.customer.bottleBalance.toString());
-    //_paymentMode = 'Cash'; // Default or from entity if available
+    _paymentMode = widget.customer.paymentMode; // Use from entity
   }
 
   @override
@@ -100,33 +100,33 @@ class _EditCustomerDialogState extends State<EditCustomerDialog> {
               _buildLabel('Security Deposit (₹)'),
               _buildTextField(_depositController, '500', keyboardType: TextInputType.number),
               const SizedBox(height: 16),
-            //_buildLabel('Payment Mode'),
-            //Container(
-            //  width: double.infinity,
-            //  padding: const EdgeInsets.symmetric(horizontal: 12),
-            //  decoration: BoxDecoration(
-            //    color: Colors.grey[50],
-            //    borderRadius: BorderRadius.circular(8),
-            //    border: Border.all(color: Colors.grey.shade200),
-            //  ),
-            //  child: DropdownButtonHideUnderline(
-            //    child: DropdownButton<String>(
-            //      value: _paymentMode,
-            //      icon: const Icon(Icons.keyboard_arrow_down, color: Colors.grey),
-            //      items: ['Cash', 'Online', 'UPI'].map((String value) {
-            //        return DropdownMenuItem<String>(
-            //          value: value,
-            //          child: Text(value),
-            //        );
-            //      }).toList(),
-            //      onChanged: (newValue) {
-            //        setState(() {
-            //          _paymentMode = newValue!;
-            //        });
-            //      },
-            //    ),
-            //  ),
-            //),
+            _buildLabel('Payment Mode'),
+            Container(
+             width: double.infinity,
+             padding: const EdgeInsets.symmetric(horizontal: 12),
+             decoration: BoxDecoration(
+               color: Colors.grey[50],
+               borderRadius: BorderRadius.circular(8),
+               border: Border.all(color: Colors.grey.shade200),
+             ),
+             child: DropdownButtonHideUnderline(
+               child: DropdownButton<String>(
+                 value: _paymentMode,
+                 icon: const Icon(Icons.keyboard_arrow_down, color: Colors.grey),
+                 items: ['Cash', 'Online', 'UPI'].map((String value) {
+                   return DropdownMenuItem<String>(
+                     value: value,
+                     child: Text(value),
+                   );
+                 }).toList(),
+                 onChanged: (newValue) {
+                   setState(() {
+                     _paymentMode = newValue!;
+                   });
+                 },
+               ),
+             ),
+            ),
              // const SizedBox(height: 16),
              // _buildLabel('Pending Balance (₹)'),
              // _buildTextField(_balanceController, '100', keyboardType: TextInputType.number),
@@ -150,6 +150,7 @@ class _EditCustomerDialogState extends State<EditCustomerDialog> {
                           pendingBalance: widget.customer.pendingBalance,
                           bottleBalance: widget.customer.bottleBalance,
                           isRefunded: widget.customer.isRefunded,
+                          paymentMode: _paymentMode,
                         );
                         widget.customerBloc.add(UpdateCustomer(updatedCustomer));
                         Navigator.pop(context);

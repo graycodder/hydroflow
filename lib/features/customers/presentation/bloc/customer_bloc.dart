@@ -82,6 +82,7 @@ class CustomerBloc extends Bloc<CustomerEvent, CustomerState> {
         address: event.address,
         status: 'Active',
         securityDeposit: event.securityDeposit,
+        paymentMode: event.paymentMode,
       );
 
       await addCustomer(newCustomer);

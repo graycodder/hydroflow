@@ -456,6 +456,7 @@ class _AddCustomerDialogState extends State<_AddCustomerDialog> {
                         phone: phone,
                         address: address,
                         securityDeposit: deposit,
+                        paymentMode: _paymentMode,
                       ));
                       Navigator.pop(context);
                     }
