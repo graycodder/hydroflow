@@ -77,8 +77,10 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   ) async {
     if (event.salesman != null && event.salesman is Salesman) {
       final salesman = event.salesman as Salesman;
-      if (salesman.subscriptionExpiry != null && 
-          salesman.subscriptionExpiry!.isBefore(DateTime.now())) {
+      final bool isExpired = salesman.subscriptionExpiry != null && 
+          salesman.subscriptionExpiry!.isBefore(DateTime.now());
+      
+      if (!salesman.isActive || isExpired) {
         emit(AuthSubscriptionExpired(salesman));
       } else {
         emit(AuthAuthenticated(salesman));

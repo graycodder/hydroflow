@@ -34,7 +34,12 @@ class SubscriptionLockPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final bool isDeactivated = !salesman.isActive;
+    
     final expiryDate = salesman.subscriptionExpiry;
+    final bool isExpired = expiryDate != null && 
+        DateTime.now().isAfter(expiryDate);
+
     final formattedDate = expiryDate != null 
         ? DateFormat('d MMMM yyyy').format(expiryDate) 
         : 'Unknown';
@@ -102,19 +107,21 @@ class SubscriptionLockPage extends StatelessWidget {
                         ),
                         child: Column(
                           children: [
-                            const Text(
-                              'Subscription Expired',
-                              style: TextStyle(
+                            Text(
+                              isDeactivated ? 'Account Deactivated' : 'Subscription Expired',
+                              style: const TextStyle(
                                 fontSize: 24,
                                 fontWeight: FontWeight.bold,
                                 color: Color(0xFF8E0000),
                               ),
                             ),
                             const SizedBox(height: 12),
-                            const Text(
-                              'Your HydroFlow Pro access has been suspended',
+                            Text(
+                              isDeactivated 
+                                  ? 'Your access has been disabled by the administrator'
+                                  : 'Your HydroFlow Pro access has been suspended',
                               textAlign: TextAlign.center,
-                              style: TextStyle(
+                              style: const TextStyle(
                                 fontSize: 14,
                                 color: Color(0xFFD32F2F),
                                 height: 1.5,
@@ -154,7 +161,7 @@ class SubscriptionLockPage extends StatelessWidget {
                             ),
                             const SizedBox(height: 16),
                             
-                            // Expiry Info
+                            // Expiry/Status Info
                             Container(
                               width: double.infinity,
                               padding: const EdgeInsets.all(16),
@@ -165,14 +172,17 @@ class SubscriptionLockPage extends StatelessWidget {
                               ),
                               child: Row(
                                 children: [
-                                  const Icon(Icons.calendar_today_outlined, color: Color(0xFFD32F2F)),
+                                  Icon(
+                                    isDeactivated ? Icons.person_off_outlined : Icons.calendar_today_outlined, 
+                                    color: const Color(0xFFD32F2F)
+                                  ),
                                   const SizedBox(width: 16),
                                   Expanded(
                                     child: Column(
                                       crossAxisAlignment: CrossAxisAlignment.start,
                                       children: [
                                         Text(
-                                          'Expired On',
+                                          isDeactivated ? 'Account Status' : 'Expired On',
                                           style: TextStyle(
                                             fontSize: 12,
                                             color: Colors.red[900],
@@ -180,14 +190,14 @@ class SubscriptionLockPage extends StatelessWidget {
                                         ),
                                         const SizedBox(height: 2),
                                         Text(
-                                          formattedDate,
+                                          isDeactivated ? 'INACTIVE' : formattedDate,
                                           style: const TextStyle(
                                             fontSize: 16,
                                             fontWeight: FontWeight.bold,
                                             color: Color(0xFFB71C1C),
                                           ),
                                         ),
-                                        if (daysAgo > 0)
+                                        if (!isDeactivated && daysAgo > 0)
                                           Text(
                                             '$daysAgo days ago',
                                             style: TextStyle(
@@ -231,7 +241,9 @@ class SubscriptionLockPage extends StatelessWidget {
                                         ),
                                         const SizedBox(height: 4),
                                         Text(
-                                          'Please contact your administrator to renew your subscription and regain access to the application.',
+                                          isDeactivated 
+                                              ? 'Please contact your administrator to reactivate your account and regain access.'
+                                              : 'Please contact your administrator to renew your subscription and regain access to the application.',
                                           style: TextStyle(
                                             color: Colors.orange[800],
                                             fontSize: 12,
@@ -250,7 +262,7 @@ class SubscriptionLockPage extends StatelessWidget {
                             const SizedBox(height: 16),
                             
                             Text(
-                              'Contact Administrator to Renew',
+                              isDeactivated ? 'Contact Administrator to Reactivate' : 'Contact Administrator to Renew',
                               style: TextStyle(
                                 fontSize: 14,
                                 color: Colors.grey[600],
@@ -265,7 +277,7 @@ class SubscriptionLockPage extends StatelessWidget {
                               child: ElevatedButton.icon(
                                 onPressed: () => _makePhoneCall('+919876500000'), // Replace with actual admin number
                                 icon: const Icon(Icons.phone),
-                                label: const Text('Call Admin: +91 98765 00000'),
+                                label: Text(isDeactivated ? 'Request Activation' : 'Call Admin: +91 98765 00000'),
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: const Color(0xFF030303),
                                   foregroundColor: Colors.white,
