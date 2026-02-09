@@ -266,7 +266,7 @@ class _StockPageState extends State<StockPage> {
                       // Load Stock Section
                       BlocBuilder<StockBloc, StockState>(
                         builder: (context, state) {
-                          final hasLog = state.todayLog != null;
+                          // final hasLog = state.todayLog != null;
                           return AnimatedCrossFade(
                             firstChild: SizedBox(
                               width: double.infinity,
@@ -309,7 +309,7 @@ class _StockPageState extends State<StockPage> {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
-                                    hasLog ? 'Refill Stock' : 'Morning Load',
+                                   'Refill Stock',
                                     style: const TextStyle(
                                       fontSize: 18,
                                       fontWeight: FontWeight.bold,
@@ -317,7 +317,7 @@ class _StockPageState extends State<StockPage> {
                                   ),
                                   const SizedBox(height: 4),
                                   Text(
-                                    hasLog ? 'Add extra cans to your inventory' : 'Start your day by loading initial stock',
+                                    'Add extra cans to your inventory',
                                     style: TextStyle(
                                       fontSize: 14,
                                       color: Colors.grey[600],
@@ -362,7 +362,7 @@ class _StockPageState extends State<StockPage> {
                                                   borderRadius: BorderRadius.circular(8),
                                                 ),
                                               ),
-                                              child: Text(hasLog ? 'Refill Cans' : 'Confirm Morning Load'),
+                                              child: Text('Refill Cans'),
                                             );
                                           }
                                         ),

@@ -187,6 +187,11 @@ class TransactionRepositoryImpl implements TransactionRepository {
 
       // C. Update Salesman Inventory
       final salesmanRef = _database.ref().child('Salesmen/${transaction.salesmanId}');
+      
+      // Fetch current stock BEFORE updating it to use for log initialization if needed
+      final salesmanSnapshot = await salesmanRef.child('currentStock').get();
+      final currentStockInVanBeforeTx = (salesmanSnapshot.value as num?)?.toInt() ?? 0;
+
       await salesmanRef.runTransaction((Object? post) {
         if (post == null) {
            return Transaction.abort();
@@ -195,10 +200,7 @@ class TransactionRepositoryImpl implements TransactionRepository {
         
         // Decrease Full Cans (currentStock)
         int currentStock = (salesmanMap['currentStock'] as num?)?.toInt() ?? 0;
-        salesmanMap['currentStock'] = currentStock - transaction.cansDelivered;
-        
-        // We could also track "Empty Bottles Held" by salesman if we want, but schema check required.
-        // Salesman entity has `currentStock` (ints). Simple decrement.
+        salesmanMap.update('currentStock', (value) => (value as num).toInt() - transaction.cansDelivered, ifAbsent: () => 0);
         
         return Transaction.success(salesmanMap);
       });
@@ -208,22 +210,33 @@ class TransactionRepositoryImpl implements TransactionRepository {
       final dateKey = dateFormatted.replaceAll('-', '_');
       final logRef = _database.ref().child('Stock_logs').child('LOG_${dateKey}_${transaction.salesmanId}');
       
-      await logRef.update({
-        'salesmanId': transaction.salesmanId,
-        'date': dateFormatted,
-      });
-
       await logRef.runTransaction((Object? post) {
         final logMap = post == null 
             ? <String, dynamic>{} 
             : Map<String, dynamic>.from(post as Map);
         
+        final isNewLog = !logMap.containsKey('date');
+        if (isNewLog) {
+           logMap['salesmanId'] = transaction.salesmanId;
+           logMap['date'] = dateFormatted;
+           logMap['openingStock'] = currentStockInVanBeforeTx;
+           logMap['loaded'] = 0;
+           logMap['damaged'] = 0;
+           logMap['actualClosingStock'] = 0;
+           logMap['mismatchCount'] = 0;
+           logMap['isReconciled'] = false;
+        }
+
         final currentDelivered = (logMap['totalDelivered'] as num?)?.toInt() ?? 0;
         final currentEmpty = (logMap['totalEmptyCollected'] as num?)?.toInt() ?? 0;
         final currentCash = (logMap['cashCollected'] as num?)?.toDouble() ?? 0.0;
         final currentOnline = (logMap['onlineCollected'] as num?)?.toDouble() ?? 0.0;
+        final opening = (logMap['openingStock'] as num?)?.toInt() ?? 0;
+        final loaded = (logMap['loaded'] as num?)?.toInt() ?? 0;
+        final damaged = (logMap['damaged'] as num?)?.toInt() ?? 0;
 
-        logMap['totalDelivered'] = currentDelivered + transaction.cansDelivered;
+        final newDelivered = currentDelivered + transaction.cansDelivered;
+        logMap['totalDelivered'] = newDelivered;
         logMap['totalEmptyCollected'] = currentEmpty + transaction.emptyCollected;
         
         if (transaction.paymentMode == 'Cash') {
@@ -231,6 +244,8 @@ class TransactionRepositoryImpl implements TransactionRepository {
         } else if (transaction.paymentMode == 'Online' || transaction.paymentMode == 'UPI') {
           logMap['onlineCollected'] = currentOnline + transaction.amountReceived;
         }
+
+        logMap['closingStock'] = opening + loaded - newDelivered - damaged;
 
         return Transaction.success(logMap);
       });

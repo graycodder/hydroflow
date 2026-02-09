@@ -44,14 +44,15 @@ class InventoryRepositoryImpl implements InventoryRepository {
          logMap['salesmanId'] = salesmanId;
          logMap['date'] = DateTime.now().toIso8601String().substring(0, 10);
          
-         // First load of the day: openingStock = currentStockInVan + quantity
-         // This handles the user request: if currentStock is 0, openingStock = quantity
-         logMap['openingStock'] = currentStockInVan + quantity;
-         logMap['loaded'] = 0;
+         // Opening stock is what was already in the van
+         logMap['openingStock'] = currentStockInVan;
+         // The new quantity is "loaded"
+         logMap['loaded'] = quantity;
          
          logMap['totalDelivered'] = 0;
          logMap['totalEmptyCollected'] = 0;
          logMap['damaged'] = 0;
+         // Closing stock = carry forward + newly loaded
          logMap['closingStock'] = currentStockInVan + quantity;
          logMap['actualClosingStock'] = 0;
          logMap['mismatchCount'] = 0;
@@ -102,14 +103,44 @@ class InventoryRepositoryImpl implements InventoryRepository {
       return Transaction.success(currentStock - quantity);
     });
 
+    // Get current stock for carry forward calculation
+    final salesmanSnapshot = await _database.ref().child('Salesmen').child(salesmanId).child('currentStock').get();
+    final currentStockInVan = (salesmanSnapshot.value as num?)?.toInt() ?? 0;
+
     // Upload damaged log
     final dateKey = DateTime.now().toIso8601String().substring(0, 10).replaceAll('-', '_');
     final logRef = _database.ref().child('Stock_logs').child('LOG_${dateKey}_$salesmanId');
     
     // Increment damaged count transactionally
-    await logRef.child('damaged').runTransaction((Object? currentData) {
-       final currentDamaged = (currentData as num?)?.toInt() ?? 0;
-       return Transaction.success(currentDamaged + quantity);
+    await logRef.runTransaction((Object? post) {
+       final logMap = post == null 
+           ? <String, dynamic>{} 
+           : Map<String, dynamic>.from(post as Map);
+
+       if (!logMap.containsKey('date')) {
+          logMap['salesmanId'] = salesmanId;
+          logMap['date'] = DateTime.now().toIso8601String().substring(0, 10);
+          logMap['openingStock'] = (currentStockInVan); // Use captured van stock
+          logMap['loaded'] = 0;
+          logMap['totalDelivered'] = 0;
+          logMap['totalEmptyCollected'] = 0;
+          logMap['damaged'] = quantity;
+          logMap['closingStock'] = currentStockInVan - quantity; 
+          logMap['actualClosingStock'] = 0;
+          logMap['mismatchCount'] = 0;
+          logMap['isReconciled'] = false;
+          logMap['cashCollected'] = 0.0;
+          logMap['onlineCollected'] = 0.0;
+       } else {
+          final currentDamaged = (logMap['damaged'] as num?)?.toInt() ?? 0;
+          logMap['damaged'] = currentDamaged + quantity;
+          
+          final opening = (logMap['openingStock'] as num?)?.toInt() ?? 0;
+          final loaded = (logMap['loaded'] as num?)?.toInt() ?? 0;
+          final delivered = (logMap['totalDelivered'] as num?)?.toInt() ?? 0;
+          logMap['closingStock'] = opening + loaded - delivered - (currentDamaged + quantity);
+       }
+       return Transaction.success(logMap);
     });
   }
 
