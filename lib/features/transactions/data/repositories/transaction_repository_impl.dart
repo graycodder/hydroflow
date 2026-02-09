@@ -257,30 +257,60 @@ class TransactionRepositoryImpl implements TransactionRepository {
 
   @override
   Stream<List<TransactionEntity>> getTodayTransactions(String salesmanId) {
+    return getTransactionsByDate(salesmanId, DateTime.now());
+  }
+
+  @override
+  Stream<List<TransactionEntity>> getTransactionsByDate(String salesmanId, DateTime date) {
     final ref = _database.ref().child('Transactions');
-    // We want transactions for THIS salesman.
-    // We also want "Today".
-    // RTDB filtering is limited. We usage onValue to listen to all updates for this salesman.
     
     return ref.orderByChild('salesmanId').equalTo(salesmanId).onValue.map((event) {
       if (event.snapshot.exists) {
         final data = event.snapshot.value as Map<dynamic, dynamic>;
         final List<TransactionEntity> transactions = [];
         
-        final now = DateTime.now();
-        final startOfDay = DateTime(now.year, now.month, now.day);
+        final startOfDay = DateTime(date.year, date.month, date.day);
         final endOfDay = startOfDay.add(const Duration(days: 1));
 
         data.forEach((key, value) {
           final map = Map<String, dynamic>.from(value as Map);
           final tx = TransactionModel.fromMap(map, key as String);
           
-          if (tx.timestamp.isAfter(startOfDay) && tx.timestamp.isBefore(endOfDay)) {
+          if (tx.timestamp.isAfter(startOfDay.subtract(const Duration(milliseconds: 1))) && 
+              tx.timestamp.isBefore(endOfDay)) {
             transactions.add(tx);
           }
         });
         
-        // Sort by timestamp desc
+        transactions.sort((a, b) => b.timestamp.compareTo(a.timestamp));
+        return transactions;
+      }
+      return [];
+    });
+  }
+
+  @override
+  Stream<List<TransactionEntity>> getTransactionsByMonth(String salesmanId, DateTime month) {
+    final ref = _database.ref().child('Transactions');
+    
+    return ref.orderByChild('salesmanId').equalTo(salesmanId).onValue.map((event) {
+      if (event.snapshot.exists) {
+        final data = event.snapshot.value as Map<dynamic, dynamic>;
+        final List<TransactionEntity> transactions = [];
+        
+        final startOfMonth = DateTime(month.year, month.month, 1);
+        final endOfMonth = DateTime(month.year, month.month + 1, 1).subtract(const Duration(milliseconds: 1));
+
+        data.forEach((key, value) {
+          final map = Map<String, dynamic>.from(value as Map);
+          final tx = TransactionModel.fromMap(map, key as String);
+          
+          if (tx.timestamp.isAfter(startOfMonth.subtract(const Duration(milliseconds: 1))) && 
+              tx.timestamp.isBefore(endOfMonth.add(const Duration(milliseconds: 1)))) {
+            transactions.add(tx);
+          }
+        });
+        
         transactions.sort((a, b) => b.timestamp.compareTo(a.timestamp));
         return transactions;
       }

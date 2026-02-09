@@ -25,6 +25,7 @@ import 'package:hydroflow/features/transactions/presentation/bloc/delivery_bloc.
 import 'package:hydroflow/features/reports/data/repositories/report_repository_impl.dart';
 import 'package:hydroflow/features/reports/domain/repositories/report_repository.dart';
 import 'package:hydroflow/features/reports/domain/usecases/get_daily_report_usecase.dart';
+import 'package:hydroflow/features/reports/domain/usecases/get_monthly_report_usecase.dart';
 import 'package:hydroflow/features/reports/presentation/bloc/reports_bloc.dart';
 import 'package:hydroflow/features/subscription/data/repositories/subscription_repository_impl.dart';
 import 'package:hydroflow/features/subscription/domain/repositories/subscription_repository.dart';
@@ -105,8 +106,14 @@ Future<void> init() async {
   sl.registerLazySingleton(() => AddTransactionUseCase(sl()));
   sl.registerLazySingleton(() => GetTodayTransactionsUseCase(sl()));
   // Reports Feature
-  sl.registerFactory(() => ReportsBloc(getDailyReportUseCase: sl()));
+  sl.registerFactory(
+    () => ReportsBloc(
+      getDailyReportUseCase: sl(),
+      getMonthlyReportUseCase: sl(),
+    ),
+  );
   sl.registerLazySingleton(() => GetDailyReportUseCase(sl()));
+  sl.registerLazySingleton(() => GetMonthlyReportUseCase(sl()));
   sl.registerLazySingleton<ReportRepository>(
     () => ReportRepositoryImpl(
       database: sl(),

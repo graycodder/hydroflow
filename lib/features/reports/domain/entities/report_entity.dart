@@ -41,6 +41,16 @@ class ReportEntity extends Equatable {
   // Performance
   final double avgPricePerCan;
   final double stockTurnover; // Percentage
+  
+  final int workingDays;
+  final double avgDailyRevenue;
+  final double avgDailyDeliveries;
+  
+  // Customer Stats (Monthly)
+  final int totalCustomers;
+  final int activeCustomers;
+  final int newCustomers;
+  final int inactiveCustomers;
 
   const ReportEntity({
     required this.date,
@@ -70,6 +80,13 @@ class ReportEntity extends Equatable {
     required this.upiCollections,
     required this.avgPricePerCan,
     required this.stockTurnover,
+    this.workingDays = 0,
+    this.avgDailyRevenue = 0.0,
+    this.avgDailyDeliveries = 0.0,
+    this.totalCustomers = 0,
+    this.activeCustomers = 0,
+    this.newCustomers = 0,
+    this.inactiveCustomers = 0,
   });
 
   @override
@@ -101,5 +118,12 @@ class ReportEntity extends Equatable {
         upiCollections,
         avgPricePerCan,
         stockTurnover,
+        workingDays,
+        avgDailyRevenue,
+        avgDailyDeliveries,
+        totalCustomers,
+        activeCustomers,
+        newCustomers,
+        inactiveCustomers,
       ];
 }

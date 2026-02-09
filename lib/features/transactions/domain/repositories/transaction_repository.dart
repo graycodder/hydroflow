@@ -3,4 +3,6 @@ import 'package:hydroflow/features/transactions/domain/entities/transaction_enti
 abstract class TransactionRepository {
   Future<void> recordTransaction(TransactionEntity transaction);
   Stream<List<TransactionEntity>> getTodayTransactions(String salesmanId);
+  Stream<List<TransactionEntity>> getTransactionsByDate(String salesmanId, DateTime date);
+  Stream<List<TransactionEntity>> getTransactionsByMonth(String salesmanId, DateTime month);
 }
