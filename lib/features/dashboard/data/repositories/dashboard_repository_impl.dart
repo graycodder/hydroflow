@@ -61,6 +61,7 @@ class DashboardRepositoryImpl implements DashboardRepository {
               final double amount = (map['amount'] as num?)?.toDouble() ?? 0.0;
               final double received = (map['amountReceived'] as num?)?.toDouble() ?? 0.0;
               final String type = map['type'] as String? ?? '';
+              final String paymentMode = map['paymentMode'] as String? ?? '';
 
               // Total Sales should be the Bill Amount where actually goods were delivered
               if (cansDelivered > 0) {
@@ -68,9 +69,10 @@ class DashboardRepositoryImpl implements DashboardRepository {
               }
               
               // Total Collection is regardless of goods status (covers debt payments, deposits etc)
-              // EXCEPT for Refunds, which shouldn't count as positive collection.
-              if (type != 'Refund') {
-                todayCollection += received;
+              if (type == 'Refund') {
+                todayCollection -= received; // Subtract refunds
+              } else if (paymentMode != 'Deposit Adjustment') {
+                todayCollection += received; // Add only fresh collections
               }
               todayDeliveries += cansDelivered;
             }
