@@ -36,7 +36,8 @@ class _DeliveryViewState extends State<DeliveryView> {
   // Controllers
   final TextEditingController _fullCansController = TextEditingController(text: '0');
   final TextEditingController _emptyCansController = TextEditingController(text: '0');
-  final TextEditingController _priceController = TextEditingController(text: '60'); // Default price
+  final TextEditingController _pricePerBottleController = TextEditingController(text: '60');
+  final TextEditingController _priceController = TextEditingController(text: '0');
   final TextEditingController _amountReceivedController = TextEditingController(text: '0');
   
   String _paymentMode = 'Cash'; // Default
@@ -56,17 +57,19 @@ class _DeliveryViewState extends State<DeliveryView> {
   void dispose() {
     _fullCansController.dispose();
     _emptyCansController.dispose();
+    _pricePerBottleController.dispose();
     _priceController.dispose();
     _amountReceivedController.dispose();
     super.dispose();
   }
 
   void _calculateTotal() {
-    // 1. Calculate price if standard (e.g., 60 per can) - logic mostly manual for now based on user edit
-    // But if we want auto-calc:
-    // int quantity = int.tryParse(_fullCansController.text) ?? 0;
-    // double price = quantity * 60.0;
-    // _priceController.text = price.toStringAsFixed(0);
+    // Calculate total based on count and price per bottle
+    final int quantity = int.tryParse(_fullCansController.text) ?? 0;
+    final double pricePerBottle = double.tryParse(_pricePerBottleController.text) ?? 0.0;
+    
+    final double total = quantity * pricePerBottle;
+    _priceController.text = total.toStringAsFixed(0);
     
     // 2. Auto-fill Amount Received based on Mode
     _updateAmountReceived();
@@ -74,26 +77,44 @@ class _DeliveryViewState extends State<DeliveryView> {
   }
   
   void _updateAmountReceived() {
-    final total = double.tryParse(_priceController.text) ?? 0;
-    if (_paymentMode == 'Cash' || _paymentMode == 'UPI') {
-       // Default to full payment
-       // Only update if it seems "untouched" or we enforce rule?
-       // Better to just set it equal to total for convenience, user can edit if partial.
-       _amountReceivedController.text = total.toStringAsFixed(0);
-    } else if (_paymentMode == 'Credit') {
-       _amountReceivedController.text = '0';
-    }
+    // Force explicit entry: always default to 0 regardless of mode
+    _amountReceivedController.text = '0';
   }
 
   @override
   Widget build(BuildContext context) {
     return BlocConsumer<DeliveryBloc, DeliveryState>(
+      listenWhen: (previous, current) => previous.status != current.status,
       listener: (context, state) {
-        if (state.status == DeliveryStatus.failure) {
+        // 1. Handle submission loader dismissal (if active)
+        if (state.status != DeliveryStatus.submitting && 
+            ModalRoute.of(context)?.isCurrent == false) {
+           // We only pop if we are sure the current route is NOT the DeliveryPage
+           // Note: This assumes the loader is the only thing that could be on top.
+           // However, if the receipt dialog is already up, we don't want to pop it.
+           // A safer way is using a Navigator observer or checking route names, 
+           // but AlertDialog usually doesn't have a unique name easily accessible here.
+           // Let's use rootNavigator: true to be specific to the loader dialog.
+        }
+
+        // 2. Handle specific actions based on status transitions
+        if (state.status == DeliveryStatus.submitting) {
+          _showLoadingDialog(context);
+        } else if (state.status == DeliveryStatus.failure) {
+          // Dismiss loader ONLY IF one was shown (submitting was previous)
+          if (ModalRoute.of(context)?.isCurrent == false) {
+             Navigator.of(context, rootNavigator: true).pop();
+          }
+          
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text(state.errorMessage ?? 'An error occurred')),
           );
         } else if (state.status == DeliveryStatus.submissionSuccess) {
+            // Dismiss loader ONLY IF one was shown
+            if (ModalRoute.of(context)?.isCurrent == false) {
+               Navigator.of(context, rootNavigator: true).pop();
+            }
+            
             FocusScope.of(context).unfocus();
             if (state.todayTransactions.isNotEmpty) {
                final tx = state.todayTransactions.first;
@@ -238,6 +259,7 @@ class _DeliveryViewState extends State<DeliveryView> {
                popupProps: PopupProps.menu(
                  showSearchBox: true,
                  searchFieldProps: const TextFieldProps(
+                   autofocus: false,
                    decoration: InputDecoration(
                      hintText: "Search customer...",
                      prefixIcon: Icon(Icons.search),
@@ -271,6 +293,7 @@ class _DeliveryViewState extends State<DeliveryView> {
                  Expanded(
                    child: TextFormField(
                      controller: _fullCansController,
+                     autofocus: false,
                      keyboardType: TextInputType.number,
                      decoration: const InputDecoration(
                        labelText: 'Full Cans',
@@ -284,6 +307,7 @@ class _DeliveryViewState extends State<DeliveryView> {
                  Expanded(
                    child: TextFormField(
                      controller: _emptyCansController,
+                     autofocus: false,
                      keyboardType: TextInputType.number,
                      decoration: const InputDecoration(
                        labelText: 'Empty Cans',
@@ -297,16 +321,34 @@ class _DeliveryViewState extends State<DeliveryView> {
              
              const SizedBox(height: 16),
              
-             // Price
+             // Price Per Bottle
+             TextFormField(
+               controller: _pricePerBottleController,
+               autofocus: false,
+               keyboardType: TextInputType.number,
+               decoration: const InputDecoration(
+                 labelText: 'Price Per Bottle (₹)',
+                 prefixText: '₹ ',
+                 border: OutlineInputBorder(),
+                 hintText: 'Enter rate per bottle',
+               ),
+               onChanged: (_) => _calculateTotal(),
+             ),
+             
+             const SizedBox(height: 16),
+             
+             // Total Amount
              TextFormField(
                controller: _priceController,
+               autofocus: false,
                keyboardType: TextInputType.number,
                decoration: const InputDecoration(
                  labelText: 'Total Amount (₹)',
                  prefixText: '₹ ',
                  border: OutlineInputBorder(),
+                 helperText: "Auto-calculated: Full Cans × Rate",
                ),
-                onChanged: (_) => _calculateTotal(),
+               onChanged: (_) => _updateAmountReceived(),
              ),
              
              const SizedBox(height: 16),
@@ -314,13 +356,27 @@ class _DeliveryViewState extends State<DeliveryView> {
              // Amount Received (Partial Payment)
              TextFormField(
                controller: _amountReceivedController,
+               autofocus: false,
                keyboardType: TextInputType.number,
                decoration: const InputDecoration(
                  labelText: 'Amount Received (₹)',
                  prefixText: '₹ ',
                  border: OutlineInputBorder(),
-                 helperText: "Enter 0 for Credit, equals Total for Cash"
+                 helperText: "Mandatory: Enter actual amount received",
                ),
+               validator: (value) {
+                 if (value == null || value.isEmpty) {
+                   return 'Amount received is required';
+                 }
+                 final amount = double.tryParse(value);
+                 if (amount == null) {
+                   return 'Please enter a valid amount';
+                 }
+                 if ((_paymentMode == 'Cash' || _paymentMode == 'UPI') && amount <= 0) {
+                   return 'Amount must be greater than 0 for $_paymentMode';
+                 }
+                 return null;
+               },
              ),
              
              const SizedBox(height: 16),
@@ -350,9 +406,7 @@ class _DeliveryViewState extends State<DeliveryView> {
                    backgroundColor: const Color(0xFF2962FF),
                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                  ),
-                 child: state.status == DeliveryStatus.loading 
-                    ? const CircularProgressIndicator(color: Colors.white)
-                    : const Text('Complete Transaction', style: TextStyle(color: Colors.white, fontSize: 16)),
+                 child: const Text('Complete Transaction', style: TextStyle(color: Colors.white, fontSize: 16)),
                ),
              ),
           ],
@@ -480,32 +534,91 @@ class _DeliveryViewState extends State<DeliveryView> {
       final selectedCustomer = context.read<DeliveryBloc>().state.selectedCustomer;
       if (selectedCustomer == null) return;
       
-      final transaction = TransactionEntity(
-        id: Uuid().v4(), 
-        salesmanId: salesmanId,
-        customerId: selectedCustomer.id,
-        timestamp: DateTime.now(),
-        type: 'delivery',
-        amount: double.tryParse(_priceController.text) ?? 0,
-        amountReceived: double.tryParse(_amountReceivedController.text) ?? 0,
-        paymentMode: _paymentMode,
-        cansDelivered: int.tryParse(_fullCansController.text) ?? 0,
-        emptyCollected: int.tryParse(_emptyCansController.text) ?? 0,
-        notes: '',
+      final total = double.tryParse(_priceController.text) ?? 0;
+      final received = double.tryParse(_amountReceivedController.text) ?? 0;
+      final cans = int.tryParse(_fullCansController.text) ?? 0;
+
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('Confirm Transaction'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Customer: ${selectedCustomer.name}'),
+              const SizedBox(height: 8),
+              Text('Bottles Delivered: $cans'),
+              Text('Total Amount: ₹${total.toStringAsFixed(0)}'),
+              Text('Amount Received: ₹${received.toStringAsFixed(0)}'),
+              Text('Payment Mode: $_paymentMode'),
+              const Divider(height: 24),
+              const Text('Are you sure you want to complete this transaction?', 
+                style: TextStyle(fontWeight: FontWeight.bold)),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.pop(context);
+                final transaction = TransactionEntity(
+                  id: const Uuid().v4(), 
+                  salesmanId: salesmanId,
+                  customerId: selectedCustomer.id,
+                  timestamp: DateTime.now(),
+                  type: 'delivery',
+                  amount: total,
+                  amountReceived: received,
+                  paymentMode: _paymentMode,
+                  cansDelivered: cans,
+                  emptyCollected: int.tryParse(_emptyCansController.text) ?? 0,
+                  notes: '',
+                );
+                context.read<DeliveryBloc>().add(SubmitTransaction(transaction));
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF2962FF),
+                foregroundColor: Colors.white,
+              ),
+              child: const Text('Confirm'),
+            ),
+          ],
+        ),
       );
-      
-      context.read<DeliveryBloc>().add(SubmitTransaction(transaction));
     }
   }
 
   void _resetForm() {
     _fullCansController.text = '0';
     _emptyCansController.text = '0';
-    _priceController.text = '60'; // Updated to 60 as per user default change
-    _amountReceivedController.text = '60'; 
+    // We KEEP _pricePerBottleController text as per user requirement (it doesn't change every day)
+    _priceController.text = '0';
+    _amountReceivedController.text = '0'; 
     setState(() {
       _paymentMode = 'Cash';
       // Selected customer is reset by BLoC state change
     });
+  }
+
+  void _showLoadingDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const CircularProgressIndicator(),
+            const SizedBox(height: 16),
+            Text('Submitting delivery...', 
+              style: Theme.of(context).textTheme.bodyMedium),
+          ],
+        ),
+      ),
+    );
   }
 }

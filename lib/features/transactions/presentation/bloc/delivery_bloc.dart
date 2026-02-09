@@ -36,9 +36,13 @@ class DeliveryBloc extends Bloc<DeliveryEvent, DeliveryState> {
   ) async {
     emit(state.copyWith(status: DeliveryStatus.loading));
     
-    // Cancel any existing subscriptions
-    await _customersSubscription?.cancel();
-    await _transactionsSubscription?.cancel();
+    // Cancel any existing subscriptions safely
+    try {
+      _customersSubscription?.cancel();
+      _transactionsSubscription?.cancel();
+    } catch (e) {
+      // Platform channels can be unstable during hot-restarts or navigation
+    }
 
     // Initialize Streams
     // Strategy: We listen to both. When EITHER updates, we re-calculate stats.
@@ -154,12 +158,11 @@ class DeliveryBloc extends Bloc<DeliveryEvent, DeliveryState> {
     final txList = transactions.cast<dynamic>(); 
 
     for (var tx in txList) {
-       // Assuming tx is TransactionEntity
-       // But we need to be careful with casting if mocks/tests differ.
-       // In real code:
-       sales += tx.amount;
-       if (tx.paymentMode == 'Cash') cash += tx.amount;
-       if (tx.paymentMode == 'UPI') upi += tx.amount;
+       // Today's Sales should be based on actual amount RECEIVED (Cash + Online)
+       // tx.amount is the total bill value, but sales metric usually means revenue collected.
+       sales += tx.amountReceived;
+       if (tx.paymentMode == 'Cash') cash += tx.amountReceived;
+       if (tx.paymentMode == 'UPI' || tx.paymentMode == 'Online') upi += tx.amountReceived;
        delivered += tx.cansDelivered as int;
        returned += tx.emptyCollected as int;
     }
