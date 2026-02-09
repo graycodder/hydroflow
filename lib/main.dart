@@ -59,6 +59,12 @@ class HydroFlowApp extends StatelessWidget {
           if (state is AuthAuthenticated) {
             context.read<NotificationBloc>().add(LoadNotifications(state.salesman.id));
             context.read<DashboardBloc>().add(LoadDashboard(state.salesman.id));
+            
+            // If we are on lock screen or login, go to home
+            final location = router.routerDelegate.currentConfiguration.last.matchedLocation;
+            if (location == '/lock' || location == '/login' || location == '/splash') {
+              router.go('/home');
+            }
           } else if (state is AuthSubscriptionExpired) {
             router.go('/lock', extra: state.salesman);
           } else if (state is AuthUnauthenticated) {

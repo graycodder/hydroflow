@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:hydroflow/features/auth/presentation/bloc/auth_bloc.dart';
+import 'package:hydroflow/features/auth/presentation/bloc/auth_state.dart';
 import 'package:hydroflow/features/dashboard/presentation/pages/dashboard_page.dart';
 import 'package:hydroflow/features/stock/presentation/pages/stock_page.dart';
 import 'package:hydroflow/features/auth/presentation/pages/login_page.dart';
@@ -15,6 +18,28 @@ import 'package:hydroflow/features/auth/domain/entities/salesman.dart';
 
 final router = GoRouter(
   initialLocation: '/splash',
+  redirect: (context, state) {
+    final authState = context.read<AuthBloc>().state;
+    final bool loggingIn = state.matchedLocation == '/login';
+    final bool locking = state.matchedLocation == '/lock';
+    final bool splashing = state.matchedLocation == '/splash';
+
+    if (authState is AuthUnauthenticated) {
+      if (loggingIn || splashing) return null;
+      return '/login';
+    }
+
+    if (authState is AuthSubscriptionExpired) {
+      if (locking) return null;
+      return '/lock';
+    }
+
+    if (authState is AuthAuthenticated) {
+      if (loggingIn || locking || splashing) return '/home';
+    }
+
+    return null;
+  },
   routes: [
     GoRoute(
       path: '/splash',
@@ -24,8 +49,13 @@ final router = GoRouter(
     GoRoute(
       path: '/lock',
       builder: (context, state) {
-        final salesman = state.extra as Salesman;
-        return SubscriptionLockPage(salesman: salesman);
+        final authState = context.read<AuthBloc>().state;
+        if (authState is AuthSubscriptionExpired) {
+          return SubscriptionLockPage(salesman: authState.salesman);
+        }
+        // Fallback or loading if state hasn't stabilized, 
+        // though redirect should handle this.
+        return const Scaffold(body: Center(child: CircularProgressIndicator()));
       },
     ),
     GoRoute(
