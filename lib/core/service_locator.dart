@@ -42,6 +42,12 @@ import 'package:hydroflow/features/notifications/domain/usecases/get_notificatio
 import 'package:hydroflow/features/notifications/domain/usecases/mark_notification_read_usecase.dart';
 import 'package:hydroflow/features/notifications/domain/usecases/mark_all_read_usecase.dart';
 import 'package:hydroflow/features/notifications/presentation/bloc/notification_bloc.dart';
+import 'package:hydroflow/features/dashboard/data/repositories/dashboard_repository_impl.dart';
+import 'package:hydroflow/features/dashboard/domain/repositories/dashboard_repository.dart';
+import 'package:hydroflow/features/dashboard/domain/usecases/get_dashboard_summary_usecase.dart';
+import 'package:hydroflow/features/dashboard/presentation/bloc/dashboard_bloc.dart';
+import 'package:hydroflow/features/dashboard/presentation/bloc/dashboard_event.dart';
+import 'package:hydroflow/features/dashboard/presentation/bloc/dashboard_state.dart';
 
 
 final sl = GetIt.instance;
@@ -148,4 +154,11 @@ Future<void> init() async {
       markAllRead: sl(),
     ),
   );
+
+  // Dashboard Feature
+  sl.registerLazySingleton<DashboardRepository>(
+    () => DashboardRepositoryImpl(database: sl()),
+  );
+  sl.registerLazySingleton(() => GetDashboardSummaryUseCase(sl()));
+  sl.registerFactory(() => DashboardBloc(getDashboardSummary: sl()));
 }

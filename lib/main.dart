@@ -12,6 +12,8 @@ import 'package:hydroflow/features/bottles/presentation/bloc/bottle_bloc.dart';
 import 'package:hydroflow/features/customers/presentation/bloc/customer_bloc.dart';
 import 'package:hydroflow/features/transactions/presentation/bloc/delivery_bloc.dart';
 import 'package:hydroflow/features/notifications/presentation/bloc/notification_bloc.dart';
+import 'package:hydroflow/features/dashboard/presentation/bloc/dashboard_bloc.dart';
+import 'package:hydroflow/features/dashboard/presentation/bloc/dashboard_event.dart';
 import 'package:hydroflow/features/auth/presentation/bloc/auth_state.dart';
 
 void main() async {
@@ -50,11 +52,13 @@ class HydroFlowApp extends StatelessWidget {
         BlocProvider<CustomerBloc>(create: (_) => di.sl<CustomerBloc>()),
         BlocProvider<DeliveryBloc>(create: (_) => di.sl<DeliveryBloc>()),
         BlocProvider<NotificationBloc>(create: (_) => di.sl<NotificationBloc>()),
+        BlocProvider<DashboardBloc>(create: (_) => di.sl<DashboardBloc>()),
       ],
       child: BlocListener<AuthBloc, AuthState>(
         listener: (context, state) {
           if (state is AuthAuthenticated) {
             context.read<NotificationBloc>().add(LoadNotifications(state.salesman.id));
+            context.read<DashboardBloc>().add(LoadDashboard(state.salesman.id));
           } else if (state is AuthSubscriptionExpired) {
             router.go('/lock', extra: state.salesman);
           } else if (state is AuthUnauthenticated) {

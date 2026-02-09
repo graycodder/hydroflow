@@ -4,9 +4,8 @@ import 'package:go_router/go_router.dart';
 import 'package:hydroflow/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:hydroflow/features/auth/presentation/bloc/auth_state.dart';
 import 'package:hydroflow/core/widgets/app_bottom_bar.dart';
-import 'package:hydroflow/features/transactions/presentation/bloc/delivery_bloc.dart';
-import 'package:hydroflow/features/transactions/presentation/bloc/delivery_state.dart';
-import 'package:hydroflow/features/transactions/presentation/bloc/delivery_event.dart'; 
+import 'package:hydroflow/features/dashboard/presentation/bloc/dashboard_bloc.dart';
+import 'package:hydroflow/features/dashboard/presentation/bloc/dashboard_state.dart';
 import 'package:hydroflow/core/widgets/hydro_flow_app_bar.dart';
 import 'package:intl/intl.dart';
 
@@ -23,22 +22,6 @@ class _DashboardPageState extends State<DashboardPage> {
   @override
   void initState() {
     super.initState();
-    _loadData();
-  }
-
-  void _loadData() {
-    final authState = context.read<AuthBloc>().state;
-    if (authState is AuthAuthenticated) {
-      // Trigger loads for global blocs
-      // Note: Stock is loaded by Auth/Salesman mostly? Or StockBloc? 
-      // User snippet said StockBloc is provided. Assuming it might need loading too.
-      // But let's focus on Delivery.
-      context.read<DeliveryBloc>().add(LoadDeliveryPage(authState.salesman.id));
-      
-      // We should also trigger CustomerBloc and BottleBloc if they assume manual load.
-      // But I don't see their imports here easily (user didn't provide).
-      // Assuming for now focusing on Delivery as requested.
-    }
   }
 
   @override
@@ -47,9 +30,6 @@ class _DashboardPageState extends State<DashboardPage> {
       listener: (context, state) {
         if (state is AuthUnauthenticated) {
           context.go('/login');
-        } else if (state is AuthAuthenticated) {
-             // If we just logged in or re-auth, maybe reload?
-             _loadData();
         }
       },
       builder: (context, authState) {
@@ -197,53 +177,73 @@ class _DashboardPageState extends State<DashboardPage> {
                   ),
                   const SizedBox(height: 24),
                   // Stats Grid
-                  // Stats Grid
-                  BlocBuilder<DeliveryBloc, DeliveryState>(
-                    builder: (context, deliveryState) {
-                      return LayoutBuilder(
-                        builder: (context, constraints) {
-                          final width = constraints.maxWidth;
-                          final cardWidth = (width - 16) / 2; // 16 is space between
-                          return Wrap(
-                            spacing: 16,
-                            runSpacing: 16,
-                            children: [
-                              _buildStatCard(
-                                width: cardWidth,
-                                title: 'Current Stock',
-                                value: '${salesman.currentStock}',
-                                subtitle: 'Cans',
-                                valueColor: const Color(0xFF2962FF),
-                                onTap: () => context.push('/stock'),
-                              ),
-                              _buildStatCard(
-                                width: cardWidth,
-                                title: 'Active Customers',
-                                value: '${deliveryState.customers.length}',
-                                subtitle: 'Total Active',
-                                valueColor: const Color(0xFF00C853),
-                                onTap: () => context.push('/customers'),
-                              ),
-                              _buildStatCard(
-                                width: cardWidth,
-                                title: "Today's Sales",
-                                value: '₹${deliveryState.totalSales.toStringAsFixed(0).replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]},')}',
-                                subtitle: 'Cash + Online',
-                                valueColor: const Color(0xFF6200EA),
-                                onTap: () => context.push('/delivery'), // Or reports?
-                              ),
-                              _buildStatCard(
-                                width: cardWidth,
-                                title: 'Deliveries',
-                                value: deliveryState.status == DeliveryStatus.loading ? '...' : '${deliveryState.totalDelivered}',
-                                subtitle: 'Completed',
-                                valueColor: const Color(0xFFFF6D00),
-                                onTap: () => context.push('/delivery'),
-                              ),
-                            ],
-                          );
-                        },
-                      );
+                  BlocBuilder<DashboardBloc, DashboardState>(
+                    builder: (context, dashboardState) {
+                      if (dashboardState is DashboardLoaded) {
+                        final summary = dashboardState.summary;
+                        return LayoutBuilder(
+                          builder: (context, constraints) {
+                            final width = constraints.maxWidth;
+                            final cardWidth = (width - 16) / 2;
+                            return Wrap(
+                              spacing: 16,
+                              runSpacing: 16,
+                              children: [
+                                _buildStatCard(
+                                  width: cardWidth,
+                                  title: 'Current Stock',
+                                  value: '${summary.currentStock}',
+                                  subtitle: 'Cans in Van',
+                                  valueColor: const Color(0xFF2962FF),
+                                  onTap: () => context.push('/stock'),
+                                ),
+                                _buildStatCard(
+                                  width: cardWidth,
+                                  title: 'Deliveries',
+                                  value: '${summary.todayDeliveries}',
+                                  subtitle: 'Cans Delivered',
+                                  valueColor: const Color(0xFFFF6D00),
+                                  onTap: () => context.push('/delivery'),
+                                ),
+                                _buildStatCard(
+                                  width: cardWidth,
+                                  title: "Today's Sales",
+                                  value: '₹${summary.todaySales.toStringAsFixed(0).replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]},')}',
+                                  subtitle: 'Total Bill Amount',
+                                  valueColor: const Color(0xFF6200EA),
+                                  onTap: () => context.push('/delivery'),
+                                ),
+                                _buildStatCard(
+                                  width: cardWidth,
+                                  title: "Today's Collection",
+                                  value: '₹${summary.todayCollection.toStringAsFixed(0).replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]},')}',
+                                  subtitle: 'Cash + Online',
+                                  valueColor: const Color(0xFF00C853),
+                                  onTap: () => context.push('/delivery'),
+                                ),
+                                _buildStatCard(
+                                  width: cardWidth,
+                                  title: 'Active Customers',
+                                  value: '${summary.activeCustomers}',
+                                  subtitle: 'Total Active',
+                                  valueColor: const Color(0xFF00B8D4),
+                                  onTap: () => context.push('/customers'),
+                                ),
+                              ],
+                            );
+                          },
+                        );
+                      }
+                      if (dashboardState is DashboardLoading) {
+                        return const Center(child: Padding(
+                          padding: EdgeInsets.all(32.0),
+                          child: CircularProgressIndicator(),
+                        ));
+                      }
+                      if (dashboardState is DashboardError) {
+                        return Center(child: Text('Error: ${dashboardState.message}'));
+                      }
+                      return const SizedBox.shrink();
                     },
                   ),
                 ],
