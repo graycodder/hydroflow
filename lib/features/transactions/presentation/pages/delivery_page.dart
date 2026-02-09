@@ -235,7 +235,30 @@ class _DeliveryViewState extends State<DeliveryView> {
              // Customer Dropdown
              // Customer Dropdown with Search
              DropdownSearch<Customer>(
-               items: (filter, loadProps) => state.customers.where((c) => c.status == 'Active').toList(),
+               items: (filter, loadProps) async {
+                 // Add artificial delay to show loader
+                 await Future.delayed(const Duration(milliseconds: 300));
+                 
+                 final activeCustomers = state.customers.where((c) => c.status == 'Active').toList();
+                 if (filter.isEmpty) return activeCustomers;
+                 
+                 final query = filter.toLowerCase();
+                 final filtered = activeCustomers.where((c) {
+                   return c.name.toLowerCase().contains(query) || 
+                          c.phone.contains(query);
+                 }).toList();
+
+                 // Sort: prioritize those starting with the query
+                 filtered.sort((a, b) {
+                   final aNameMatch = a.name.toLowerCase().startsWith(query);
+                   final bNameMatch = b.name.toLowerCase().startsWith(query);
+                   if (aNameMatch && !bNameMatch) return -1;
+                   if (!aNameMatch && bNameMatch) return 1;
+                   return a.name.compareTo(b.name);
+                 });
+                 
+                 return filtered;
+               },
                itemAsString: (Customer c) => c.name,
                compareFn: (i, s) => i.id == s.id,
                decoratorProps: DropDownDecoratorProps(
@@ -259,9 +282,16 @@ class _DeliveryViewState extends State<DeliveryView> {
                  ),
                  itemBuilder: (context, item, isSelected, isHovered) {
                    return ListTile(
-                     title: Text(item.name),
-                     subtitle: Text(item.address, maxLines: 1, overflow: TextOverflow.ellipsis),
+                     title: Text(item.name, style: const TextStyle(fontSize: 14)),
+                     subtitle: Text(item.address, 
+                       maxLines: 1, 
+                       overflow: TextOverflow.ellipsis,
+                       style: const TextStyle(fontSize: 12),
+                     ),
                      selected: isSelected,
+                     dense: true,
+                     visualDensity: VisualDensity.compact,
+                     contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 0),
                    );
                  },
                ),

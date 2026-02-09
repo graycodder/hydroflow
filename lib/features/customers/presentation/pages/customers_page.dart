@@ -30,54 +30,15 @@ class _CustomersPageState extends State<CustomersPage> {
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (context) => sl<CustomerBloc>(),
-      child: BlocBuilder<AuthBloc, AuthState>(
-        builder: (context, authState) {
-          if (authState is AuthAuthenticated) {
-            final salesman = authState.salesman;
-            // Use the already created bloc and trigger load
-            context.read<CustomerBloc>().add(LoadCustomers(salesman.id));
-            
-            return Scaffold(
+    return BlocBuilder<AuthBloc, AuthState>(
+      builder: (context, authState) {
+        if (authState is AuthAuthenticated) {
+          final salesman = authState.salesman;
+          
+          return Scaffold(
               backgroundColor: Colors.grey[50], 
               appBar: const HydroFlowAppBar(),
-              body: BlocConsumer<CustomerBloc, CustomerState>(
-                  listener: (context, state) {
-                    if (state.status == CustomerStatus.submitting) {
-                      _showLoadingDialog(context);
-                    } else if (state.status == CustomerStatus.failure) {
-                      // Dismiss loader if showing
-                      if (ModalRoute.of(context)?.isCurrent == false) {
-                        Navigator.of(context, rootNavigator: true).pop();
-                      }
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text(state.errorMessage ?? 'Error'),
-                          backgroundColor: Colors.red,
-                        ),
-                      );
-                    } else if (state.status == CustomerStatus.success && state.successMessage != null) {
-                      // Dismiss loader if showing
-                      if (ModalRoute.of(context)?.isCurrent == false) {
-                        Navigator.of(context, rootNavigator: true).pop();
-                      }
-                      
-                      // Close the Add/Edit dialog if success
-                      // Note: We need to be careful not to pop the main page.
-                      // Usually we are coming from a dialog.
-                      if (Navigator.of(context).canPop()) {
-                        Navigator.of(context).pop();
-                      }
-
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text(state.successMessage!),
-                          backgroundColor: Colors.green,
-                        ),
-                      );
-                    }
-                  },
+              body: BlocBuilder<CustomerBloc, CustomerState>(
                   builder: (context, state) {
                     if (state.status == CustomerStatus.loading) {
                       return const Center(child: CircularProgressIndicator());
@@ -170,8 +131,7 @@ class _CustomersPageState extends State<CustomersPage> {
             }
             return const Scaffold(body: Center(child: CircularProgressIndicator()));
           },
-        ),
-      );
+        );
   }
 
   Widget _buildStatItem(String value, String label, Color color) {
@@ -400,6 +360,7 @@ class _AddCustomerDialogState extends State<_AddCustomerDialog> {
   final _addressController = TextEditingController();
   final _depositController = TextEditingController(); // Empty default
   String? _paymentMode; // Nullable for explicit selection
+  bool _isSubmitting = false;
 
   @override
   void dispose() {
@@ -412,17 +373,38 @@ class _AddCustomerDialogState extends State<_AddCustomerDialog> {
 
   @override
   Widget build(BuildContext context) {
-    return Dialog(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      child: Padding(
-        padding: const EdgeInsets.all(20.0),
-        child: SingleChildScrollView(
-          child: Form(
-            key: _formKey,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start, // Align labels left
-              children: [
+    return BlocListener<CustomerBloc, CustomerState>(
+      bloc: widget.bloc,
+      listener: (context, state) {
+        if (_isSubmitting) {
+          if (state.status == CustomerStatus.submitting) {
+            _showLoadingDialog(context);
+          } else if (state.status == CustomerStatus.failure || 
+                     (state.status == CustomerStatus.success && state.successMessage != null)) {
+            // Dismiss loader if showing
+            if (ModalRoute.of(context)?.isCurrent == false) {
+              Navigator.of(context, rootNavigator: true).pop();
+            }
+            if (state.status == CustomerStatus.success) {
+              _isSubmitting = false;
+              Navigator.of(context).pop(); // Close add dialog
+            } else if (state.status == CustomerStatus.failure) {
+              _isSubmitting = false;
+            }
+          }
+        }
+      },
+      child: Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        child: Padding(
+          padding: const EdgeInsets.all(20.0),
+          child: SingleChildScrollView(
+            child: Form(
+              key: _formKey,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start, // Align labels left
+                children: [
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -564,6 +546,9 @@ class _AddCustomerDialogState extends State<_AddCustomerDialog> {
                               ),
                               ElevatedButton(
                                 onPressed: () {
+                                  setState(() {
+                                    _isSubmitting = true;
+                                  });
                                   Navigator.pop(confirmContext); // Close confirmation
                                   widget.bloc.add(AddCustomer(
                                     salesmanId: widget.salesmanId,
@@ -573,7 +558,6 @@ class _AddCustomerDialogState extends State<_AddCustomerDialog> {
                                     securityDeposit: deposit,
                                     paymentMode: _paymentMode!,
                                   ));
-                                  // Navigator.pop(context); // REMOVED: Handled by listener on success
                                 },
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: const Color(0xFF0D1117),
@@ -598,8 +582,27 @@ class _AddCustomerDialogState extends State<_AddCustomerDialog> {
                   ),
                 ),
               ],
+                ),
+              ),
             ),
           ),
+        ),
+      );
+  }
+
+  void _showLoadingDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const CircularProgressIndicator(color: Color(0xFF2962FF)),
+            const SizedBox(height: 16),
+            Text('Processing...', 
+              style: GoogleFonts.poppins(fontSize: 14)),
+          ],
         ),
       ),
     );

@@ -23,6 +23,7 @@ class CustomerDetailsDialog extends StatefulWidget {
 
 class _CustomerDetailsDialogState extends State<CustomerDetailsDialog> {
   late bool isActive;
+  bool _isSubmitting = false;
 
   @override
   void initState() {
@@ -35,16 +36,17 @@ class _CustomerDetailsDialogState extends State<CustomerDetailsDialog> {
     return BlocListener<CustomerBloc, CustomerState>(
       bloc: widget.customerBloc,
       listener: (context, state) {
-        if (state.status == CustomerStatus.submitting) {
-          _showLoadingDialog(context);
-        } else if (state.status == CustomerStatus.failure || 
+        if (_isSubmitting) {
+          if (state.status == CustomerStatus.submitting) {
+             _showLoadingDialog(context);
+          } else if (state.status == CustomerStatus.failure || 
                    (state.status == CustomerStatus.success && state.successMessage != null)) {
-          // Dismiss loader if showing
-          if (ModalRoute.of(context)?.isCurrent == false) {
-             Navigator.of(context, rootNavigator: true).pop();
+            // Dismiss loader if showing
+            if (ModalRoute.of(context)?.isCurrent == false) {
+               Navigator.of(context, rootNavigator: true).pop();
+            }
+            _isSubmitting = false;
           }
-          // Optionally close details on success if it was a status update?
-          // For settle, we might want to keep it open to show 'Inactive' but the page usually refreshes.
         }
       },
       child: Dialog(
@@ -321,6 +323,7 @@ class _CustomerDetailsDialogState extends State<CustomerDetailsDialog> {
                                       // but Switch might assume it did. Better to enforce 'true'.)
                                       setState(() {
                                         isActive = true;
+                                        _isSubmitting = true;
                                       });
                                       Navigator.pop(context);
                                     },
@@ -330,6 +333,7 @@ class _CustomerDetailsDialogState extends State<CustomerDetailsDialog> {
                                     onPressed: () {
                                       setState(() {
                                         isActive = false;
+                                        _isSubmitting = true;
                                       });
                                       widget.customerBloc.add(SettleCustomer(widget.customer));
                                       Navigator.pop(context); // Close Alert

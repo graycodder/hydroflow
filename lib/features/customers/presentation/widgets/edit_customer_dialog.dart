@@ -29,6 +29,7 @@ class _EditCustomerDialogState extends State<EditCustomerDialog> {
   //late TextEditingController _balanceController;
   //late TextEditingController _bottleBalanceController;
   late String? _paymentMode;
+  bool _isSubmitting = false;
 
   @override
   void initState() {
@@ -58,16 +59,21 @@ class _EditCustomerDialogState extends State<EditCustomerDialog> {
     return BlocListener<CustomerBloc, CustomerState>(
       bloc: widget.customerBloc,
       listener: (context, state) {
-        if (state.status == CustomerStatus.submitting) {
-          _showLoadingDialog(context);
-        } else if (state.status == CustomerStatus.failure || 
-                   (state.status == CustomerStatus.success && state.successMessage != null)) {
-          // Dismiss loader if showing
-          if (ModalRoute.of(context)?.isCurrent == false) {
-             Navigator.of(context, rootNavigator: true).pop();
-          }
-          if (state.status == CustomerStatus.success) {
-            Navigator.of(context).pop(); // Close edit dialog
+        if (_isSubmitting) {
+          if (state.status == CustomerStatus.submitting) {
+            _showLoadingDialog(context);
+          } else if (state.status == CustomerStatus.failure || 
+                     (state.status == CustomerStatus.success && state.successMessage != null)) {
+            // Dismiss loader if showing
+            if (ModalRoute.of(context)?.isCurrent == false) {
+               Navigator.of(context, rootNavigator: true).pop();
+            }
+            if (state.status == CustomerStatus.success) {
+              _isSubmitting = false;
+              Navigator.of(context).pop(); // Close edit dialog
+            } else if (state.status == CustomerStatus.failure) {
+              _isSubmitting = false;
+            }
           }
         }
       },
@@ -231,6 +237,9 @@ class _EditCustomerDialogState extends State<EditCustomerDialog> {
                                   ),
                                   ElevatedButton(
                                     onPressed: () {
+                                      setState(() {
+                                        _isSubmitting = true;
+                                      });
                                       Navigator.pop(confirmContext); // Close confirmation
                                       final updatedCustomer = Customer(
                                         id: widget.customer.id,
