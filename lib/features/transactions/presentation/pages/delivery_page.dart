@@ -40,7 +40,7 @@ class _DeliveryViewState extends State<DeliveryView> {
   final TextEditingController _priceController = TextEditingController(text: '0');
   final TextEditingController _amountReceivedController = TextEditingController(text: '0');
   
-  String _paymentMode = 'Cash'; // Default
+  String _paymentMode = ''; // No default auto-selection
   Customer? _selectedCustomer;
 
   @override
@@ -71,15 +71,10 @@ class _DeliveryViewState extends State<DeliveryView> {
     final double total = quantity * pricePerBottle;
     _priceController.text = total.toStringAsFixed(0);
     
-    // 2. Auto-fill Amount Received based on Mode
-    _updateAmountReceived();
+    // 2. Remove aggressive reset: let user keep their input
     setState(() {});
   }
   
-  void _updateAmountReceived() {
-    // Force explicit entry: always default to 0 regardless of mode
-    _amountReceivedController.text = '0';
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -147,8 +142,8 @@ class _DeliveryViewState extends State<DeliveryView> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 // Stats Header
-                _buildStatsHeader(state),
-                const SizedBox(height: 24),
+              //  _buildStatsHeader(state),
+               // const SizedBox(height: 24),
                 
                 // Form Card
                 _buildDeliveryForm(context, state, salesmanId),
@@ -156,11 +151,6 @@ class _DeliveryViewState extends State<DeliveryView> {
                 const SizedBox(height: 24),
                 
                 // Transactions List
-                const Text(
-                  "Today's Transactions",
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(height: 8),
                 _buildTransactionsList(state),
               ],
             ),
@@ -245,7 +235,7 @@ class _DeliveryViewState extends State<DeliveryView> {
              // Customer Dropdown
              // Customer Dropdown with Search
              DropdownSearch<Customer>(
-               items: (filter, loadProps) => state.customers,
+               items: (filter, loadProps) => state.customers.where((c) => c.status == 'Active').toList(),
                itemAsString: (Customer c) => c.name,
                compareFn: (i, s) => i.id == s.id,
                decoratorProps: DropDownDecoratorProps(
@@ -282,6 +272,12 @@ class _DeliveryViewState extends State<DeliveryView> {
                  if (value != null) {
                    context.read<DeliveryBloc>().add(SelectCustomer(value));
                  }
+               },
+               validator: (value) {
+                 if (value == null) {
+                   return 'Please select a customer';
+                 }
+                 return null;
                },
              ),
              
@@ -348,7 +344,6 @@ class _DeliveryViewState extends State<DeliveryView> {
                  border: OutlineInputBorder(),
                  helperText: "Auto-calculated: Full Cans × Rate",
                ),
-               onChanged: (_) => _updateAmountReceived(),
              ),
              
              const SizedBox(height: 16),
@@ -422,7 +417,6 @@ class _DeliveryViewState extends State<DeliveryView> {
         onTap: () {
           setState(() {
             _paymentMode = mode;
-            _updateAmountReceived();
           });
         },
         child: Container(
@@ -452,75 +446,138 @@ class _DeliveryViewState extends State<DeliveryView> {
   }
 
   Widget _buildTransactionsList(DeliveryState state) {
-    if (state.todayTransactions.isEmpty) {
-      return Container(
-        padding: const EdgeInsets.all(24),
-        alignment: Alignment.center,
-        child: Text("No transactions yet today.", style: TextStyle(color: Colors.grey[500])),
-      );
-    }
+    final transactionsCount = state.todayTransactions.length;
     
-    return ListView.separated(
-      physics: const NeverScrollableScrollPhysics(),
-      shrinkWrap: true,
-      itemCount: state.todayTransactions.length,
-      separatorBuilder: (context, index) => const SizedBox(height: 12),
-      itemBuilder: (context, index) {
-        final tx = state.todayTransactions[index];
-        // Look up customer name from stats customers list? 
-        // We might not have the name in TransactionEntity (only ID).
-        // Let's try to find it in loaded customers.
-        final customer = state.customers.firstWhere(
-            (c) => c.id == tx.customerId, 
-            orElse: () => const Customer(id: '', salesmanId: '', name: 'Unknown', phone: '', address: '', status: '', securityDeposit: 0, pendingBalance: 0, bottleBalance: 0)
-        );
-
-        return Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: Colors.grey[200]!),
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(color: Colors.grey.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, 4)),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            "Today's Transactions",
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
           ),
-          child: Column(
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Row(
+          const SizedBox(height: 4),
+          Text(
+            "$transactionsCount transactions completed",
+            style: TextStyle(color: Colors.grey[500], fontSize: 14),
+          ),
+          const SizedBox(height: 20),
+          
+          if (state.todayTransactions.isEmpty)
+            Center(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 24),
+                child: Text("No transactions yet today.", style: TextStyle(color: Colors.grey[400])),
+              ),
+            )
+          else
+            ListView.separated(
+              physics: const NeverScrollableScrollPhysics(),
+              shrinkWrap: true,
+              itemCount: state.todayTransactions.length,
+              separatorBuilder: (context, index) => const SizedBox(height: 12),
+              itemBuilder: (context, index) {
+                final tx = state.todayTransactions[index];
+                final customer = state.customers.firstWhere(
+                    (c) => c.id == tx.customerId, 
+                    orElse: () => const Customer(id: '', salesmanId: '', name: 'Unknown', phone: '', address: '', status: '', securityDeposit: 0, pendingBalance: 0, bottleBalance: 0)
+                );
+
+                return Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF8F9FA),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Colors.grey[200]!),
+                  ),
+                  child: Column(
                     children: [
-                      const Icon(Icons.person_outline, size: 20, color: Colors.grey),
-                      const SizedBox(width: 8),
-                      Text(customer.name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              const Icon(Icons.person_outline, size: 20, color: Colors.grey),
+                              const SizedBox(width: 8),
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(customer.name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                                  const SizedBox(height: 2),
+                                  Text(_formatTime(tx.timestamp), style: TextStyle(color: Colors.grey[500], fontSize: 12)),
+                                ],
+                              ),
+                            ],
+                          ),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.end,
+                            children: [
+                              Text('₹${tx.amount.toStringAsFixed(0)}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: Color(0xFF2962FF))),
+                              const SizedBox(height: 4),
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                decoration: BoxDecoration(
+                                  color: Colors.black,
+                                  borderRadius: BorderRadius.circular(6),
+                                ),
+                                child: Text(
+                                  tx.paymentMode.toUpperCase(),
+                                  style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                      const Divider(height: 24, color: Color(0xFFEEEEEE)),
+                      if (tx.type == 'Deposit' || tx.type == 'Deposit Received')
+                        const Align(
+                          alignment: Alignment.centerLeft,
+                          child: Text(
+                            'Deposit Received',
+                            style: TextStyle(
+                              color: Colors.green,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 14,
+                            ),
+                          ),
+                        )
+                      else
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            _buildTxStatItem('↓ ${tx.cansDelivered} delivered', Colors.orange),
+                            _buildTxStatItem('↑ ${tx.emptyCollected} returned', Colors.teal),
+                            _buildTxStatItem('💧 ${customer.bottleBalance} balance', Colors.blue),
+                          ],
+                        ),
                     ],
                   ),
-                  Text('₹${tx.amount.toStringAsFixed(0)}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Color(0xFF2962FF))),
-                ],
-              ),
-              const SizedBox(height: 8),
-               Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                   Text(
-                    '${_formatTime(tx.timestamp)} • ${tx.paymentMode}', 
-                    style: TextStyle(color: Colors.grey[600], fontSize: 12)
-                   ),
-                   Row(
-                     children: [
-                       if (tx.cansDelivered > 0) 
-                         Text('↓ ${tx.cansDelivered}', style: const TextStyle(color: Colors.orange, fontSize: 12, fontWeight: FontWeight.bold)),
-                       if (tx.cansDelivered > 0 && tx.emptyCollected > 0)
-                          const SizedBox(width: 8),
-                       if (tx.emptyCollected > 0)
-                         Text('↑ ${tx.emptyCollected}', style: const TextStyle(color: Colors.teal, fontSize: 12, fontWeight: FontWeight.bold)),
-                     ],
-                   )
-                ],
-              ),
-            ],
-          ),
-        );
-      },
+                );
+              },
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTxStatItem(String text, Color color) {
+    return Row(
+      children: [
+        Text(
+          text,
+          style: TextStyle(color: color, fontSize: 12, fontWeight: FontWeight.w600),
+        ),
+      ],
     );
   }
   
@@ -531,11 +588,23 @@ class _DeliveryViewState extends State<DeliveryView> {
 
   void _submitTransaction(BuildContext context, String salesmanId) {
     if (_formKey.currentState!.validate()) {
+      if (_paymentMode.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Please select a payment mode (Cash, UPI, or Credit)')),
+        );
+        return;
+      }
+      
       final selectedCustomer = context.read<DeliveryBloc>().state.selectedCustomer;
-      if (selectedCustomer == null) return;
+      if (selectedCustomer == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Please select a customer from the dropdown')),
+        );
+        return;
+      }
       
       final total = double.tryParse(_priceController.text) ?? 0;
-      final received = double.tryParse(_amountReceivedController.text) ?? 0;
+      final received = _paymentMode == 'Credit' ? 0.0 : (double.tryParse(_amountReceivedController.text) ?? 0);
       final cans = int.tryParse(_fullCansController.text) ?? 0;
 
       showDialog(
@@ -599,7 +668,7 @@ class _DeliveryViewState extends State<DeliveryView> {
     _priceController.text = '0';
     _amountReceivedController.text = '0'; 
     setState(() {
-      _paymentMode = 'Cash';
+      _paymentMode = ''; // Clear selection
       // Selected customer is reset by BLoC state change
     });
   }

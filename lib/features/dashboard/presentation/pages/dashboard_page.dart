@@ -229,6 +229,14 @@ class _DashboardPageState extends State<DashboardPage> {
                                   valueColor: const Color(0xFF00B8D4),
                                   onTap: () => context.push('/customers'),
                                 ),
+                                _buildStatCard(
+                                  width: cardWidth,
+                                  title: 'Inactive Customers',
+                                  value: '${summary.inactiveCustomers}',
+                                  subtitle: 'Total Inactive',
+                                  valueColor: Colors.blueGrey,
+                                  onTap: () => context.push('/customers'),
+                                ),
                               ],
                             );
                           },

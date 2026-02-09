@@ -34,7 +34,10 @@ class DeliveryBloc extends Bloc<DeliveryEvent, DeliveryState> {
     LoadDeliveryPage event,
     Emitter<DeliveryState> emit,
   ) async {
-    emit(state.copyWith(status: DeliveryStatus.loading));
+    emit(state.copyWith(
+      status: DeliveryStatus.loading,
+      clearSelectedCustomer: true,
+    ));
     
     // Cancel any existing subscriptions safely
     try {
@@ -77,11 +80,8 @@ class DeliveryBloc extends Bloc<DeliveryEvent, DeliveryState> {
     DeliveryDataUpdated event,
     Emitter<DeliveryState> emit,
   ) async {
-    // Merge new data with current state data
-    var customers = event.customers ?? state.customers;
-    
-    // Filter for Active customers only
-    customers = customers.where((c) => c.status == 'Active').toList();
+    // Keep all customers so that the transaction list can map names even for inactive ones
+    final customers = event.customers ?? state.customers;
 
     final transactions = event.transactions ?? state.todayTransactions;
     

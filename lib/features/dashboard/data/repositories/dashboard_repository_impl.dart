@@ -23,11 +23,13 @@ class DashboardRepositoryImpl implements DashboardRepository {
         // 1. Parse Stock
         final int currentStock = (stockEvent.snapshot.value as num?)?.toInt() ?? 0;
 
-        // 2. Parse Customers (Active count)
+        // 2. Parse Customers (Active and Inactive counts)
         int activeCount = 0;
+        int inactiveCount = 0;
         if (customersEvent.snapshot.exists) {
           final data = customersEvent.snapshot.value as Map<dynamic, dynamic>;
           activeCount = data.values.where((v) => (v as Map)['status'] == 'Active').length;
+          inactiveCount = data.values.where((v) => (v as Map)['status'] == 'Inactive').length;
         }
 
         // 3. Parse Transactions (Today's Sales & Collection)
@@ -43,13 +45,22 @@ class DashboardRepositoryImpl implements DashboardRepository {
 
           data.forEach((key, value) {
             final map = Map<String, dynamic>.from(value as Map);
-            final timestampStr = map['timestamp'] as String? ?? '';
-            final timestamp = DateTime.tryParse(timestampStr) ?? DateTime.now();
+            final rawTimestamp = map['timestamp'];
+            DateTime timestamp;
+            if (rawTimestamp is int) {
+              timestamp = DateTime.fromMillisecondsSinceEpoch(rawTimestamp);
+            } else if (rawTimestamp is String) {
+              timestamp = DateTime.tryParse(rawTimestamp) ?? DateTime.now();
+            } else {
+              timestamp = DateTime.now();
+            }
 
-            if (timestamp.isAfter(startOfDay) && timestamp.isBefore(endOfDay)) {
+            if (timestamp.isAfter(startOfDay.subtract(const Duration(milliseconds: 1))) && 
+                timestamp.isBefore(endOfDay)) {
               final int cansDelivered = (map['cansDelivered'] as num?)?.toInt() ?? 0;
               final double amount = (map['amount'] as num?)?.toDouble() ?? 0.0;
               final double received = (map['amountReceived'] as num?)?.toDouble() ?? 0.0;
+              final String type = map['type'] as String? ?? '';
 
               // Total Sales should be the Bill Amount where actually goods were delivered
               if (cansDelivered > 0) {
@@ -57,7 +68,10 @@ class DashboardRepositoryImpl implements DashboardRepository {
               }
               
               // Total Collection is regardless of goods status (covers debt payments, deposits etc)
-              todayCollection += received;
+              // EXCEPT for Refunds, which shouldn't count as positive collection.
+              if (type != 'Refund') {
+                todayCollection += received;
+              }
               todayDeliveries += cansDelivered;
             }
           });
@@ -66,6 +80,7 @@ class DashboardRepositoryImpl implements DashboardRepository {
         return DashboardSummaryModel.fromValues(
           currentStock: currentStock,
           activeCustomers: activeCount,
+          inactiveCustomers: inactiveCount,
           todaySales: todaySales,
           todayCollection: todayCollection,
           todayDeliveries: todayDeliveries,

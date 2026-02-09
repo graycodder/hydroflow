@@ -4,6 +4,7 @@ class DashboardSummaryModel extends DashboardSummary {
   const DashboardSummaryModel({
     required super.currentStock,
     required super.activeCustomers,
+    required super.inactiveCustomers,
     required super.todaySales,
     required super.todayCollection,
     required super.todayDeliveries,
@@ -12,6 +13,7 @@ class DashboardSummaryModel extends DashboardSummary {
   factory DashboardSummaryModel.fromValues({
     required int currentStock,
     required int activeCustomers,
+    required int inactiveCustomers,
     required double todaySales,
     required double todayCollection,
     required int todayDeliveries,
@@ -19,6 +21,7 @@ class DashboardSummaryModel extends DashboardSummary {
     return DashboardSummaryModel(
       currentStock: currentStock,
       activeCustomers: activeCustomers,
+      inactiveCustomers: inactiveCustomers,
       todaySales: todaySales,
       todayCollection: todayCollection,
       todayDeliveries: todayDeliveries,
@@ -29,6 +32,7 @@ class DashboardSummaryModel extends DashboardSummary {
     return {
       'currentStock': currentStock,
       'activeCustomers': activeCustomers,
+      'inactiveCustomers': inactiveCustomers,
       'todaySales': todaySales,
       'todayCollection': todayCollection,
       'todayDeliveries': todayDeliveries,
