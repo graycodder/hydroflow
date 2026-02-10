@@ -31,8 +31,13 @@ final router = GoRouter(
       return '/update';
     }
 
+    // Allow splash to stay if AuthInitial or AuthLoading (implied by not matching other states)
+    if (authState is AuthInitial || authState is AuthLoading) {
+      return null; 
+    }
+
     if (authState is AuthUnauthenticated) {
-      if (loggingIn || splashing || updating) return null;
+      if (loggingIn || updating) return null;
       return '/login';
     }
 
