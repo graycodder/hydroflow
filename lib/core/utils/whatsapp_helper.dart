@@ -1,3 +1,4 @@
+import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class WhatsappHelper {
@@ -23,36 +24,30 @@ class WhatsappHelper {
       sanitizedPhone = '91$sanitizedPhone';
     }
 
-    final String status = isPaid ? "PAID" : "PARTIAL/CREDIT";
-    // Format date similar to PDF
-    final String dateStr = "${date.day}/${date.month}/${date.year}"; 
-    
-    final String paymentDetails = amountReceived >= amount
-         ? "💰 *Total Bill:* ₹${amount.toInt()}\n✅ *Amount Paid:* ₹${amountReceived.toInt()}"
-         : "💰 *Total Bill:* ₹${amount.toInt()}\n💵 *Amount Paid:* ₹${amountReceived.toInt()}\n⚠️ *Current Due:* ₹${(amount - amountReceived).toInt()}";
+    // Format date: Feb 26, 2026
+    final String dateStr = DateFormat('MMM dd, yyyy').format(date);
 
     final String message = '''
-🧾 *HydroFlow Pro - Digital Receipt*
-📅 Date: $dateStr
+💧 *Water Delivery* ☑️
+💧 *Bill Details* 📦
 
-👤 *Customer:* $customerName
+*To:* $customerName
+*Date:* $dateStr
+*Order:*
+  $delivered x 20L Water Can
+  $returned x 20L Empty Can (Returned)
 
---- 📦 *Bottle Exchange* ---
-🔹 Delivered: $delivered cans
-🔹 Returned: $returned cans
-🔹 Bottle Balance: $bottleBalance
+*Charges:*
+Water Cost: ₹${amount.toInt()}
+Subtotal: ₹${amount.toInt()}
+*Amount Paid:* $paymentMode
+Scan & Pay: UPI ₹${amount.toInt()}
 
---- 💳 *Payment Details* ---
-$paymentDetails
-Payment Mode: $paymentMode
+*Notes:*
+* Enjoy your clean water!
+Thank you for your order!
 
---- 📒 *Account Summary* ---
-Prev Balance: ₹${oldBalance.toInt()}
-*Total Pending:* ₹${newBalance.toInt()}
-
-✅ Status: $status
-
-Thank you for choosing HydroFlow Pro!
+*Total Due:* ₹${newBalance.toInt()} ${newBalance <= 0 ? '✅' : ''}
 ''';
 
     final Uri whatsappUrl = Uri.parse(

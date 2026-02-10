@@ -425,10 +425,46 @@ class TransactionReceiptDialog extends StatelessWidget {
                     SizedBox(
                       width: double.infinity,
                       child: ElevatedButton.icon(
+                        onPressed: () {
+                           // Balance Logic (Same as PDF)
+                           final bill = (transaction.cansDelivered > 0) ? transaction.amount : 0.0;
+                           final paid = transaction.amountReceived;
+                           final change = bill - paid;
+                           final newBal = customer.pendingBalance; 
+                           final oldBal = newBal - change;
+
+                          WhatsappHelper.sendReceipt(
+                            phone: customer.phone,
+                            customerName: customer.name,
+                            delivered: transaction.cansDelivered,
+                            returned: transaction.emptyCollected,
+                            bottleBalance: customer.bottleBalance,
+                            amount: transaction.amount,
+                            amountReceived: transaction.amountReceived,
+                            isPaid: transaction.amountReceived >= transaction.amount,
+                            oldBalance: oldBal,
+                            newBalance: newBal,
+                            paymentMode: transaction.paymentMode,
+                            date: transaction.timestamp,
+                          );
+                        },
+                        icon: const Icon(Icons.send), 
+                        label: const Text('Send Text Receipt via WhatsApp'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF00C853),
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    SizedBox(
+                      width: double.infinity,
+                      child: OutlinedButton.icon(
                         onPressed: () async {
-                           final isCredit = transaction.paymentMode == 'Credit';
-                           final currentVisibleBalance = customer.pendingBalance; // This might be pre-update state
-                           
                            // Logic for PDF Balance:
                            // We assume customer.pendingBalance is UPDATED (New Balance) because BLoC stream updates state.
                            // So New Balance = customer.pendingBalance
@@ -457,45 +493,6 @@ class TransactionReceiptDialog extends StatelessWidget {
                         },
                         icon: const Icon(Icons.picture_as_pdf),
                         label: const Text('Share PDF Receipt'),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF00C853),
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    SizedBox(
-                      width: double.infinity,
-                      child: OutlinedButton.icon(
-                        onPressed: () {
-                           // Balance Logic (Same as PDF)
-                           final bill = (transaction.cansDelivered > 0) ? transaction.amount : 0.0;
-                           final paid = transaction.amountReceived;
-                           final change = bill - paid;
-                           final newBal = customer.pendingBalance; 
-                           final oldBal = newBal - change;
-
-                          WhatsappHelper.sendReceipt(
-                            phone: customer.phone,
-                            customerName: customer.name,
-                            delivered: transaction.cansDelivered,
-                            returned: transaction.emptyCollected,
-                            bottleBalance: customer.bottleBalance,
-                            amount: transaction.amount,
-                            amountReceived: transaction.amountReceived,
-                            isPaid: transaction.amountReceived >= transaction.amount,
-                            oldBalance: oldBal,
-                            newBalance: newBal,
-                            paymentMode: transaction.paymentMode,
-                            date: transaction.timestamp,
-                          );
-                        },
-                        icon: const Icon(Icons.send), 
-                        label: const Text('Send Text Receipt via WhatsApp'),
                         style: OutlinedButton.styleFrom(
                           foregroundColor: Colors.black,
                           padding: const EdgeInsets.symmetric(vertical: 12),
@@ -508,7 +505,11 @@ class TransactionReceiptDialog extends StatelessWidget {
                     ),
                     const SizedBox(height: 16),
                     TextButton(
-                      onPressed: () => Navigator.pop(context),
+                      onPressed: () {
+                        // Ensure keyboard stays hidden when closing dialog
+                        FocusScope.of(context).unfocus();
+                        Navigator.pop(context);
+                      },
                       child: const Text(
                         'Close',
                         style: TextStyle(
