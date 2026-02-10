@@ -12,6 +12,7 @@ import 'package:hydroflow/features/transactions/domain/entities/transaction_enti
 import 'package:hydroflow/features/transactions/presentation/bloc/delivery_bloc.dart';
 import 'package:hydroflow/features/transactions/presentation/bloc/delivery_event.dart';
 import 'package:hydroflow/features/transactions/presentation/bloc/delivery_state.dart';
+import 'package:hydroflow/core/widgets/hydro_flow_loader.dart';
 import 'package:hydroflow/features/transactions/presentation/widgets/transaction_receipt_dialog.dart';
 
 class DeliveryPage extends StatelessWidget {
@@ -93,22 +94,11 @@ class _DeliveryViewState extends State<DeliveryView> {
         }
 
         // 2. Handle specific actions based on status transitions
-        if (state.status == DeliveryStatus.submitting) {
-          _showLoadingDialog(context);
-        } else if (state.status == DeliveryStatus.failure) {
-          // Dismiss loader ONLY IF one was shown (submitting was previous)
-          if (ModalRoute.of(context)?.isCurrent == false) {
-             Navigator.of(context, rootNavigator: true).pop();
-          }
-          
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(state.errorMessage ?? 'An error occurred')),
-          );
-        } else if (state.status == DeliveryStatus.submissionSuccess) {
-            // Dismiss loader ONLY IF one was shown
-            if (ModalRoute.of(context)?.isCurrent == false) {
-               Navigator.of(context, rootNavigator: true).pop();
-            }
+          if (state.status == DeliveryStatus.submitting) {
+            HydroFlowLoader.show(context, message: 'Submitting Transaction...');
+          } else if (state.status == DeliveryStatus.submissionSuccess) {
+            HydroFlowLoader.hide(context);
+            _amountReceivedController.clear();
             
             FocusScope.of(context).unfocus();
             if (state.todayTransactions.isNotEmpty) {
@@ -126,6 +116,12 @@ class _DeliveryViewState extends State<DeliveryView> {
                );
             }
             _resetForm();
+        } else if (state.status == DeliveryStatus.failure) {
+          HydroFlowLoader.hide(context);
+          
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(state.errorMessage ?? 'An error occurred')),
+          );
         }
       },
       builder: (context, state) {
@@ -137,7 +133,7 @@ class _DeliveryViewState extends State<DeliveryView> {
           backgroundColor: Colors.grey[50],
             appBar: const HydroFlowAppBar(),
           body: state.status == DeliveryStatus.loading 
-            ? const Center(child: CircularProgressIndicator())
+            ? const HydroFlowLoader(message: 'Syncing Delivery Data...', isOverlay: false)
             : SingleChildScrollView(
                 padding: const EdgeInsets.all(16.0),
                 child: Column(
@@ -637,6 +633,7 @@ class _DeliveryViewState extends State<DeliveryView> {
       final received = _paymentMode == 'Credit' ? 0.0 : (double.tryParse(_amountReceivedController.text) ?? 0);
       final cans = int.tryParse(_fullCansController.text) ?? 0;
 
+      FocusScope.of(context).unfocus();
       showDialog(
         context: context,
         builder: (context) => AlertDialog(
@@ -701,23 +698,5 @@ class _DeliveryViewState extends State<DeliveryView> {
       _paymentMode = ''; // Clear selection
       // Selected customer is reset by BLoC state change
     });
-  }
-
-  void _showLoadingDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => AlertDialog(
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const CircularProgressIndicator(),
-            const SizedBox(height: 16),
-            Text('Submitting delivery...', 
-              style: Theme.of(context).textTheme.bodyMedium),
-          ],
-        ),
-      ),
-    );
   }
 }

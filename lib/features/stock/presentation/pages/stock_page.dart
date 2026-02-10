@@ -9,6 +9,7 @@ import 'package:hydroflow/features/stock/presentation/bloc/stock_bloc.dart';
 import 'package:hydroflow/features/stock/presentation/bloc/stock_event.dart';
 import 'package:hydroflow/features/stock/presentation/bloc/stock_state.dart';
 import 'package:hydroflow/core/widgets/hydro_flow_app_bar.dart';
+import 'package:hydroflow/core/widgets/hydro_flow_loader.dart';
 
 class StockPage extends StatefulWidget {
   const StockPage({super.key});
@@ -44,7 +45,12 @@ class _StockPageState extends State<StockPage> {
       },
       child: BlocListener<StockBloc, StockState>(
         listener: (context, state) {
-          if (state is StockActionSuccess) {
+          if (state is StockLoading) {
+            FocusManager.instance.primaryFocus?.unfocus();
+            HydroFlowLoader.show(context, message: 'Updating Stock...');
+          } else if (state is StockActionSuccess) {
+            HydroFlowLoader.hide(context);
+            FocusManager.instance.primaryFocus?.unfocus();
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(content: Text(state.message), backgroundColor: Colors.green),
             );
@@ -54,6 +60,8 @@ class _StockPageState extends State<StockPage> {
               _isLoadStockExpanded = false;
             });
           } else if (state is StockFailure) {
+            HydroFlowLoader.hide(context);
+            FocusManager.instance.primaryFocus?.unfocus();
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(content: Text(state.error), backgroundColor: Colors.red),
             );
@@ -331,6 +339,7 @@ class _StockPageState extends State<StockPage> {
                                   const SizedBox(height: 8),
                                   TextFormField(
                                     controller: _loadStockController,
+                                    autofocus: false,
                                     keyboardType: TextInputType.number,
                                     decoration: InputDecoration(
                                       hintText: 'Enter quantity',
@@ -355,6 +364,7 @@ class _StockPageState extends State<StockPage> {
                                                 final qty = int.tryParse(qtyText) ?? 0;
                                                 if (qty <= 0) return;
 
+                                                FocusManager.instance.primaryFocus?.unfocus();
                                                 showDialog(
                                                   context: context,
                                                   builder: (dialogContext) => AlertDialog(
@@ -365,11 +375,12 @@ class _StockPageState extends State<StockPage> {
                                                         onPressed: () => Navigator.pop(dialogContext),
                                                         child: const Text('Cancel'),
                                                       ),
-                                                      ElevatedButton(
-                                                        onPressed: () {
-                                                          context.read<StockBloc>().add(StockLoadRequested(salesmanId: salesman.id, quantity: qty));
-                                                          Navigator.pop(dialogContext);
-                                                        },
+                                                        ElevatedButton(
+                                                          onPressed: () {
+                                                            FocusManager.instance.primaryFocus?.unfocus();
+                                                            Navigator.pop(dialogContext);
+                                                            context.read<StockBloc>().add(StockLoadRequested(salesmanId: salesman.id, quantity: qty));
+                                                          },
                                                         style: ElevatedButton.styleFrom(backgroundColor: Colors.black),
                                                         child: const Text('Confirm', style: TextStyle(color: Colors.white)),
                                                       ),
@@ -485,6 +496,7 @@ class _StockPageState extends State<StockPage> {
                                       final qty = int.tryParse(qtyText) ?? 0;
                                       if (qty <= 0) return;
 
+                                      FocusManager.instance.primaryFocus?.unfocus();
                                       showDialog(
                                         context: context,
                                         builder: (dialogContext) => AlertDialog(
@@ -495,11 +507,12 @@ class _StockPageState extends State<StockPage> {
                                               onPressed: () => Navigator.pop(dialogContext),
                                               child: const Text('Cancel'),
                                             ),
-                                            ElevatedButton(
-                                              onPressed: () {
-                                                context.read<StockBloc>().add(StockDamagedReported(salesmanId: salesman.id, quantity: qty));
-                                                Navigator.pop(dialogContext);
-                                              },
+                                              ElevatedButton(
+                                                onPressed: () {
+                                                  FocusManager.instance.primaryFocus?.unfocus();
+                                                  Navigator.pop(dialogContext);
+                                                  context.read<StockBloc>().add(StockDamagedReported(salesmanId: salesman.id, quantity: qty));
+                                                },
                                               style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
                                               child: const Text('Confirm', style: TextStyle(color: Colors.white)),
                                             ),
@@ -554,6 +567,7 @@ class _StockPageState extends State<StockPage> {
             const SizedBox(height: 16),
             TextFormField(
               controller: controller,
+              autofocus: false,
               keyboardType: TextInputType.number,
               decoration: const InputDecoration(
                 labelText: 'Opening Stock',
@@ -574,9 +588,10 @@ class _StockPageState extends State<StockPage> {
           ),
           ElevatedButton(
             onPressed: () {
+              FocusManager.instance.primaryFocus?.unfocus();
               final qty = int.tryParse(controller.text) ?? 0;
-              context.read<StockBloc>().add(StockOpeningStockSet(salesmanId: salesmanId, quantity: qty));
               Navigator.pop(dialogContext);
+              context.read<StockBloc>().add(StockOpeningStockSet(salesmanId: salesmanId, quantity: qty));
             },
             child: const Text('Updated'),
           ),
@@ -601,6 +616,7 @@ class _StockPageState extends State<StockPage> {
             const SizedBox(height: 12),
             TextFormField(
               controller: controller,
+              autofocus: false,
               keyboardType: TextInputType.number,
               decoration: const InputDecoration(
                 labelText: 'Actual Count',
@@ -622,9 +638,10 @@ class _StockPageState extends State<StockPage> {
           ),
           ElevatedButton(
             onPressed: () {
+              FocusManager.instance.primaryFocus?.unfocus();
               final qty = int.tryParse(controller.text) ?? 0;
-              context.read<StockBloc>().add(StockReconciled(salesmanId: salesmanId, physicalCount: qty));
               Navigator.pop(dialogContext);
+              context.read<StockBloc>().add(StockReconciled(salesmanId: salesmanId, physicalCount: qty));
             },
             child: const Text('Finalize Reconciliation'),
           ),
@@ -680,4 +697,6 @@ class _StockPageState extends State<StockPage> {
       ),
     );
   }
+
+  // _showLoadingDialog removed in favor of HydroFlowLoader.show
 }
