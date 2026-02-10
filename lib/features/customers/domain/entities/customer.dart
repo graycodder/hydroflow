@@ -27,6 +27,34 @@ class Customer extends Equatable {
     this.paymentMode = 'Cash',
   });
 
+  Customer copyWith({
+    String? id,
+    String? salesmanId,
+    String? name,
+    String? phone,
+    String? address,
+    String? status,
+    double? securityDeposit,
+    double? pendingBalance,
+    int? bottleBalance,
+    bool? isRefunded,
+    String? paymentMode,
+  }) {
+    return Customer(
+      id: id ?? this.id,
+      salesmanId: salesmanId ?? this.salesmanId,
+      name: name ?? this.name,
+      phone: phone ?? this.phone,
+      address: address ?? this.address,
+      status: status ?? this.status,
+      securityDeposit: securityDeposit ?? this.securityDeposit,
+      pendingBalance: pendingBalance ?? this.pendingBalance,
+      bottleBalance: bottleBalance ?? this.bottleBalance,
+      isRefunded: isRefunded ?? this.isRefunded,
+      paymentMode: paymentMode ?? this.paymentMode,
+    );
+  }
+
   @override
   List<Object?> get props => [
     id,

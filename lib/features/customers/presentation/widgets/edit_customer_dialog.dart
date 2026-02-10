@@ -5,6 +5,7 @@ import 'package:hydroflow/features/customers/domain/entities/customer.dart';
 import 'package:hydroflow/features/customers/presentation/bloc/customer_bloc.dart';
 import 'package:hydroflow/features/customers/presentation/bloc/customer_event.dart';
 import 'package:hydroflow/features/customers/presentation/bloc/customer_state.dart';
+import 'package:hydroflow/core/widgets/hydro_flow_loader.dart';
 
 class EditCustomerDialog extends StatefulWidget {
   final Customer customer;
@@ -61,13 +62,10 @@ class _EditCustomerDialogState extends State<EditCustomerDialog> {
       listener: (context, state) {
         if (_isSubmitting) {
           if (state.status == CustomerStatus.submitting) {
-            _showLoadingDialog(context);
+            HydroFlowLoader.show(context, message: 'Saving Changes...');
           } else if (state.status == CustomerStatus.failure || 
                      (state.status == CustomerStatus.success && state.successMessage != null)) {
-            // Dismiss loader if showing
-            if (ModalRoute.of(context)?.isCurrent == false) {
-               Navigator.of(context, rootNavigator: true).pop();
-            }
+            HydroFlowLoader.hide(context);
             if (state.status == CustomerStatus.success) {
               _isSubmitting = false;
               Navigator.of(context).pop(); // Close edit dialog
@@ -303,24 +301,6 @@ class _EditCustomerDialogState extends State<EditCustomerDialog> {
       ),
     ),
   );
-}
-
-  void _showLoadingDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => AlertDialog(
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const CircularProgressIndicator(color: Color(0xFF2962FF)),
-            const SizedBox(height: 16),
-            Text('Processing...', 
-              style: GoogleFonts.poppins(fontSize: 14)),
-          ],
-        ),
-      ),
-    );
   }
 
   Widget _buildLabel(String text, {bool isMandatory = false}) {

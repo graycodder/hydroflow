@@ -6,6 +6,7 @@ import 'package:hydroflow/features/customers/presentation/bloc/customer_bloc.dar
 import 'package:hydroflow/features/customers/presentation/bloc/customer_event.dart';
 import 'package:hydroflow/features/customers/presentation/bloc/customer_state.dart';
 import 'package:hydroflow/features/customers/presentation/widgets/edit_customer_dialog.dart';
+import 'package:hydroflow/core/widgets/hydro_flow_loader.dart';
 
 class CustomerDetailsDialog extends StatefulWidget {
   final Customer customer;
@@ -38,13 +39,10 @@ class _CustomerDetailsDialogState extends State<CustomerDetailsDialog> {
       listener: (context, state) {
         if (_isSubmitting) {
           if (state.status == CustomerStatus.submitting) {
-             _showLoadingDialog(context);
+            HydroFlowLoader.show(context, message: 'Processing...');
           } else if (state.status == CustomerStatus.failure || 
                    (state.status == CustomerStatus.success && state.successMessage != null)) {
-            // Dismiss loader if showing
-            if (ModalRoute.of(context)?.isCurrent == false) {
-               Navigator.of(context, rootNavigator: true).pop();
-            }
+            HydroFlowLoader.hide(context);
             _isSubmitting = false;
           }
         }
@@ -401,7 +399,7 @@ class _CustomerDetailsDialogState extends State<CustomerDetailsDialog> {
                       showDialog(
                         context: context,
                         builder: (context) => EditCustomerDialog(
-                          customer: widget.customer,
+                          customer: widget.customer.copyWith(status: isActive ? 'Active' : 'Inactive'),
                           customerBloc: widget.customerBloc,
                         ),
                       );
@@ -424,23 +422,5 @@ class _CustomerDetailsDialogState extends State<CustomerDetailsDialog> {
       ),
     ),
   );
-}
-
-  void _showLoadingDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => AlertDialog(
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const CircularProgressIndicator(color: Color(0xFF2962FF)),
-            const SizedBox(height: 16),
-            Text('Processing...', 
-              style: GoogleFonts.poppins(fontSize: 14)),
-          ],
-        ),
-      ),
-    );
   }
 }
