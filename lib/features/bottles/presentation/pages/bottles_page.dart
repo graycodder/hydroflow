@@ -10,6 +10,7 @@ import 'package:hydroflow/features/bottles/presentation/bloc/bottle_event.dart';
 import 'package:hydroflow/features/bottles/presentation/bloc/bottle_state.dart';
 import 'package:hydroflow/features/customers/domain/entities/customer.dart';
 import 'package:hydroflow/core/widgets/hydro_flow_app_bar.dart';
+import 'package:hydroflow/core/widgets/hydro_flow_loader.dart';
 
 class BottlesPage extends StatefulWidget {
   const BottlesPage({super.key});
@@ -47,7 +48,7 @@ class _BottlesPageState extends State<BottlesPage> {
                 body: BlocBuilder<BottleBloc, BottleState>(
                   builder: (context, state) {
                     if (state is BottleLoading) {
-                      return const Center(child: CircularProgressIndicator());
+                      return const HydroFlowLoader(isOverlay: false);
                     } else if (state is BottleFailure) {
                       return Center(child: Text('Error: ${state.error}'));
                     } else if (state is BottleLoaded) {
@@ -294,7 +295,7 @@ class _BottlesPageState extends State<BottlesPage> {
               ),
             );
           }
-           return const Scaffold(body: Center(child: CircularProgressIndicator()));
+           return const Scaffold(body: HydroFlowLoader(isOverlay: false));
         },
       ),
     );

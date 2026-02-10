@@ -473,24 +473,24 @@ class MonthlyReportView extends StatelessWidget {
             ),
           ),
         ),
-        const SizedBox(height: 12),
-        SizedBox(
-          width: double.infinity,
-          height: 50,
-          child: OutlinedButton.icon(
-            onPressed: onSharePressed,
-            icon: const Icon(Icons.people_outline, color: Colors.black),
-            label: const Text(
-              "Share with Admin",
-              style: TextStyle(color: Colors.black, fontSize: 16),
-            ),
-            style: OutlinedButton.styleFrom(
-              backgroundColor: Colors.white,
-              side: BorderSide(color: Colors.grey[300]!),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-            ),
-          ),
-        ),
+      //  const SizedBox(height: 12),
+        // SizedBox(
+        //   width: double.infinity,
+        //   height: 50,
+        //   child: OutlinedButton.icon(
+        //     onPressed: onSharePressed,
+        //     icon: const Icon(Icons.people_outline, color: Colors.black),
+        //     label: const Text(
+        //       "Share with Admin",
+        //       style: TextStyle(color: Colors.black, fontSize: 16),
+        //     ),
+        //     style: OutlinedButton.styleFrom(
+        //       backgroundColor: Colors.white,
+        //       side: BorderSide(color: Colors.grey[300]!),
+        //       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        //     ),
+        //   ),
+        // ),
       ],
     );
   }

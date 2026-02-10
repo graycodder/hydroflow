@@ -7,6 +7,7 @@ import 'package:hydroflow/core/widgets/app_bottom_bar.dart';
 import 'package:hydroflow/features/dashboard/presentation/bloc/dashboard_bloc.dart';
 import 'package:hydroflow/features/dashboard/presentation/bloc/dashboard_state.dart';
 import 'package:hydroflow/core/widgets/hydro_flow_app_bar.dart';
+import 'package:hydroflow/core/widgets/hydro_flow_loader.dart';
 import 'package:intl/intl.dart';
 
 class DashboardPage extends StatefulWidget {
@@ -243,10 +244,10 @@ class _DashboardPageState extends State<DashboardPage> {
                         );
                       }
                       if (dashboardState is DashboardLoading) {
-                        return const Center(child: Padding(
+                        return const Padding(
                           padding: EdgeInsets.all(32.0),
-                          child: CircularProgressIndicator(),
-                        ));
+                          child: HydroFlowLoader(isOverlay: false),
+                        );
                       }
                       if (dashboardState is DashboardError) {
                         return Center(child: Text('Error: ${dashboardState.message}'));
@@ -260,7 +261,7 @@ class _DashboardPageState extends State<DashboardPage> {
             bottomNavigationBar: const AppBottomBar(currentIndex: 0),
           );
         }
-        return const Center(child: CircularProgressIndicator());
+        return const HydroFlowLoader(isOverlay: false);
       },
     );
   }

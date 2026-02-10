@@ -6,6 +6,7 @@ import 'package:hydroflow/features/auth/presentation/bloc/auth_state.dart';
 import 'package:hydroflow/features/reports/presentation/bloc/reports_bloc.dart';
 import 'package:hydroflow/core/widgets/app_bottom_bar.dart';
 import 'package:hydroflow/core/widgets/hydro_flow_app_bar.dart';
+import 'package:hydroflow/core/widgets/hydro_flow_loader.dart';
 import '../widgets/daily_report_view.dart';
 import '../widgets/monthly_report_view.dart';
 
@@ -43,7 +44,7 @@ class _ReportsPageState extends State<ReportsPage> {
                   child: BlocBuilder<ReportsBloc, ReportsState>(
                     builder: (context, state) {
                       if (state is ReportsLoading) {
-                        return const Center(child: CircularProgressIndicator());
+                        return const HydroFlowLoader(isOverlay: false);
                       } else if (state is ReportsFailure) {
                         return Center(child: Text('Error: ${state.message}'));
                       } else if (state is ReportsLoaded) {
