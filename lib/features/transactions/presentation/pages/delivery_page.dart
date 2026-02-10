@@ -113,10 +113,10 @@ class _DeliveryViewState extends State<DeliveryView> {
             FocusScope.of(context).unfocus();
             if (state.todayTransactions.isNotEmpty) {
                final tx = state.todayTransactions.first;
-               final customer = state.customers.firstWhere(
-                 (c) => c.id == tx.customerId,
-                 orElse: () => const Customer(id: '', salesmanId: '', name: 'Unknown', phone: '', address: '', status: '', securityDeposit: 0, pendingBalance: 0, bottleBalance: 0),
-               );
+                final customer = state.customers.cast<Customer>().firstWhere(
+                  (c) => c.id == tx.customerId,
+                  orElse: () => const Customer(id: '', salesmanId: '', name: 'Unknown', phone: '', address: '', status: '', securityDeposit: 0, pendingBalance: 0, bottleBalance: 0),
+                );
                showDialog(
                  context: context,
                  builder: (_) => TransactionReceiptDialog(
@@ -136,25 +136,27 @@ class _DeliveryViewState extends State<DeliveryView> {
         return Scaffold(
           backgroundColor: Colors.grey[50],
             appBar: const HydroFlowAppBar(),
-          body: SingleChildScrollView(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                // Stats Header
-              //  _buildStatsHeader(state),
-               // const SizedBox(height: 24),
-                
-                // Form Card
-                _buildDeliveryForm(context, state, salesmanId),
-                
-                const SizedBox(height: 24),
-                
-                // Transactions List
-                _buildTransactionsList(state),
-              ],
-            ),
-          ),
+          body: state.status == DeliveryStatus.loading 
+            ? const Center(child: CircularProgressIndicator())
+            : SingleChildScrollView(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    // Stats Header
+                  //  _buildStatsHeader(state),
+                   // const SizedBox(height: 24),
+                    
+                    // Form Card
+                    _buildDeliveryForm(context, state, salesmanId),
+                    
+                    const SizedBox(height: 24),
+                    
+                    // Transactions List
+                    _buildTransactionsList(state),
+                  ],
+                ),
+              ),
           bottomNavigationBar: AppBottomBar(currentIndex: 4), // Index 4 for Delivery
         );
       },
@@ -235,10 +237,7 @@ class _DeliveryViewState extends State<DeliveryView> {
              // Customer Dropdown
              // Customer Dropdown with Search
              DropdownSearch<Customer>(
-               items: (filter, loadProps) async {
-                 // Add artificial delay to show loader
-                 await Future.delayed(const Duration(milliseconds: 300));
-                 
+               items: (filter, loadProps) {
                  final activeCustomers = state.customers.where((c) => c.status == 'Active').toList();
                  if (filter.isEmpty) return activeCustomers;
                  
@@ -271,6 +270,7 @@ class _DeliveryViewState extends State<DeliveryView> {
                ),
                popupProps: PopupProps.menu(
                  showSearchBox: true,
+                 searchDelay: Duration.zero,
                  searchFieldProps: const TextFieldProps(
                    autofocus: false,
                    decoration: InputDecoration(
@@ -516,7 +516,7 @@ class _DeliveryViewState extends State<DeliveryView> {
               separatorBuilder: (context, index) => const SizedBox(height: 12),
               itemBuilder: (context, index) {
                 final tx = state.todayTransactions[index];
-                final customer = state.customers.firstWhere(
+                final customer = state.customers.cast<Customer>().firstWhere(
                     (c) => c.id == tx.customerId, 
                     orElse: () => const Customer(id: '', salesmanId: '', name: 'Unknown', phone: '', address: '', status: '', securityDeposit: 0, pendingBalance: 0, bottleBalance: 0)
                 );

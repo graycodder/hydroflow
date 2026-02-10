@@ -35,13 +35,3 @@ class SubmitTransaction extends DeliveryEvent {
   @override
   List<Object?> get props => [transaction];
 }
-
-class DeliveryDataUpdated extends DeliveryEvent {
-  final List<Customer>? customers;
-  final List<TransactionEntity>? transactions;
-
-  const DeliveryDataUpdated({this.customers, this.transactions});
-
-  @override
-  List<Object?> get props => [customers, transactions];
-}

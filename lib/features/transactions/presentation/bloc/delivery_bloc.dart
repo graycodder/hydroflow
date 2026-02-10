@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:rxdart/rxdart.dart';
 import 'package:hydroflow/features/transactions/presentation/bloc/delivery_event.dart';
 import 'package:hydroflow/features/transactions/presentation/bloc/delivery_state.dart';
 import 'package:hydroflow/features/transactions/domain/usecases/add_transaction_usecase.dart';
@@ -13,9 +14,6 @@ class DeliveryBloc extends Bloc<DeliveryEvent, DeliveryState> {
   final GetTodayTransactionsUseCase _getTodayTransactionsUseCase;
   final CustomerRepository _customerRepository;
   
-  StreamSubscription? _customersSubscription;
-  StreamSubscription? _transactionsSubscription;
-
   DeliveryBloc({
     required AddTransactionUseCase addTransactionUseCase,
     required GetTodayTransactionsUseCase getTodayTransactionsUseCase,
@@ -27,7 +25,6 @@ class DeliveryBloc extends Bloc<DeliveryEvent, DeliveryState> {
     on<LoadDeliveryPage>(_onLoadDeliveryPage);
     on<SelectCustomer>(_onSelectCustomer);
     on<SubmitTransaction>(_onSubmitTransaction);
-    on<DeliveryDataUpdated>(_onDeliveryDataUpdated);
   }
 
   Future<void> _onLoadDeliveryPage(
@@ -39,73 +36,40 @@ class DeliveryBloc extends Bloc<DeliveryEvent, DeliveryState> {
       clearSelectedCustomer: true,
     ));
     
-    // Cancel any existing subscriptions safely
-    try {
-      _customersSubscription?.cancel();
-      _transactionsSubscription?.cancel();
-    } catch (e) {
-      // Platform channels can be unstable during hot-restarts or navigation
-    }
+    final customerStream = _customerRepository.getCustomers(event.salesmanId);
+    final transactionStream = _getTodayTransactionsUseCase(event.salesmanId);
 
-    // Initialize Streams
-    // Strategy: We listen to both. When EITHER updates, we re-calculate stats.
-    // However, we need access to the "latest" of the OTHER stream to calculate stats correctly.
-    // Since we don't have rxdart CombineLatest, we can just rely on the BLoC state!
-    // The state effectively holds the "latest known" list of customers and transactions.
-    // So when Customers update, we use (New Customers, State Transactions).
-    // When Transactions update, we use (State Customers, New Transactions).
-    
-    // 1. Listen to Customers
-    _customersSubscription = _customerRepository.getCustomers(event.salesmanId).listen(
-      (customers) {
-        add(DeliveryDataUpdated(customers: customers));
-      },
-      onError: (error) {
-        // Handle error via event or directly if possible, but easier to just log or ignore for stream
-      }
-    );
+    await emit.forEach<Map<String, dynamic>>(
+      CombineLatestStream.combine2<List<Customer>, List<TransactionEntity>, Map<String, dynamic>>(
+        customerStream,
+        transactionStream,
+        (customers, transactions) => {
+          'customers': customers,
+          'transactions': transactions,
+        },
+      ),
+      onData: (data) {
+        final customers = data['customers'] as List<Customer>;
+        final transactions = data['transactions'] as List<TransactionEntity>;
 
-    // 2. Listen to Transactions
-    _transactionsSubscription = _getTodayTransactionsUseCase(event.salesmanId).listen(
-      (transactions) {
-        add(DeliveryDataUpdated(transactions: transactions));
+        // Handle Dropdown Sync: If customers updated, sync selectedCustomer reference
+        Customer? updatedSelectedCustomer = state.selectedCustomer;
+        if (updatedSelectedCustomer != null) {
+          updatedSelectedCustomer = customers.cast<Customer?>().firstWhere(
+            (c) => c?.id == updatedSelectedCustomer?.id,
+            orElse: () => updatedSelectedCustomer,
+          );
+        }
+
+        return _calculateUpdatedState(transactions, customers, updatedSelectedCustomer: updatedSelectedCustomer);
       },
-      onError: (error) {
-         // Handle error
-      }
+      onError: (e, stackTrace) => state.copyWith(
+        status: DeliveryStatus.failure,
+        errorMessage: e.toString(),
+      ),
     );
   }
   
-  Future<void> _onDeliveryDataUpdated(
-    DeliveryDataUpdated event,
-    Emitter<DeliveryState> emit,
-  ) async {
-    // Keep all customers so that the transaction list can map names even for inactive ones
-    final customers = event.customers ?? state.customers;
-
-    final transactions = event.transactions ?? state.todayTransactions;
-    
-    // Fix Dropdown Crash: If customers updated, sync selectedCustomer reference
-    Customer? updatedSelectedCustomer = state.selectedCustomer;
-    if (event.customers != null && updatedSelectedCustomer != null) {
-      // Find the same customer in the NEW list
-      updatedSelectedCustomer = customers.cast<Customer?>().firstWhere(
-        (c) => c?.id == updatedSelectedCustomer?.id,
-        orElse: () => updatedSelectedCustomer, // Fallback to current if missing
-      );
-    }
-
-    // Calculate stats
-    _calculateStats(emit, transactions, customers, updatedSelectedCustomer: updatedSelectedCustomer);
-  }
-  
-  @override
-  Future<void> close() {
-    _customersSubscription?.cancel();
-    _transactionsSubscription?.cancel();
-    return super.close();
-  }
-
   void _onSelectCustomer(
     SelectCustomer event,
     Emitter<DeliveryState> emit,
@@ -143,8 +107,7 @@ class DeliveryBloc extends Bloc<DeliveryEvent, DeliveryState> {
     }
   }
 
-  void _calculateStats(
-    Emitter<DeliveryState> emit,
+  DeliveryState _calculateUpdatedState(
     List<TransactionEntity> transactions,
     List<Customer> customers, {
     Customer? updatedSelectedCustomer,
@@ -155,28 +118,26 @@ class DeliveryBloc extends Bloc<DeliveryEvent, DeliveryState> {
     int delivered = 0;
     int returned = 0;
 
-    final txList = transactions.cast<dynamic>(); 
-
-    for (var tx in txList) {
+    for (var tx in transactions) {
        // Today's Sales should be based on actual amount RECEIVED (Cash + Online)
        // tx.amount is the total bill value, but sales metric usually means revenue collected.
        sales += tx.amountReceived;
        if (tx.paymentMode == 'Cash') cash += tx.amountReceived;
        if (tx.paymentMode == 'UPI' || tx.paymentMode == 'Online') upi += tx.amountReceived;
-       delivered += tx.cansDelivered as int;
-       returned += tx.emptyCollected as int;
+       delivered += tx.cansDelivered;
+       returned += tx.emptyCollected;
     }
 
-    emit(state.copyWith(
+    return state.copyWith(
       status: state.status == DeliveryStatus.submitting ? DeliveryStatus.submitting : DeliveryStatus.success,
-      customers: customers.cast(),
-      todayTransactions: txList.cast(),
+      customers: customers,
+      todayTransactions: transactions,
       selectedCustomer: updatedSelectedCustomer, // Sync the reference
       totalSales: sales,
       totalCash: cash,
       totalUpi: upi,
       totalDelivered: delivered,
       totalReturned: returned,
-    ));
+    );
   }
 }
