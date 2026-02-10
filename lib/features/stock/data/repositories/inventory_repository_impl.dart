@@ -14,6 +14,12 @@ class InventoryRepositoryImpl implements InventoryRepository {
     final dateKey = DateTime.now().toIso8601String().substring(0, 10).replaceAll('-', '_');
     final logRef = _database.ref().child('Stock_logs').child('LOG_${dateKey}_$salesmanId');
     
+    // Enable synchronization for today's logs
+    logRef.keepSynced(true);
+    
+    // Also keep the salesman's main stock record synced
+    _database.ref().child('Salesmen').child(salesmanId).child('currentStock').keepSynced(true);
+
     return logRef.onValue.map((event) {
       if (event.snapshot.exists && event.snapshot.value != null) {
         final data = Map<String, dynamic>.from(event.snapshot.value as Map);

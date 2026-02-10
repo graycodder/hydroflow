@@ -6,26 +6,26 @@ class GetBottleLedgerUseCase {
 
   GetBottleLedgerUseCase(this.repository);
 
-  Future<BottleLedgerStats> call(String salesmanId) async {
-    final customers = await repository.getCustomers(salesmanId).first;
+  Stream<BottleLedgerStats> call(String salesmanId) {
+    return repository.getCustomers(salesmanId).map((customers) {
+      int totalBottles = 0;
+      int highBalanceCount = 0;
 
-    int totalBottles = 0;
-    int highBalanceCount = 0;
-
-    for (var customer in customers) {
-      totalBottles += customer.bottleBalance;
-      if (customer.bottleBalance > 5) {
-        highBalanceCount++;
+      for (var customer in customers) {
+        totalBottles += customer.bottleBalance;
+        if (customer.bottleBalance > 5) {
+          highBalanceCount++;
+        }
       }
-    }
 
-    double avgBalance = customers.isEmpty ? 0.0 : totalBottles / customers.length;
+      double avgBalance = customers.isEmpty ? 0.0 : totalBottles / customers.length;
 
-    return BottleLedgerStats(
-      customers: customers,
-      totalBottles: totalBottles,
-      highBalanceCount: highBalanceCount,
-      avgBalance: avgBalance,
-    );
+      return BottleLedgerStats(
+        customers: customers,
+        totalBottles: totalBottles,
+        highBalanceCount: highBalanceCount,
+        avgBalance: avgBalance,
+      );
+    });
   }
 }

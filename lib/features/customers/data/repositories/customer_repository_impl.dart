@@ -12,6 +12,8 @@ class CustomerRepositoryImpl implements CustomerRepository {
   @override
   Stream<List<Customer>> getCustomers(String salesmanId) {
     final ref = _database.ref().child('Customers');
+    // Enable synchronization for this node to keep it ready in local cache
+    ref.keepSynced(true);
     // Query customers by salesmanId
     return ref.orderByChild('salesmanId').equalTo(salesmanId).onValue.map((event) {
       if (event.snapshot.exists) {
@@ -25,6 +27,7 @@ class CustomerRepositoryImpl implements CustomerRepository {
       return [];
     });
   }
+
   @override
   Future<void> addCustomer(Customer customer) async {
     try {
@@ -68,6 +71,29 @@ class CustomerRepositoryImpl implements CustomerRepository {
           'emptyCollected': 0,
           'whatsappReceiptSent': false,
           'notes': 'Initial Security Deposit',
+        });
+
+        // Update Stock Log Collection
+        final dateKey = DateTime.now().toIso8601String().substring(0, 10).replaceAll('-', '_');
+        final logRef = _database.ref().child('Stock_logs').child('LOG_${dateKey}_${customer.salesmanId}');
+        await logRef.runTransaction((Object? post) {
+          final logMap = post == null ? <String, dynamic>{} : Map<String, dynamic>.from(post as Map);
+          if (!logMap.containsKey('date')) {
+            logMap['date'] = DateTime.now().toIso8601String().substring(0, 10);
+            logMap['salesmanId'] = customer.salesmanId;
+          }
+          final currentColl = (logMap['todayCollection'] as num?)?.toDouble() ?? 0.0;
+          logMap['todayCollection'] = currentColl + customer.securityDeposit;
+          
+          if (customer.paymentMode == 'Cash') {
+            final currentCash = (logMap['cashCollected'] as num?)?.toDouble() ?? 0.0;
+            logMap['cashCollected'] = currentCash + customer.securityDeposit;
+          } else if (customer.paymentMode == 'Online' || customer.paymentMode == 'UPI') {
+            final currentOnline = (logMap['onlineCollected'] as num?)?.toDouble() ?? 0.0;
+            logMap['onlineCollected'] = currentOnline + customer.securityDeposit;
+          }
+          
+          return Transaction.success(logMap);
         });
       }
     } catch (e) {
@@ -172,6 +198,30 @@ class CustomerRepositoryImpl implements CustomerRepository {
             'notes': 'Security Deposit Decreased',
           });
         }
+
+        // Update Stock Log Collection
+        final dateKey = DateTime.now().toIso8601String().substring(0, 10).replaceAll('-', '_');
+        final logRef = _database.ref().child('Stock_logs').child('LOG_${dateKey}_${customer.salesmanId}');
+        await logRef.runTransaction((Object? post) {
+            final logMap = post == null ? <String, dynamic>{} : Map<String, dynamic>.from(post as Map);
+            if (!logMap.containsKey('date')) {
+              logMap['date'] = DateTime.now().toIso8601String().substring(0, 10);
+              logMap['salesmanId'] = customer.salesmanId;
+            }
+            final currentColl = (logMap['todayCollection'] as num?)?.toDouble() ?? 0.0;
+            // Deposit increase is (+) collection. Decrease/Refund is (-) collection.
+            logMap['todayCollection'] = currentColl + depositDiff;
+
+            if (customer.paymentMode == 'Cash') {
+              final currentCash = (logMap['cashCollected'] as num?)?.toDouble() ?? 0.0;
+              logMap['cashCollected'] = currentCash + depositDiff;
+            } else if (customer.paymentMode == 'Online' || customer.paymentMode == 'UPI') {
+              final currentOnline = (logMap['onlineCollected'] as num?)?.toDouble() ?? 0.0;
+              logMap['onlineCollected'] = currentOnline + depositDiff;
+            }
+
+            return Transaction.success(logMap);
+        });
       }
     } catch (e) {
       throw Exception('Failed to update customer: $e');
@@ -185,10 +235,6 @@ class CustomerRepositoryImpl implements CustomerRepository {
       final double pending = customer.pendingBalance;
       
       // Calculate adjusted amounts
-      // Scenario 1: Deposit (500) > Pending (200) -> Refund 300. Pending becomes 0.
-      // Scenario 2: Deposit (200) < Pending (500) -> Refund 0. Pending becomes 300. Used 200.
-      // Scenario 3: Deposit (500) == Pending (500) -> Refund 0. Pending 0.
-      
       double refundAmount = 0;
       double adjustedPending = 0;
       double amountAdjusted = 0; // Amount of deposit used to pay pending
@@ -242,9 +288,6 @@ class CustomerRepositoryImpl implements CustomerRepository {
 
       // B. Adjustment Transaction (if deposit covered pending)
       if (amountAdjusted > 0) {
-        // We record this as a "Payment Received" 
-        // Logic: Salesman collected 'amountAdjusted' from Deposit to pay Bill.
-        
         final adjustRef = _database.ref().child('Transactions').push();
         await adjustRef.set({
           'salesmanId': customer.salesmanId,
@@ -261,27 +304,23 @@ class CustomerRepositoryImpl implements CustomerRepository {
         });
       }
       
-      // Note: If we just reduce Total Deposits Held (-500), and Record Refund (-300) + Payment (+200).
-      // Cash Flow:
-      // Refund: Money OUT (-300).
-      // Payment: Money in?? No, this money was already held. 
-      // It's a transfer from "Held Deposit" to "Sales Revenue/Pending Collection".
-      // Actually, since "Total Deposits Held" DECREASES by 500.
-      // And "Cash In Hand" = Cash Sales + Deposits - Refunds.
-      
-      // If we record Payment (+200) as "Cash"?
-      // Cash In Hand += 200.
-      // Refund (-300).
-      // Deposits Held (-500). -> This field is Balance, not Flow.
-      
-      // Let's check Report Logic for Cash In Hand:
-      // Cash In Hand = Cash Sales + Deposits Collected - Refunds.
-      
-      // If paymentMode is 'Deposit Adjustment', it is NOT 'Cash' or 'Online'.
-      // So `cashSales` will NOT increase. Correct.
-      // So Cash In Hand remains: Previous - 300 (Refund). 
-      // This is CORRECT. You pay out 300 cash.
-      // The 200 used to settle? It just reduces pending balance. No cash moves.
+      // Update Stock Log for Settlement
+      final dateKey = DateTime.now().toIso8601String().substring(0, 10).replaceAll('-', '_');
+      final logRef = _database.ref().child('Stock_logs').child('LOG_${dateKey}_${customer.salesmanId}');
+      await logRef.runTransaction((Object? post) {
+          final logMap = post == null ? <String, dynamic>{} : Map<String, dynamic>.from(post as Map);
+          if (!logMap.containsKey('date')) {
+            logMap['date'] = DateTime.now().toIso8601String().substring(0, 10);
+            logMap['salesmanId'] = customer.salesmanId;
+          }
+          final currentColl = (logMap['todayCollection'] as num?)?.toDouble() ?? 0.0;
+          logMap['todayCollection'] = currentColl - refundAmount;
+          
+          final currentCash = (logMap['cashCollected'] as num?)?.toDouble() ?? 0.0;
+          logMap['cashCollected'] = currentCash - refundAmount;
+
+          return Transaction.success(logMap);
+      });
       
     } catch (e) {
       throw Exception('Failed to settle and deactivate customer: $e');

@@ -2,8 +2,6 @@ import 'package:firebase_database/firebase_database.dart';
 import 'package:hydroflow/features/transactions/domain/entities/transaction_entity.dart';
 import 'package:hydroflow/features/transactions/domain/repositories/transaction_repository.dart';
 import 'package:hydroflow/features/transactions/data/models/transaction_model.dart';
-import 'package:hydroflow/features/customers/data/models/customer_model.dart'; // Needed to fetch/update customer
-import 'package:hydroflow/features/auth/data/models/salesman_model.dart'; // Needed to fetch/update salesman
 
 class TransactionRepositoryImpl implements TransactionRepository {
   final FirebaseDatabase _database;
@@ -159,10 +157,6 @@ class TransactionRepositoryImpl implements TransactionRepository {
         // If delivery (cans > 0), Value = Amount.
         // If collection only (cans == 0), Value = 0 (we ignore the 'amount' field as bill value).
         
-        final double effectiveBillValue = (transaction.cansDelivered > 0 || transaction.emptyCollected > 0) 
-            ? transaction.amount 
-            : 0.0; 
-            
         // Wait, if I return bottles (emptyCollected > 0) and NO delivery?
         // Usually that's 0 value unless we refund?
         // Let's assume `amount` entered by user IS the Bill Value.
@@ -199,7 +193,6 @@ class TransactionRepositoryImpl implements TransactionRepository {
         final salesmanMap = Map<String, dynamic>.from(post as Map);
         
         // Decrease Full Cans (currentStock)
-        int currentStock = (salesmanMap['currentStock'] as num?)?.toInt() ?? 0;
         salesmanMap.update('currentStock', (value) => (value as num).toInt() - transaction.cansDelivered, ifAbsent: () => 0);
         
         return Transaction.success(salesmanMap);
@@ -231,6 +224,9 @@ class TransactionRepositoryImpl implements TransactionRepository {
         final currentEmpty = (logMap['totalEmptyCollected'] as num?)?.toInt() ?? 0;
         final currentCash = (logMap['cashCollected'] as num?)?.toDouble() ?? 0.0;
         final currentOnline = (logMap['onlineCollected'] as num?)?.toDouble() ?? 0.0;
+        final currentTotalSales = (logMap['totalSalesValue'] as num?)?.toDouble() ?? 0.0;
+        final currentNetCollection = (logMap['todayCollection'] as num?)?.toDouble() ?? 0.0;
+
         final opening = (logMap['openingStock'] as num?)?.toInt() ?? 0;
         final loaded = (logMap['loaded'] as num?)?.toInt() ?? 0;
         final damaged = (logMap['damaged'] as num?)?.toInt() ?? 0;
@@ -239,10 +235,20 @@ class TransactionRepositoryImpl implements TransactionRepository {
         logMap['totalDelivered'] = newDelivered;
         logMap['totalEmptyCollected'] = currentEmpty + transaction.emptyCollected;
         
+        // Update Total Sales (Goods Value)
+        if (transaction.cansDelivered > 0) {
+          logMap['totalSalesValue'] = currentTotalSales + transaction.amount;
+        }
+
+        // Update Money Flow
         if (transaction.paymentMode == 'Cash') {
           logMap['cashCollected'] = currentCash + transaction.amountReceived;
         } else if (transaction.paymentMode == 'Online' || transaction.paymentMode == 'UPI') {
           logMap['onlineCollected'] = currentOnline + transaction.amountReceived;
+        }
+
+        if (transaction.paymentMode != 'Deposit Adjustment') {
+          logMap['todayCollection'] = currentNetCollection + transaction.amountReceived;
         }
 
         logMap['closingStock'] = opening + loaded - newDelivered - damaged;

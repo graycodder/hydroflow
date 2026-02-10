@@ -6,7 +6,7 @@ class GetDailyReportUseCase {
 
   GetDailyReportUseCase(this.repository);
 
-  Future<ReportEntity> call(String salesmanId, DateTime date) async {
-    return await repository.getDailyReport(salesmanId, date);
+  Stream<ReportEntity> call(String salesmanId, DateTime date) {
+    return repository.getDailyReport(salesmanId, date);
   }
 }

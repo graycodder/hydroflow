@@ -6,7 +6,7 @@ class GetMonthlyReportUseCase {
 
   GetMonthlyReportUseCase(this.repository);
 
-  Future<ReportEntity> call(String salesmanId, DateTime month) async {
-    return await repository.getMonthlyReport(salesmanId, month);
+  Stream<ReportEntity> call(String salesmanId, DateTime month) {
+    return repository.getMonthlyReport(salesmanId, month);
   }
 }

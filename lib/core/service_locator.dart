@@ -57,6 +57,11 @@ Future<void> init() async {
   // External
   final sharedPreferences = await SharedPreferences.getInstance();
   sl.registerLazySingleton(() => sharedPreferences);
+  
+  // Enable Firebase Disk Persistence
+  FirebaseDatabase.instance.setPersistenceEnabled(true);
+  FirebaseDatabase.instance.setPersistenceCacheSizeBytes(10 * 1024 * 1024); // 10MB cache
+
   sl.registerLazySingleton<FirebaseDatabase>(() => FirebaseDatabase.instance);
 
   // Repositories

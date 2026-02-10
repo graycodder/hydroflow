@@ -6,7 +6,7 @@ class GetPlansUseCase {
 
   GetPlansUseCase(this.repository);
 
-  Future<List<Plan>> call() {
+  Stream<List<Plan>> call() {
     return repository.getPlans();
   }
 }

@@ -11,78 +11,50 @@ class DashboardRepositoryImpl implements DashboardRepository {
 
   @override
   Stream<DashboardSummary> getDashboardSummary(String salesmanId) {
-    final stockStream = _database.ref().child('Salesmen').child(salesmanId).child('currentStock').onValue;
-    final customersStream = _database.ref().child('Customers').orderByChild('salesmanId').equalTo(salesmanId).onValue;
-    final transactionsStream = _database.ref().child('Transactions').orderByChild('salesmanId').equalTo(salesmanId).onValue;
+    final dateKey = DateTime.now().toIso8601String().substring(0, 10).replaceAll('-', '_');
+    
+    final salesmanRef = _database.ref().child('Salesmen').child(salesmanId);
+    final logRef = _database.ref().child('Stock_logs').child('LOG_${dateKey}_$salesmanId');
 
-    return Rx.combineLatest3<DatabaseEvent, DatabaseEvent, DatabaseEvent, DashboardSummary>(
-      stockStream,
-      customersStream,
-      transactionsStream,
-      (stockEvent, customersEvent, transactionsEvent) {
-        // 1. Parse Stock
-        final int currentStock = (stockEvent.snapshot.value as num?)?.toInt() ?? 0;
+    // Enable synchronization for real-time dashboard data
+    salesmanRef.keepSynced(true);
+    logRef.keepSynced(true);
 
-        // 2. Parse Customers (Active and Inactive counts)
+    final salesmanStream = salesmanRef.onValue;
+    final logStream = logRef.onValue;
+
+    return Rx.combineLatest2<DatabaseEvent, DatabaseEvent, DashboardSummary>(
+      salesmanStream,
+      logStream,
+      (salesmanEvent, logEvent) {
+        // 1. Parse Salesman Data (Stock and Customer Counts)
+        int currentStock = 0;
         int activeCount = 0;
-        int inactiveCount = 0;
-        if (customersEvent.snapshot.exists) {
-          final data = customersEvent.snapshot.value as Map<dynamic, dynamic>;
-          activeCount = data.values.where((v) => (v as Map)['status'] == 'Active').length;
-          inactiveCount = data.values.where((v) => (v as Map)['status'] == 'Inactive').length;
+        int customerCount = 0;
+        
+        if (salesmanEvent.snapshot.exists) {
+          final data = Map<String, dynamic>.from(salesmanEvent.snapshot.value as Map);
+          currentStock = (data['currentStock'] as num?)?.toInt() ?? 0;
+          activeCount = (data['activeCustomers'] as num?)?.toInt() ?? 0;
+          customerCount = (data['customerCount'] as num?)?.toInt() ?? 0;
         }
 
-        // 3. Parse Transactions (Today's Sales & Collection)
+        // 2. Parse Aggregated Log Data (Sales and Collections)
         double todaySales = 0.0;
         double todayCollection = 0.0;
         int todayDeliveries = 0;
-        
-        if (transactionsEvent.snapshot.exists) {
-          final data = transactionsEvent.snapshot.value as Map<dynamic, dynamic>;
-          final now = DateTime.now();
-          final startOfDay = DateTime(now.year, now.month, now.day);
-          final endOfDay = startOfDay.add(const Duration(days: 1));
 
-          data.forEach((key, value) {
-            final map = Map<String, dynamic>.from(value as Map);
-            final rawTimestamp = map['timestamp'];
-            DateTime timestamp;
-            if (rawTimestamp is int) {
-              timestamp = DateTime.fromMillisecondsSinceEpoch(rawTimestamp);
-            } else if (rawTimestamp is String) {
-              timestamp = DateTime.tryParse(rawTimestamp) ?? DateTime.now();
-            } else {
-              timestamp = DateTime.now();
-            }
-
-            if (timestamp.isAfter(startOfDay.subtract(const Duration(milliseconds: 1))) && 
-                timestamp.isBefore(endOfDay)) {
-              final int cansDelivered = (map['cansDelivered'] as num?)?.toInt() ?? 0;
-              final double amount = (map['amount'] as num?)?.toDouble() ?? 0.0;
-              final double received = (map['amountReceived'] as num?)?.toDouble() ?? 0.0;
-              final String type = map['type'] as String? ?? '';
-              final String paymentMode = map['paymentMode'] as String? ?? '';
-
-              // Total Sales should be the Bill Amount where actually goods were delivered
-              if (cansDelivered > 0) {
-                todaySales += amount;
-              }
-              
-              // Total Collection is regardless of goods status (covers debt payments, deposits etc)
-              if (type == 'Refund') {
-                todayCollection -= received; // Subtract refunds
-              } else if (paymentMode != 'Deposit Adjustment') {
-                todayCollection += received; // Add only fresh collections
-              }
-              todayDeliveries += cansDelivered;
-            }
-          });
+        if (logEvent.snapshot.exists) {
+          final data = Map<String, dynamic>.from(logEvent.snapshot.value as Map);
+          todaySales = (data['totalSalesValue'] as num?)?.toDouble() ?? 0.0;
+          todayCollection = (data['todayCollection'] as num?)?.toDouble() ?? 0.0;
+          todayDeliveries = (data['totalDelivered'] as num?)?.toInt() ?? 0;
         }
 
         return DashboardSummaryModel.fromValues(
           currentStock: currentStock,
           activeCustomers: activeCount,
-          inactiveCustomers: inactiveCount,
+          inactiveCustomers: customerCount - activeCount,
           todaySales: todaySales,
           todayCollection: todayCollection,
           todayDeliveries: todayDeliveries,

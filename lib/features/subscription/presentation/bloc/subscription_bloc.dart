@@ -1,4 +1,5 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:hydroflow/features/subscription/domain/entities/plan.dart';
 import 'package:hydroflow/features/subscription/domain/usecases/get_plans_usecase.dart';
 import 'package:hydroflow/features/subscription/presentation/bloc/subscription_event.dart';
 import 'package:hydroflow/features/subscription/presentation/bloc/subscription_state.dart';
@@ -17,11 +18,10 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
     Emitter<SubscriptionState> emit,
   ) async {
     emit(SubscriptionLoading());
-    try {
-      final plans = await _getPlans();
-      emit(SubscriptionLoaded(plans));
-    } catch (e) {
-      emit(SubscriptionError(e.toString()));
-    }
+    await emit.forEach<List<Plan>>(
+      _getPlans(),
+      onData: (plans) => SubscriptionLoaded(plans),
+      onError: (e, stackTrace) => SubscriptionError(e.toString()),
+    );
   }
 }

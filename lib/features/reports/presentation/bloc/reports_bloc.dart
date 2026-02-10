@@ -71,22 +71,20 @@ class ReportsBloc extends Bloc<ReportsEvent, ReportsState> {
   Future<void> _onLoadDailyReport(
       LoadDailyReport event, Emitter<ReportsState> emit) async {
     emit(ReportsLoading());
-    try {
-      final report = await _getDailyReportUseCase(event.salesmanId, event.date);
-      emit(ReportsLoaded(report, isMonthly: false));
-    } catch (e) {
-      emit(ReportsFailure(e.toString()));
-    }
+    await emit.forEach<ReportEntity>(
+      _getDailyReportUseCase(event.salesmanId, event.date),
+      onData: (report) => ReportsLoaded(report, isMonthly: false),
+      onError: (e, stackTrace) => ReportsFailure(e.toString()),
+    );
   }
 
   Future<void> _onLoadMonthlyReport(
       LoadMonthlyReport event, Emitter<ReportsState> emit) async {
     emit(ReportsLoading());
-    try {
-      final report = await _getMonthlyReportUseCase(event.salesmanId, event.month);
-      emit(ReportsLoaded(report, isMonthly: true));
-    } catch (e) {
-      emit(ReportsFailure(e.toString()));
-    }
+    await emit.forEach<ReportEntity>(
+      _getMonthlyReportUseCase(event.salesmanId, event.month),
+      onData: (report) => ReportsLoaded(report, isMonthly: true),
+      onError: (e, stackTrace) => ReportsFailure(e.toString()),
+    );
   }
 }

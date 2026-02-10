@@ -10,21 +10,17 @@ class SubscriptionRepositoryImpl implements SubscriptionRepository {
       : _database = database ?? FirebaseDatabase.instance;
 
   @override
-  Future<List<Plan>> getPlans() async {
-    try {
-      final ref = _database.ref().child('Plans');
-      final snapshot = await ref.get();
-
-      if (snapshot.exists) {
-        final data = snapshot.value as Map<dynamic, dynamic>;
+  Stream<List<Plan>> getPlans() {
+    final ref = _database.ref().child('Plans');
+    return ref.onValue.map((event) {
+      if (event.snapshot.exists) {
+        final data = event.snapshot.value as Map<dynamic, dynamic>;
         return data.values.map((value) {
           final map = Map<String, dynamic>.from(value as Map);
           return PlanModel.fromMap(map);
         }).toList();
       }
       return [];
-    } catch (e) {
-      throw Exception('Failed to fetch plans: $e');
-    }
+    });
   }
 }
