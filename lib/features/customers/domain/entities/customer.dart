@@ -12,6 +12,7 @@ class Customer extends Equatable {
   final int bottleBalance;
   final bool isRefunded;
   final String paymentMode;
+  final DateTime? createdAt;
 
   const Customer({
     required this.id,
@@ -25,6 +26,7 @@ class Customer extends Equatable {
     this.bottleBalance = 0,
     this.isRefunded = false,
     this.paymentMode = 'Cash',
+    this.createdAt,
   });
 
   Customer copyWith({
@@ -39,6 +41,7 @@ class Customer extends Equatable {
     int? bottleBalance,
     bool? isRefunded,
     String? paymentMode,
+    DateTime? createdAt,
   }) {
     return Customer(
       id: id ?? this.id,
@@ -52,6 +55,7 @@ class Customer extends Equatable {
       bottleBalance: bottleBalance ?? this.bottleBalance,
       isRefunded: isRefunded ?? this.isRefunded,
       paymentMode: paymentMode ?? this.paymentMode,
+      createdAt: createdAt ?? this.createdAt,
     );
   }
 
@@ -68,5 +72,6 @@ class Customer extends Equatable {
     bottleBalance,
     isRefunded,
     paymentMode,
+    createdAt,
   ];
 }

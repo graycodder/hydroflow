@@ -76,6 +76,7 @@ class CustomerBloc extends Bloc<CustomerEvent, CustomerState> {
         status: 'Active',
         securityDeposit: event.securityDeposit,
         paymentMode: event.paymentMode,
+        createdAt: DateTime.now(),
       );
 
       await addCustomer(newCustomer);

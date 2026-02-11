@@ -251,6 +251,7 @@ class _EditCustomerDialogState extends State<EditCustomerDialog> {
                                         bottleBalance: widget.customer.bottleBalance,
                                         isRefunded: widget.customer.isRefunded,
                                         paymentMode: _paymentMode!,
+                                        createdAt: widget.customer.createdAt,
                                       );
                                       widget.customerBloc.add(UpdateCustomer(updatedCustomer));
                                       // Navigator.pop(context); // Handled by listener

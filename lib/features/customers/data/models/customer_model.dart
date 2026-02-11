@@ -13,6 +13,7 @@ class CustomerModel extends Customer {
     super.bottleBalance = 0,
     super.isRefunded = false,
     super.paymentMode = 'Cash',
+    super.createdAt,
   });
 
   factory CustomerModel.fromMap(Map<String, dynamic> data) {
@@ -28,6 +29,9 @@ class CustomerModel extends Customer {
       bottleBalance: (data['bottleBalance'] as num?)?.toInt() ?? 0,
       isRefunded: data['isRefunded'] as bool? ?? false,
       paymentMode: data['paymentMode'] as String? ?? 'Cash',
+      createdAt: data['createdAt'] != null 
+          ? DateTime.tryParse(data['createdAt'] as String) 
+          : null,
     );
   }
 
@@ -43,6 +47,7 @@ class CustomerModel extends Customer {
       'bottleBalance': bottleBalance,
       'isRefunded': isRefunded,
       'paymentMode': paymentMode,
+      'createdAt': createdAt?.toIso8601String(),
     };
   }
 }

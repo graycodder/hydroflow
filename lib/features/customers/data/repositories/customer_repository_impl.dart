@@ -44,6 +44,7 @@ class CustomerRepositoryImpl implements CustomerRepository {
         bottleBalance: customer.bottleBalance,
         isRefunded: customer.isRefunded,
         paymentMode: customer.paymentMode,
+        createdAt: DateTime.now(),
       );
       
       await ref.set(customerModel.toMap());
@@ -152,6 +153,7 @@ class CustomerRepositoryImpl implements CustomerRepository {
         bottleBalance: customer.bottleBalance,
         isRefunded: customer.isRefunded,
         paymentMode: customer.paymentMode,
+        createdAt: customer.createdAt,
       );
       await ref.update(customerModel.toMap());
       

@@ -205,10 +205,21 @@ class ReportRepositoryImpl implements ReportRepository {
       logsStream,
       salesmanStream,
       (transactions, customers, logsEvent, salesmanEvent) {
-        // 1. Bottle Balance from Customers
-        final totalBottlesWithCustomers = customers.fold(0, (sum, c) => sum + c.bottleBalance);
+        // 1. Filter Customers based on creation date
+        // Customers created AFTER this month should not be counted in stats for this month
+        final monthEnd = DateTime(month.year, month.month + 1, 0, 23, 59, 59);
+        final relevantCustomers = customers.where((c) {
+          if (c.createdAt == null) return true; // Legacy customers are always included
+          return c.createdAt!.isBefore(monthEnd);
+        }).toList();
 
-        // 2. Aggregate Stock Logs for the month
+        // 2. Bottle Balance from RELEVANT Customers
+        // Note: Bottle balance is current state, so it might be slightly off for past reports 
+        // if user history isn't perfect, but we can't easily reconstruction past bottle balance without full replay.
+        // For now, using current balance of relevant customers is the best approximation.
+        final totalBottlesWithCustomers = relevantCustomers.fold(0, (sum, c) => sum + c.bottleBalance);
+
+        // 3. Aggregate Stock Logs for the month
         int totalLoaded = 0;
         int totalDamaged = 0;
         int totalMismatch = 0;
@@ -348,9 +359,9 @@ class ReportRepositoryImpl implements ReportRepository {
           workingDays: workingDaysCount,
           avgDailyRevenue: avgDailyRev,
           avgDailyDeliveries: avgDailyDel,
-          totalCustomers: customers.length,
+          totalCustomers: relevantCustomers.length,
           activeCustomers: activeCustomerIds.length,
-          inactiveCustomers: customers.length - activeCustomerIds.length,
+          inactiveCustomers: relevantCustomers.length - activeCustomerIds.length,
           newCustomers: 0, 
         );
       },
