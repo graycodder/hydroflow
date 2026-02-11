@@ -666,6 +666,13 @@ class _DeliveryViewState extends State<DeliveryView> {
 
       FocusScope.of(context).unfocus();
 
+      // Check Stock Availability (Strict)
+      final currentStock = context.read<DeliveryBloc>().state.currentStock;
+      if (cans > currentStock) {
+        _showStockErrorDialog(context, currentStock, cans);
+        return;
+      }
+
       // Check for excess empty cans and warn
       if (emptyCans > selectedCustomer.bottleBalance) {
         showDialog(
@@ -753,6 +760,44 @@ class _DeliveryViewState extends State<DeliveryView> {
           ],
         ),
       );
+  }
+
+  void _showStockErrorDialog(BuildContext context, int currentStock, int requested) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Row(
+          children: [
+            Icon(Icons.error_outline, color: Colors.deepOrange),
+            SizedBox(width: 8),
+            Text('Insufficient Stock'),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('You are trying to deliver $requested cans, but you only have $currentStock cans in stock.'),
+            const SizedBox(height: 8),
+            const Text(
+              'Strict Blocking Enabled.',
+              style: TextStyle(fontWeight: FontWeight.bold, color: Colors.red),
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              'Please "Refill Stock" if you have physically loaded more cans.',
+              style: TextStyle(fontSize: 12, color: Colors.grey),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('OK'),
+          ),
+        ],
+      ),
+    );
   }
 
   void _resetForm() {

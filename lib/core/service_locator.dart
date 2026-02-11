@@ -132,6 +132,7 @@ Future<void> init() async {
       addTransactionUseCase: sl(),
       getTodayTransactionsUseCase: sl(),
       customerRepository: sl(),
+      authRepository: sl(),
     ),
   );
   sl.registerFactory(() => SubscriptionBloc(getPlans: sl()));

@@ -15,6 +15,7 @@ class DeliveryState extends Equatable {
   final int totalDelivered;
   final int totalReturned;
   final String? errorMessage;
+  final int currentStock;
 
   const DeliveryState({
     this.status = DeliveryStatus.initial,
@@ -27,6 +28,7 @@ class DeliveryState extends Equatable {
     this.totalDelivered = 0,
     this.totalReturned = 0,
     this.errorMessage,
+    this.currentStock = 0,
   });
 
   DeliveryState copyWith({
@@ -41,6 +43,7 @@ class DeliveryState extends Equatable {
     int? totalDelivered,
     int? totalReturned,
     String? errorMessage,
+    int? currentStock,
   }) {
     return DeliveryState(
       status: status ?? this.status,
@@ -53,6 +56,7 @@ class DeliveryState extends Equatable {
       totalDelivered: totalDelivered ?? this.totalDelivered,
       totalReturned: totalReturned ?? this.totalReturned,
       errorMessage: errorMessage ?? this.errorMessage,
+      currentStock: currentStock ?? this.currentStock,
     );
   }
 
@@ -68,5 +72,6 @@ class DeliveryState extends Equatable {
         totalDelivered,
         totalReturned,
         errorMessage,
+        currentStock,
       ];
 }

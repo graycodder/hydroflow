@@ -9,18 +9,24 @@ import 'package:hydroflow/features/transactions/domain/entities/transaction_enti
 import 'package:hydroflow/features/customers/domain/repositories/customer_repository.dart';
 import 'package:hydroflow/features/customers/domain/entities/customer.dart';
 
+import 'package:hydroflow/features/auth/domain/repositories/auth_repository.dart';
+import 'package:hydroflow/features/auth/domain/entities/salesman.dart';
+
 class DeliveryBloc extends Bloc<DeliveryEvent, DeliveryState> {
   final AddTransactionUseCase _addTransactionUseCase;
   final GetTodayTransactionsUseCase _getTodayTransactionsUseCase;
   final CustomerRepository _customerRepository;
+  final AuthRepository _authRepository;
   
   DeliveryBloc({
     required AddTransactionUseCase addTransactionUseCase,
     required GetTodayTransactionsUseCase getTodayTransactionsUseCase,
     required CustomerRepository customerRepository,
+    required AuthRepository authRepository,
   })  : _addTransactionUseCase = addTransactionUseCase,
         _getTodayTransactionsUseCase = getTodayTransactionsUseCase,
         _customerRepository = customerRepository,
+        _authRepository = authRepository,
         super(const DeliveryState()) {
     on<LoadDeliveryPage>(_onLoadDeliveryPage);
     on<SelectCustomer>(_onSelectCustomer);
@@ -38,19 +44,23 @@ class DeliveryBloc extends Bloc<DeliveryEvent, DeliveryState> {
     
     final customerStream = _customerRepository.getCustomers(event.salesmanId);
     final transactionStream = _getTodayTransactionsUseCase(event.salesmanId);
+    final salesmanStream = _authRepository.getSalesmanStream(event.salesmanId);
 
     await emit.forEach<Map<String, dynamic>>(
-      CombineLatestStream.combine2<List<Customer>, List<TransactionEntity>, Map<String, dynamic>>(
+      CombineLatestStream.combine3<List<Customer>, List<TransactionEntity>, Salesman, Map<String, dynamic>>(
         customerStream,
         transactionStream,
-        (customers, transactions) => {
+        salesmanStream,
+        (customers, transactions, salesman) => {
           'customers': customers,
           'transactions': transactions,
+          'currentStock': salesman.currentStock,
         },
       ),
       onData: (data) {
         final customers = data['customers'] as List<Customer>;
         final transactions = data['transactions'] as List<TransactionEntity>;
+        final currentStock = data['currentStock'] as int;
 
         // Handle Dropdown Sync: If customers updated, sync selectedCustomer reference
         Customer? updatedSelectedCustomer = state.selectedCustomer;
@@ -61,7 +71,7 @@ class DeliveryBloc extends Bloc<DeliveryEvent, DeliveryState> {
           );
         }
 
-        return _calculateUpdatedState(transactions, customers, updatedSelectedCustomer: updatedSelectedCustomer);
+        return _calculateUpdatedState(transactions, customers, currentStock, updatedSelectedCustomer: updatedSelectedCustomer);
       },
       onError: (e, stackTrace) => state.copyWith(
         status: DeliveryStatus.failure,
@@ -109,7 +119,8 @@ class DeliveryBloc extends Bloc<DeliveryEvent, DeliveryState> {
 
   DeliveryState _calculateUpdatedState(
     List<TransactionEntity> transactions,
-    List<Customer> customers, {
+    List<Customer> customers, 
+    int currentStock, {
     Customer? updatedSelectedCustomer,
   }) {
     double sales = 0;
@@ -138,6 +149,7 @@ class DeliveryBloc extends Bloc<DeliveryEvent, DeliveryState> {
       totalUpi: upi,
       totalDelivered: delivered,
       totalReturned: returned,
+      currentStock: currentStock,
     );
   }
 }
