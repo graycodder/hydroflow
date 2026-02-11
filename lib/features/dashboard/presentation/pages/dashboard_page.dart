@@ -196,7 +196,8 @@ class _DashboardPageState extends State<DashboardPage> {
                                   value: '${summary.currentStock}',
                                   subtitle: 'Cans in Van',
                                   valueColor: const Color(0xFF2962FF),
-                                  onTap: () => context.push('/stock'),
+                                  onTap: (){}
+                                 // onTap: () => context.push('/stock'),
                                 ),
                                 _buildStatCard(
                                   width: cardWidth,
@@ -204,7 +205,8 @@ class _DashboardPageState extends State<DashboardPage> {
                                   value: '${summary.todayDeliveries}',
                                   subtitle: 'Cans Delivered',
                                   valueColor: const Color(0xFFFF6D00),
-                                  onTap: () => context.push('/delivery'),
+                                   onTap: (){}
+                                  //onTap: () => context.push('/delivery'),
                                 ),
                                 _buildStatCard(
                                   width: cardWidth,
@@ -212,7 +214,8 @@ class _DashboardPageState extends State<DashboardPage> {
                                   value: '₹${summary.todaySales.toStringAsFixed(0).replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]},')}',
                                   subtitle: 'Total Bill Amount',
                                   valueColor: const Color(0xFF6200EA),
-                                  onTap: () => context.push('/delivery'),
+                                   onTap: (){}
+                                 // onTap: () => context.push('/delivery'),
                                 ),
                                 _buildStatCard(
                                   width: cardWidth,
@@ -220,7 +223,8 @@ class _DashboardPageState extends State<DashboardPage> {
                                   value: '₹${summary.todayCollection.toStringAsFixed(0).replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]},')}',
                                   subtitle: 'Cash + Online',
                                   valueColor: const Color(0xFF00C853),
-                                  onTap: () => context.push('/delivery'),
+                                   onTap: (){}
+                                 // onTap: () => context.push('/delivery'),
                                 ),
                                 _buildStatCard(
                                   width: cardWidth,
@@ -228,7 +232,8 @@ class _DashboardPageState extends State<DashboardPage> {
                                   value: '${summary.activeCustomers}',
                                   subtitle: 'Total Active',
                                   valueColor: const Color(0xFF00B8D4),
-                                  onTap: () => context.push('/customers'),
+                                   onTap: (){}
+                                  //onTap: () => context.push('/customers'),
                                 ),
                                 _buildStatCard(
                                   width: cardWidth,
@@ -236,7 +241,8 @@ class _DashboardPageState extends State<DashboardPage> {
                                   value: '${summary.inactiveCustomers}',
                                   subtitle: 'Total Inactive',
                                   valueColor: Colors.blueGrey,
-                                  onTap: () => context.push('/customers'),
+                                   onTap: (){}
+                                 // onTap: () => context.push('/customers'),
                                 ),
                               ],
                             );
