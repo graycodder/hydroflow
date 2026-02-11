@@ -32,12 +32,19 @@ class ReportRepositoryImpl implements ReportRepository {
     final salesmanRef = _database.ref().child('Salesmen').child(salesmanId);
     final salesmanStream = salesmanRef.onValue;
 
-    return Rx.combineLatest4<List<TransactionEntity>, List<Customer>, DatabaseEvent, DatabaseEvent, ReportEntity>(
+    // Fetch previous day's log for carry forward
+    final prevDate = date.subtract(Duration(days: 1));
+    final prevDateKey = prevDate.toIso8601String().substring(0, 10).replaceAll('-', '_');
+    final prevLogRef = _database.ref().child('Stock_logs').child('LOG_${prevDateKey}_$salesmanId');
+    final prevLogStream = prevLogRef.onValue;
+
+    return Rx.combineLatest5<List<TransactionEntity>, List<Customer>, DatabaseEvent, DatabaseEvent, DatabaseEvent, ReportEntity>(
       transactionsStream,
       customersStream,
       logStream,
       salesmanStream,
-      (transactions, customers, logEvent, salesmanEvent) {
+      prevLogStream,
+      (transactions, customers, logEvent, salesmanEvent, prevLogEvent) {
         // 1. Calculate Bottle Balance from Customers
         final totalBottlesWithCustomers = customers.fold(0, (sum, c) => sum + c.bottleBalance);
 
@@ -47,12 +54,28 @@ class ReportRepositoryImpl implements ReportRepository {
         int damaged = 0;
         int stockMismatch = 0;
         
+        // Determine Opening Stock from Previous Day Closing if available
+        int carriedForwardOpening = 0;
+        if (prevLogEvent.snapshot.exists) {
+           final prevData = Map<String, dynamic>.from(prevLogEvent.snapshot.value as Map);
+           carriedForwardOpening = (prevData['closingStock'] as num?)?.toInt() ?? 0;
+        }
+        
         if (logEvent.snapshot.exists) {
           final data = Map<String, dynamic>.from(logEvent.snapshot.value as Map);
           openingStock = (data['openingStock'] as num?)?.toInt() ?? 0;
           loaded = (data['loaded'] as num?)?.toInt() ?? 0;
           damaged = (data['damaged'] as num?)?.toInt() ?? 0;
           stockMismatch = (data['mismatchCount'] as num?)?.toInt() ?? 0;
+          
+          // Bug Fix: If opening stock is 0 but we have a valid carry forward, use it.
+          // This fixes the specific issue user reported.
+          if (openingStock == 0 && carriedForwardOpening > 0) {
+            openingStock = carriedForwardOpening;
+          }
+        } else {
+          // If no log for today yet, assume opening is carry forward
+          openingStock = carriedForwardOpening;
         }
 
         // 3. Parse Salesman Data
@@ -110,8 +133,15 @@ class ReportRepositoryImpl implements ReportRepository {
         }
         
         // 5. Stock Reconciliation
-        final finalOpening = logEvent.snapshot.exists ? openingStock : (currentStock - loaded + delivered + damaged);
+        // Use our corrected openingStock
+        final finalOpening = openingStock;
         final finalAvailable = finalOpening + loaded;
+        final calculatedClosing = finalAvailable - delivered - damaged;
+        
+        // If log exists, closingStock is usually what's in there, but if we corrected opening,
+        // we should probably trust our calculated closing for consistency in the report view.
+        // We calculate closing to ensure Opening + Loaded - Delivered = Closing consistency.
+        final finalClosing = calculatedClosing;
         final netDeposits = securityDepositsCollected - securityDepositsRefunded;
         final cashInHand = cashSales + cashFromDeposits - securityDepositsRefunded;
         final upiCollections = onlineSales + onlineFromDeposits;
@@ -127,7 +157,7 @@ class ReportRepositoryImpl implements ReportRepository {
           totalAvailable: finalAvailable,
           deliveredStock: delivered,
           damagedStock: damaged,
-          closingStock: currentStock,
+          closingStock: finalClosing,
           stockMismatch: stockMismatch,
           bottlesDelivered: delivered,
           bottlesReturned: returned,

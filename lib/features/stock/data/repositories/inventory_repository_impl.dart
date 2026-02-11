@@ -35,9 +35,34 @@ class InventoryRepositoryImpl implements InventoryRepository {
     final logRef = _database.ref().child('Stock_logs').child('LOG_${dateKey}_$salesmanId');
     final salesmanStockRef = _database.ref().child('Salesmen').child(salesmanId).child('currentStock');
 
-    // Get current stock for carry forward calculation
+    // Get current stock for carry forward calculation - FALLBACK
     final salesmanSnapshot = await _database.ref().child('Salesmen').child(salesmanId).child('currentStock').get();
     final currentStockInVan = (salesmanSnapshot.value as num?)?.toInt() ?? 0;
+
+    // Fetch carry forward from previous log
+    int carryForwardStock = 0;
+    try {
+      final query = _database.ref()
+          .child('Stock_logs')
+          .orderByChild('salesmanId')
+          .equalTo(salesmanId)
+          .limitToLast(2); 
+      final snapshot = await query.get();
+      if (snapshot.exists) {
+        final data = Map<dynamic, dynamic>.from(snapshot.value as Map);
+        final sortedKeys = data.keys.toList()..sort();
+        for (var i = sortedKeys.length - 1; i >= 0; i--) {
+           final key = sortedKeys[i];
+           final log = Map<String, dynamic>.from(data[key]);
+           if (log['date'] != DateTime.now().toIso8601String().substring(0, 10)) {
+             carryForwardStock = (log['closingStock'] as num?)?.toInt() ?? 0;
+             break;
+           }
+        }
+      }
+    } catch (_) {}
+
+    final openingStockToUse = carryForwardStock > 0 ? carryForwardStock : currentStockInVan;
 
     // 1. Update log
     await logRef.runTransaction((Object? post) {
@@ -50,8 +75,8 @@ class InventoryRepositoryImpl implements InventoryRepository {
          logMap['salesmanId'] = salesmanId;
          logMap['date'] = DateTime.now().toIso8601String().substring(0, 10);
          
-         // Opening stock is what was already in the van
-         logMap['openingStock'] = currentStockInVan;
+         // Opening stock is what was carried forward
+         logMap['openingStock'] = openingStockToUse;
          // The new quantity is "loaded"
          logMap['loaded'] = quantity;
          
@@ -59,7 +84,7 @@ class InventoryRepositoryImpl implements InventoryRepository {
          logMap['totalEmptyCollected'] = 0;
          logMap['damaged'] = 0;
          // Closing stock = carry forward + newly loaded
-         logMap['closingStock'] = currentStockInVan + quantity;
+         logMap['closingStock'] = openingStockToUse + quantity;
          logMap['actualClosingStock'] = 0;
          logMap['mismatchCount'] = 0;
          logMap['isReconciled'] = false;
@@ -109,9 +134,34 @@ class InventoryRepositoryImpl implements InventoryRepository {
       return Transaction.success(currentStock - quantity);
     });
 
-    // Get current stock for carry forward calculation
+    // Get current stock for carry forward calculation (FALLBACK)
     final salesmanSnapshot = await _database.ref().child('Salesmen').child(salesmanId).child('currentStock').get();
     final currentStockInVan = (salesmanSnapshot.value as num?)?.toInt() ?? 0;
+
+    // Fetch carry forward logic
+    int carryForwardStock = 0;
+    try {
+      final query = _database.ref()
+          .child('Stock_logs')
+          .orderByChild('salesmanId')
+          .equalTo(salesmanId)
+          .limitToLast(2); 
+      final snapshot = await query.get();
+      if (snapshot.exists) {
+        final data = Map<dynamic, dynamic>.from(snapshot.value as Map);
+        final sortedKeys = data.keys.toList()..sort();
+        for (var i = sortedKeys.length - 1; i >= 0; i--) {
+           final key = sortedKeys[i];
+           final log = Map<String, dynamic>.from(data[key]);
+           if (log['date'] != DateTime.now().toIso8601String().substring(0, 10)) {
+             carryForwardStock = (log['closingStock'] as num?)?.toInt() ?? 0;
+             break;
+           }
+        }
+      }
+    } catch (_) {}
+
+    final openingStockToUse = carryForwardStock > 0 ? carryForwardStock : currentStockInVan;
 
     // Upload damaged log
     final dateKey = DateTime.now().toIso8601String().substring(0, 10).replaceAll('-', '_');
@@ -126,12 +176,12 @@ class InventoryRepositoryImpl implements InventoryRepository {
        if (!logMap.containsKey('date')) {
           logMap['salesmanId'] = salesmanId;
           logMap['date'] = DateTime.now().toIso8601String().substring(0, 10);
-          logMap['openingStock'] = (currentStockInVan); // Use captured van stock
+          logMap['openingStock'] = openingStockToUse; // Use balance carried forward
           logMap['loaded'] = 0;
           logMap['totalDelivered'] = 0;
           logMap['totalEmptyCollected'] = 0;
           logMap['damaged'] = quantity;
-          logMap['closingStock'] = currentStockInVan - quantity; 
+          logMap['closingStock'] = openingStockToUse - quantity; 
           logMap['actualClosingStock'] = 0;
           logMap['mismatchCount'] = 0;
           logMap['isReconciled'] = false;
