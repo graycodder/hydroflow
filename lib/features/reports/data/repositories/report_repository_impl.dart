@@ -311,10 +311,28 @@ class ReportRepositoryImpl implements ReportRepository {
         final upiCollections = onlineSales + onlineFromDeposits;
         final avgPrice = delivered > 0 ? salesRevenue / delivered : 0.0;
 
-        // Use explicit opening if found, otherwise back-calculate
-        final calculatedOpening = hasOpeningStock 
-            ? monthlyOpeningStock 
-            : (currentStock + delivered + totalDamaged - totalLoaded);
+        // Logic Change: Only use currentStock for the current month.
+        // For past months, rely on logs or defaults to avoid showing current data in empty past reports.
+        final now = DateTime.now();
+        final isCurrentMonth = month.year == now.year && month.month == now.month;
+
+        int calculatedOpening = 0;
+        int calculatedClosing = 0;
+
+        if (isCurrentMonth) {
+          calculatedOpening = hasOpeningStock 
+              ? monthlyOpeningStock 
+              : (currentStock + delivered + totalDamaged - totalLoaded);
+          calculatedClosing = currentStock;
+        } else {
+          // Past month: Do not use currentStock
+          calculatedOpening = hasOpeningStock ? monthlyOpeningStock : 0;
+          calculatedClosing = calculatedOpening + totalLoaded - delivered - totalDamaged;
+        }
+
+        // Safety clamp
+        if (calculatedOpening < 0) calculatedOpening = 0;
+        if (calculatedClosing < 0) calculatedClosing = 0;
             
         final totalAvailable = calculatedOpening + totalLoaded;
         final turnover = totalAvailable > 0 ? (delivered / totalAvailable) * 100 : 0.0;
@@ -337,7 +355,7 @@ class ReportRepositoryImpl implements ReportRepository {
           totalAvailable: totalAvailable,
           deliveredStock: delivered,
           damagedStock: totalDamaged,
-          closingStock: currentStock,
+          closingStock: calculatedClosing,
           stockMismatch: totalMismatch,
           bottlesDelivered: delivered,
           bottlesReturned: returned,
