@@ -6,6 +6,7 @@ abstract class InventoryRepository {
   Future<void> recordDamagedStock({required String salesmanId, required int quantity});
   Future<void> setOpeningStock({required String salesmanId, required int quantity});
   Stream<StockLog?> getTodayStockLogStream(String salesmanId);
+  Future<void> recordDailyBottleSnapshot({required String salesmanId, required int totalBottles});
   Future<void> reconcileStock({required String salesmanId, required int physicalCount});
   Future<bool> checkStockLogsExist(String salesmanId);
 }

@@ -46,7 +46,14 @@ class ReportRepositoryImpl implements ReportRepository {
       prevLogStream,
       (transactions, customers, logEvent, salesmanEvent, prevLogEvent) {
         // 1. Calculate Bottle Balance from Customers
-        final totalBottlesWithCustomers = customers.fold(0, (sum, c) => sum + c.bottleBalance);
+        // Logic deferred to use snapshot if available.
+        // Also filter customers who did not exist on this date to improve accuracy of fallback.
+        final dayEnd = DateTime(date.year, date.month, date.day, 23, 59, 59);
+        final relevantCustomers = customers.where((c) {
+          if (c.createdAt == null) return true; // Legacy customers included
+          return c.createdAt!.isBefore(dayEnd);
+        }).toList();
+
 
         // 2. Parse Stock Logs
         int openingStock = 0;
@@ -54,6 +61,9 @@ class ReportRepositoryImpl implements ReportRepository {
         int damaged = 0;
         int stockMismatch = 0;
         
+        // Snapshot Support
+        int? snapshotTotalBottles;
+
         // Determine Opening Stock from Previous Day Closing if available
         int carriedForwardOpening = 0;
         if (prevLogEvent.snapshot.exists) {
@@ -67,6 +77,10 @@ class ReportRepositoryImpl implements ReportRepository {
           loaded = (data['loaded'] as num?)?.toInt() ?? 0;
           damaged = (data['damaged'] as num?)?.toInt() ?? 0;
           stockMismatch = (data['mismatchCount'] as num?)?.toInt() ?? 0;
+          
+          if (data.containsKey('totalBottlesWithCustomers')) {
+            snapshotTotalBottles = (data['totalBottlesWithCustomers'] as num?)?.toInt();
+          }
           
           // Bug Fix: If opening stock is 0 but we have a valid carry forward, use it.
           // This fixes the specific issue user reported.
@@ -162,7 +176,7 @@ class ReportRepositoryImpl implements ReportRepository {
           bottlesDelivered: delivered,
           bottlesReturned: returned,
           netBottlesOut: delivered - returned,
-          totalBottlesWithCustomers: totalBottlesWithCustomers,
+          totalBottlesWithCustomers: snapshotTotalBottles ?? relevantCustomers.fold(0, (sum, c) => sum + c.bottleBalance),
           salesRevenue: salesRevenue,
           totalCollected: totalCollected,
           totalCreditPending: totalCreditPending,
@@ -176,7 +190,7 @@ class ReportRepositoryImpl implements ReportRepository {
           upiCollections: upiCollections,
           avgPricePerCan: avgPrice,
           stockTurnover: turnover,
-          totalCustomers: customers.length,
+          totalCustomers: relevantCustomers.length,
           activeCustomers: 0,
           newCustomers: 0,
           inactiveCustomers: 0,

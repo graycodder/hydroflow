@@ -1,17 +1,21 @@
 import 'dart:async';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:hydroflow/features/stock/domain/repositories/inventory_repository.dart';
+import 'package:hydroflow/features/customers/domain/repositories/customer_repository.dart';
 import 'package:hydroflow/features/stock/domain/entities/stock_log.dart';
 import 'package:hydroflow/features/stock/presentation/bloc/stock_event.dart';
 import 'package:hydroflow/features/stock/presentation/bloc/stock_state.dart';
 
 class StockBloc extends Bloc<StockEvent, StockState> {
   final InventoryRepository _inventoryRepository;
+  final CustomerRepository _customerRepository;
   StreamSubscription<StockLog?>? _logSubscription;
 
   StockBloc({
     required InventoryRepository inventoryRepository,
+    required CustomerRepository customerRepository,
   })  : _inventoryRepository = inventoryRepository,
+        _customerRepository = customerRepository,
         super(const StockInitial()) {
     on<LoadStockPage>(_onLoadStockPage);
     on<StockLoadRequested>(_onStockLoadRequested);
@@ -136,10 +140,25 @@ class StockBloc extends Bloc<StockEvent, StockState> {
   ) async {
     emit(StockLoading(todayLog: state.todayLog, hasAnyLogs: state.hasAnyLogs));
     try {
+      // 1. Reconcile Stock
       await _inventoryRepository.reconcileStock(
         salesmanId: event.salesmanId,
         physicalCount: event.physicalCount,
       );
+
+      // 2. Snapshot Total Bottles with Customers
+      try {
+        final totalBottles = await _customerRepository.getTotalBottleBalance(event.salesmanId);
+        await _inventoryRepository.recordDailyBottleSnapshot(
+          salesmanId: event.salesmanId, 
+          totalBottles: totalBottles,
+        );
+      } catch (e) {
+        // Fail silently on snapshot error to not block the main reconciliation flow
+        // Just log it or ignore
+        print('Failed to snapshot bottle balance: $e');
+      }
+
       emit(StockActionSuccess('Reconciliation completed', todayLog: state.todayLog, hasAnyLogs: state.hasAnyLogs));
     } catch (e) {
       emit(StockFailure('Reconciliation failed: $e', todayLog: state.todayLog, hasAnyLogs: state.hasAnyLogs));

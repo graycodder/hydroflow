@@ -29,6 +29,27 @@ class CustomerRepositoryImpl implements CustomerRepository {
   }
 
   @override
+  Future<int> getTotalBottleBalance(String salesmanId) async {
+    try {
+      final ref = _database.ref().child('Customers');
+      final snapshot = await ref.orderByChild('salesmanId').equalTo(salesmanId).get();
+
+      if (snapshot.exists) {
+        final data = snapshot.value as Map<dynamic, dynamic>;
+        int totalBalance = 0;
+        data.forEach((key, value) {
+          final customer = Map<String, dynamic>.from(value as Map);
+          totalBalance += (customer['bottleBalance'] as num?)?.toInt() ?? 0;
+        });
+        return totalBalance;
+      }
+      return 0;
+    } catch (e) {
+      return 0;
+    }
+  }
+
+  @override
   Future<void> addCustomer(Customer customer) async {
     try {
       final ref = _database.ref().child('Customers').push();

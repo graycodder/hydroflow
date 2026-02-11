@@ -284,6 +284,21 @@ class InventoryRepositoryImpl implements InventoryRepository {
   }
 
   @override
+  Future<void> recordDailyBottleSnapshot({required String salesmanId, required int totalBottles}) async {
+    final dateKey = DateTime.now().toIso8601String().substring(0, 10).replaceAll('-', '_');
+    final logRef = _database.ref().child('Stock_logs').child('LOG_${dateKey}_$salesmanId');
+
+    await logRef.runTransaction((Object? post) {
+      if (post == null) return Transaction.abort();
+      
+      final logMap = Map<String, dynamic>.from(post as Map);
+      logMap['totalBottlesWithCustomers'] = totalBottles;
+      
+      return Transaction.success(logMap);
+    });
+  }
+
+  @override
   Future<bool> checkStockLogsExist(String salesmanId) async {
     try {
       final query = _database.ref()

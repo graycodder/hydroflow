@@ -92,7 +92,10 @@ Future<void> init() async {
 
   // BLoCs
   sl.registerFactory(() => AuthBloc(authRepository: sl()));
-  sl.registerFactory(() => StockBloc(inventoryRepository: sl()));
+  sl.registerFactory(() => StockBloc(
+    inventoryRepository: sl(),
+    customerRepository: sl(),
+  ));
   sl.registerFactory(() => BottleBloc(getBottleLedger: sl()));
   sl.registerFactory(
     () => CustomerBloc(
