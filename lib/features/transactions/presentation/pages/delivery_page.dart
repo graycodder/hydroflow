@@ -662,8 +662,45 @@ class _DeliveryViewState extends State<DeliveryView> {
       final total = double.tryParse(_priceController.text) ?? 0;
       final received = _paymentMode == 'Credit' ? 0.0 : (double.tryParse(_amountReceivedController.text) ?? 0);
       final cans = int.tryParse(_fullCansController.text) ?? 0;
+      final emptyCans = int.tryParse(_emptyCansController.text) ?? 0;
 
       FocusScope.of(context).unfocus();
+
+      // Check for excess empty cans and warn
+      if (emptyCans > selectedCustomer.bottleBalance) {
+        showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text('Excess Empty Cans Warning', style: TextStyle(color: Colors.orange)),
+            content: Text(
+              'The customer is returning $emptyCans empty cans, but their current balance is only ${selectedCustomer.bottleBalance}.\n\n'
+              'This will result in a negative bottle balance data discrepancy.\n\n'
+              'Are you sure you want to proceed?',
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Cancel'),
+              ),
+              ElevatedButton(
+                onPressed: () {
+                  Navigator.pop(context); // Close warning
+                  _showConfirmationDialog(context, salesmanId, selectedCustomer, total, received, cans, emptyCans); // Proceed
+                },
+                style: ElevatedButton.styleFrom(backgroundColor: Colors.orange),
+                child: const Text('Connect Anyway', style: TextStyle(color: Colors.white)),
+              ),
+            ],
+          ),
+        );
+        return;
+      }
+      
+      _showConfirmationDialog(context, salesmanId, selectedCustomer, total, received, cans, emptyCans);
+    }
+  }
+
+  void _showConfirmationDialog(BuildContext context, String salesmanId, Customer selectedCustomer, double total, double received, int cans, int emptyCans) {
       showDialog(
         context: context,
         builder: (context) => AlertDialog(
@@ -675,6 +712,7 @@ class _DeliveryViewState extends State<DeliveryView> {
               Text('Customer: ${selectedCustomer.name}'),
               const SizedBox(height: 8),
               Text('Bottles Delivered: $cans'),
+              Text('Empty Cans Returned: $emptyCans'),
               Text('Total Amount: ₹${total.toStringAsFixed(0)}'),
               Text('Amount Received: ₹${received.toStringAsFixed(0)}'),
               Text('Payment Mode: $_paymentMode'),
@@ -701,7 +739,7 @@ class _DeliveryViewState extends State<DeliveryView> {
                   amountReceived: received,
                   paymentMode: _paymentMode,
                   cansDelivered: cans,
-                  emptyCollected: int.tryParse(_emptyCansController.text) ?? 0,
+                  emptyCollected: emptyCans,
                   notes: '',
                 );
                 context.read<DeliveryBloc>().add(SubmitTransaction(transaction));
@@ -715,7 +753,6 @@ class _DeliveryViewState extends State<DeliveryView> {
           ],
         ),
       );
-    }
   }
 
   void _resetForm() {
