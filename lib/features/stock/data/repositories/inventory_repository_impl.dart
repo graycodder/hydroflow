@@ -282,4 +282,19 @@ class InventoryRepositoryImpl implements InventoryRepository {
     // We also update currentStock to match physicalCount because that's the REAL truth now.
     await _database.ref().child('Salesmen').child(salesmanId).child('currentStock').set(physicalCount);
   }
+
+  @override
+  Future<bool> checkStockLogsExist(String salesmanId) async {
+    try {
+      final query = _database.ref()
+          .child('Stock_logs')
+          .orderByChild('salesmanId')
+          .equalTo(salesmanId)
+          .limitToFirst(1);
+      final snapshot = await query.get();
+      return snapshot.exists;
+    } catch (e) {
+      return false; // Assume false on error or handle differently? Safe enough for UI toggle.
+    }
+  }
 }

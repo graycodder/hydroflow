@@ -26,6 +26,25 @@ class StockBloc extends Bloc<StockEvent, StockState> {
     Emitter<StockState> emit,
   ) async {
     _logSubscription?.cancel();
+    
+    // Check if any logs exist globally for this salesman
+    final hasLogs = await _inventoryRepository.checkStockLogsExist(event.salesmanId);
+    
+    // Emit current state with updated hasAnyLogs flag
+    // We use StockDataUpdated or just copy current state if possible, but here we likely transition from Initial/Loading
+    // Let's assume we are in Loading or Initial. 
+    // If we are already listening, we might have a todayLog.
+    if (state is StockDataUpdated) {
+       emit(StockDataUpdated(todayLog: state.todayLog, hasAnyLogs: hasLogs));
+    } else {
+       // If we are just starting, we might not have todayLog yet.
+       // We can emit a state that has hasAnyLogs set.
+       // Actually, we can just let the stream listener handle todayLog updates, 
+       // but we need to create a state that holds hasAnyLogs.
+       // Let's emit a preliminary update.
+       emit(StockDataUpdated(todayLog: state.todayLog, hasAnyLogs: hasLogs));
+    }
+
     _logSubscription = _inventoryRepository
         .getTodayStockLogStream(event.salesmanId)
         .listen((log) {
@@ -37,7 +56,14 @@ class StockBloc extends Bloc<StockEvent, StockState> {
     StockLogUpdated event,
     Emitter<StockState> emit,
   ) {
-    emit(StockDataUpdated(event.todayLog));
+    // If we get a log, it definitely means we have logs!
+    // So if event.todayLog is not null, hasAnyLogs is true.
+    // If event.todayLog is null, we stick to what we checked earlier (hasAnyLogs from DB check).
+    // However, the DB check `checkStockLogsExist` is authoritative for "ever".
+    // So we should preserve state.hasAnyLogs, UNLESS todayLog is not null, which implies true.
+    
+    final hasLogs = event.todayLog != null ? true : state.hasAnyLogs;
+    emit(StockDataUpdated(todayLog: event.todayLog, hasAnyLogs: hasLogs));
   }
 
   Future<void> _onStockLoadRequested(
@@ -45,19 +71,19 @@ class StockBloc extends Bloc<StockEvent, StockState> {
     Emitter<StockState> emit,
   ) async {
     if (event.quantity <= 0) {
-      emit(const StockFailure('Quantity must be greater than 0'));
+      emit(StockFailure('Quantity must be greater than 0', todayLog: state.todayLog, hasAnyLogs: state.hasAnyLogs));
       return;
     }
 
-    emit(StockLoading(todayLog: state.todayLog));
+    emit(StockLoading(todayLog: state.todayLog, hasAnyLogs: state.hasAnyLogs));
     try {
       await _inventoryRepository.addStock(
         salesmanId: event.salesmanId,
         quantity: event.quantity,
       );
-      emit(StockActionSuccess('Stock loaded successfully', todayLog: state.todayLog));
+      emit(StockActionSuccess('Stock loaded successfully', todayLog: state.todayLog, hasAnyLogs: state.hasAnyLogs));
     } catch (e) {
-      emit(StockFailure('Failed to load stock: $e', todayLog: state.todayLog));
+      emit(StockFailure('Failed to load stock: $e', todayLog: state.todayLog, hasAnyLogs: state.hasAnyLogs));
     }
   }
 
@@ -66,19 +92,19 @@ class StockBloc extends Bloc<StockEvent, StockState> {
     Emitter<StockState> emit,
   ) async {
     if (event.quantity <= 0) {
-      emit(const StockFailure('Quantity must be greater than 0'));
+      emit(StockFailure('Quantity must be greater than 0', todayLog: state.todayLog, hasAnyLogs: state.hasAnyLogs));
       return;
     }
 
-    emit(StockLoading(todayLog: state.todayLog));
+    emit(StockLoading(todayLog: state.todayLog, hasAnyLogs: state.hasAnyLogs));
     try {
       await _inventoryRepository.recordDamagedStock(
         salesmanId: event.salesmanId,
         quantity: event.quantity,
       );
-      emit(StockActionSuccess('Damaged stock recorded', todayLog: state.todayLog));
+      emit(StockActionSuccess('Damaged stock recorded', todayLog: state.todayLog, hasAnyLogs: state.hasAnyLogs));
     } catch (e) {
-      emit(StockFailure('Failed to record damaged stock: $e', todayLog: state.todayLog));
+      emit(StockFailure('Failed to record damaged stock: $e', todayLog: state.todayLog, hasAnyLogs: state.hasAnyLogs));
     }
   }
 
@@ -92,15 +118,15 @@ class StockBloc extends Bloc<StockEvent, StockState> {
     StockOpeningStockSet event,
     Emitter<StockState> emit,
   ) async {
-    emit(StockLoading(todayLog: state.todayLog));
+    emit(StockLoading(todayLog: state.todayLog, hasAnyLogs: state.hasAnyLogs));
     try {
       await _inventoryRepository.setOpeningStock(
         salesmanId: event.salesmanId,
         quantity: event.quantity,
       );
-      emit(StockActionSuccess('Opening stock fixed', todayLog: state.todayLog));
+      emit(StockActionSuccess('Opening stock fixed', todayLog: state.todayLog, hasAnyLogs: state.hasAnyLogs));
     } catch (e) {
-      emit(StockFailure('Failed to set opening stock: $e', todayLog: state.todayLog));
+      emit(StockFailure('Failed to set opening stock: $e', todayLog: state.todayLog, hasAnyLogs: state.hasAnyLogs));
     }
   }
 
@@ -108,15 +134,15 @@ class StockBloc extends Bloc<StockEvent, StockState> {
     StockReconciled event,
     Emitter<StockState> emit,
   ) async {
-    emit(StockLoading(todayLog: state.todayLog));
+    emit(StockLoading(todayLog: state.todayLog, hasAnyLogs: state.hasAnyLogs));
     try {
       await _inventoryRepository.reconcileStock(
         salesmanId: event.salesmanId,
         physicalCount: event.physicalCount,
       );
-      emit(StockActionSuccess('Reconciliation completed', todayLog: state.todayLog));
+      emit(StockActionSuccess('Reconciliation completed', todayLog: state.todayLog, hasAnyLogs: state.hasAnyLogs));
     } catch (e) {
-      emit(StockFailure('Reconciliation failed: $e', todayLog: state.todayLog));
+      emit(StockFailure('Reconciliation failed: $e', todayLog: state.todayLog, hasAnyLogs: state.hasAnyLogs));
     }
   }
 }

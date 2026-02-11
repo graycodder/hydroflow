@@ -143,6 +143,7 @@ class _StockPageState extends State<StockPage> {
                         // Today's Summary Card
                         BlocBuilder<StockBloc, StockState>(
                           builder: (context, state) {
+                            if (!state.hasAnyLogs) return const SizedBox.shrink();
                             final log = state.todayLog;
                             return Container(
                               padding: const EdgeInsets.all(20),
@@ -274,6 +275,7 @@ class _StockPageState extends State<StockPage> {
                       // Load Stock Section
                       BlocBuilder<StockBloc, StockState>(
                         builder: (context, state) {
+
                           // final hasLog = state.todayLog != null;
                           return AnimatedCrossFade(
                             firstChild: SizedBox(
