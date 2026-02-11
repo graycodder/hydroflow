@@ -547,7 +547,13 @@ class _DeliveryViewState extends State<DeliveryView> {
                           Column(
                             crossAxisAlignment: CrossAxisAlignment.end,
                             children: [
-                              Text('₹${tx.amount.toStringAsFixed(0)}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: Color(0xFF2962FF))),
+                              if (tx.amount != tx.amountReceived && tx.type != 'Deposit')
+                                Text(
+                                  '₹${tx.amountReceived.toStringAsFixed(0)} / ₹${tx.amount.toStringAsFixed(0)}',
+                                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: Color(0xFF2962FF)),
+                                )
+                              else
+                                Text('₹${tx.amount.toStringAsFixed(0)}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: Color(0xFF2962FF))),
                               const SizedBox(height: 4),
                               Container(
                                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
@@ -571,6 +577,30 @@ class _DeliveryViewState extends State<DeliveryView> {
                           child: Text(
                             'Deposit Received',
                             style: TextStyle(
+                              color: Colors.green,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 14,
+                            ),
+                          ),
+                        )
+                      else if (tx.type == 'Refund')
+                        const Align(
+                          alignment: Alignment.centerLeft,
+                          child: Text(
+                            'Deposit Refunded',
+                            style: TextStyle(
+                              color: Colors.red,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 14,
+                            ),
+                          ),
+                        )
+                      else if (tx.paymentMode == 'Deposit Adjustment')
+                        Align(
+                          alignment: Alignment.centerLeft,
+                          child: Text(
+                            tx.notes ?? 'Deposit Adjustment',
+                            style: const TextStyle(
                               color: Colors.green,
                               fontWeight: FontWeight.bold,
                               fontSize: 14,
