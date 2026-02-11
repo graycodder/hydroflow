@@ -497,6 +497,42 @@ class _StockPageState extends State<StockPage> {
                                       if (qty <= 0) return;
 
                                       FocusManager.instance.primaryFocus?.unfocus();
+
+                                      // Check if stock is sufficient
+                                      if (qty > salesman.currentStock) {
+                                        showDialog(
+                                          context: context,
+                                          builder: (dialogContext) => AlertDialog(
+                                            title: const Row(
+                                              children: [
+                                                Icon(Icons.error_outline, color: Colors.deepOrange),
+                                                SizedBox(width: 8),
+                                                Text('Insufficient Stock'),
+                                              ],
+                                            ),
+                                            content: Column(
+                                              mainAxisSize: MainAxisSize.min,
+                                              crossAxisAlignment: CrossAxisAlignment.start,
+                                              children: [
+                                                Text('You are trying to remove $qty cans, but you only have ${salesman.currentStock} cans in stock.'),
+                                                const SizedBox(height: 12),
+                                                const Text(
+                                                  'This action is blocked to prevent negative stock.',
+                                                   style: TextStyle(fontSize: 12, color: Colors.grey),
+                                                ),
+                                              ],
+                                            ),
+                                            actions: [
+                                              TextButton(
+                                                onPressed: () => Navigator.pop(dialogContext),
+                                                child: const Text('OK'),
+                                              ),
+                                            ],
+                                          ),
+                                        );
+                                        return;
+                                      }
+
                                       showDialog(
                                         context: context,
                                         builder: (dialogContext) => AlertDialog(
