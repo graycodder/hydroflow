@@ -44,8 +44,8 @@ class MonthlyReportView extends StatelessWidget {
         const SizedBox(height: 16),
         _buildMonthlyPerformanceMetrics(),
         const SizedBox(height: 24),
-        _buildMonthlyActionButtons(),
-        const SizedBox(height: 24),
+       // _buildMonthlyActionButtons(),
+        //const SizedBox(height: 24),
       ],
     );
   }
@@ -161,12 +161,14 @@ class MonthlyReportView extends StatelessWidget {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text("Total Monthly Revenue", style: TextStyle(fontWeight: FontWeight.w500)),
-                    Text("Sales + Net Deposits", style: TextStyle(fontSize: 12, color: Colors.grey)),
-                  ],
+                const Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text("Total Monthly Revenue", style: TextStyle(fontWeight: FontWeight.w500)),
+                      Text("Sales + Net Deposits", style: TextStyle(fontSize: 12, color: Colors.grey)),
+                    ],
+                  ),
                 ),
                 Text(
                   "₹${NumberFormat('#,##,###').format(report.totalRevenue)}",
@@ -233,23 +235,37 @@ class MonthlyReportView extends StatelessWidget {
               borderRadius: BorderRadius.circular(12),
             ),
             child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+             mainAxisAlignment: MainAxisAlignment.center,
+             crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                const Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text("Net Bottles Out This Month", style: TextStyle(fontWeight: FontWeight.w500)),
-                    Text("Added to customer inventory", style: TextStyle(fontSize: 12, color: Colors.grey)),
-                  ],
+                const Expanded(
+                  child: Column(
+                     mainAxisAlignment: MainAxisAlignment.start,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text("Net Bottles Out This Month",  style: TextStyle(fontWeight: FontWeight.w500)),
+                      Text("Added to customer inventory", style: TextStyle(fontSize: 12, color: Colors.grey)),
+                    ],
+                  ),
                 ),
-                Text(
-                  "+${report.netBottlesOut}",
+                     Expanded(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                       Text("+${report.netBottlesOut}",
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
                     color: Colors.orange,
                   ),
                 ),
+                    ],
+                  ),
+                ),
+              
               ],
             ),
           ),
@@ -469,22 +485,22 @@ class MonthlyReportView extends StatelessWidget {
   Widget _buildMonthlyActionButtons() {
     return Column(
       children: [
-        SizedBox(
-          width: double.infinity,
-          height: 50,
-          child: ElevatedButton.icon(
-            onPressed: onExportPressed,
-            icon: const Icon(Icons.download, color: Colors.white),
-            label: const Text(
-              "Export Monthly Report",
-              style: TextStyle(color: Colors.white, fontSize: 16),
-            ),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF11142A),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-            ),
-          ),
-        ),
+        // SizedBox(
+        //   width: double.infinity,
+        //   height: 50,
+        //   child: ElevatedButton.icon(
+        //     onPressed: onExportPressed,
+        //     icon: const Icon(Icons.download, color: Colors.white),
+        //     label: const Text(
+        //       "Export Monthly Report",
+        //       style: TextStyle(color: Colors.white, fontSize: 16),
+        //     ),
+        //     style: ElevatedButton.styleFrom(
+        //       backgroundColor: const Color(0xFF11142A),
+        //       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        //     ),
+        //   ),
+        // ),
       //  const SizedBox(height: 12),
         // SizedBox(
         //   width: double.infinity,

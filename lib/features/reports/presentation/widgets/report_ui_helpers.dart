@@ -140,10 +140,12 @@ Widget buildLargeSummaryCard({
         Text(title, style: const TextStyle(color: Colors.white, fontSize: 16)),
         const SizedBox(height: 8),
         Text(
-          value,
+         value,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
           style: const TextStyle(
             color: Colors.white,
-            fontSize: 32,
+            fontSize: 25,
             fontWeight: FontWeight.bold,
           ),
         ),

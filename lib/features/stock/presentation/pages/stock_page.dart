@@ -112,25 +112,30 @@ class _StockPageState extends State<StockPage> {
                                   ),
                                 ),
                                 const SizedBox(width: 16),
-                                Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      '${salesman.currentStock}',
-                                      style: const TextStyle(
-                                        color: Colors.white,
-                                        fontSize: 48,
-                                        fontWeight: FontWeight.bold,
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      FittedBox(
+                                        fit: BoxFit.scaleDown,
+                                        child: Text(
+                                          '${salesman.currentStock}',
+                                          style: const TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 48,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
                                       ),
-                                    ),
-                                    const Text(
-                                      'Cans Available',
-                                      style: TextStyle(
-                                        color: Colors.white,
-                                        fontSize: 14,
+                                      const Text(
+                                        'Cans Available',
+                                        style: TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 14,
+                                        ),
                                       ),
-                                    ),
-                                  ],
+                                    ],
+                                  ),
                                 ),
                               ],
                             ),

@@ -76,9 +76,8 @@ class _BottlesPageState extends State<BottlesPage> {
                             const SizedBox(height: 20),
 
                             // Top Stats Row
-                            IntrinsicHeight(
-                              child: Row(
-                                crossAxisAlignment: CrossAxisAlignment.stretch,
+                            Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   _buildStatCard(
                                     context,
@@ -105,7 +104,6 @@ class _BottlesPageState extends State<BottlesPage> {
                                   ),
                                 ],
                               ),
-                            ),
                             const SizedBox(height: 24),
 
                             // Alert Card (High Balance)
@@ -326,16 +324,14 @@ class _BottlesPageState extends State<BottlesPage> {
               ),
             ),
             const SizedBox(height: 8),
-            FittedBox(
-              fit: BoxFit.scaleDown,
-              alignment: Alignment.centerLeft,
-              child: Text(
-                value,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 32,
-                  fontWeight: FontWeight.bold,
-                ),
+            Text(
+              value,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
               ),
             ),
             const SizedBox(height: 8),
@@ -386,8 +382,8 @@ class _BottlesPageState extends State<BottlesPage> {
                       children: [
                         Text(
                             customer.name.isNotEmpty
-      ? customer.name[0].toUpperCase() + customer.name.substring(1)
-      : '',
+                            ? customer.name[0].toUpperCase() + customer.name.substring(1)
+                            : '',
                           style: const TextStyle(
                             fontWeight: FontWeight.bold,
                             fontSize: 16,
@@ -425,10 +421,12 @@ class _BottlesPageState extends State<BottlesPage> {
                  const Icon(Icons.water_drop_outlined, color: Color(0xFFE65100), size: 20),
                   Text(
                     '${customer.bottleBalance}',
+                     maxLines: 1,
+              overflow: TextOverflow.ellipsis,
                     style: const TextStyle(
                       color: Color(0xFFE65100),
                       fontWeight: FontWeight.bold,
-                      fontSize: 24,
+                      fontSize: 20,
                     ),
                   ),
                    const Text(

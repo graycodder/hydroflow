@@ -610,8 +610,10 @@ class _DeliveryViewState extends State<DeliveryView> {
                           ),
                         )
                       else
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        Wrap(
+                          spacing: 8,
+                          runSpacing: 4,
+                          alignment: WrapAlignment.spaceBetween,
                           children: [
                             _buildTxStatItem('↓ ${tx.cansDelivered} delivered', Colors.orange),
                             _buildTxStatItem('↑ ${tx.emptyCollected} returned', Colors.teal),
