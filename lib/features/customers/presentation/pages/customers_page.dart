@@ -193,8 +193,10 @@ class _CustomersPageState extends State<CustomersPage> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(
-                  customer.name,
+               Text(
+  customer.name.isNotEmpty
+      ? customer.name[0].toUpperCase() + customer.name.substring(1)
+      : '',
                   style: const TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 16,

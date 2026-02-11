@@ -537,7 +537,9 @@ class _DeliveryViewState extends State<DeliveryView> {
                               Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Text(customer.name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                                  Text(  customer.name.isNotEmpty
+      ? customer.name[0].toUpperCase() + customer.name.substring(1)
+      : '', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
                                   const SizedBox(height: 2),
                                   Text(_formatTime(tx.timestamp), style: TextStyle(color: Colors.grey[500], fontSize: 12)),
                                 ],

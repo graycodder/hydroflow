@@ -385,7 +385,9 @@ class _BottlesPageState extends State<BottlesPage> {
                     Row(
                       children: [
                         Text(
-                          customer.name,
+                            customer.name.isNotEmpty
+      ? customer.name[0].toUpperCase() + customer.name.substring(1)
+      : '',
                           style: const TextStyle(
                             fontWeight: FontWeight.bold,
                             fontSize: 16,
