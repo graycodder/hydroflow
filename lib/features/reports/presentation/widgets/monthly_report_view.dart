@@ -370,10 +370,22 @@ class MonthlyReportView extends StatelessWidget {
       child: Column(
         children: [
           buildRow(
+            "Opening Stock",
+            "${report.openingStock} cans",
+            valueColor: Colors.black87,
+          ),
+          buildRow(
             "Total Stock Loaded",
             "${report.stockLoaded} cans",
             valueColor: const Color(0xFF2E7D32),
           ),
+          buildRow(
+            "Total Available",
+            "${report.totalAvailable} cans",
+            valueColor: Colors.black,
+            isBold: true,
+          ),
+          const Divider(height: 16),
           buildRow(
             "Total Delivered",
             "${report.deliveredStock} cans",

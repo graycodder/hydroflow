@@ -212,10 +212,24 @@ class ReportRepositoryImpl implements ReportRepository {
         int totalLoaded = 0;
         int totalDamaged = 0;
         int totalMismatch = 0;
+        int monthlyOpeningStock = 0;
+        bool hasOpeningStock = false;
+        
         final monthPrefix = month.toIso8601String().substring(0, 7).replaceAll('-', '_');
 
         if (logsEvent.snapshot.exists) {
           final data = Map<dynamic, dynamic>.from(logsEvent.snapshot.value as Map);
+          
+          // Sort logs by date to find the earliest one for opening stock
+          final sortedKeys = data.keys.where((k) => k.toString().contains(monthPrefix)).toList();
+          sortedKeys.sort(); // String sort works for 'LOG_YYYY_MM_DD' format
+
+          if (sortedKeys.isNotEmpty) {
+             final firstLog = Map<String, dynamic>.from(data[sortedKeys.first] as Map);
+             monthlyOpeningStock = (firstLog['openingStock'] as num?)?.toInt() ?? 0;
+             hasOpeningStock = true;
+          }
+
           data.forEach((key, value) {
             if (key.toString().contains(monthPrefix)) {
               final log = Map<String, dynamic>.from(value as Map);
@@ -286,7 +300,11 @@ class ReportRepositoryImpl implements ReportRepository {
         final upiCollections = onlineSales + onlineFromDeposits;
         final avgPrice = delivered > 0 ? salesRevenue / delivered : 0.0;
 
-        final calculatedOpening = currentStock + delivered + totalDamaged - totalLoaded;
+        // Use explicit opening if found, otherwise back-calculate
+        final calculatedOpening = hasOpeningStock 
+            ? monthlyOpeningStock 
+            : (currentStock + delivered + totalDamaged - totalLoaded);
+            
         final totalAvailable = calculatedOpening + totalLoaded;
         final turnover = totalAvailable > 0 ? (delivered / totalAvailable) * 100 : 0.0;
 
