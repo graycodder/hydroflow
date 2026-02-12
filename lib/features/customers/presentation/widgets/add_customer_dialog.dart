@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:hydroflow/features/customers/presentation/bloc/customer_bloc.dart';
 import 'package:hydroflow/features/customers/presentation/bloc/customer_event.dart';
 import 'package:hydroflow/features/customers/presentation/bloc/customer_state.dart';
+import 'package:flutter/services.dart';
 import 'package:hydroflow/core/widgets/hydro_flow_loader.dart';
 
 class AddCustomerDialog extends StatefulWidget {
@@ -102,10 +103,13 @@ class _AddCustomerDialogState extends State<AddCustomerDialog> {
                   ),
                   const SizedBox(height: 16),
                   _buildLabel('Phone Number', isMandatory: true),
-                  _buildTextFormField(
                     _phoneController,
                     'Enter 10 digit number',
                     keyboardType: TextInputType.phone,
+                    inputFormatters: [
+                      FilteringTextInputFormatter.digitsOnly,
+                      LengthLimitingTextInputFormatter(10),
+                    ],
                     validator: (value) {
                       if (value == null || value.trim().isEmpty) {
                         return 'Please enter phone number';
@@ -282,11 +286,13 @@ class _AddCustomerDialogState extends State<AddCustomerDialog> {
     TextEditingController controller,
     String hint, {
     TextInputType keyboardType = TextInputType.text,
+    List<TextInputFormatter>? inputFormatters,
     String? Function(String?)? validator,
   }) {
     return TextFormField(
       controller: controller,
       keyboardType: keyboardType,
+      inputFormatters: inputFormatters,
       validator: validator,
       decoration: InputDecoration(
         hintText: hint,

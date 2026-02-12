@@ -8,6 +8,7 @@ import 'package:hydroflow/features/customers/presentation/bloc/customer_state.da
 import 'package:hydroflow/core/widgets/hydro_flow_loader.dart';
 import 'package:hydroflow/features/transactions/domain/entities/transaction_entity.dart';
 import 'package:hydroflow/features/transactions/domain/repositories/transaction_repository.dart';
+import 'package:flutter/services.dart';
 import 'package:hydroflow/core/service_locator.dart' as di;
 
 class EditCustomerDialog extends StatefulWidget {
@@ -137,6 +138,10 @@ class _EditCustomerDialogState extends State<EditCustomerDialog> {
                   _phoneController, 
                   '98765 43212', 
                   keyboardType: TextInputType.phone,
+                  inputFormatters: [
+                      FilteringTextInputFormatter.digitsOnly,
+                      LengthLimitingTextInputFormatter(10),
+                  ],
                   validator: (value) {
                     if (value == null || value.trim().isEmpty) {
                       return 'Please enter phone number';
@@ -413,13 +418,14 @@ class _EditCustomerDialogState extends State<EditCustomerDialog> {
     TextEditingController controller, 
     String hint, 
     {
-      TextInputType keyboardType = TextInputType.text,
-      String? Function(String?)? validator,
-    }
-  ) {
+    TextInputType keyboardType = TextInputType.text,
+    List<TextInputFormatter>? inputFormatters,
+    String? Function(String?)? validator,
+  }) {
     return TextFormField(
       controller: controller,
       keyboardType: keyboardType,
+      inputFormatters: inputFormatters,
       validator: validator,
       decoration: InputDecoration(
         hintText: hint,
