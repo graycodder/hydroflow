@@ -11,6 +11,7 @@ import 'package:hydroflow/features/customers/presentation/bloc/customer_state.da
 import 'package:hydroflow/features/customers/presentation/widgets/customer_details_dialog.dart';
 import 'package:hydroflow/features/customers/presentation/widgets/add_customer_dialog.dart';
 import 'package:hydroflow/core/widgets/hydro_flow_app_bar.dart';
+import 'package:hydroflow/features/customers/presentation/widgets/pending_balance_adjustment_dialog.dart';
 import 'package:hydroflow/core/widgets/hydro_flow_loader.dart';
 
 class CustomersPage extends StatefulWidget {
@@ -194,9 +195,9 @@ class _CustomersPageState extends State<CustomersPage> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                Text(
-  customer.name.isNotEmpty
-      ? customer.name[0].toUpperCase() + customer.name.substring(1)
-      : '',
+               customer.name.isNotEmpty
+                   ? customer.name[0].toUpperCase() + customer.name.substring(1)
+                   : '',
                   style: const TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 16,
@@ -244,6 +245,18 @@ class _CustomersPageState extends State<CustomersPage> {
               ],
             ),
             const SizedBox(height: 12),
+            // Pending Balance Section
+            GestureDetector(
+              onTap: (){
+                showDialog(
+                  context: context,
+                  builder: (_) => PendingBalanceAdjustmentDialog(
+                    customer: customer,
+                    customerBloc: context.read<CustomerBloc>(),
+                  ),
+                );
+              },
+              child:
             Row(
               children: [
                 Text(
@@ -254,7 +267,7 @@ class _CustomersPageState extends State<CustomersPage> {
                   ),
                 ),
               ],
-            ),
+            )),
             const SizedBox(height: 4),
             Row(
               children: [
