@@ -323,6 +323,18 @@ class _DeliveryViewState extends State<DeliveryView> {
                        border: OutlineInputBorder(),
                      ),
                      onChanged: (_) => _calculateTotal(),
+                     validator: (value) {
+                       if (value == null || value.isEmpty) return 'Required';
+                       final n = int.tryParse(value);
+                       if (n == null) return 'Invalid';
+                       if (n < 0) return 'Cannot be negative';
+                       // Strict "Must be > 0"? User's manual edit suggested cans==0 is blocked.
+                       // User asked: "show same validation error message like Amount Received Texfiled ? for Full Cans TextFormField"
+                       // Amount Received validator checks for > 0.
+                       // I will enforce > 0 to match user intent.
+                       if (n <= 0) return 'Must be greater than 0';
+                       return null;
+                     },
                    ),
                  ),
                  const SizedBox(width: 16),
@@ -386,6 +398,7 @@ class _DeliveryViewState extends State<DeliveryView> {
                  helperText: "Mandatory: Enter actual amount received",
                ),
                validator: (value) {
+                 if (_paymentMode == 'Credit') return null; // Credit implies 0 received, no validation needed
                  if (value == null || value.isEmpty) {
                    return 'Amount received is required';
                  }
@@ -680,6 +693,8 @@ class _DeliveryViewState extends State<DeliveryView> {
       }
 
       FocusScope.of(context).unfocus();
+
+
 
       // Check Stock Availability (Strict)
       final currentStock = context.read<DeliveryBloc>().state.currentStock;

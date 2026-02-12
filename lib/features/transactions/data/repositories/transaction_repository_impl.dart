@@ -269,6 +269,123 @@ class TransactionRepositoryImpl implements TransactionRepository {
       throw Exception('Failed to record transaction: $e');
     }
   }
+  
+  @override
+  Future<void> recordAdjustment(TransactionEntity transaction) async {
+    try {
+      // 1. Record Transaction with Custom ID
+      final dateStr = DateFormat('yyyyMMdd').format(transaction.timestamp);
+      final timeStr = DateFormat('HHmmss').format(transaction.timestamp);
+      final safeSalesmanId = transaction.salesmanId.replaceAll(RegExp(r'[.#$\[\]]'), '_'); 
+      final customId = '${dateStr}_${safeSalesmanId}_$timeStr';
+      
+      final txRef = _database.ref().child('Transactions').child(customId);
+      
+      final txModel = TransactionModel(
+        id: customId,
+        salesmanId: transaction.salesmanId,
+        customerId: transaction.customerId,
+        timestamp: transaction.timestamp,
+        type: transaction.type,
+        amount: transaction.amount,
+        amountReceived: transaction.amountReceived,
+        paymentMode: transaction.paymentMode,
+        cansDelivered: transaction.cansDelivered,
+        emptyCollected: transaction.emptyCollected,
+        notes: transaction.notes,
+      );
+      
+      // Save Transaction Log
+      await txRef.set(txModel.toMap());
+
+      // Note: We DO NOT update Customer Balance here because 'recordAdjustment' is called 
+      // from contexts (like Edit Customer) where the Customer Balance is manually updated 
+      // via 'UpdateCustomer'. We avoid double-counting.
+
+      // 3. Update Salesman Inventory (Only if cans delivered > 0, which is unlikely for adjustment but safe to keep)
+      if (transaction.cansDelivered > 0) {
+        final salesmanRef = _database.ref().child('Salesmen/${transaction.salesmanId}');
+        await salesmanRef.runTransaction((Object? post) {
+          if (post == null) {
+             return Transaction.abort();
+          }
+          final salesmanMap = Map<String, dynamic>.from(post as Map);
+          salesmanMap.update('currentStock', (value) => (value as num).toInt() - transaction.cansDelivered, ifAbsent: () => 0);
+          return Transaction.success(salesmanMap);
+        });
+      }
+
+      // 4. Update Today's Stock Log (Crucial for Reports)
+      final dateFormatted = transaction.timestamp.toIso8601String().substring(0, 10);
+      final dateKey = dateFormatted.replaceAll('-', '_');
+      final logRef = _database.ref().child('Stock_logs').child('LOG_${dateKey}_${transaction.salesmanId}');
+      
+      await logRef.runTransaction((Object? post) {
+        final logMap = post == null 
+            ? <String, dynamic>{} 
+            : Map<String, dynamic>.from(post as Map);
+        
+        final isNewLog = !logMap.containsKey('date');
+        if (isNewLog) {
+            // If log doesn't exist, we might miss opening stock if not careful.
+            // But usually log exists if they have stock. If not, 0 is fine.
+           logMap['salesmanId'] = transaction.salesmanId;
+           logMap['date'] = dateFormatted;
+           logMap['openingStock'] = 0; // Assumption or fetch? stick to simple for adjustment.
+           logMap['loaded'] = 0;
+           logMap['damaged'] = 0;
+           logMap['actualClosingStock'] = 0;
+           logMap['mismatchCount'] = 0;
+           logMap['isReconciled'] = false;
+        }
+
+        final currentDelivered = (logMap['totalDelivered'] as num?)?.toInt() ?? 0;
+        final currentEmpty = (logMap['totalEmptyCollected'] as num?)?.toInt() ?? 0;
+        final currentCash = (logMap['cashCollected'] as num?)?.toDouble() ?? 0.0;
+        final currentOnline = (logMap['onlineCollected'] as num?)?.toDouble() ?? 0.0;
+        final currentTotalSales = (logMap['totalSalesValue'] as num?)?.toDouble() ?? 0.0;
+        final currentNetCollection = (logMap['todayCollection'] as num?)?.toDouble() ?? 0.0;
+
+        final opening = (logMap['openingStock'] as num?)?.toInt() ?? 0;
+        final loaded = (logMap['loaded'] as num?)?.toInt() ?? 0;
+        final damaged = (logMap['damaged'] as num?)?.toInt() ?? 0;
+
+        final newDelivered = currentDelivered + transaction.cansDelivered;
+        logMap['totalDelivered'] = newDelivered;
+        logMap['totalEmptyCollected'] = currentEmpty + transaction.emptyCollected;
+        
+        // Update Total Sales (Goods Value)
+        if (transaction.cansDelivered > 0) {
+          logMap['totalSalesValue'] = currentTotalSales + transaction.amount;
+        }
+
+        // Update Money Flow
+        if (transaction.paymentMode == 'Cash') {
+          logMap['cashCollected'] = currentCash + transaction.amountReceived;
+        } else if (transaction.paymentMode == 'Online' || transaction.paymentMode == 'UPI') {
+          logMap['onlineCollected'] = currentOnline + transaction.amountReceived;
+        }
+
+        // For Adjustments, we usually want to track them in collection if they represent money received.
+        // If Payment Mode is 'Deposit Adjustment', we skip collection?
+        // But here we use 'Adjustment'.
+        // If amountReceived > 0, it means money IS received (or account settled).
+        // If it's a "Correction", maybe we shouldn't add to 'todayCollection'?
+        // BUT, if I decrease balance 600->500, I admit I received 100.
+        // So I should show it in collection.
+        if (transaction.paymentMode != 'Deposit Adjustment') {
+          logMap['todayCollection'] = currentNetCollection + transaction.amountReceived;
+        }
+
+        logMap['closingStock'] = opening + loaded - newDelivered - damaged;
+
+        return Transaction.success(logMap);
+      });
+
+    } catch (e) {
+      throw Exception('Failed to record adjustment: $e');
+    }
+  }
 
   @override
   Stream<List<TransactionEntity>> getTodayTransactions(String salesmanId) {

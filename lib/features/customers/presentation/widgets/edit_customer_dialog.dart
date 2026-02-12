@@ -6,6 +6,9 @@ import 'package:hydroflow/features/customers/presentation/bloc/customer_bloc.dar
 import 'package:hydroflow/features/customers/presentation/bloc/customer_event.dart';
 import 'package:hydroflow/features/customers/presentation/bloc/customer_state.dart';
 import 'package:hydroflow/core/widgets/hydro_flow_loader.dart';
+import 'package:hydroflow/features/transactions/domain/entities/transaction_entity.dart';
+import 'package:hydroflow/features/transactions/domain/repositories/transaction_repository.dart';
+import 'package:hydroflow/core/service_locator.dart' as di;
 
 class EditCustomerDialog extends StatefulWidget {
   final Customer customer;
@@ -27,7 +30,7 @@ class _EditCustomerDialogState extends State<EditCustomerDialog> {
   late TextEditingController _phoneController;
   late TextEditingController _addressController;
   late TextEditingController _depositController;
-  //late TextEditingController _balanceController;
+  late TextEditingController _balanceController;
   late TextEditingController _bottleBalanceController;
   late String? _paymentMode;
   bool _isSubmitting = false;
@@ -39,7 +42,7 @@ class _EditCustomerDialogState extends State<EditCustomerDialog> {
     _phoneController = TextEditingController(text: widget.customer.phone);
     _addressController = TextEditingController(text: widget.customer.address);
     _depositController = TextEditingController(text: widget.customer.securityDeposit.toStringAsFixed(0));
-    //_balanceController = TextEditingController(text: widget.customer.pendingBalance.toStringAsFixed(0));
+    _balanceController = TextEditingController(text: widget.customer.pendingBalance.toStringAsFixed(0));
     _bottleBalanceController = TextEditingController(text: widget.customer.bottleBalance.toString());
     _paymentMode = widget.customer.paymentMode; // Use from entity
   }
@@ -50,7 +53,7 @@ class _EditCustomerDialogState extends State<EditCustomerDialog> {
     _phoneController.dispose();
     _addressController.dispose();
     _depositController.dispose();
-    //_balanceController.dispose();
+    _balanceController.dispose();
     _bottleBalanceController.dispose();
     super.dispose();
   }
@@ -215,12 +218,38 @@ class _EditCustomerDialogState extends State<EditCustomerDialog> {
                     return null;
                   },
                 ),
-             // const SizedBox(height: 16),
-             // _buildLabel('Pending Balance (₹)'),
-             // _buildTextField(_balanceController, '100', keyboardType: TextInputType.number),
+              const SizedBox(height: 16),
+              _buildLabel('Pending Balance (₹)'),
+              _buildTextFormField(
+                _balanceController, 
+                '100', 
+                keyboardType: TextInputType.number,
+                validator: (value) {
+                  if (value == null || value.trim().isEmpty) return null; // Allow empty? No, it's a number field.
+                  final newVal = double.tryParse(value);
+                  if (newVal == null) return 'Invalid number';
+                  if (newVal > widget.customer.pendingBalance) {
+                     return 'Cannot increase manually';
+                  }
+                  return null;
+                },
+              ),
              const SizedBox(height: 16),
              _buildLabel('Bottle Balance'),
-             _buildTextFormField(_bottleBalanceController, '2', keyboardType: TextInputType.number),
+             _buildTextFormField(
+               _bottleBalanceController, 
+               '2', 
+               keyboardType: TextInputType.number,
+               validator: (value) {
+                  if (value == null || value.trim().isEmpty) return null;
+                  final newVal = int.tryParse(value);
+                  if (newVal == null) return 'Invalid number';
+                  if (newVal > widget.customer.bottleBalance) {
+                     return 'Cannot increase manually';
+                  }
+                  return null;
+                },
+             ),
                 const SizedBox(height: 24),
                 Row(
                   children: [
@@ -232,6 +261,7 @@ class _EditCustomerDialogState extends State<EditCustomerDialog> {
                             final phone = _phoneController.text.trim();
                             final address = _addressController.text.trim();
                             final deposit = double.parse(_depositController.text.trim());
+                            final balance = double.parse(_balanceController.text.trim());
                             final bottleBalance = int.parse(_bottleBalanceController.text.trim());
                             showDialog(
                               context: context,
@@ -244,11 +274,15 @@ class _EditCustomerDialogState extends State<EditCustomerDialog> {
                                     child: const Text('Cancel'),
                                   ),
                                   ElevatedButton(
-                                    onPressed: () {
+                                    onPressed: () async {
                                       setState(() {
                                         _isSubmitting = true;
                                       });
                                       Navigator.pop(confirmContext); // Close confirmation
+
+                                      // 1. Update Customer Details (including Balance - Repository logic handles overwrite)
+                                      // Note: recordAdjustment will SKIP overwriting customer balance to avoid conflict,
+                                      // allowing this UpdateCustomer call to set the definitive new balance.
                                       final updatedCustomer = Customer(
                                         id: widget.customer.id,
                                         salesmanId: widget.customer.salesmanId,
@@ -259,12 +293,47 @@ class _EditCustomerDialogState extends State<EditCustomerDialog> {
                                         securityDeposit: deposit,
                                         bottleBalance: bottleBalance,
                                         paymentMode: _paymentMode!,
-                                        pendingBalance: widget.customer.pendingBalance,
+                                        pendingBalance: balance,
                                         isRefunded: widget.customer.isRefunded,
                                         createdAt: widget.customer.createdAt,
                                       );
                                       widget.customerBloc.add(UpdateCustomer(updatedCustomer));
-                                      // Navigator.pop(context); // Handled by listener
+                                      
+                                      // 2. Check for Adjustments and Record Transactions
+                                      // Pending Balance Decrease
+                                      if (balance < widget.customer.pendingBalance) {
+                                        final diff = widget.customer.pendingBalance - balance;
+                                        final tx = TransactionEntity(
+                                          id: 'adj_pay_${DateTime.now().millisecondsSinceEpoch}', // Temp ID
+                                          salesmanId: widget.customer.salesmanId,
+                                          customerId: widget.customer.id,
+                                          timestamp: DateTime.now(),
+                                          type: 'Payment Adjustment',
+                                          amount: 0,
+                                          amountReceived: diff,
+                                          paymentMode: 'System Adjustment', // Use System Adjustment to track in collection
+                                          notes: 'Manual Balance Adjustment',
+                                        );
+                                         await di.sl<TransactionRepository>().recordAdjustment(tx);
+                                      }
+
+                                      // Bottle Balance Decrease
+                                      if (bottleBalance < widget.customer.bottleBalance) {
+                                        final diff = widget.customer.bottleBalance - bottleBalance;
+                                        final tx = TransactionEntity(
+                                          id: 'adj_bot_${DateTime.now().millisecondsSinceEpoch}',
+                                          salesmanId: widget.customer.salesmanId,
+                                          customerId: widget.customer.id,
+                                          timestamp: DateTime.now(),
+                                          type: 'Bottle Adjustment',
+                                          amount: 0,
+                                          amountReceived: 0,
+                                          paymentMode: 'System Adjustment',
+                                          emptyCollected: diff,
+                                          notes: 'Manual Bottle Adjustment',
+                                        );
+                                        await di.sl<TransactionRepository>().recordAdjustment(tx);
+                                      }
                                     },
                                     style: ElevatedButton.styleFrom(
                                       backgroundColor: Colors.grey[700],
