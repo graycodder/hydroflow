@@ -103,6 +103,7 @@ class _AddCustomerDialogState extends State<AddCustomerDialog> {
                   ),
                   const SizedBox(height: 16),
                   _buildLabel('Phone Number', isMandatory: true),
+                  _buildTextFormField(
                     _phoneController,
                     'Enter 10 digit number',
                     keyboardType: TextInputType.phone,
