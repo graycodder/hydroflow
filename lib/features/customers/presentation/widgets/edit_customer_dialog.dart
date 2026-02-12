@@ -122,6 +122,9 @@ class _EditCustomerDialogState extends State<EditCustomerDialog> {
                 _buildTextFormField(
                   _nameController, 
                   'Enter name',
+                  inputFormatters: [
+                    FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z0-9 ]')),
+                  ],
                   validator: (value) {
                     if (value == null || value.trim().isEmpty) {
                       return 'Please enter customer name';
@@ -157,6 +160,9 @@ class _EditCustomerDialogState extends State<EditCustomerDialog> {
                 _buildTextFormField(
                   _addressController, 
                   'Enter address',
+                  inputFormatters: [
+                    FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z0-9 ]')),
+                  ],
                   validator: (value) {
                     if (value == null || value.trim().isEmpty) {
                       return 'Please enter address';
@@ -173,6 +179,9 @@ class _EditCustomerDialogState extends State<EditCustomerDialog> {
                   _depositController, 
                   '500', 
                   keyboardType: TextInputType.number,
+                  inputFormatters: [
+                    FilteringTextInputFormatter.digitsOnly,
+                  ],
                   validator: (value) {
                     if (value == null || value.trim().isEmpty) {
                       return 'Please enter security deposit';
@@ -229,6 +238,9 @@ class _EditCustomerDialogState extends State<EditCustomerDialog> {
                 _balanceController, 
                 '100', 
                 keyboardType: TextInputType.number,
+                inputFormatters: [
+                  FilteringTextInputFormatter.digitsOnly,
+                ],
                 validator: (value) {
                   if (value == null || value.trim().isEmpty) return null; // Allow empty? No, it's a number field.
                   final newVal = double.tryParse(value);
@@ -245,6 +257,9 @@ class _EditCustomerDialogState extends State<EditCustomerDialog> {
                _bottleBalanceController, 
                '2', 
                keyboardType: TextInputType.number,
+               inputFormatters: [
+                 FilteringTextInputFormatter.digitsOnly,
+               ],
                validator: (value) {
                   if (value == null || value.trim().isEmpty) return null;
                   final newVal = int.tryParse(value);

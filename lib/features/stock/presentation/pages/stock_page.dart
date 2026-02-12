@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hydroflow/features/auth/presentation/bloc/auth_bloc.dart';
@@ -198,8 +199,9 @@ class _StockPageState extends State<StockPage> {
                                       TextFormField(
                                         autofocus: false,
                                         controller: _openingStockController,
-                                        keyboardType: TextInputType.number,
-                                        decoration: InputDecoration(
+                                          keyboardType: TextInputType.number,
+                                          inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                                          decoration: InputDecoration(
                                           hintText: 'Enter Opening Stock',
                                           filled: true,
                                           fillColor: Colors.grey[100],
@@ -329,6 +331,7 @@ class _StockPageState extends State<StockPage> {
                                           controller: _loadStockController,
                                           autofocus: false,
                                           keyboardType: TextInputType.number,
+                                          inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                                           decoration: InputDecoration(
                                             hintText: 'Enter quantity',
                                             filled: true,
@@ -461,6 +464,7 @@ class _StockPageState extends State<StockPage> {
                                         autofocus: false,
                                         controller: _damagedStockController,
                                         keyboardType: TextInputType.number,
+                                        inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                                         decoration: InputDecoration(
                                           hintText: 'Enter quantity',
                                           filled: true,

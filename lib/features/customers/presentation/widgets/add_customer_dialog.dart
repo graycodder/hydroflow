@@ -91,6 +91,9 @@ class _AddCustomerDialogState extends State<AddCustomerDialog> {
                   _buildTextFormField(
                     _nameController,
                     'Enter name',
+                    inputFormatters: [
+                      FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z0-9 ]')),
+                    ],
                     validator: (value) {
                       if (value == null || value.trim().isEmpty) {
                         return 'Please enter customer name';
@@ -126,6 +129,9 @@ class _AddCustomerDialogState extends State<AddCustomerDialog> {
                   _buildTextFormField(
                     _addressController,
                     'Enter address',
+                    inputFormatters: [
+                      FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z0-9 ]')),
+                    ],
                     validator: (value) {
                       if (value == null || value.trim().isEmpty) {
                         return 'Please enter address';
@@ -142,6 +148,9 @@ class _AddCustomerDialogState extends State<AddCustomerDialog> {
                     _depositController,
                     'Enter deposit amount',
                     keyboardType: TextInputType.number,
+                    inputFormatters: [
+                      FilteringTextInputFormatter.digitsOnly,
+                    ],
                     validator: (value) {
                       if (value == null || value.trim().isEmpty) {
                         return 'Please enter security deposit';

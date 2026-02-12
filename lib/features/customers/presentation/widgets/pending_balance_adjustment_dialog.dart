@@ -135,7 +135,7 @@ class _PendingBalanceAdjustmentDialogState extends State<PendingBalanceAdjustmen
                     controller: _amountReceivedController,
                     keyboardType: TextInputType.number,
                     inputFormatters: [
-                      FilteringTextInputFormatter.digitsOnly,
+                      FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d{0,2}')),
                     ],
                     decoration: InputDecoration(
                       hintText: 'Enter received amount',
