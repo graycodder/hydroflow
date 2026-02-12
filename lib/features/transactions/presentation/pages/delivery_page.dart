@@ -667,6 +667,17 @@ class _DeliveryViewState extends State<DeliveryView> {
       final received = _paymentMode == 'Credit' ? 0.0 : (double.tryParse(_amountReceivedController.text) ?? 0);
       final cans = int.tryParse(_fullCansController.text) ?? 0;
       final emptyCans = int.tryParse(_emptyCansController.text) ?? 0;
+      
+      // Validation: Max 1000 cans per transaction
+      if (cans > 1000) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Maximum 1000 cans allowed per single transaction'),
+            backgroundColor: Colors.red,
+          ),
+        );
+        return;
+      }
 
       FocusScope.of(context).unfocus();
 

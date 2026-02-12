@@ -28,7 +28,7 @@ class _EditCustomerDialogState extends State<EditCustomerDialog> {
   late TextEditingController _addressController;
   late TextEditingController _depositController;
   //late TextEditingController _balanceController;
-  //late TextEditingController _bottleBalanceController;
+  late TextEditingController _bottleBalanceController;
   late String? _paymentMode;
   bool _isSubmitting = false;
 
@@ -40,7 +40,7 @@ class _EditCustomerDialogState extends State<EditCustomerDialog> {
     _addressController = TextEditingController(text: widget.customer.address);
     _depositController = TextEditingController(text: widget.customer.securityDeposit.toStringAsFixed(0));
     //_balanceController = TextEditingController(text: widget.customer.pendingBalance.toStringAsFixed(0));
-    //_bottleBalanceController = TextEditingController(text: widget.customer.bottleBalance.toString());
+    _bottleBalanceController = TextEditingController(text: widget.customer.bottleBalance.toString());
     _paymentMode = widget.customer.paymentMode; // Use from entity
   }
 
@@ -51,7 +51,7 @@ class _EditCustomerDialogState extends State<EditCustomerDialog> {
     _addressController.dispose();
     _depositController.dispose();
     //_balanceController.dispose();
-    //_bottleBalanceController.dispose();
+    _bottleBalanceController.dispose();
     super.dispose();
   }
 
@@ -218,9 +218,9 @@ class _EditCustomerDialogState extends State<EditCustomerDialog> {
              // const SizedBox(height: 16),
              // _buildLabel('Pending Balance (₹)'),
              // _buildTextField(_balanceController, '100', keyboardType: TextInputType.number),
-             // const SizedBox(height: 16),
-             // _buildLabel('Bottle Balance'),
-             // _buildTextField(_bottleBalanceController, '2', keyboardType: TextInputType.number),
+             const SizedBox(height: 16),
+             _buildLabel('Bottle Balance'),
+             _buildTextFormField(_bottleBalanceController, '2', keyboardType: TextInputType.number),
                 const SizedBox(height: 24),
                 Row(
                   children: [
@@ -232,7 +232,7 @@ class _EditCustomerDialogState extends State<EditCustomerDialog> {
                             final phone = _phoneController.text.trim();
                             final address = _addressController.text.trim();
                             final deposit = double.parse(_depositController.text.trim());
-
+                            final bottleBalance = int.parse(_bottleBalanceController.text.trim());
                             showDialog(
                               context: context,
                               builder: (confirmContext) => AlertDialog(
@@ -257,10 +257,10 @@ class _EditCustomerDialogState extends State<EditCustomerDialog> {
                                         address: address,
                                         status: widget.customer.status,
                                         securityDeposit: deposit,
-                                        pendingBalance: widget.customer.pendingBalance,
-                                        bottleBalance: widget.customer.bottleBalance,
-                                        isRefunded: widget.customer.isRefunded,
+                                        bottleBalance: bottleBalance,
                                         paymentMode: _paymentMode!,
+                                        pendingBalance: widget.customer.pendingBalance,
+                                        isRefunded: widget.customer.isRefunded,
                                         createdAt: widget.customer.createdAt,
                                       );
                                       widget.customerBloc.add(UpdateCustomer(updatedCustomer));
