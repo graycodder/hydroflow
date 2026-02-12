@@ -3,6 +3,8 @@ import 'package:hydroflow/features/transactions/domain/entities/transaction_enti
 import 'package:hydroflow/features/transactions/domain/repositories/transaction_repository.dart';
 import 'package:hydroflow/features/transactions/data/models/transaction_model.dart';
 
+import 'package:intl/intl.dart';
+
 class TransactionRepositoryImpl implements TransactionRepository {
   final FirebaseDatabase _database;
 
@@ -12,10 +14,17 @@ class TransactionRepositoryImpl implements TransactionRepository {
   @override
   Future<void> recordTransaction(TransactionEntity transaction) async {
     try {
-      // 1. Record Transaction
-      final txRef = _database.ref().child('Transactions').push();
+      // 1. Record Transaction with Custom ID
+      final dateStr = DateFormat('yyyyMMdd').format(transaction.timestamp);
+      final timeStr = DateFormat('HHmmss').format(transaction.timestamp);
+      // Sanitize salesmanId just in case, though usually safe
+      final safeSalesmanId = transaction.salesmanId.replaceAll(RegExp(r'[.#$\[\]]'), '_'); 
+      final customId = '${dateStr}_${safeSalesmanId}_$timeStr';
+      
+      final txRef = _database.ref().child('Transactions').child(customId);
+      
       final txModel = TransactionModel(
-        id: txRef.key!,
+        id: customId,
         salesmanId: transaction.salesmanId,
         customerId: transaction.customerId,
         timestamp: transaction.timestamp,

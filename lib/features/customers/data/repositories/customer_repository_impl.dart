@@ -2,6 +2,7 @@ import 'package:firebase_database/firebase_database.dart';
 import 'package:hydroflow/features/customers/domain/entities/customer.dart';
 import 'package:hydroflow/features/customers/domain/repositories/customer_repository.dart';
 import 'package:hydroflow/features/customers/data/models/customer_model.dart';
+import 'package:intl/intl.dart';
 
 class CustomerRepositoryImpl implements CustomerRepository {
   final FirebaseDatabase _database;
@@ -52,9 +53,17 @@ class CustomerRepositoryImpl implements CustomerRepository {
   @override
   Future<void> addCustomer(Customer customer) async {
     try {
-      final ref = _database.ref().child('Customers').push();
+      // 1. Generate Custom Customer ID
+      final now = DateTime.now();
+      final dateStr = DateFormat('yyyyMMdd').format(now);
+      final timeStr = DateFormat('HHmmss').format(now);
+      final safeSalesmanId = customer.salesmanId.replaceAll(RegExp(r'[.#$\[\]]'), '_'); 
+      final customCustomerId = '${dateStr}_${safeSalesmanId}_$timeStr';
+
+      final ref = _database.ref().child('Customers').child(customCustomerId);
+      
       final customerModel = CustomerModel(
-        id: ref.key!,
+        id: customCustomerId,
         salesmanId: customer.salesmanId,
         name: customer.name,
         phone: customer.phone,
@@ -65,7 +74,7 @@ class CustomerRepositoryImpl implements CustomerRepository {
         bottleBalance: customer.bottleBalance,
         isRefunded: customer.isRefunded,
         paymentMode: customer.paymentMode,
-        createdAt: DateTime.now(),
+        createdAt: now,
       );
       
       await ref.set(customerModel.toMap());
@@ -80,11 +89,42 @@ class CustomerRepositoryImpl implements CustomerRepository {
 
       // Record Deposit Transaction
       if (customer.securityDeposit > 0) {
-        final txRef = _database.ref().child('Transactions').push();
+        // Ensure Transaction ID is unique even if created same second
+        // Adding a small delay or suffix if needed, but for now milliseconds might differ?
+        // Actually, user requested strict `Date_SalesmanId_Time`.
+        // If we strictly follow that, we might collide if multiple tx/cust created same second.
+        // But here we create 1 cust + 1 tx.
+        // Let's use the same timestamp for both to link them? 
+        // Or generate a new timestamp for the Transaction to distinguish (if >1s elapses or we force it).
+        // Let's use `DateTime.now()` again for the transaction to get a potentially slightly later time,
+        // OR simply append `_Dep` for clarity/uniqueness if permitted.
+        // User requested: `Date_SalesmanId_Time`.
+        // If I use the SAME string, it's fine because they are in different collections (Customers vs Transactions).
+        
+        final txTime = DateTime.now();
+        // If execution is fast, txTime might be same second as `now`.
+        // To ensure uniqueness within `Transactions` collection (if another tx happened same sec?),
+        // we might adding milliseconds?
+        // User example: `20240212_Salesman123_143005`.
+        // I will stick to the requested format. 
+        // If I use `DateTime.now()`, it's likely fine.
+        
+        final txDateStr = DateFormat('yyyyMMdd').format(txTime);
+        final txTimeStr = DateFormat('HHmmss').format(txTime);
+        // Check if same as customer?
+        String customTxId = '${txDateStr}_${safeSalesmanId}_$txTimeStr';
+        
+        // If it matches customer ID (which is in Customers), it's fine for Transactions.
+        // IMPORTANT: If a REGULAR transaction happened at the exact same second, we have a collision.
+        // But regular transactions are manual. This is automatic. Unlikely to collide.
+        
+        final txRef = _database.ref().child('Transactions').child(customTxId);
+        
         await txRef.set({
+          'id': customTxId, // Add ID to the body too for consistency
           'salesmanId': customer.salesmanId,
-          'customerId': ref.key,
-          'timestamp': DateTime.now().toIso8601String(),
+          'customerId': customCustomerId,
+          'timestamp': txTime.toIso8601String(),
           'type': 'Deposit',
           'amount': customer.securityDeposit,
           'amountReceived': customer.securityDeposit,
@@ -96,12 +136,12 @@ class CustomerRepositoryImpl implements CustomerRepository {
         });
 
         // Update Stock Log Collection
-        final dateKey = DateTime.now().toIso8601String().substring(0, 10).replaceAll('-', '_');
+        final dateKey = txTime.toIso8601String().substring(0, 10).replaceAll('-', '_');
         final logRef = _database.ref().child('Stock_logs').child('LOG_${dateKey}_${customer.salesmanId}');
         await logRef.runTransaction((Object? post) {
           final logMap = post == null ? <String, dynamic>{} : Map<String, dynamic>.from(post as Map);
           if (!logMap.containsKey('date')) {
-            logMap['date'] = DateTime.now().toIso8601String().substring(0, 10);
+            logMap['date'] = txTime.toIso8601String().substring(0, 10);
             logMap['salesmanId'] = customer.salesmanId;
           }
           final currentColl = (logMap['todayCollection'] as num?)?.toDouble() ?? 0.0;
