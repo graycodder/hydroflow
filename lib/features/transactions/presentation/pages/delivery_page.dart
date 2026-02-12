@@ -538,6 +538,8 @@ class _DeliveryViewState extends State<DeliveryView> {
                     border: Border.all(color: Colors.grey[200]!),
                   ),
                   child: Column(
+                    mainAxisAlignment: MainAxisAlignment.start,
+                        crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -551,9 +553,9 @@ class _DeliveryViewState extends State<DeliveryView> {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(  customer.name.isNotEmpty
-      ? customer.name[0].toUpperCase() + customer.name.substring(1)
-      : '', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                                  const SizedBox(height: 2),
+                                   ? customer.name[0].toUpperCase() + customer.name.substring(1)
+                                   : '', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                                   const SizedBox(height: 2),
                                   Text(_formatTime(tx.timestamp), style: TextStyle(color: Colors.grey[500], fontSize: 12)),
                                 ],
                               ),
@@ -562,15 +564,7 @@ class _DeliveryViewState extends State<DeliveryView> {
                           Column(
                             crossAxisAlignment: CrossAxisAlignment.end,
                             children: [
-                              if (tx.amount != tx.amountReceived && tx.type != 'Deposit')
-                                Text(
-                                  '₹${tx.amountReceived.toStringAsFixed(0)} / ₹${tx.amount.toStringAsFixed(0)}',
-                                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: Color(0xFF2962FF)),
-                                )
-                              else
-                                Text('₹${tx.amount.toStringAsFixed(0)}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: Color(0xFF2962FF))),
-                              const SizedBox(height: 4),
-                              Container(
+                                Container(
                                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                                 decoration: BoxDecoration(
                                   color: Colors.black,
@@ -580,11 +574,19 @@ class _DeliveryViewState extends State<DeliveryView> {
                                   tx.paymentMode.toUpperCase(),
                                   style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
                                 ),
-                              ),
+                              ),           
                             ],
                           ),
                         ],
                       ),
+                       const SizedBox(height: 4),
+                              if (tx.amount != tx.amountReceived && tx.type != 'Deposit')
+                                Text(
+                                  '₹${tx.amountReceived.toStringAsFixed(0)} / ₹${tx.amount.toStringAsFixed(0)}',
+                                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: Color(0xFF2962FF)),
+                                )
+                              else
+                                Text('₹${tx.amount.toStringAsFixed(0)}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: Color(0xFF2962FF))),
                       const Divider(height: 24, color: Color(0xFFEEEEEE)),
                       if (tx.type == 'Deposit' || tx.type == 'Deposit Received')
                         const Align(
