@@ -182,71 +182,63 @@ class _DashboardPageState extends State<DashboardPage> {
                     builder: (context, dashboardState) {
                       if (dashboardState is DashboardLoaded) {
                         final summary = dashboardState.summary;
-                        return LayoutBuilder(
-                          builder: (context, constraints) {
-                            final width = constraints.maxWidth;
-                            final cardWidth = (width - 16) / 2;
-                            return Wrap(
-                              spacing: 16,
-                              runSpacing: 16,
-                              children: [
-                                _buildStatCard(
-                                  width: cardWidth,
-                                  title: 'Current Stock',
-                                  value: '${summary.currentStock}',
-                                  subtitle: 'Cans in Van',
-                                  valueColor: const Color(0xFF2962FF),
-                                  onTap: (){}
-                                 // onTap: () => context.push('/stock'),
-                                ),
-                                _buildStatCard(
-                                  width: cardWidth,
-                                  title: 'Deliveries',
-                                  value: '${summary.todayDeliveries}',
-                                  subtitle: 'Cans Delivered',
-                                  valueColor: const Color(0xFFFF6D00),
-                                   onTap: (){}
-                                  //onTap: () => context.push('/delivery'),
-                                ),
-                                _buildStatCard(
-                                  width: cardWidth,
-                                  title: "Today's Sales",
-                                  value: '₹${summary.todaySales.toStringAsFixed(0).replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]},')}',
-                                  subtitle: 'Total Bill Amount',
-                                  valueColor: const Color(0xFF6200EA),
-                                   onTap: (){}
-                                 // onTap: () => context.push('/delivery'),
-                                ),
-                                _buildStatCard(
-                                  width: cardWidth,
-                                  title: "Today's Collection",
-                                  value: '₹${summary.todayCollection.toStringAsFixed(0).replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]},')}',
-                                  subtitle: 'Cash + Online',
-                                  valueColor: const Color(0xFF00C853),
-                                   onTap: (){}
-                                 // onTap: () => context.push('/delivery'),
-                                ),
-                                _buildStatCard(
-                                  width: cardWidth,
-                                  title: 'Active Customers',
-                                  value: '${summary.activeCustomers}',
-                                  subtitle: 'Total Active',
-                                  valueColor: const Color(0xFF00B8D4),
-                                   onTap: (){}
-                                  //onTap: () => context.push('/customers'),
-                                ),
-                                _buildStatCard(
-                                  width: cardWidth,
-                                  title: 'Inactive Customers',
-                                  value: '${summary.inactiveCustomers}',
-                                  subtitle: 'Total Inactive',
-                                  valueColor: Colors.blueGrey,
-                                   onTap: (){}
-                                 // onTap: () => context.push('/customers'),
-                                ),
-                              ],
-                            );
-                          },
+                        return GridView.count(
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          crossAxisCount: 2,
+                          crossAxisSpacing: 16,
+                          mainAxisSpacing: 16,
+                          childAspectRatio: 1.0, // Increased height to prevent overflow
+                          children: [
+                            _buildStatCard(
+                              title: 'Current Stock',
+                              value: '${summary.currentStock}',
+                              subtitle: 'Cans in Van',
+                              valueColor: const Color(0xFF2962FF),
+                              onTap: (){},
+                             // onTap: () => context.push('/stock'),
+                            ),
+                            _buildStatCard(
+                              title: 'Deliveries',
+                              value: '${summary.todayDeliveries}',
+                              subtitle: 'Cans Delivered',
+                              valueColor: const Color(0xFFFF6D00),
+                               onTap: (){},
+                              //onTap: () => context.push('/delivery'),
+                            ),
+                            _buildStatCard(
+                              title: "Today's Sales",
+                              value: '₹${summary.todaySales.toStringAsFixed(0).replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]},')}',
+                              subtitle: 'Total Bill Amount',
+                              valueColor: const Color(0xFF6200EA),
+                               onTap: (){},
+                             // onTap: () => context.push('/delivery'),
+                            ),
+                            _buildStatCard(
+                              title: "Today's Collection",
+                              value: '₹${summary.todayCollection.toStringAsFixed(0).replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]},')}',
+                              subtitle: 'Cash + Online',
+                              valueColor: const Color(0xFF00C853),
+                               onTap: (){},
+                             // onTap: () => context.push('/delivery'),
+                            ),
+                            _buildStatCard(
+                              title: 'Active Customers',
+                              value: '${summary.activeCustomers}',
+                              subtitle: 'Total Active',
+                              valueColor: const Color(0xFF00B8D4),
+                               onTap: (){},
+                              //onTap: () => context.push('/customers'),
+                            ),
+                            _buildStatCard(
+                              title: 'Inactive Customers',
+                              value: '${summary.inactiveCustomers}',
+                              subtitle: 'Total Inactive',
+                              valueColor: Colors.blueGrey,
+                               onTap: (){},
+                             // onTap: () => context.push('/customers'),
+                            ),
+                          ],
                         );
                       }
                       if (dashboardState is DashboardLoading) {
@@ -273,7 +265,6 @@ class _DashboardPageState extends State<DashboardPage> {
   }
 
   Widget _buildStatCard({
-    required double width,
     required String title,
     required String value,
     required String subtitle,
@@ -283,8 +274,7 @@ class _DashboardPageState extends State<DashboardPage> {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        width: width,
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.all(7),
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(16),
@@ -297,7 +287,8 @@ class _DashboardPageState extends State<DashboardPage> {
           ],
         ),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          mainAxisAlignment: MainAxisAlignment.center, // Center content vertically
           children: [
             Text(
               title,
@@ -307,14 +298,17 @@ class _DashboardPageState extends State<DashboardPage> {
               ),
             ),
             const SizedBox(height: 12),
-            Text(
-               value,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(
-                color: valueColor,
-                fontSize: 28,
-                fontWeight: FontWeight.bold,
+            FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Text(
+                 value,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  color: valueColor,
+                  fontSize: 28,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
             ),
             const SizedBox(height: 4),

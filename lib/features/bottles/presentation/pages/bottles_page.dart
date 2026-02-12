@@ -117,18 +117,23 @@ class _BottlesPageState extends State<BottlesPage> {
                                   border: Border.all(color: const Color(0xFFFFE0B2)),
                                 ),
                                 child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.start,
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Row(
+                                      mainAxisAlignment: MainAxisAlignment.start,
+                                  crossAxisAlignment: CrossAxisAlignment.start,
                                       children: [
                                         const Icon(Icons.error_outline, color: Color(0xFFBF360C)),
                                         const SizedBox(width: 8),
-                                        Text(
-                                          '${state.highBalanceCount} customer(s) has high bottle balance',
-                                          style: const TextStyle(
-                                            color: Color(0xFF3E2723),
-                                            fontWeight: FontWeight.bold,
-                                            fontSize: 16,
+                                        Expanded(
+                                          child: Text(
+                                            '${state.highBalanceCount} customer(s) has high bottle balance',
+                                            style: const TextStyle(
+                                              color: Color(0xFF3E2723),
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: 16,
+                                            ),
                                           ),
                                         ),
                                       ],
@@ -307,13 +312,13 @@ class _BottlesPageState extends State<BottlesPage> {
   }) {
     return Expanded(
       child: Container(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.only(top:16,bottom:16,left:7,right:7),
         decoration: BoxDecoration(
           color: color,
           borderRadius: BorderRadius.circular(16),
         ),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.center,
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(

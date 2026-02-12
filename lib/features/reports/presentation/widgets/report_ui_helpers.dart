@@ -54,12 +54,15 @@ Widget buildRow(String label, String value, {bool isBold = false, Color? valueCo
     child: Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(
-          label,
-          style: TextStyle(
-            color: Colors.black87,
-            fontSize: 15,
-            fontWeight: isBold ? FontWeight.bold : FontWeight.normal,
+        Expanded(
+          flex: 2,
+          child: Text(
+            label,
+            style: TextStyle(
+              color: Colors.black87,
+              fontSize: 15,
+              fontWeight: isBold ? FontWeight.bold : FontWeight.normal,
+            ),
           ),
         ),
         Text(
@@ -109,13 +112,15 @@ Widget buildStatBox(String label, String value, Color color) {
               color: color,
             ),
             const SizedBox(width: 4),
-            Text(label, style: const TextStyle(color: Colors.grey)),
+            Text(label, 
+            style: const TextStyle(color: Colors.grey)),
           ],
         ),
         const SizedBox(height: 8),
         Text(
-          value,
-          style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: color),
+          value,maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+          style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: color),
         ),
       ],
     ),
@@ -135,7 +140,7 @@ Widget buildLargeSummaryCard({
       borderRadius: BorderRadius.circular(20),
     ),
     child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         Text(title, style: const TextStyle(color: Colors.white, fontSize: 16)),
         const SizedBox(height: 8),

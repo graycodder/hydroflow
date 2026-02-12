@@ -149,9 +149,9 @@ class _StockPageState extends State<StockPage> {
                       // Opeinning Stock Section
                       BlocBuilder<StockBloc, StockState>(
                         builder: (context, state) {
-                          if (state is StockInitial) {
-                            return const Center(child: HydroFlowLoader(message: 'Fetching Stock...', isOverlay: false));
-                          }
+                          // if (state is StockInitial) {
+                          //   return const Center(child: HydroFlowLoader(message: 'Fetching Stock...', isOverlay: false));
+                          // }
 
                           return Column(
                             crossAxisAlignment: CrossAxisAlignment.stretch,

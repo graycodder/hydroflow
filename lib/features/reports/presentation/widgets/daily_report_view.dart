@@ -227,51 +227,7 @@ class DailyReportView extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 16),
-           Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              border: Border.all(color: Colors.blue[100]!),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Row(
-             mainAxisAlignment: MainAxisAlignment.center,
-             crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                const Expanded(
-                  child: Column(
-                     mainAxisAlignment: MainAxisAlignment.start,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                        Text("Total Bottles with Customers", style: TextStyle(color: Colors.grey)),
-                    Text(
-                      "All-time outstanding",
-                      style: TextStyle(color: Colors.grey, fontSize: 12),
-                    ),
-                    ],
-                  ),
-                ),
-                     Expanded(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: [
-                       Text("+${report.totalBottlesWithCustomers}",
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                 style: const TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.blue,
-                  ),
-                ),
-                    ],
-                  ),
-                ),
-              
-              ],
-            ),
-          ),
+
         ],
       ),
     );
@@ -345,26 +301,36 @@ class DailyReportView extends StatelessWidget {
               borderRadius: BorderRadius.circular(12),
             ),
             child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              mainAxisAlignment: MainAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text("Cash in Hand", style: TextStyle(fontSize: 16, color: Colors.black87)),
-                    Text(
-                      "(Cash Sales + Deposits - Refunds)",
-                      style: TextStyle(fontSize: 12, color: Colors.grey),
-                    ),
-                  ],
+                Expanded(
+                  flex:2,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text("Cash in Hand", style: TextStyle(fontSize: 16, color: Colors.black87)),
+                      Text(
+                        "(Cash Sales + Deposits - Refunds)",
+                        style: const TextStyle(fontSize: 12, color: Colors.grey),
+                        // overflow: TextOverflow.ellipsis,
+                        // maxLines: 1,
+                      ),
+                    ],
+                  ),
                 ),
+                 Expanded(flex:1,
+                  child: 
                 Text(
                   "₹${report.cashInHand.toStringAsFixed(0)}",
+                  overflow: TextOverflow.ellipsis,
+                        maxLines: 1,
                   style: const TextStyle(
-                    fontSize: 24,
+                    fontSize: 18,
                     fontWeight: FontWeight.bold,
                     color: Colors.green,
                   ),
-                ),
+                )),
               ],
             ),
           ),
@@ -376,23 +342,51 @@ class DailyReportView extends StatelessWidget {
               borderRadius: BorderRadius.circular(12),
             ),
             child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+               mainAxisAlignment: MainAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.start,
+             // mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text("UPI Collections", style: TextStyle(fontSize: 16, color: Colors.black87)),
-                    Text("(To be transferred to bank)", style: TextStyle(fontSize: 12, color: Colors.grey)),
-                  ],
+                  Expanded(
+                  flex:2,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text("UPI Collections", style: TextStyle(fontSize: 16, color: Colors.black87)),
+                      Text(
+                        "(To be transferred to bank)",
+                        style: const TextStyle(fontSize: 12, color: Colors.grey),
+                      ),
+                    ],
+                  ),
                 ),
+                 Expanded(flex:1,
+                  child: 
                 Text(
                   "₹${report.upiCollections.toStringAsFixed(0)}",
+                  overflow: TextOverflow.ellipsis,
+                        maxLines: 1,
                   style: const TextStyle(
-                    fontSize: 24,
+                    fontSize: 18,
                     fontWeight: FontWeight.bold,
                     color: Colors.purple,
                   ),
-                ),
+                )),
+
+                // const Column(
+                //   crossAxisAlignment: CrossAxisAlignment.start,
+                //   children: [
+                //     Text("UPI Collections", style: TextStyle(fontSize: 16, color: Colors.black87)),
+                //     Text("(To be transferred to bank)", style: TextStyle(fontSize: 12, color: Colors.grey)),
+                //   ],
+                // ),
+                // Text(
+                //   "₹${report.upiCollections.toStringAsFixed(0)}",
+                //   style: const TextStyle(
+                //     fontSize: 24,
+                //     fontWeight: FontWeight.bold,
+                //     color: Colors.purple,
+                //   ),
+                // ),
               ],
             ),
           ),
