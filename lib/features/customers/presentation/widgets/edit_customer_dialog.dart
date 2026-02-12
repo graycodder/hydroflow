@@ -122,6 +122,9 @@ class _EditCustomerDialogState extends State<EditCustomerDialog> {
                     if (value == null || value.trim().isEmpty) {
                       return 'Please enter customer name';
                     }
+                    if (value.trim().length > 20) {
+                      return 'Name must be at most 20 characters';
+                    }
                     return null;
                   },
                 ),
@@ -150,6 +153,9 @@ class _EditCustomerDialogState extends State<EditCustomerDialog> {
                     if (value == null || value.trim().isEmpty) {
                       return 'Please enter address';
                     }
+                    if (value.trim().length > 40) {
+                      return 'Address must be at most 40 characters';
+                    }
                     return null;
                   },
                 ),
@@ -163,8 +169,12 @@ class _EditCustomerDialogState extends State<EditCustomerDialog> {
                     if (value == null || value.trim().isEmpty) {
                       return 'Please enter security deposit';
                     }
-                    if (double.tryParse(value) == null) {
+                    final amount = double.tryParse(value);
+                    if (amount == null) {
                       return 'Please enter a valid amount';
+                    }
+                    if (amount > 100000) {
+                       return 'Deposit cannot exceed ₹1,00,000';
                     }
                     return null;
                   },
