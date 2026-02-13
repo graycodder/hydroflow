@@ -27,6 +27,7 @@ class PendingBalanceAdjustmentDialog extends StatefulWidget {
 class _PendingBalanceAdjustmentDialogState extends State<PendingBalanceAdjustmentDialog> {
   final _formKey = GlobalKey<FormState>();
   late TextEditingController _amountReceivedController;
+  String? _selectedPaymentMode;
   bool _isSubmitting = false;
 
   @override
@@ -162,6 +163,56 @@ class _PendingBalanceAdjustmentDialogState extends State<PendingBalanceAdjustmen
                       return null;
                     },
                   ),
+                  const SizedBox(height: 16),
+                  Row(
+                    children: [
+                      const Text(
+                        'Payment Mode',
+                        style: TextStyle(
+                          fontWeight: FontWeight.w600,
+                          fontSize: 14,
+                        ),
+                      ),
+                      const Text(
+                        ' *',
+                        style: TextStyle(color: Colors.red),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  DropdownButtonFormField<String>(
+                    value: _selectedPaymentMode,
+                    decoration: InputDecoration(
+                      filled: true,
+                      fillColor: Colors.grey[100],
+                      hintText: 'Select Payment Mode',
+                      hintStyle: const TextStyle(color: Colors.grey, fontSize: 14),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                        borderSide: BorderSide.none,
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                    ),
+                    items: ['Cash', 'Online', 'UPI'].map((String mode) {
+                      return DropdownMenuItem<String>(
+                        value: mode,
+                        child: Text(mode),
+                      );
+                    }).toList(),
+                    onChanged: (String? newValue) {
+                      if (newValue != null) {
+                        setState(() {
+                          _selectedPaymentMode = newValue;
+                        });
+                      }
+                    },
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Please select payment mode';
+                      }
+                      return null;
+                    },
+                  ),
                   const SizedBox(height: 24),
                   Row(
                     children: [
@@ -214,7 +265,7 @@ class _PendingBalanceAdjustmentDialogState extends State<PendingBalanceAdjustmen
         builder: (confirmContext) => AlertDialog(
           title: const Text('Confirm Adjustment'),
           content: Text(
-            'Are you sure you want to adjust ₹$receivedAmount from pending balance?',
+            'Are you sure you want to adjust ₹$receivedAmount from pending balance using $_selectedPaymentMode?',
           ),
           actions: [
             TextButton(
@@ -265,8 +316,8 @@ class _PendingBalanceAdjustmentDialogState extends State<PendingBalanceAdjustmen
                     type: 'Payment Adjustment',
                     amount: 0,
                     amountReceived: receivedAmount,
-                    paymentMode: 'System Adjustment',
-                    notes: 'Quick Balance Adjustment',
+                    paymentMode: _selectedPaymentMode!, // Use selected mode (bang operator safe due to validation)
+                    notes: 'Quick Balance Adjustment via $_selectedPaymentMode',
                   );
                   
                   await di.sl<TransactionRepository>().recordAdjustment(tx);
