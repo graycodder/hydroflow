@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:uuid/uuid.dart';
@@ -317,6 +318,7 @@ class _DeliveryViewState extends State<DeliveryView> {
                      controller: _fullCansController,
                      autofocus: false,
                      keyboardType: TextInputType.number,
+                     inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                      decoration: const InputDecoration(
                        labelText: 'Full Cans',
                        prefixIcon: Icon(Icons.arrow_downward, color: Colors.orange),
@@ -343,6 +345,7 @@ class _DeliveryViewState extends State<DeliveryView> {
                      controller: _emptyCansController,
                      autofocus: false,
                      keyboardType: TextInputType.number,
+                     inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                      decoration: const InputDecoration(
                        labelText: 'Empty Cans',
                        prefixIcon: Icon(Icons.arrow_upward, color: Colors.teal),
@@ -360,6 +363,7 @@ class _DeliveryViewState extends State<DeliveryView> {
                controller: _pricePerBottleController,
                autofocus: false,
                keyboardType: TextInputType.number,
+               inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                decoration: const InputDecoration(
                  labelText: 'Price Per Bottle (₹)',
                  prefixText: '₹ ',
@@ -376,6 +380,7 @@ class _DeliveryViewState extends State<DeliveryView> {
                controller: _priceController,
                autofocus: false,
                keyboardType: TextInputType.number,
+               inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                decoration: const InputDecoration(
                  labelText: 'Total Amount (₹)',
                  prefixText: '₹ ',
@@ -391,6 +396,7 @@ class _DeliveryViewState extends State<DeliveryView> {
                controller: _amountReceivedController,
                autofocus: false,
                keyboardType: TextInputType.number,
+               inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                decoration: const InputDecoration(
                  labelText: 'Amount Received (₹)',
                  prefixText: '₹ ',

@@ -167,7 +167,7 @@ class TransactionHistoryPage extends StatelessWidget {
                                   'Returned: ${tx.emptyCollected} cans',
                                   style: const TextStyle(color: Color(0xFF00C853), fontWeight: FontWeight.bold, fontSize: 12),
                                 ),
-                              ]
+                              ],
                             ),
                             const SizedBox(height: 12),
                             
