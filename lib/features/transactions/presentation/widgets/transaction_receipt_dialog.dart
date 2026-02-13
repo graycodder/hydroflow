@@ -223,8 +223,9 @@ class TransactionReceiptDialog extends StatelessWidget {
                           ),
                           Row(
                             children: [
+                              // Previous balance: current - delivered + collected
                               Text(
-                                '${customer.bottleBalance}',
+                                '${customer.bottleBalance - transaction.cansDelivered + transaction.emptyCollected}',
                                 style: const TextStyle(
                                   color: Color(0xFF1565C0),
                                   fontWeight: FontWeight.bold,
@@ -238,16 +239,9 @@ class TransactionReceiptDialog extends StatelessWidget {
                                   color: Color(0xFF1565C0),
                                 ),
                               ),
-                              // Calculate new balance: old + delivered - returned
-                              // Note: 'customer.bottleBalance' passed here is usually CURRENT/LATEST from state.
-                              // If it's already updated, then 'old' was 'new - delivered + returned'.
-                              // Let's assume the Customer object passed IS the updated one.
+                              // Current balance (already updated in customer object)
                               Text(
-                                '${customer.bottleBalance + transaction.cansDelivered - transaction.emptyCollected}', // Wait, if customer is already updated, this logic is tricky. Let's just show current.
-                                // Design shows "3 -> 4".
-                                // Assuming 'customer' passed is the one BEFORE update? Or AFTER?
-                                // Best to just show current balance if that's what we have.
-                                // For now, let's just show the current balance.
+                                '${customer.bottleBalance}',
                                 style: const TextStyle(
                                   color: Color(0xFF1565C0),
                                   fontWeight: FontWeight.bold,
