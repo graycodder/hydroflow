@@ -14,6 +14,8 @@ class TransactionModel extends TransactionEntity {
     super.emptyCollected = 0,
     super.whatsappReceiptSent = false,
     super.notes = '',
+    super.previousBalance = 0,
+    super.currentBalance = 0,
   });
 
   factory TransactionModel.fromMap(Map<String, dynamic> map, String id) {
@@ -40,6 +42,8 @@ class TransactionModel extends TransactionEntity {
       emptyCollected: (map['emptyCollected'] as num?)?.toInt() ?? 0,
       whatsappReceiptSent: map['whatsappReceiptSent'] as bool? ?? false,
       notes: map['notes'] as String? ?? '',
+      previousBalance: (map['previousBalance'] as num?)?.toDouble() ?? 0.0,
+      currentBalance: (map['currentBalance'] as num?)?.toDouble() ?? 0.0,
     );
   }
 
@@ -56,6 +60,8 @@ class TransactionModel extends TransactionEntity {
       'emptyCollected': emptyCollected,
       'whatsappReceiptSent': whatsappReceiptSent,
       'notes': notes,
+      'previousBalance': previousBalance,
+      'currentBalance': currentBalance,
     };
   }
 }

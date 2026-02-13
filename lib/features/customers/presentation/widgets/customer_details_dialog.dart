@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:hydroflow/features/customers/domain/entities/customer.dart';
 import 'package:hydroflow/features/customers/presentation/bloc/customer_bloc.dart';
@@ -61,36 +62,42 @@ class _CustomerDetailsDialogState extends State<CustomerDetailsDialog> {
             children: [
               // Header
               Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Spacer(),
-                  const Column(
-                    children: [
-                      Text(
-                        'Customer Details',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      Text(
-                        'View and manage customer information',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Colors.grey,
-                        ),
-                      ),
-                    ],
-                  ),
+                   // Empty space to balance the close button and help center the title
+                  const SizedBox(width: 40), 
                   Expanded(
-                    child: Align(
-                      alignment: Alignment.centerRight,
-                      child: IconButton(
-                        icon: const Icon(Icons.close, color: Colors.grey),
-                        onPressed: () => Navigator.pop(context),
-                        padding: EdgeInsets.zero,
-                        constraints: const BoxConstraints(),
-                      ),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Text(
+                          'Customer Details',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                        const Text(
+                          'View and manage customer info',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.grey,
+                          ),
+                          textAlign: TextAlign.center,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
+                    ),
+                  ),
+                  SizedBox(
+                    width: 40,
+                    child: IconButton(
+                      icon: const Icon(Icons.close, color: Colors.black),
+                      onPressed: () => Navigator.pop(context),
+                      padding: EdgeInsets.zero,
+                      alignment: Alignment.topRight,
                     ),
                   ),
                 ],
@@ -243,6 +250,35 @@ class _CustomerDetailsDialogState extends State<CustomerDetailsDialog> {
                   ),
                 ),
               ),
+               const SizedBox(height: 16),
+              
+              // Transaction History
+              InkWell(
+                onTap: () {
+                  Navigator.pop(context);
+                  context.push('/customer_history', extra: widget.customer);
+                },
+                child: Row(
+                  children: [
+                    const Icon(
+                      Icons.history,
+                      color: Color(0xFF2962FF),
+                    ),
+                    const SizedBox(width: 8),
+                    const Text(
+                      'Transaction History',
+                      style: TextStyle(
+                        color: Color(0xFF2962FF),
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+          
+
+
               const SizedBox(height: 24),
               
               // Status Toggle

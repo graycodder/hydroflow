@@ -21,7 +21,9 @@ import 'package:hydroflow/features/transactions/data/repositories/transaction_re
 import 'package:hydroflow/features/transactions/domain/repositories/transaction_repository.dart';
 import 'package:hydroflow/features/transactions/domain/usecases/add_transaction_usecase.dart';
 import 'package:hydroflow/features/transactions/domain/usecases/get_today_transactions_usecase.dart';
+import 'package:hydroflow/features/transactions/domain/usecases/get_customer_transactions_usecase.dart';
 import 'package:hydroflow/features/transactions/presentation/bloc/delivery_bloc.dart';
+import 'package:hydroflow/features/transactions/presentation/bloc/customer_transactions_bloc.dart';
 import 'package:hydroflow/features/reports/data/repositories/report_repository_impl.dart';
 import 'package:hydroflow/features/reports/domain/repositories/report_repository.dart';
 import 'package:hydroflow/features/reports/domain/usecases/get_daily_report_usecase.dart';
@@ -113,6 +115,7 @@ Future<void> init() async {
   );
   sl.registerLazySingleton(() => AddTransactionUseCase(sl()));
   sl.registerLazySingleton(() => GetTodayTransactionsUseCase(sl()));
+  sl.registerLazySingleton(() => GetCustomerTransactionsUseCase(sl()));
   // Reports Feature
   sl.registerFactory(
     () => ReportsBloc(
@@ -136,6 +139,11 @@ Future<void> init() async {
       getTodayTransactionsUseCase: sl(),
       customerRepository: sl(),
       authRepository: sl(),
+    ),
+  );
+  sl.registerFactory(
+    () => CustomerTransactionsBloc(
+      getCustomerTransactionsUseCase: sl(),
     ),
   );
   sl.registerFactory(() => SubscriptionBloc(getPlans: sl()));

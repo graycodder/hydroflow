@@ -133,6 +133,8 @@ class CustomerRepositoryImpl implements CustomerRepository {
           'emptyCollected': 0,
           'whatsappReceiptSent': false,
           'notes': 'Initial Security Deposit',
+          'previousBalance': customer.pendingBalance, // Usually 0
+          'currentBalance': customer.pendingBalance, // Deposit doesn't affect pending money
         });
 
         // Update Stock Log Collection
@@ -243,6 +245,8 @@ class CustomerRepositoryImpl implements CustomerRepository {
             'emptyCollected': 0,
             'whatsappReceiptSent': false,
             'notes': 'Security Deposit Increased',
+            'previousBalance': customer.pendingBalance,
+            'currentBalance': customer.pendingBalance,
           });
         } else {
           // Refund/Decrease
@@ -259,6 +263,8 @@ class CustomerRepositoryImpl implements CustomerRepository {
             'emptyCollected': 0,
             'whatsappReceiptSent': false,
             'notes': 'Security Deposit Decreased',
+            'previousBalance': customer.pendingBalance,
+            'currentBalance': customer.pendingBalance,
           });
         }
 
@@ -346,6 +352,8 @@ class CustomerRepositoryImpl implements CustomerRepository {
           'emptyCollected': 0,
           'whatsappReceiptSent': false,
           'notes': 'Security Deposit Refund',
+          'previousBalance': pending, // pendingBalance doesn't change on pure refund
+          'currentBalance': pending,
         });
       }
 
@@ -364,6 +372,8 @@ class CustomerRepositoryImpl implements CustomerRepository {
           'emptyCollected': 0,
           'whatsappReceiptSent': false,
           'notes': 'Settled via Security Deposit',
+          'previousBalance': pending,
+          'currentBalance': adjustedPending,
         });
       }
       

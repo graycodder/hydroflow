@@ -13,6 +13,8 @@ class TransactionEntity extends Equatable {
   final int emptyCollected;
   final bool whatsappReceiptSent;
   final String notes;
+  final double previousBalance;
+  final double currentBalance;
 
   const TransactionEntity({
     required this.id,
@@ -27,6 +29,8 @@ class TransactionEntity extends Equatable {
     this.emptyCollected = 0,
     this.whatsappReceiptSent = false,
     this.notes = '',
+    this.previousBalance = 0,
+    this.currentBalance = 0,
   });
 
   @override
@@ -43,5 +47,7 @@ class TransactionEntity extends Equatable {
     emptyCollected,
     whatsappReceiptSent,
     notes,
+    previousBalance,
+    currentBalance,
   ];
 }

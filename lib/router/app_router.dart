@@ -14,8 +14,10 @@ import 'package:hydroflow/features/splash/presentation/pages/splash_page.dart';
 import 'package:hydroflow/features/notifications/presentation/pages/notifications_page.dart';
 import 'package:hydroflow/features/profile/presentation/pages/subscription_lock_page.dart';
 import 'package:hydroflow/features/profile/presentation/pages/profile_page.dart';
+import 'package:hydroflow/features/transactions/presentation/pages/transaction_history_page.dart';
 import 'package:hydroflow/features/auth/presentation/pages/force_update_page.dart';
 import 'package:hydroflow/features/auth/domain/entities/salesman.dart';
+import 'package:hydroflow/features/customers/domain/entities/customer.dart';
 
 final router = GoRouter(
   initialLocation: '/splash',
@@ -111,6 +113,13 @@ final router = GoRouter(
     GoRoute(
       path: '/profile',
       builder: (context, state) => const ProfilePage(),
+    ),
+    GoRoute(
+      path: '/customer_history',
+      builder: (context, state) {
+        final customer = state.extra as Customer;
+        return TransactionHistoryPage(customer: customer);
+      },
     ),
   ],
 );

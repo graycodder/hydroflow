@@ -6,4 +6,5 @@ abstract class TransactionRepository {
   Stream<List<TransactionEntity>> getTodayTransactions(String salesmanId);
   Stream<List<TransactionEntity>> getTransactionsByDate(String salesmanId, DateTime date);
   Stream<List<TransactionEntity>> getTransactionsByMonth(String salesmanId, DateTime month);
+  Stream<List<TransactionEntity>> getTransactionsByCustomer(String customerId);
 }

@@ -14,15 +14,25 @@ class TransactionRepositoryImpl implements TransactionRepository {
   @override
   Future<void> recordTransaction(TransactionEntity transaction) async {
     try {
-      // 1. Record Transaction with Custom ID
+      // 0. Define IDs
       final dateStr = DateFormat('yyyyMMdd').format(transaction.timestamp);
       final timeStr = DateFormat('HHmmss').format(transaction.timestamp);
-      // Sanitize salesmanId just in case, though usually safe
       final safeSalesmanId = transaction.salesmanId.replaceAll(RegExp(r'[.#$\[\]]'), '_'); 
       final customId = '${dateStr}_${safeSalesmanId}_$timeStr';
+
+      // 1. Fetch Customer Balance Snapshot
+      final customerSnapshot = await _database.ref().child('Customers/${transaction.customerId}').get();
+      final customerData = customerSnapshot.value as Map<dynamic, dynamic>?;
+      final double prevBalance = (customerData?['pendingBalance'] as num?)?.toDouble() ?? 0.0;
       
-      final txRef = _database.ref().child('Transactions').child(customId);
-      
+      // Universal Balance Logic: 
+      // New Balance = Old Balance + (Value of Transaction - Amount Received)
+      // This works for:
+      // - Delivery: amount (Bill) - received (Paid) -> Debt increases by difference
+      // - Payment only: 0 - received -> Debt decreases by received
+      // - Adjustment: amount (new debt) - received (payment)
+      final double currBalance = prevBalance + (transaction.amount - transaction.amountReceived);
+
       final txModel = TransactionModel(
         id: customId,
         salesmanId: transaction.salesmanId,
@@ -35,16 +45,14 @@ class TransactionRepositoryImpl implements TransactionRepository {
         cansDelivered: transaction.cansDelivered,
         emptyCollected: transaction.emptyCollected,
         notes: transaction.notes,
+        previousBalance: prevBalance,
+        currentBalance: currBalance,
       );
-      
-      // Update data atomically if possible, but RTDB multi-path updates can be tricky with complex logic.
-      // For simplicity/safety, we'll do sequential updates, or try a multi-path update map.
-      // Let's use a multi-path update for atomicity.
       
       final Map<String, dynamic> updates = {};
       
       // Add transaction
-      updates['/Transactions/${txRef.key}'] = txModel.toMap();
+      updates['/Transactions/$customId'] = txModel.toMap();
 
       // 2. Prepare Customer Update
       // Logic Change for Partial Payment:
@@ -142,7 +150,8 @@ class TransactionRepositoryImpl implements TransactionRepository {
       // Actually, let's use `runTransaction` for the sensitive counter updates.
 
       // A. Save Transaction Log (Safe to do anytime)
-      await txRef.set(txModel.toMap());
+      // await txRef.set(txModel.toMap()); // Removed as we use updates map now
+      await _database.ref().update(updates);
 
       // B. Update Customer Balance 
       final customerRef = _database.ref().child('Customers/${transaction.customerId}');
@@ -160,30 +169,10 @@ class TransactionRepositoryImpl implements TransactionRepository {
         customerMap['bottleBalance'] = currentBottleBalance + transaction.cansDelivered - transaction.emptyCollected;
 
         // Update Pending Balance (Money)
-        double currentPending = (customerMap['pendingBalance'] as num?)?.toDouble() ?? 0.0;
+        final double currentPending = (customerMap['pendingBalance'] as num?)?.toDouble() ?? 0.0;
         
-        // Logic: Balance += (Value of Goods - Amount Sent/Received)
-        // If delivery (cans > 0), Value = Amount.
-        // If collection only (cans == 0), Value = 0 (we ignore the 'amount' field as bill value).
-        
-        // Wait, if I return bottles (emptyCollected > 0) and NO delivery?
-        // Usually that's 0 value unless we refund?
-        // Let's assume `amount` entered by user IS the Bill Value.
-        // User is responsible for entering correct Bill Value.
-        // If Cans=10, Price=600. Bill=600.
-        // If Cans=0, Price=300 (Collection?). 
-        // IF IT IS A COLLECTION, the Bill Value (Goods Sold) is 0.
-        // But the user entered 300 in Price field.
-        
-        // Let's stick to strict logic:
-        // Sales (Cans > 0): Goods Value = amount.
-        // No Sales (Cans = 0): Goods Value = 0.
-        
-        final double goodsValue = (transaction.cansDelivered > 0) ? transaction.amount : 0.0;
-        final double amountPaid = transaction.amountReceived;
-        
-        // Balance Change = Goods Value - Amount Paid
-        customerMap['pendingBalance'] = currentPending + (goodsValue - amountPaid);
+        // Universal Logic: Balance += (Amount - AmountReceived)
+        customerMap['pendingBalance'] = currentPending + (transaction.amount - transaction.amountReceived);
         
         return Transaction.success(customerMap);
       });
@@ -273,14 +262,19 @@ class TransactionRepositoryImpl implements TransactionRepository {
   @override
   Future<void> recordAdjustment(TransactionEntity transaction) async {
     try {
-      // 1. Record Transaction with Custom ID
+      // 0. Define IDs
       final dateStr = DateFormat('yyyyMMdd').format(transaction.timestamp);
       final timeStr = DateFormat('HHmmss').format(transaction.timestamp);
       final safeSalesmanId = transaction.salesmanId.replaceAll(RegExp(r'[.#$\[\]]'), '_'); 
       final customId = '${dateStr}_${safeSalesmanId}_$timeStr';
-      
       final txRef = _database.ref().child('Transactions').child(customId);
-      
+
+      // 1. Fetch Customer Balance Snapshot
+      final customerSnapshot = await _database.ref().child('Customers/${transaction.customerId}').get();
+      final customerData = customerSnapshot.value as Map<dynamic, dynamic>?;
+      final double prevBalance = (customerData?['pendingBalance'] as num?)?.toDouble() ?? 0.0;
+      final double currBalance = prevBalance + (transaction.amount - transaction.amountReceived);
+
       final txModel = TransactionModel(
         id: customId,
         salesmanId: transaction.salesmanId,
@@ -293,6 +287,8 @@ class TransactionRepositoryImpl implements TransactionRepository {
         cansDelivered: transaction.cansDelivered,
         emptyCollected: transaction.emptyCollected,
         notes: transaction.notes,
+        previousBalance: prevBalance,
+        currentBalance: currBalance,
       );
       
       // Save Transaction Log
@@ -443,6 +439,27 @@ class TransactionRepositoryImpl implements TransactionRepository {
           }
         });
         
+        transactions.sort((a, b) => b.timestamp.compareTo(a.timestamp));
+        return transactions;
+      }
+      return [];
+    });
+  }
+  @override
+  Stream<List<TransactionEntity>> getTransactionsByCustomer(String customerId) {
+    final ref = _database.ref().child('Transactions');
+    
+    return ref.orderByChild('customerId').equalTo(customerId).onValue.map((event) {
+      if (event.snapshot.exists) {
+        final data = event.snapshot.value as Map<dynamic, dynamic>;
+        final List<TransactionEntity> transactions = [];
+        
+        data.forEach((key, value) {
+          final map = Map<String, dynamic>.from(value as Map);
+          transactions.add(TransactionModel.fromMap(map, key as String));
+        });
+        
+        // Sort by timestamp descending
         transactions.sort((a, b) => b.timestamp.compareTo(a.timestamp));
         return transactions;
       }
