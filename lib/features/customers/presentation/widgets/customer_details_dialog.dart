@@ -6,6 +6,8 @@ import 'package:hydroflow/features/customers/presentation/bloc/customer_bloc.dar
 import 'package:hydroflow/features/customers/presentation/bloc/customer_event.dart';
 import 'package:hydroflow/features/customers/presentation/bloc/customer_state.dart';
 import 'package:hydroflow/features/customers/presentation/widgets/edit_customer_dialog.dart';
+import 'package:hydroflow/features/customers/presentation/widgets/pending_balance_adjustment_dialog.dart';
+import 'package:hydroflow/features/customers/presentation/widgets/bottle_balance_adjustment_dialog.dart';
 import 'package:hydroflow/core/widgets/hydro_flow_loader.dart';
 
 class CustomerDetailsDialog extends StatefulWidget {
@@ -158,16 +160,27 @@ class _CustomerDetailsDialogState extends State<CustomerDetailsDialog> {
                     ),
                   ),
                   Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text('Pending Balance', style: TextStyle(color: Colors.grey, fontSize: 13)),
-                        const SizedBox(height: 4),
-                        Text(
-                          '₹${widget.customer.pendingBalance.toStringAsFixed(0)}',
-                          style: const TextStyle(color: Color(0xFFE65100), fontWeight: FontWeight.bold, fontSize: 18),
-                        ),
-                      ],
+                    child: InkWell(
+                      onTap: () {
+                        showDialog(
+                          context: context,
+                          builder: (_) => PendingBalanceAdjustmentDialog(
+                            customer: widget.customer,
+                            customerBloc: widget.customerBloc,
+                          ),
+                        );
+                      },
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text('Pending Balance', style: TextStyle(color: Colors.grey, fontSize: 13)),
+                          const SizedBox(height: 4),
+                          Text(
+                            '₹${widget.customer.pendingBalance.toStringAsFixed(0)}',
+                            style: const TextStyle(color: Color(0xFFE65100), fontWeight: FontWeight.bold, fontSize: 18),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ],
@@ -175,48 +188,59 @@ class _CustomerDetailsDialogState extends State<CustomerDetailsDialog> {
               const SizedBox(height: 24),
               
               // Bottle Balance Card
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFEDF6FF), // Soft Blue
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: const Color(0xFFD0E4FF)),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Row(
-                      children: [
-                         Icon(Icons.water_drop_outlined, color: Color(0xFF2962FF), size: 20),
-                         SizedBox(width: 8),
-                         Text(
-                           'Bottle Balance',
-                           style: TextStyle(
-                             color: Color(0xFF0039CB),
-                             fontWeight: FontWeight.w600,
+              InkWell(
+                onTap: () {
+                  showDialog(
+                    context: context,
+                    builder: (_) => BottleBalanceAdjustmentDialog(
+                      customer: widget.customer,
+                      customerBloc: widget.customerBloc,
+                    ),
+                  );
+                },
+                child: Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFEDF6FF), // Soft Blue
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: const Color(0xFFD0E4FF)),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Row(
+                        children: [
+                           Icon(Icons.water_drop_outlined, color: Color(0xFF2962FF), size: 20),
+                           SizedBox(width: 8),
+                           Text(
+                             'Bottle Balance',
+                             style: TextStyle(
+                               color: Color(0xFF0039CB),
+                               fontWeight: FontWeight.w600,
+                             ),
                            ),
-                         ),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      '${widget.customer.bottleBalance}',
-                      style: const TextStyle(
-                        color: Color(0xFF2962FF),
-                        fontSize: 28,
-                        fontWeight: FontWeight.bold,
+                        ],
                       ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      'Customer is holding ${widget.customer.bottleBalance} empty bottles',
-                      style: const TextStyle(
-                        color: Color(0xFF1976D2),
-                        fontSize: 13,
+                      const SizedBox(height: 8),
+                      Text(
+                        '${widget.customer.bottleBalance}',
+                        style: const TextStyle(
+                          color: Color(0xFF2962FF),
+                          fontSize: 28,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
-                    ),
-                  ],
+                      const SizedBox(height: 4),
+                      Text(
+                        'Customer is holding ${widget.customer.bottleBalance} empty bottles',
+                        style: const TextStyle(
+                          color: Color(0xFF1976D2),
+                          fontSize: 13,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
               const SizedBox(height: 24),

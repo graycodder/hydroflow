@@ -12,6 +12,7 @@ import 'package:hydroflow/features/customers/presentation/widgets/customer_detai
 import 'package:hydroflow/features/customers/presentation/widgets/add_customer_dialog.dart';
 import 'package:hydroflow/core/widgets/hydro_flow_app_bar.dart';
 import 'package:hydroflow/features/customers/presentation/widgets/pending_balance_adjustment_dialog.dart';
+import 'package:hydroflow/features/customers/presentation/widgets/bottle_balance_adjustment_dialog.dart';
 import 'package:hydroflow/core/widgets/hydro_flow_loader.dart';
 
 class CustomersPage extends StatefulWidget {
@@ -269,18 +270,31 @@ class _CustomersPageState extends State<CustomersPage> {
               ],
             )),
             const SizedBox(height: 4),
-            Row(
-              children: [
-                const Icon(Icons.water_drop_outlined, size: 16, color: Color(0xFF2962FF)),
-                const SizedBox(width: 4),
-                Text(
-                  '${customer.bottleBalance} bottles held',
-                  style: const TextStyle(
-                    color: Color(0xFF2962FF), // Blue
-                    fontWeight: FontWeight.w500,
+            
+          // Bottle Balance Section
+            GestureDetector(
+              onTap: () {
+                showDialog(
+                  context: context,
+                  builder: (_) => BottleBalanceAdjustmentDialog(
+                    customer: customer,
+                    customerBloc: context.read<CustomerBloc>(),
                   ),
-                ),
-              ],
+                );
+              },
+              child: Row(
+                children: [
+                  const Icon(Icons.water_drop_outlined, size: 16, color: Color(0xFF2962FF)),
+                  const SizedBox(width: 4),
+                  Text(
+                    '${customer.bottleBalance} bottles held',
+                    style: const TextStyle(
+                      color: Color(0xFF2962FF), // Blue
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
+              ),
             ),
           ],
         ),
