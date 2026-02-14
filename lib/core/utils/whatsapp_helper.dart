@@ -5,6 +5,7 @@ class WhatsappHelper {
   static Future<void> sendReceipt({
     required String phone,
     required String customerName,
+    required String address,
     required int delivered,
     required int returned,
     required int bottleBalance, // Kept for context, even if not in PDF
@@ -24,30 +25,35 @@ class WhatsappHelper {
       sanitizedPhone = '91$sanitizedPhone';
     }
 
-    // Format date: Feb 26, 2026
-    final String dateStr = DateFormat('MMM dd, yyyy').format(date);
+    // Format date: 26 Feb 2026, 12:30 PM
+    final String dateStr = DateFormat('dd MMM yyyy, hh:mm a').format(date);
 
     final String message = '''
-💧 *Water Delivery* ☑️
-💧 *Bill Details* 📦
-
-*To:* $customerName
+*HydroFlow*
+Water Delivery Service
+-------------------------------------------
 *Date:* $dateStr
-*Order:*
-  $delivered x 20L Water Can
-  $returned x 20L Empty Can (Returned)
 
-*Charges:*
-Water Cost: ₹${amount.toInt()}
-Subtotal: ₹${amount.toInt()}
-*Amount Paid:* $paymentMode
-Scan & Pay: UPI ₹${amount.toInt()}
+*Customer Details:*
+$customerName
+$phone
+$address
 
-*Notes:*
-* Enjoy your clean water!
-Thank you for your order!
+-------------------------------------------
+*Delivered Cans:* $delivered
+*Empty Collected:* $returned
 
-*Total Due:* ₹${newBalance.toInt()} ${newBalance <= 0 ? '✅' : ''}
+-------------------------------------------
+*Total Bill:* ₹${amount.toInt()}
+*Amount Paid:* ₹${amountReceived.toInt()}
+${amount > amountReceived ? '*Current Due:* ₹${(amount - amountReceived).toInt()}\n' : ''}*Payment Mode:* $paymentMode
+
+-------------------------------------------
+*Prev Balance:* ₹${oldBalance.toInt()}
+*Total Pending:* ₹${newBalance.toInt()}
+
+*Thank You for Choosing HydroFlow!*
+_Powered by GrayCodder_
 ''';
 
     final Uri whatsappUrl = Uri.parse(

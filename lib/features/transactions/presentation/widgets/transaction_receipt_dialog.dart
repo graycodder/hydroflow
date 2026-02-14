@@ -430,6 +430,7 @@ class TransactionReceiptDialog extends StatelessWidget {
                           WhatsappHelper.sendReceipt(
                             phone: customer.phone,
                             customerName: customer.name,
+                            address: customer.address,
                             delivered: transaction.cansDelivered,
                             returned: transaction.emptyCollected,
                             bottleBalance: customer.bottleBalance,
