@@ -16,7 +16,7 @@ class HydroFlowAppBar extends StatelessWidget implements PreferredSizeWidget {
           const Icon(Icons.water_drop, color: Color(0xFF2962FF)),
           const SizedBox(width: 8),
           const Text(
-            'HydroFlow Pro',
+            'HydroFlow',
             style: TextStyle(
               color: Colors.black,
               fontWeight: FontWeight.bold,

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:hydroflow/features/profile/domain/entities/subscription_record.dart';
 import 'package:intl/intl.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class CurrentSubscriptionCard extends StatelessWidget {
   final List<SubscriptionRecord> history;
@@ -9,6 +10,16 @@ class CurrentSubscriptionCard extends StatelessWidget {
     super.key,
     required this.history,
   });
+
+    Future<void> _makePhoneCall(String phoneNumber) async {
+    final Uri launchUri = Uri(
+      scheme: 'tel',
+      path: phoneNumber,
+    );
+    if (await canLaunchUrl(launchUri)) {
+      await launchUrl(launchUri, mode: LaunchMode.externalApplication);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -80,23 +91,40 @@ class CurrentSubscriptionCard extends StatelessWidget {
           ),
           
           const SizedBox(height: 24),
-          
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton.icon(
-              onPressed: () {},
-              icon: const Icon(Icons.phone, size: 18, color: Colors.white),
-              label: const Text('Contact Admin to Renew'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.black,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 12),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
-              ),
+
+            SizedBox(
+             width: double.infinity,
+             child: ElevatedButton.icon(
+               onPressed: () => _makePhoneCall('9995226139'), 
+               icon: const Icon(Icons.phone),
+               label: Text('Contact Admin to Renew'),
+               style: ElevatedButton.styleFrom(
+                 backgroundColor: const Color(0xFF030303),
+                 foregroundColor: Colors.white,
+                 padding: const EdgeInsets.symmetric(vertical: 16),
+                 shape: RoundedRectangleBorder(
+                   borderRadius: BorderRadius.circular(12),
+                 ),
+               ),
+             ),
             ),
-          )
+          
+          // SizedBox(
+          //   width: double.infinity,
+          //   child: ElevatedButton.icon(
+          //     onPressed: () {},
+          //     icon: const Icon(Icons.phone, size: 18, color: Colors.white),
+          //     label: const Text('Contact Admin to Renew'),
+          //     style: ElevatedButton.styleFrom(
+          //       backgroundColor: Colors.black,
+          //       foregroundColor: Colors.white,
+          //       padding: const EdgeInsets.symmetric(vertical: 12),
+          //       shape: RoundedRectangleBorder(
+          //         borderRadius: BorderRadius.circular(8),
+          //       ),
+          //     ),
+          //   ),
+          // )
         ],
       ),
     );

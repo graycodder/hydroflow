@@ -55,7 +55,7 @@ class ForceUpdatePage extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             Text(
-              "A newer version of HydroFlow Pro is available. Please update the app to continue using our services.",
+              "A newer version of HydroFlow is available. Please update the app to continue using our services.",
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 16,
@@ -88,7 +88,7 @@ class ForceUpdatePage extends StatelessWidget {
             ),
             const SizedBox(height: 24),
             Text(
-              "HydroFlow Pro v1.0.0",
+              "HydroFlow v1.0.0",
               style: TextStyle(
                 color: Colors.white.withOpacity(0.5),
                 fontSize: 12,

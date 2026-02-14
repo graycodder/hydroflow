@@ -28,10 +28,14 @@ class CustomerTransactionsBloc extends Bloc<CustomerTransactionsEvent, CustomerT
     
     _transactionsSubscription = _getCustomerTransactionsUseCase(event.customerId).listen(
       (transactions) {
-        add(_UpdateTransactions(transactions));
+        if (!isClosed) {
+          add(_UpdateTransactions(transactions));
+        }
       },
       onError: (error) {
-        add(_HandleError(error.toString()));
+        if (!isClosed) {
+          add(_HandleError(error.toString()));
+        }
       },
     );
   }

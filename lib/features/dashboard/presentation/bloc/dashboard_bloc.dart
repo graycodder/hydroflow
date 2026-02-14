@@ -21,8 +21,16 @@ class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
     emit(DashboardLoading());
     await _dashboardSubscription?.cancel();
     _dashboardSubscription = _getDashboardSummary(event.salesmanId).listen(
-      (summary) => add(DashboardUpdated(summary)),
-      onError: (e) => add(DashboardSummaryError(e.toString())),
+      (summary) {
+        if (!isClosed) {
+          add(DashboardUpdated(summary));
+        }
+      },
+      onError: (e) {
+        if (!isClosed) {
+          add(DashboardSummaryError(e.toString()));
+        }
+      },
     );
   }
 

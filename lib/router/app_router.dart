@@ -18,9 +18,11 @@ import 'package:hydroflow/features/transactions/presentation/pages/transaction_h
 import 'package:hydroflow/features/auth/presentation/pages/force_update_page.dart';
 import 'package:hydroflow/features/auth/domain/entities/salesman.dart';
 import 'package:hydroflow/features/customers/domain/entities/customer.dart';
+import 'package:hydroflow/core/utils/router_refresh_listenable.dart';
 
 final router = GoRouter(
   initialLocation: '/splash',
+  refreshListenable: routerRefreshListenable,
   redirect: (context, state) {
     final authState = context.read<AuthBloc>().state;
     final bool loggingIn = state.matchedLocation == '/login';

@@ -29,10 +29,12 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
 
     _authSubscription?.cancel();
     _authSubscription = _authRepository.onAuthStateChanged.listen((uid) {
-      if (uid != null) {
-        _subscribeToSalesman(uid);
-      } else {
-        add(const AuthStatusChanged(null));
+      if (!isClosed) {
+        if (uid != null) {
+          _subscribeToSalesman(uid);
+        } else {
+          add(const AuthStatusChanged(null));
+        }
       }
     });
     // Trigger session restore check
@@ -45,10 +47,14 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         .getSalesmanStream(uid)
         .listen(
           (salesman) {
-            add(AuthStatusChanged(salesman));
+            if (!isClosed) {
+              add(AuthStatusChanged(salesman));
+            }
           },
           onError: (error) {
-            add(const AuthStatusChanged(null));
+            if (!isClosed) {
+              add(const AuthStatusChanged(null));
+            }
           },
         );
   }

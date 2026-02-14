@@ -31,7 +31,13 @@ class ReportEntity extends Equatable {
   final double onlineSales; // Actual Online Received
   
   final double securityDepositsCollected;
+  final double securityDepositsCollectedCash;
+  final double securityDepositsCollectedOnline;
+  
   final double securityDepositsRefunded;
+  final double securityDepositsRefundedCash;
+  final double securityDepositsRefundedOnline;
+  
   final double netDeposits;
   final double totalDepositsHeld;
   
@@ -73,7 +79,11 @@ class ReportEntity extends Equatable {
     required this.cashSales,
     required this.onlineSales,
     required this.securityDepositsCollected,
+    this.securityDepositsCollectedCash = 0.0,
+    this.securityDepositsCollectedOnline = 0.0,
     required this.securityDepositsRefunded,
+    this.securityDepositsRefundedCash = 0.0,
+    this.securityDepositsRefundedOnline = 0.0,
     required this.netDeposits,
     required this.totalDepositsHeld,
     required this.cashInHand,
@@ -111,7 +121,11 @@ class ReportEntity extends Equatable {
         cashSales,
         onlineSales,
         securityDepositsCollected,
+        securityDepositsCollectedCash,
+        securityDepositsCollectedOnline,
         securityDepositsRefunded,
+        securityDepositsRefundedCash,
+        securityDepositsRefundedOnline,
         netDeposits,
         totalDepositsHeld,
         cashInHand,

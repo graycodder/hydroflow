@@ -34,6 +34,8 @@ class StockBloc extends Bloc<StockEvent, StockState> {
     // Check if any logs exist globally for this salesman
     final hasLogs = await _inventoryRepository.checkStockLogsExist(event.salesmanId);
     
+    if (isClosed) return;
+
     // Emit current state with updated hasAnyLogs flag
     // We use StockDataUpdated or just copy current state if possible, but here we likely transition from Initial/Loading
     // Let's assume we are in Loading or Initial. 
@@ -52,7 +54,9 @@ class StockBloc extends Bloc<StockEvent, StockState> {
     _logSubscription = _inventoryRepository
         .getTodayStockLogStream(event.salesmanId)
         .listen((log) {
-      add(StockLogUpdated(log));
+      if (!isClosed) {
+        add(StockLogUpdated(log));
+      }
     });
   }
 

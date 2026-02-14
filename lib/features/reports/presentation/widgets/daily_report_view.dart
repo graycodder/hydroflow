@@ -195,13 +195,13 @@ class DailyReportView extends StatelessWidget {
               Expanded(
                 child: buildStatBox(
                   "Delivered",
-                  "↓ ${report.bottlesDelivered}",
+                  "${report.bottlesDelivered}",
                   Colors.orange,
                 ),
               ),
               const SizedBox(width: 16),
               Expanded(
-                child: buildStatBox("Returned", "↑ ${report.bottlesReturned}", Colors.teal),
+                child: buildStatBox("Returned", "${report.bottlesReturned}", Colors.teal),
               ),
             ],
           ),
@@ -278,11 +278,36 @@ class DailyReportView extends StatelessWidget {
                   "+₹${report.securityDepositsCollected.toStringAsFixed(0)}",
                   valueColor: Colors.green,
                 ),
+                if (report.securityDepositsCollectedCash > 0 || report.securityDepositsCollectedOnline > 0)
+                  Padding(
+                    padding: const EdgeInsets.only(left: 12),
+                    child: Column(
+                      children: [
+                        if (report.securityDepositsCollectedCash > 0)
+                          buildSubRow("Cash", "₹${report.securityDepositsCollectedCash.toStringAsFixed(0)}"),
+                        if (report.securityDepositsCollectedOnline > 0)
+                          buildSubRow("UPI/Online", "₹${report.securityDepositsCollectedOnline.toStringAsFixed(0)}"),
+                      ],
+                    ),
+                  ),
+                const SizedBox(height: 4),
                 buildRow(
                   "• Refunded",
                   "-₹${report.securityDepositsRefunded.toStringAsFixed(0)}",
                   valueColor: Colors.red,
                 ),
+                if (report.securityDepositsRefundedCash > 0 || report.securityDepositsRefundedOnline > 0)
+                  Padding(
+                    padding: const EdgeInsets.only(left: 12),
+                    child: Column(
+                      children: [
+                        if (report.securityDepositsRefundedCash > 0)
+                          buildSubRow("Cash", "₹${report.securityDepositsRefundedCash.toStringAsFixed(0)}"),
+                        if (report.securityDepositsRefundedOnline > 0)
+                          buildSubRow("UPI/Online", "₹${report.securityDepositsRefundedOnline.toStringAsFixed(0)}"),
+                      ],
+                    ),
+                  ),
               ],
             ),
           ),

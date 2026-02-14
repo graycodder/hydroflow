@@ -19,6 +19,7 @@ import 'package:hydroflow/features/auth/presentation/bloc/auth_state.dart';
 import 'package:flutter_native_splash/flutter_native_splash.dart';
 
 import 'package:hydroflow/features/splash/presentation/widgets/splash_view.dart';
+import 'package:hydroflow/core/utils/router_refresh_listenable.dart';
 
 void main() {
   WidgetsBinding widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
@@ -88,7 +89,7 @@ class _BootstrapAppState extends State<BootstrapApp> {
 
     if (!_initialized) {
       return const MaterialApp(
-        title: 'HydroFlow Pro',
+        title: 'HydroFlow',
         debugShowCheckedModeBanner: false,
         home: SplashView(), // Show pure splash UI while initializing
       );
@@ -117,6 +118,9 @@ class HydroFlowApp extends StatelessWidget {
       ],
       child: BlocListener<AuthBloc, AuthState>(
         listener: (context, state) {
+          // Trigger router re-evaluation whenever auth state changes
+          routerRefreshListenable.notifyListeners();
+
           if (state is AuthAuthenticated) {
             context.read<NotificationBloc>().add(LoadNotifications(state.salesman.id));
             context.read<DashboardBloc>().add(LoadDashboard(state.salesman.id));
@@ -133,7 +137,7 @@ class HydroFlowApp extends StatelessWidget {
           }
         },
         child: MaterialApp.router(
-          title: 'HydroFlow Pro',
+          title: 'HydroFlow',
           debugShowCheckedModeBanner: false,
           theme: CodeTheme.lightTheme,
           routerConfig: router,

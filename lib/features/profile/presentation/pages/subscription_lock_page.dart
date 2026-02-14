@@ -17,20 +17,23 @@ class SubscriptionLockPage extends StatelessWidget {
       path: phoneNumber,
     );
     if (await canLaunchUrl(launchUri)) {
-      await launchUrl(launchUri);
+      await launchUrl(launchUri, mode: LaunchMode.externalApplication);
     }
   }
+
+
 
   Future<void> _sendEmail() async {
     final Uri launchUri = Uri(
       scheme: 'mailto',
-      path: 'support@hydroflowpro.com',
+      path: 'graycodder@gmail.com',
       query: 'subject=Subscription Renewal - ${salesman.name}',
     );
     if (await canLaunchUrl(launchUri)) {
-      await launchUrl(launchUri);
+      await launchUrl(launchUri, mode: LaunchMode.externalApplication);
     }
   }
+
 
   @override
   Widget build(BuildContext context) {
@@ -119,7 +122,7 @@ class SubscriptionLockPage extends StatelessWidget {
                             Text(
                               isDeactivated 
                                   ? 'Your access has been disabled by the administrator'
-                                  : 'Your HydroFlow Pro access has been suspended',
+                                  : 'Your HydroFlow access has been suspended',
                               textAlign: TextAlign.center,
                               style: const TextStyle(
                                 fontSize: 14,
@@ -275,9 +278,9 @@ class SubscriptionLockPage extends StatelessWidget {
                             SizedBox(
                               width: double.infinity,
                               child: ElevatedButton.icon(
-                                onPressed: () => _makePhoneCall('+919876500000'), // Replace with actual admin number
+                                onPressed: () => _makePhoneCall('9995226139'), 
                                 icon: const Icon(Icons.phone),
-                                label: Text(isDeactivated ? 'Request Activation' : 'Call Admin: +91 98765 00000'),
+                                label: Text(isDeactivated ? 'Request Activation' : 'Call Admin'),
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: const Color(0xFF030303),
                                   foregroundColor: Colors.white,
@@ -316,7 +319,7 @@ class SubscriptionLockPage extends StatelessWidget {
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        'HydroFlow Pro • Subscription-based SaaS',
+                        'HydroFlow • Subscription-based SaaS',
                         style: TextStyle(color: Colors.grey[400], fontSize: 10, fontWeight: FontWeight.bold),
                       ),
                     ],

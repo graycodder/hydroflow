@@ -38,7 +38,7 @@ class ReceiptPdfGenerator {
               crossAxisAlignment: pw.CrossAxisAlignment.start,
               children: [
               pw.Center(
-                child: pw.Text("HydroFlow Pro", style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 18)),
+                child: pw.Text("HydroFlow", style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 18)),
               ),
               pw.Center(child: pw.Text("Water Delivery Service")),
               pw.Divider(),

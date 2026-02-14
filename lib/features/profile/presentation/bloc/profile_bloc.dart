@@ -40,24 +40,45 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
 
     _profileSubscription = profileStream.listen(
       (profile) {
-        latestProfile = profile;
-        add(_InternalUpdate(latestProfile, latestHistory));
+        if (!isClosed) {
+          latestProfile = profile;
+          add(_InternalUpdate(latestProfile, latestHistory));
+        }
       },
-      onError: (e) => add(_InternalError(e.toString())),
+      onError: (e) {
+        if (!isClosed) {
+          add(_InternalError(e.toString()));
+        }
+      },
     );
 
     _historySubscription = historyStream.listen(
       (history) {
-        latestHistory = history;
-        add(_InternalUpdate(latestProfile, latestHistory));
+        if (!isClosed) {
+          latestHistory = history;
+          add(_InternalUpdate(latestProfile, latestHistory));
+        }
       },
-      onError: (e) => add(_InternalError(e.toString())),
+      onError: (e) {
+        if (!isClosed) {
+          add(_InternalError(e.toString()));
+        }
+      },
     );
   }
 
   void _onInternalUpdate(_InternalUpdate event, Emitter<ProfileState> emit) {
     if (event.profile != null && event.history != null) {
-      emit(ProfileLoaded(event.profile!, event.history!));
+      final history = event.history!;
+      final totalSubscriptions = history.length;
+      final totalAmountPaid = history.fold<double>(0, (sum, record) => sum + record.amount);
+
+      final updatedProfile = event.profile!.copyWith(
+        totalSubscriptions: totalSubscriptions,
+        totalAmountPaid: totalAmountPaid,
+      );
+
+      emit(ProfileLoaded(updatedProfile, history));
     }
   }
 

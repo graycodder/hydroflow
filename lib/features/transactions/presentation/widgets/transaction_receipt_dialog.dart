@@ -78,7 +78,7 @@ class TransactionReceiptDialog extends StatelessWidget {
                       child: Column(
                         children: [
                           const Text(
-                            'HYDROFLOW PRO',
+                            'HYDROFLOW',
                             style: TextStyle(
                               fontWeight: FontWeight.w900,
                               fontSize: 16,
@@ -398,7 +398,7 @@ class TransactionReceiptDialog extends StatelessWidget {
                     const SizedBox(height: 16),
                     const Center(
                       child: Text(
-                        'Powered by HydroFlow Pro',
+                        'Powered by HydroFlow',
                         style: TextStyle(
                           color: Colors.grey,
                           fontStyle: FontStyle.italic,

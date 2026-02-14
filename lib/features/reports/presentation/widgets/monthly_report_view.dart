@@ -140,11 +140,36 @@ class MonthlyReportView extends StatelessWidget {
             "+₹${NumberFormat('#,##,###').format(report.securityDepositsCollected)}",
             color: Colors.green,
           ),
+          if (report.securityDepositsCollectedCash > 0 || report.securityDepositsCollectedOnline > 0)
+            Padding(
+              padding: const EdgeInsets.only(left: 24),
+              child: Column(
+                children: [
+                  if (report.securityDepositsCollectedCash > 0)
+                    buildSubRow("Cash", "₹${NumberFormat('#,##,###').format(report.securityDepositsCollectedCash)}"),
+                  if (report.securityDepositsCollectedOnline > 0)
+                    buildSubRow("UPI/Online", "₹${NumberFormat('#,##,###').format(report.securityDepositsCollectedOnline)}"),
+                ],
+              ),
+            ),
+          const SizedBox(height: 4),
           buildSubRow(
             "Refunded",
             "-₹${NumberFormat('#,##,###').format(report.securityDepositsRefunded)}",
             color: Colors.red,
           ),
+          if (report.securityDepositsRefundedCash > 0 || report.securityDepositsRefundedOnline > 0)
+            Padding(
+              padding: const EdgeInsets.only(left: 24),
+              child: Column(
+                children: [
+                  if (report.securityDepositsRefundedCash > 0)
+                    buildSubRow("Cash", "₹${NumberFormat('#,##,###').format(report.securityDepositsRefundedCash)}"),
+                  if (report.securityDepositsRefundedOnline > 0)
+                    buildSubRow("UPI/Online", "₹${NumberFormat('#,##,###').format(report.securityDepositsRefundedOnline)}"),
+                ],
+              ),
+            ),
           buildRow(
             "Net Deposits",
             "₹${NumberFormat('#,##,###').format(report.netDeposits)}",

@@ -111,22 +111,32 @@ class ReportRepositoryImpl implements ReportRepository {
         double securityDepositsRefunded = 0;
         double cashFromDeposits = 0;
         double onlineFromDeposits = 0;
+        double securityDepositsRefundedCash = 0;
+        double securityDepositsRefundedOnline = 0;
         int delivered = 0;
         int returned = 0;
         
         for (var tx in transactions) {
+          final isCash = tx.paymentMode == 'Cash';
+          final isOnline = tx.paymentMode == 'Online' || tx.paymentMode == 'UPI';
+
           if (tx.type == 'Deposit') {
             securityDepositsCollected += tx.amountReceived;
             totalCollected += tx.amountReceived;
-            if (tx.paymentMode == 'Cash') {
+            if (isCash) {
               cashFromDeposits += tx.amountReceived;
-            } else if (tx.paymentMode == 'Online' || tx.paymentMode == 'UPI') {
+            } else if (isOnline) {
               onlineFromDeposits += tx.amountReceived;
             }
             continue; 
           } else if (tx.type == 'Refund') {
              securityDepositsRefunded += tx.amountReceived;
              totalCollected -= tx.amountReceived;
+             if (isCash) {
+               securityDepositsRefundedCash += tx.amountReceived;
+             } else if (isOnline) {
+               securityDepositsRefundedOnline += tx.amountReceived;
+             }
              continue; 
           }
 
@@ -183,7 +193,11 @@ class ReportRepositoryImpl implements ReportRepository {
           cashSales: cashSales,
           onlineSales: onlineSales,
           securityDepositsCollected: securityDepositsCollected,
+          securityDepositsCollectedCash: cashFromDeposits,
+          securityDepositsCollectedOnline: onlineFromDeposits,
           securityDepositsRefunded: securityDepositsRefunded,
+          securityDepositsRefundedCash: securityDepositsRefundedCash,
+          securityDepositsRefundedOnline: securityDepositsRefundedOnline,
           netDeposits: netDeposits,
           totalDepositsHeld: totalDepositsHeld,
           cashInHand: cashInHand,
@@ -284,22 +298,32 @@ class ReportRepositoryImpl implements ReportRepository {
         double securityDepositsRefunded = 0;
         double cashFromDeposits = 0;
         double onlineFromDeposits = 0;
+        double securityDepositsRefundedCash = 0;
+        double securityDepositsRefundedOnline = 0;
         int delivered = 0;
         int returned = 0;
 
         for (var tx in transactions) {
+          final isCash = tx.paymentMode == 'Cash';
+          final isOnline = tx.paymentMode == 'Online' || tx.paymentMode == 'UPI';
+
           if (tx.type == 'Deposit') {
             securityDepositsCollected += tx.amountReceived;
             totalCollected += tx.amountReceived;
-            if (tx.paymentMode == 'Cash') {
+            if (isCash) {
               cashFromDeposits += tx.amountReceived;
-            } else if (tx.paymentMode == 'Online' || tx.paymentMode == 'UPI') {
+            } else if (isOnline) {
               onlineFromDeposits += tx.amountReceived;
             }
             continue;
           } else if (tx.type == 'Refund') {
             securityDepositsRefunded += tx.amountReceived;
             totalCollected -= tx.amountReceived;
+            if (isCash) {
+              securityDepositsRefundedCash += tx.amountReceived;
+            } else if (isOnline) {
+              securityDepositsRefundedOnline += tx.amountReceived;
+            }
             continue;
           }
 
@@ -381,7 +405,11 @@ class ReportRepositoryImpl implements ReportRepository {
           cashSales: cashSales,
           onlineSales: onlineSales,
           securityDepositsCollected: securityDepositsCollected,
+          securityDepositsCollectedCash: cashFromDeposits,
+          securityDepositsCollectedOnline: onlineFromDeposits,
           securityDepositsRefunded: securityDepositsRefunded,
+          securityDepositsRefundedCash: securityDepositsRefundedCash,
+          securityDepositsRefundedOnline: securityDepositsRefundedOnline,
           netDeposits: netDeposits,
           totalDepositsHeld: totalDepositsHeld,
           cashInHand: cashInHand,

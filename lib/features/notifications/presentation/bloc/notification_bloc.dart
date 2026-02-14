@@ -97,8 +97,16 @@ class NotificationBloc extends Bloc<NotificationEvent, NotificationState> {
     emit(NotificationLoading());
     await _notificationSubscription?.cancel();
     _notificationSubscription = _getNotifications(event.uid).listen(
-      (notifications) => add(_NotificationsUpdated(notifications)),
-      onError: (e) => add(_NotificationError(e.toString())),
+      (notifications) {
+        if (!isClosed) {
+          add(_NotificationsUpdated(notifications));
+        }
+      },
+      onError: (e) {
+        if (!isClosed) {
+          add(_NotificationError(e.toString()));
+        }
+      },
     );
   }
 

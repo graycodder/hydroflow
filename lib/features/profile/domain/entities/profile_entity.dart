@@ -49,6 +49,52 @@ class ProfileEntity extends Equatable {
     this.subEndDate,
   });
 
+  ProfileEntity copyWith({
+    String? id,
+    String? name,
+    String? role,
+    String? phone,
+    String? email,
+    String? address,
+    DateTime? membershipDate,
+    int? totalSubscriptions,
+    double? totalAmountPaid,
+    int? activeCustomers,
+    int? currentStock,
+    int? customerCount,
+    bool? isActive,
+    DateTime? joinDate,
+    DateTime? lastNotification,
+    String? zone,
+    String? username,
+    String? subId,
+    DateTime? subStartDate,
+    DateTime? subEndDate,
+  }) {
+    return ProfileEntity(
+      id: id ?? this.id,
+      name: name ?? this.name,
+      role: role ?? this.role,
+      phone: phone ?? this.phone,
+      email: email ?? this.email,
+      address: address ?? this.address,
+      membershipDate: membershipDate ?? this.membershipDate,
+      totalSubscriptions: totalSubscriptions ?? this.totalSubscriptions,
+      totalAmountPaid: totalAmountPaid ?? this.totalAmountPaid,
+      activeCustomers: activeCustomers ?? this.activeCustomers,
+      currentStock: currentStock ?? this.currentStock,
+      customerCount: customerCount ?? this.customerCount,
+      isActive: isActive ?? this.isActive,
+      joinDate: joinDate ?? this.joinDate,
+      lastNotification: lastNotification ?? this.lastNotification,
+      zone: zone ?? this.zone,
+      username: username ?? this.username,
+      subId: subId ?? this.subId,
+      subStartDate: subStartDate ?? this.subStartDate,
+      subEndDate: subEndDate ?? this.subEndDate,
+    );
+  }
+
   @override
   List<Object?> get props => [
         id,
