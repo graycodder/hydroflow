@@ -46,17 +46,6 @@ class NotificationsPage extends StatelessWidget {
             return Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                  child: Text(
-                    'Stay updated with your subscription and system alerts',
-                    style: TextStyle(
-                      color: Colors.grey[600],
-                      fontSize: 14,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 24),
                 if (state is NotificationLoaded && state.notifications.any((n) => !n.isRead))
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 16.0),

@@ -16,8 +16,8 @@ class NotificationModel extends NotificationEntity {
     return NotificationModel(
       id: snapshot.key ?? '',
       title: data['title'] ?? '',
-      description: data['description'] ?? '',
-      timestamp: DateTime.fromMillisecondsSinceEpoch(data['timestamp'] ?? 0),
+      description: data['description'] ?? data['body'] ?? '',
+      timestamp: _parseTimestamp(data['timestamp']),
       type: data['type'] ?? 'info',
       isRead: data['isRead'] ?? false,
     );
@@ -27,11 +27,20 @@ class NotificationModel extends NotificationEntity {
     return NotificationModel(
       id: id,
       title: map['title'] ?? '',
-      description: map['description'] ?? '',
-      timestamp: DateTime.fromMillisecondsSinceEpoch(map['timestamp'] ?? 0),
+      description: map['description'] ?? map['body'] ?? '',
+      timestamp: _parseTimestamp(map['timestamp']),
       type: map['type'] ?? 'info',
       isRead: map['isRead'] ?? false,
     );
+  }
+
+  static DateTime _parseTimestamp(dynamic timestamp) {
+    if (timestamp is int) {
+      return DateTime.fromMillisecondsSinceEpoch(timestamp);
+    } else if (timestamp is String) {
+      return DateTime.tryParse(timestamp) ?? DateTime.fromMillisecondsSinceEpoch(0);
+    }
+    return DateTime.fromMillisecondsSinceEpoch(0);
   }
 
   Map<String, dynamic> toMap() {
