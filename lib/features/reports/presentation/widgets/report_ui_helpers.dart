@@ -102,7 +102,7 @@ Widget buildStatBox(String label, String value, Color color) {
       border: Border.all(color: Colors.grey[200]!),
     ),
     child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         Row(
           children: [
@@ -113,19 +113,21 @@ Widget buildStatBox(String label, String value, Color color) {
             ),
             const SizedBox(width: 4),
             Text(label, 
-            style: const TextStyle(color: Colors.grey)),
+            style: const TextStyle(color: Colors.grey,fontSize: 14)),
           ],
         ),
         const SizedBox(height: 8),
         Text(
           value,maxLines: 1,
               overflow: TextOverflow.ellipsis,
-          style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: color),
+          style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: color),
         ),
       ],
     ),
   );
 }
+
+
 
 Widget buildLargeSummaryCard({
   required String title,

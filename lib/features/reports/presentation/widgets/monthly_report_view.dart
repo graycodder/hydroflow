@@ -342,7 +342,8 @@ class MonthlyReportView extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 8),
-          Text(value, style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: color)),
+          Text(value, maxLines: 1,
+              overflow: TextOverflow.ellipsis, style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: color)),
         ],
       ),
     );
