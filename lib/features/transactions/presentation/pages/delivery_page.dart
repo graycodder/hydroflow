@@ -573,6 +573,8 @@ class _DeliveryViewState extends State<DeliveryView> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Row(
+                            mainAxisAlignment: MainAxisAlignment.start,
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               const Icon(Icons.person_outline, size: 20, color: Colors.grey),
                               const SizedBox(width: 8),
