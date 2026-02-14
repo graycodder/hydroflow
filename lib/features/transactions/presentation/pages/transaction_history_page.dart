@@ -7,6 +7,7 @@ import 'package:hydroflow/features/transactions/presentation/bloc/customer_trans
 import 'package:hydroflow/features/transactions/presentation/bloc/customer_transactions_state.dart';
 import 'package:hydroflow/core/service_locator.dart';
 import 'package:hydroflow/core/widgets/hydro_flow_loader.dart';
+import 'package:hydroflow/core/utils/whatsapp_helper.dart';
 
 class TransactionHistoryPage extends StatelessWidget {
   final Customer customer;
@@ -111,6 +112,28 @@ class TransactionHistoryPage extends StatelessWidget {
                                   ],
                                 ),
                               ),
+                              if (tx.type.toLowerCase() == 'delivery')
+                                IconButton(
+                                  icon: const Icon(Icons.share, color: Color(0xFF00C853)),
+                                  onPressed: () {
+                                    WhatsappHelper.sendReceipt(
+                                      phone: customer.phone,
+                                      customerName: customer.name,
+                                      address: customer.address,
+                                      delivered: tx.cansDelivered,
+                                      returned: tx.emptyCollected,
+                                      bottleBalance: customer.bottleBalance,
+                                      amount: tx.amount,
+                                      amountReceived: tx.amountReceived,
+                                      isPaid: tx.amountReceived >= tx.amount,
+                                      oldBalance: txOldBalance,
+                                      newBalance: txNewBalance,
+                                      paymentMode: tx.paymentMode,
+                                      date: tx.timestamp,
+                                    );
+                                  },
+                                  tooltip: 'Share via WhatsApp',
+                                ),
                             ],
                           ),
                           const Divider(height: 24),
