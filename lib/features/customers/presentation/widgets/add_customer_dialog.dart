@@ -25,6 +25,7 @@ class _AddCustomerDialogState extends State<AddCustomerDialog> {
   final _nameController = TextEditingController();
   final _phoneController = TextEditingController();
   final _addressController = TextEditingController();
+  final _zoneController = TextEditingController();
   final _depositController = TextEditingController();
   String? _paymentMode;
   bool _isSubmitting = false;
@@ -34,6 +35,7 @@ class _AddCustomerDialogState extends State<AddCustomerDialog> {
     _nameController.dispose();
     _phoneController.dispose();
     _addressController.dispose();
+    _zoneController.dispose();
     _depositController.dispose();
     super.dispose();
   }
@@ -143,6 +145,21 @@ class _AddCustomerDialogState extends State<AddCustomerDialog> {
                     },
                   ),
                   const SizedBox(height: 16),
+                  _buildLabel('Zone (Area)', isMandatory: true),
+                  _buildTextFormField(
+                    _zoneController,
+                    'Enter zone/area (e.g. Zone A)',
+                    inputFormatters: [
+                      FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z0-9 ]')),
+                    ],
+                    validator: (value) {
+                      if (value == null || value.trim().isEmpty) {
+                        return 'Please enter customer zone';
+                      }
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 16),
                   _buildLabel('Security Deposit (₹)', isMandatory: true),
                   _buildTextFormField(
                     _depositController,
@@ -211,6 +228,7 @@ class _AddCustomerDialogState extends State<AddCustomerDialog> {
                           final name = _nameController.text.trim();
                           final phone = _phoneController.text.trim();
                           final address = _addressController.text.trim();
+                          final zone = _zoneController.text.trim();
                           final deposit = double.parse(_depositController.text.trim());
 
                           showDialog(
@@ -234,6 +252,7 @@ class _AddCustomerDialogState extends State<AddCustomerDialog> {
                                       name: name,
                                       phone: phone,
                                       address: address,
+                                      zone: zone,
                                       securityDeposit: deposit,
                                       paymentMode: _paymentMode!,
                                     ));

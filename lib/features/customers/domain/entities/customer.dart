@@ -7,6 +7,7 @@ class Customer extends Equatable {
   final String phone;
   final String address;
   final String status;
+  final String zone;
   final double securityDeposit;
   final double pendingBalance;
   final int bottleBalance;
@@ -21,6 +22,7 @@ class Customer extends Equatable {
     required this.phone,
     required this.address,
     required this.status,
+    this.zone = '',
     this.securityDeposit = 0.0,
     this.pendingBalance = 0.0,
     this.bottleBalance = 0,
@@ -36,6 +38,7 @@ class Customer extends Equatable {
     String? phone,
     String? address,
     String? status,
+    String? zone,
     double? securityDeposit,
     double? pendingBalance,
     int? bottleBalance,
@@ -50,6 +53,7 @@ class Customer extends Equatable {
       phone: phone ?? this.phone,
       address: address ?? this.address,
       status: status ?? this.status,
+      zone: zone ?? this.zone,
       securityDeposit: securityDeposit ?? this.securityDeposit,
       pendingBalance: pendingBalance ?? this.pendingBalance,
       bottleBalance: bottleBalance ?? this.bottleBalance,
@@ -67,6 +71,7 @@ class Customer extends Equatable {
     phone,
     address,
     status,
+    zone,
     securityDeposit,
     pendingBalance,
     bottleBalance,

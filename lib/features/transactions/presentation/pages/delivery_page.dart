@@ -239,10 +239,11 @@ class _DeliveryViewState extends State<DeliveryView> {
                  if (filter.isEmpty) return activeCustomers;
                  
                  final query = filter.toLowerCase();
-                 final filtered = activeCustomers.where((c) {
-                   return c.name.toLowerCase().contains(query) || 
-                          c.phone.contains(query);
-                 }).toList();
+                  final filtered = activeCustomers.where((c) {
+                    return c.name.toLowerCase().contains(query) || 
+                           c.phone.contains(query) ||
+                           c.zone.toLowerCase().contains(query);
+                  }).toList();
 
                  // Sort: prioritize those starting with the query
                  filtered.sort((a, b) {
@@ -270,9 +271,9 @@ class _DeliveryViewState extends State<DeliveryView> {
                  searchDelay: Duration.zero,
                  searchFieldProps: const TextFieldProps(
                    autofocus: false,
-                   decoration: InputDecoration(
-                     hintText: "Search customer...",
-                     prefixIcon: Icon(Icons.search),
+                    decoration: InputDecoration(
+                      hintText: "Search with Name or Zone...",
+                      prefixIcon: Icon(Icons.search),
                      contentPadding: EdgeInsets.symmetric(horizontal: 12),
                      border: OutlineInputBorder(),
                    ),
@@ -280,11 +281,31 @@ class _DeliveryViewState extends State<DeliveryView> {
                  itemBuilder: (context, item, isSelected, isHovered) {
                    return ListTile(
                      title: Text(item.name, style: const TextStyle(fontSize: 14)),
-                     subtitle: Text(item.address, 
-                       maxLines: 1, 
-                       overflow: TextOverflow.ellipsis,
-                       style: const TextStyle(fontSize: 12),
-                     ),
+                      subtitle: Row(
+                        children: [
+                          if (item.zone.isNotEmpty) ...[
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: Colors.blue[50],
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                              child: Text(
+                                item.zone,
+                                style: TextStyle(color: Colors.blue[700], fontSize: 10, fontWeight: FontWeight.bold),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                          ],
+                          Expanded(
+                            child: Text(item.address, 
+                              maxLines: 1, 
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(fontSize: 12),
+                            ),
+                          ),
+                        ],
+                      ),
                      selected: isSelected,
                      dense: true,
                      visualDensity: VisualDensity.compact,

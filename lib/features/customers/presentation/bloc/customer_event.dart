@@ -31,6 +31,7 @@ class AddCustomer extends CustomerEvent {
   final String name;
   final String phone;
   final String address;
+  final String zone;
   final double securityDeposit;
   final String paymentMode;
 
@@ -39,12 +40,13 @@ class AddCustomer extends CustomerEvent {
     required this.name,
     required this.phone,
     required this.address,
+    required this.zone,
     required this.securityDeposit,
     required this.paymentMode,
   });
 
   @override
-  List<Object> get props => [salesmanId, name, phone, address, securityDeposit, paymentMode];
+  List<Object> get props => [salesmanId, name, phone, address, zone, securityDeposit, paymentMode];
 }
 
 class UpdateCustomerStatus extends CustomerEvent {

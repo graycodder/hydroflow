@@ -74,6 +74,7 @@ class CustomerBloc extends Bloc<CustomerEvent, CustomerState> {
         phone: event.phone,
         address: event.address,
         status: 'Active',
+        zone: event.zone,
         securityDeposit: event.securityDeposit,
         paymentMode: event.paymentMode,
         createdAt: DateTime.now(),
@@ -103,7 +104,8 @@ class CustomerBloc extends Bloc<CustomerEvent, CustomerState> {
       final queryLower = event.query.toLowerCase();
       final filtered = state.customers.where((customer) {
         return customer.name.toLowerCase().contains(queryLower) ||
-               customer.phone.contains(queryLower);
+               customer.phone.contains(queryLower) ||
+               customer.zone.toLowerCase().contains(queryLower);
       }).toList();
       emit(state.copyWith(filteredCustomers: filtered, successMessage: null));
     }

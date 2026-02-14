@@ -147,6 +147,21 @@ class _CustomerDetailsDialogState extends State<CustomerDetailsDialog> {
                   fontSize: 16,
                 ),
               ),
+              if (widget.customer.zone.isNotEmpty) ...[
+                const SizedBox(height: 16),
+                const Text(
+                  'Zone',
+                  style: TextStyle(color: Colors.grey, fontSize: 13),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  widget.customer.zone,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                  ),
+                ),
+              ],
               const SizedBox(height: 24),
               
                // Financials Row

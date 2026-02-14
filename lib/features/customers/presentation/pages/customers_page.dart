@@ -72,7 +72,7 @@ class _CustomersPageState extends State<CustomersPage> {
                               context.read<CustomerBloc>().add(SearchCustomers(value));
                             },
                             decoration: InputDecoration(
-                              hintText: 'Search customers...',
+                              hintText: 'Search with Name or Zone...',
                               prefixIcon: const Icon(Icons.search, color: Colors.grey),
                               filled: true,
                               fillColor: Colors.grey[200], // Simple faint grey
@@ -210,7 +210,7 @@ class _CustomersPageState extends State<CustomersPage> {
                     color: isActive ? Colors.black : Colors.grey[300], // Active tag black, else grey
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: Text(
+                   child: Text(
                     customer.status.toLowerCase(),
                     style: TextStyle(
                       color: isActive ? Colors.white : Colors.black,
@@ -220,6 +220,23 @@ class _CustomersPageState extends State<CustomersPage> {
                 ),
               ],
             ),
+            if (customer.zone.isNotEmpty) ...[
+              const SizedBox(height: 4),
+              Row(
+                children: [
+                  const Icon(Icons.grid_view_rounded, size: 14, color: Colors.blueGrey),
+                  const SizedBox(width: 4),
+                  Text(
+                    customer.zone,
+                    style: TextStyle(
+                      color: Colors.blueGrey[700],
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
+              ),
+            ],
             const SizedBox(height: 8),
             Row(
               children: [

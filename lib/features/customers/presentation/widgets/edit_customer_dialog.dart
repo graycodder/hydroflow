@@ -30,6 +30,7 @@ class _EditCustomerDialogState extends State<EditCustomerDialog> {
   late TextEditingController _nameController;
   late TextEditingController _phoneController;
   late TextEditingController _addressController;
+  late TextEditingController _zoneController;
   late TextEditingController _depositController;
   //late TextEditingController _balanceController;
   //late TextEditingController _bottleBalanceController;
@@ -42,6 +43,7 @@ class _EditCustomerDialogState extends State<EditCustomerDialog> {
     _nameController = TextEditingController(text: widget.customer.name);
     _phoneController = TextEditingController(text: widget.customer.phone);
     _addressController = TextEditingController(text: widget.customer.address);
+    _zoneController = TextEditingController(text: widget.customer.zone);
     _depositController = TextEditingController(text: widget.customer.securityDeposit.toStringAsFixed(0));
    //_balanceController = TextEditingController(text: widget.customer.pendingBalance.toStringAsFixed(0));
    //_bottleBalanceController = TextEditingController(text: widget.customer.bottleBalance.toString());
@@ -53,6 +55,7 @@ class _EditCustomerDialogState extends State<EditCustomerDialog> {
     _nameController.dispose();
     _phoneController.dispose();
     _addressController.dispose();
+    _zoneController.dispose();
     _depositController.dispose();
     //_balanceController.dispose();
     //_bottleBalanceController.dispose();
@@ -174,6 +177,21 @@ class _EditCustomerDialogState extends State<EditCustomerDialog> {
                   },
                 ),
                 const SizedBox(height: 16),
+                _buildLabel('Zone', isMandatory: true),
+                _buildTextFormField(
+                  _zoneController, 
+                  'Enter zone',
+                  inputFormatters: [
+                    FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z0-9 ]')),
+                  ],
+                  validator: (value) {
+                    if (value == null || value.trim().isEmpty) {
+                      return 'Please enter zone';
+                    }
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 16),
                 _buildLabel('Security Deposit (₹)', isMandatory: true),
                 _buildTextFormField(
                   _depositController, 
@@ -280,6 +298,7 @@ class _EditCustomerDialogState extends State<EditCustomerDialog> {
                             final name = _nameController.text.trim();
                             final phone = _phoneController.text.trim();
                             final address = _addressController.text.trim();
+                            final zone = _zoneController.text.trim();
                             final deposit = double.parse(_depositController.text.trim());
                             //final balance = double.parse(_balanceController.text.trim());
                             //final bottleBalance = int.parse(_bottleBalanceController.text.trim());
@@ -310,6 +329,7 @@ class _EditCustomerDialogState extends State<EditCustomerDialog> {
                                         phone: phone,
                                         address: address,
                                         status: widget.customer.status,
+                                        zone: zone,
                                         securityDeposit: deposit,
                                         paymentMode: _paymentMode!,
                                         bottleBalance:  widget.customer.bottleBalance,

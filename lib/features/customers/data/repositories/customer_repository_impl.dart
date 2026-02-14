@@ -75,6 +75,7 @@ class CustomerRepositoryImpl implements CustomerRepository {
         isRefunded: customer.isRefunded,
         paymentMode: customer.paymentMode,
         createdAt: now,
+        zone: customer.zone,
       );
       
       await ref.set(customerModel.toMap());
@@ -217,6 +218,7 @@ class CustomerRepositoryImpl implements CustomerRepository {
         isRefunded: customer.isRefunded,
         paymentMode: customer.paymentMode,
         createdAt: customer.createdAt,
+        zone: customer.zone,
       );
       await ref.update(customerModel.toMap());
       
@@ -236,6 +238,7 @@ class CustomerRepositoryImpl implements CustomerRepository {
           await txRef.set({
             'salesmanId': customer.salesmanId,
             'customerId': customer.id,
+            'zone': customer.zone,
             'timestamp': DateTime.now().toIso8601String(),
             'type': 'Deposit',
             'amount': depositDiff,
@@ -265,6 +268,7 @@ class CustomerRepositoryImpl implements CustomerRepository {
             'notes': 'Security Deposit Decreased',
             'previousBalance': customer.pendingBalance,
             'currentBalance': customer.pendingBalance,
+            'zone': customer.zone,
           });
         }
 
