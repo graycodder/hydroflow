@@ -70,38 +70,48 @@ class InventoryRepositoryImpl implements InventoryRepository {
           ? <String, dynamic>{} 
           : Map<String, dynamic>.from(post as Map);
 
-      // Initialize if new log for today
+      // Robust Initialization: Ensure all required fields exist
       if (!logMap.containsKey('date')) {
-         logMap['salesmanId'] = salesmanId;
-         logMap['date'] = DateTime.now().toIso8601String().substring(0, 10);
-         
-         // Opening stock is what was carried forward
-         logMap['openingStock'] = openingStockToUse;
-         // The new quantity is "loaded"
-         logMap['loaded'] = quantity;
-         
-         logMap['totalDelivered'] = 0;
-         logMap['totalEmptyCollected'] = 0;
-         logMap['damaged'] = 0;
-         // Closing stock = carry forward + newly loaded
-         logMap['closingStock'] = openingStockToUse + quantity;
-         logMap['actualClosingStock'] = 0;
-         logMap['mismatchCount'] = 0;
-         logMap['isReconciled'] = false;
-         logMap['cashCollected'] = 0.0;
-         logMap['onlineCollected'] = 0.0;
-      } else {
-         // Subsequent loads are refills (update loaded)
-         final currentLoaded = (logMap['loaded'] as num?)?.toInt() ?? 0;
-         final newLoaded = currentLoaded + quantity;
-         logMap['loaded'] = newLoaded;
-         
-         final opening = (logMap['openingStock'] as num?)?.toInt() ?? 0;
-         final delivered = (logMap['totalDelivered'] as num?)?.toInt() ?? 0;
-         final damaged = (logMap['damaged'] as num?)?.toInt() ?? 0;
-         
-         logMap['closingStock'] = opening + newLoaded - delivered - damaged;
+        logMap['date'] = DateTime.now().toIso8601String().substring(0, 10);
+        logMap['salesmanId'] = salesmanId;
       }
+      
+      // Initialize counters if missing (e.g. if log was created by a deposit)
+      logMap['openingStock'] ??= 0;
+      logMap['loaded'] ??= 0;
+      logMap['totalDelivered'] ??= 0;
+      logMap['totalEmptyCollected'] ??= 0;
+      logMap['damaged'] ??= 0;
+      logMap['closingStock'] ??= 0;
+      logMap['actualClosingStock'] ??= 0;
+      logMap['mismatchCount'] ??= 0;
+      logMap['isReconciled'] ??= logMap['isReconciled'] ?? false;
+      logMap['todayCollection'] ??= 0.0;
+      logMap['cashCollected'] ??= 0.0;
+      logMap['onlineCollected'] ??= 0.0;
+
+      // Now apply the specific update
+      final bool isFirstSetup = !logMap.containsKey('openingStock_set'); // Internal flag for "Opening Stock" logic if needed, but we'll use value
+      
+      // Note: If this is the FIRST time we are setting stock today and it's not a refill...
+      // but 'addStock' is generally used for refills now after 'setOpeningStock' replaced initial add.
+      // Wait, let's look at how addStock is used. It's for "Refill Stock".
+      
+      final currentLoaded = (logMap['loaded'] as num?)?.toInt() ?? 0;
+      logMap['loaded'] = currentLoaded + quantity;
+      
+      // If openingStock was never set (e.g. created by deposit), we should set it to openingStockToUse
+      if (logMap['openingStock'] == 0 && !logMap.containsKey('openingStock_set')) {
+        logMap['openingStock'] = openingStockToUse;
+      }
+
+      final opening = (logMap['openingStock'] as num?)?.toInt() ?? 0;
+      final loaded = (logMap['loaded'] as num?)?.toInt() ?? 0;
+      final delivered = (logMap['totalDelivered'] as num?)?.toInt() ?? 0;
+      final damaged = (logMap['damaged'] as num?)?.toInt() ?? 0;
+      
+      logMap['closingStock'] = opening + loaded - delivered - damaged;
+
 
       return Transaction.success(logMap);
     });
@@ -173,29 +183,33 @@ class InventoryRepositoryImpl implements InventoryRepository {
            ? <String, dynamic>{} 
            : Map<String, dynamic>.from(post as Map);
 
-       if (!logMap.containsKey('date')) {
-          logMap['salesmanId'] = salesmanId;
-          logMap['date'] = DateTime.now().toIso8601String().substring(0, 10);
-          logMap['openingStock'] = openingStockToUse; // Use balance carried forward
-          logMap['loaded'] = 0;
-          logMap['totalDelivered'] = 0;
-          logMap['totalEmptyCollected'] = 0;
-          logMap['damaged'] = quantity;
-          logMap['closingStock'] = openingStockToUse - quantity; 
-          logMap['actualClosingStock'] = 0;
-          logMap['mismatchCount'] = 0;
-          logMap['isReconciled'] = false;
-          logMap['cashCollected'] = 0.0;
-          logMap['onlineCollected'] = 0.0;
-       } else {
-          final currentDamaged = (logMap['damaged'] as num?)?.toInt() ?? 0;
-          logMap['damaged'] = currentDamaged + quantity;
-          
-          final opening = (logMap['openingStock'] as num?)?.toInt() ?? 0;
-          final loaded = (logMap['loaded'] as num?)?.toInt() ?? 0;
-          final delivered = (logMap['totalDelivered'] as num?)?.toInt() ?? 0;
-          logMap['closingStock'] = opening + loaded - delivered - (currentDamaged + quantity);
-       }
+      // Robust Initialization
+      if (!logMap.containsKey('date')) {
+        logMap['date'] = DateTime.now().toIso8601String().substring(0, 10);
+        logMap['salesmanId'] = salesmanId;
+      }
+      
+      logMap['openingStock'] ??= 0;
+      logMap['loaded'] ??= 0;
+      logMap['totalDelivered'] ??= 0;
+      logMap['totalEmptyCollected'] ??= 0;
+      logMap['damaged'] ??= 0;
+      logMap['closingStock'] ??= 0;
+      logMap['actualClosingStock'] ??= 0;
+      logMap['mismatchCount'] ??= 0;
+      logMap['isReconciled'] ??= false;
+      logMap['todayCollection'] ??= 0.0;
+      logMap['cashCollected'] ??= 0.0;
+      logMap['onlineCollected'] ??= 0.0;
+
+      final currentDamaged = (logMap['damaged'] as num?)?.toInt() ?? 0;
+      logMap['damaged'] = currentDamaged + quantity;
+      
+      final opening = (logMap['openingStock'] as num?)?.toInt() ?? 0;
+      final loaded = (logMap['loaded'] as num?)?.toInt() ?? 0;
+      final delivered = (logMap['totalDelivered'] as num?)?.toInt() ?? 0;
+      logMap['closingStock'] = opening + loaded - delivered - logMap['damaged'];
+
        return Transaction.success(logMap);
     });
   }
@@ -210,18 +224,25 @@ class InventoryRepositoryImpl implements InventoryRepository {
           ? <String, dynamic>{} 
           : Map<String, dynamic>.from(post as Map);
 
-      // Initialize if new
+      // Robust Initialization
       if (!logMap.containsKey('date')) {
-         logMap['salesmanId'] = salesmanId;
-         logMap['date'] = DateTime.now().toIso8601String().substring(0, 10);
-         logMap['loaded'] = 0;
-         logMap['totalDelivered'] = 0;
-         logMap['damaged'] = 0;
-         logMap['actualClosingStock'] = 0;
-         logMap['mismatchCount'] = 0;
-         logMap['isReconciled'] = false;
+        logMap['date'] = DateTime.now().toIso8601String().substring(0, 10);
+        logMap['salesmanId'] = salesmanId;
       }
       
+      logMap['openingStock'] ??= 0;
+      logMap['loaded'] ??= 0;
+      logMap['totalDelivered'] ??= 0;
+      logMap['totalEmptyCollected'] ??= 0;
+      logMap['damaged'] ??= 0;
+      logMap['closingStock'] ??= 0;
+      logMap['actualClosingStock'] ??= 0;
+      logMap['mismatchCount'] ??= 0;
+      logMap['isReconciled'] ??= false;
+      logMap['todayCollection'] ??= 0.0;
+      logMap['cashCollected'] ??= 0.0;
+      logMap['onlineCollected'] ??= 0.0;
+
       final loaded = (logMap['loaded'] as num?)?.toInt() ?? 0;
       final delivered = (logMap['totalDelivered'] as num?)?.toInt() ?? 0;
       final damaged = (logMap['damaged'] as num?)?.toInt() ?? 0;
@@ -230,9 +251,11 @@ class InventoryRepositoryImpl implements InventoryRepository {
       
       logMap['openingStock'] = quantity;
       logMap['closingStock'] = expectedClosing;
+      logMap['openingStock_set'] = true; // Flag for UI/Repository logic
 
       return Transaction.success(logMap);
     });
+
     
     // Recalculate solely for the purpose of updating Salesman currentStock mostly accurately
     // We can just rely on the same calculation as above.
@@ -304,12 +327,28 @@ class InventoryRepositoryImpl implements InventoryRepository {
       final query = _database.ref()
           .child('Stock_logs')
           .orderByChild('salesmanId')
-          .equalTo(salesmanId)
-          .limitToFirst(1);
+          .equalTo(salesmanId);
       final snapshot = await query.get();
-      return snapshot.exists;
+      
+      if (!snapshot.exists) return false;
+      
+      final data = Map<dynamic, dynamic>.from(snapshot.value as Map);
+      // Check if any of the logs for this salesman have been explicitly setup
+      return data.values.any((log) {
+        if (log is Map) {
+          // Check for the explicit flag OR a non-zero openingStock
+       
+          final int openingStock = (log['openingStock'] as num?)?.toInt() ?? 0;
+          
+          return openingStock > 0;
+        }
+        return false;
+      });
+
+
     } catch (e) {
-      return false; // Assume false on error or handle differently? Safe enough for UI toggle.
+      return false; 
     }
   }
+
 }

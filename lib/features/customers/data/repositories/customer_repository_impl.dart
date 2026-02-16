@@ -143,10 +143,26 @@ class CustomerRepositoryImpl implements CustomerRepository {
         final logRef = _database.ref().child('Stock_logs').child('LOG_${dateKey}_${customer.salesmanId}');
         await logRef.runTransaction((Object? post) {
           final logMap = post == null ? <String, dynamic>{} : Map<String, dynamic>.from(post as Map);
+          
+          // Robust Initialization
           if (!logMap.containsKey('date')) {
             logMap['date'] = txTime.toIso8601String().substring(0, 10);
             logMap['salesmanId'] = customer.salesmanId;
           }
+          
+          logMap['openingStock'] ??= 0;
+          logMap['loaded'] ??= 0;
+          logMap['totalDelivered'] ??= 0;
+          logMap['totalEmptyCollected'] ??= 0;
+          logMap['damaged'] ??= 0;
+          logMap['closingStock'] ??= 0;
+          logMap['actualClosingStock'] ??= 0;
+          logMap['mismatchCount'] ??= 0;
+          logMap['isReconciled'] ??= false;
+          logMap['todayCollection'] ??= 0.0;
+          logMap['cashCollected'] ??= 0.0;
+          logMap['onlineCollected'] ??= 0.0;
+
           final currentColl = (logMap['todayCollection'] as num?)?.toDouble() ?? 0.0;
           logMap['todayCollection'] = currentColl + customer.securityDeposit;
           
@@ -160,6 +176,7 @@ class CustomerRepositoryImpl implements CustomerRepository {
           
           return Transaction.success(logMap);
         });
+
       }
     } catch (e) {
       throw Exception('Failed to add customer: $e');
@@ -277,10 +294,26 @@ class CustomerRepositoryImpl implements CustomerRepository {
         final logRef = _database.ref().child('Stock_logs').child('LOG_${dateKey}_${customer.salesmanId}');
         await logRef.runTransaction((Object? post) {
             final logMap = post == null ? <String, dynamic>{} : Map<String, dynamic>.from(post as Map);
+            
+            // Robust Initialization
             if (!logMap.containsKey('date')) {
               logMap['date'] = DateTime.now().toIso8601String().substring(0, 10);
               logMap['salesmanId'] = customer.salesmanId;
             }
+
+            logMap['openingStock'] ??= 0;
+            logMap['loaded'] ??= 0;
+            logMap['totalDelivered'] ??= 0;
+            logMap['totalEmptyCollected'] ??= 0;
+            logMap['damaged'] ??= 0;
+            logMap['closingStock'] ??= 0;
+            logMap['actualClosingStock'] ??= 0;
+            logMap['mismatchCount'] ??= 0;
+            logMap['isReconciled'] ??= false;
+            logMap['todayCollection'] ??= 0.0;
+            logMap['cashCollected'] ??= 0.0;
+            logMap['onlineCollected'] ??= 0.0;
+
             final currentColl = (logMap['todayCollection'] as num?)?.toDouble() ?? 0.0;
             // Deposit increase is (+) collection. Decrease/Refund is (-) collection.
             logMap['todayCollection'] = currentColl + depositDiff;
@@ -295,6 +328,7 @@ class CustomerRepositoryImpl implements CustomerRepository {
 
             return Transaction.success(logMap);
         });
+
       }
     } catch (e) {
       throw Exception('Failed to update customer: $e');
@@ -386,10 +420,26 @@ class CustomerRepositoryImpl implements CustomerRepository {
       final logRef = _database.ref().child('Stock_logs').child('LOG_${dateKey}_${customer.salesmanId}');
       await logRef.runTransaction((Object? post) {
           final logMap = post == null ? <String, dynamic>{} : Map<String, dynamic>.from(post as Map);
+          
+          // Robust Initialization
           if (!logMap.containsKey('date')) {
             logMap['date'] = DateTime.now().toIso8601String().substring(0, 10);
             logMap['salesmanId'] = customer.salesmanId;
           }
+
+          logMap['openingStock'] ??= 0;
+          logMap['loaded'] ??= 0;
+          logMap['totalDelivered'] ??= 0;
+          logMap['totalEmptyCollected'] ??= 0;
+          logMap['damaged'] ??= 0;
+          logMap['closingStock'] ??= 0;
+          logMap['actualClosingStock'] ??= 0;
+          logMap['mismatchCount'] ??= 0;
+          logMap['isReconciled'] ??= false;
+          logMap['todayCollection'] ??= 0.0;
+          logMap['cashCollected'] ??= 0.0;
+          logMap['onlineCollected'] ??= 0.0;
+
           final currentColl = (logMap['todayCollection'] as num?)?.toDouble() ?? 0.0;
           logMap['todayCollection'] = currentColl - refundAmount;
           
@@ -398,6 +448,7 @@ class CustomerRepositoryImpl implements CustomerRepository {
 
           return Transaction.success(logMap);
       });
+
       
     } catch (e) {
       throw Exception('Failed to settle and deactivate customer: $e');

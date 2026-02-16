@@ -64,14 +64,11 @@ class StockBloc extends Bloc<StockEvent, StockState> {
     StockLogUpdated event,
     Emitter<StockState> emit,
   ) {
-    // If we get a log, it definitely means we have logs!
-    // So if event.todayLog is not null, hasAnyLogs is true.
-    // If event.todayLog is null, we stick to what we checked earlier (hasAnyLogs from DB check).
-    // However, the DB check `checkStockLogsExist` is authoritative for "ever".
-    // So we should preserve state.hasAnyLogs, UNLESS todayLog is not null, which implies true.
-    
-    final hasLogs = event.todayLog != null ? true : state.hasAnyLogs;
+    // If we get a log, it only counts as "setup done" if openingStock > 0.
+    // Otherwise, we preserve the history-based state.hasAnyLogs.
+    final hasLogs = (event.todayLog != null && event.todayLog!.openingStock > 0) || state.hasAnyLogs;
     emit(StockDataUpdated(todayLog: event.todayLog, hasAnyLogs: hasLogs));
+
   }
 
   Future<void> _onStockLoadRequested(
