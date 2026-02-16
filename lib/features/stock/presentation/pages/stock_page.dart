@@ -184,7 +184,7 @@ class _StockPageState extends State<StockPage> {
                                       ),
                                       const SizedBox(height: 4),
                                       Text(
-                                        'Add Opening Stock',
+                                        '',
                                         style: TextStyle(
                                           fontSize: 14,
                                           color: Colors.grey[600],
@@ -263,7 +263,7 @@ class _StockPageState extends State<StockPage> {
                                   ),
                                 ),
 
-                              if (state.hasAnyLogs) ...[
+                              if (salesman.currentStock > 0 && state.hasAnyLogs) ...[
                                 // Refill Stock Section
                                 AnimatedCrossFade(
                                   firstChild: SizedBox(
