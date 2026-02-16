@@ -51,6 +51,8 @@ import 'package:hydroflow/features/dashboard/domain/usecases/get_dashboard_summa
 import 'package:hydroflow/features/dashboard/presentation/bloc/dashboard_bloc.dart';
 import 'package:hydroflow/features/dashboard/presentation/bloc/dashboard_event.dart';
 import 'package:hydroflow/features/dashboard/presentation/bloc/dashboard_state.dart';
+import 'package:hydroflow/core/bloc/connectivity/connectivity_bloc.dart';
+
 
 
 final sl = GetIt.instance;
@@ -184,5 +186,7 @@ Future<void> init() async {
     () => DashboardRepositoryImpl(database: sl()),
   );
   sl.registerLazySingleton(() => GetDashboardSummaryUseCase(sl()));
+  sl.registerLazySingleton(() => ConnectivityBloc());
   sl.registerFactory(() => DashboardBloc(getDashboardSummary: sl()));
 }
+

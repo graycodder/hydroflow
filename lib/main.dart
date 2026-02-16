@@ -20,6 +20,9 @@ import 'package:flutter_native_splash/flutter_native_splash.dart';
 
 import 'package:hydroflow/features/splash/presentation/widgets/splash_view.dart';
 import 'package:hydroflow/core/utils/router_refresh_listenable.dart';
+import 'package:hydroflow/core/bloc/connectivity/connectivity_bloc.dart';
+import 'package:hydroflow/core/widgets/connectivity_wrapper.dart';
+
 
 void main() {
   WidgetsBinding widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
@@ -115,7 +118,9 @@ class HydroFlowApp extends StatelessWidget {
         BlocProvider<DeliveryBloc>(create: (_) => di.sl<DeliveryBloc>()),
         BlocProvider<NotificationBloc>(create: (_) => di.sl<NotificationBloc>()),
         BlocProvider<DashboardBloc>(create: (_) => di.sl<DashboardBloc>()),
+        BlocProvider<ConnectivityBloc>(create: (_) => di.sl<ConnectivityBloc>()),
       ],
+
       child: BlocListener<AuthBloc, AuthState>(
         listener: (context, state) {
           // Trigger router re-evaluation whenever auth state changes
@@ -141,7 +146,12 @@ class HydroFlowApp extends StatelessWidget {
           debugShowCheckedModeBanner: false,
           theme: CodeTheme.lightTheme,
           routerConfig: router,
+          builder: (context, child) {
+            return ConnectivityWrapper(child: child!);
+          },
         ),
+
+
       ),
     );
   }
