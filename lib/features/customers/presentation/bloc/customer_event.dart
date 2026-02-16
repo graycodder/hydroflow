@@ -76,3 +76,12 @@ class SettleCustomer extends CustomerEvent {
   @override
   List<Object> get props => [customer];
 }
+
+class FilterByZone extends CustomerEvent {
+  final String? zone;
+
+  const FilterByZone(this.zone);
+
+  @override
+  List<Object> get props => [zone ?? ''];
+}

@@ -31,6 +31,7 @@ class DeliveryBloc extends Bloc<DeliveryEvent, DeliveryState> {
     on<LoadDeliveryPage>(_onLoadDeliveryPage);
     on<SelectCustomer>(_onSelectCustomer);
     on<SubmitTransaction>(_onSubmitTransaction);
+    on<FilterDeliveryByZone>(_onFilterDeliveryByZone);
   }
 
   Future<void> _onLoadDeliveryPage(
@@ -85,6 +86,27 @@ class DeliveryBloc extends Bloc<DeliveryEvent, DeliveryState> {
     Emitter<DeliveryState> emit,
   ) {
     emit(state.copyWith(selectedCustomer: event.customer));
+  }
+
+  void _onFilterDeliveryByZone(
+    FilterDeliveryByZone event,
+    Emitter<DeliveryState> emit,
+  ) {
+    // If selecting the same zone, clear it
+    final newZone = state.selectedZone == event.zone ? null : event.zone;
+    final filtered = _applyZoneFilter(state.customers, newZone);
+    emit(state.copyWith(
+      selectedZone: newZone,
+      clearSelectedZone: newZone == null,
+      filteredCustomers: filtered,
+      clearSelectedCustomer: true, // Clear selected customer when filtering changes
+    ));
+  }
+
+  List<Customer> _applyZoneFilter(List<Customer> customers, String? zone) {
+    final filtered = zone == null ? customers : customers.where((c) => c.zone == zone).toList();
+    // Sort alphabetically by name
+    return filtered..sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
   }
 
   Future<void> _onSubmitTransaction(
@@ -150,6 +172,7 @@ class DeliveryBloc extends Bloc<DeliveryEvent, DeliveryState> {
       totalDelivered: delivered,
       totalReturned: returned,
       currentStock: currentStock,
+      filteredCustomers: _applyZoneFilter(customers, state.selectedZone),
     );
   }
 }

@@ -144,6 +144,33 @@ class _DeliveryViewState extends State<DeliveryView> {
                   //  _buildStatsHeader(state),
                    // const SizedBox(height: 24),
                     
+                    // Zone Filters
+                    SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 8),
+                      child: Row(
+                        children: [
+                          _buildZoneChip(context, 'All', state.selectedZone == null, null),
+                          ...(state.customers
+                              .map((c) => c.zone)
+                              .where((z) => z.isNotEmpty)
+                              .toSet()
+                              .toList()
+                            ..sort())
+                              .map((zone) => Padding(
+                                    padding: const EdgeInsets.only(left: 8.0),
+                                    child: _buildZoneChip(
+                                      context,
+                                      zone,
+                                      state.selectedZone == zone,
+                                      zone,
+                                    ),
+                                  )),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+
                     // Form Card
                     _buildDeliveryForm(context, state, salesmanId),
                     
@@ -235,14 +262,13 @@ class _DeliveryViewState extends State<DeliveryView> {
              // Customer Dropdown with Search
              DropdownSearch<Customer>(
                items: (filter, loadProps) {
-                 final activeCustomers = state.customers.where((c) => c.status == 'Active').toList();
+                 final activeCustomers = state.filteredCustomers.where((c) => c.status == 'Active').toList();
                  if (filter.isEmpty) return activeCustomers;
                  
                  final query = filter.toLowerCase();
                   final filtered = activeCustomers.where((c) {
                     return c.name.toLowerCase().contains(query) || 
-                           c.phone.contains(query) ||
-                           c.zone.toLowerCase().contains(query);
+                           c.phone.contains(query);
                   }).toList();
 
                  // Sort: prioritize those starting with the query
@@ -272,7 +298,7 @@ class _DeliveryViewState extends State<DeliveryView> {
                  searchFieldProps: const TextFieldProps(
                    autofocus: false,
                     decoration: InputDecoration(
-                      hintText: "Search with Name or Zone...",
+                      hintText: "Search with Name or Phone...",
                       prefixIcon: Icon(Icons.search),
                      contentPadding: EdgeInsets.symmetric(horizontal: 12),
                      border: OutlineInputBorder(),
@@ -313,7 +339,7 @@ class _DeliveryViewState extends State<DeliveryView> {
                    );
                  },
                ),
-               selectedItem: state.customers.any((c) => c == state.selectedCustomer) 
+               selectedItem: state.filteredCustomers.any((c) => c == state.selectedCustomer) 
                    ? state.selectedCustomer 
                    : null,
                onChanged: (Customer? value) {
@@ -682,6 +708,27 @@ class _DeliveryViewState extends State<DeliveryView> {
           style: TextStyle(color: color, fontSize: 12, fontWeight: FontWeight.w600),
         ),
       ],
+    );
+  }
+
+  Widget _buildZoneChip(BuildContext context, String label, bool isSelected, String? zone) {
+    return ChoiceChip(
+      label: Text(label),
+      selected: isSelected,
+      onSelected: (selected) {
+        context.read<DeliveryBloc>().add(FilterDeliveryByZone(zone));
+      },
+      selectedColor: const Color(0xFF0D1117),
+      backgroundColor: Colors.white,
+      labelStyle: TextStyle(
+        color: isSelected ? Colors.white : Colors.black87,
+        fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+      ),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(20),
+        side: BorderSide(color: isSelected ? Colors.transparent : Colors.grey.shade300),
+      ),
+      showCheckmark: false,
     );
   }
   

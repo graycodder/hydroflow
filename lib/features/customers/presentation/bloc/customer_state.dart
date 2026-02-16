@@ -12,6 +12,8 @@ class CustomerState extends Equatable {
   final int totalCustomers;
   final int activeCustomers;
   final int inactiveCustomers;
+  final String? selectedZone;
+  final String searchQuery;
 
   const CustomerState({
     this.status = CustomerStatus.initial,
@@ -22,6 +24,8 @@ class CustomerState extends Equatable {
     this.totalCustomers = 0,
     this.activeCustomers = 0,
     this.inactiveCustomers = 0,
+    this.selectedZone,
+    this.searchQuery = '',
   });
 
   CustomerState copyWith({
@@ -33,6 +37,9 @@ class CustomerState extends Equatable {
     int? totalCustomers,
     int? activeCustomers,
     int? inactiveCustomers,
+    String? selectedZone,
+    bool clearSelectedZone = false,
+    String? searchQuery,
   }) {
     return CustomerState(
       status: status ?? this.status,
@@ -43,6 +50,8 @@ class CustomerState extends Equatable {
       totalCustomers: totalCustomers ?? this.totalCustomers,
       activeCustomers: activeCustomers ?? this.activeCustomers,
       inactiveCustomers: inactiveCustomers ?? this.inactiveCustomers,
+      selectedZone: clearSelectedZone ? null : (selectedZone ?? this.selectedZone),
+      searchQuery: searchQuery ?? this.searchQuery,
     );
   }
 
@@ -56,5 +65,7 @@ class CustomerState extends Equatable {
     totalCustomers,
     activeCustomers,
     inactiveCustomers,
+    selectedZone,
+    searchQuery,
   ];
 }

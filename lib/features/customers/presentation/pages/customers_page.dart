@@ -49,6 +49,8 @@ class _CustomersPageState extends State<CustomersPage> {
                     }
                     
                     return Column(
+                       mainAxisAlignment: MainAxisAlignment.start,
+                            crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         // Stats Header
                         Container(
@@ -64,6 +66,34 @@ class _CustomersPageState extends State<CustomersPage> {
                           ),
                         ),
                         
+                        // Zone Filters
+                        SingleChildScrollView(
+                          scrollDirection: Axis.horizontal,
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.start,
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              _buildZoneChip(context, 'All', state.selectedZone == null, null),
+                              ...(state.customers
+                                  .map((c) => c.zone)
+                                  .where((z) => z.isNotEmpty)
+                                  .toSet()
+                                  .toList()
+                                ..sort())
+                                  .map((zone) => Padding(
+                                        padding: const EdgeInsets.only(left: 8.0),
+                                        child: _buildZoneChip(
+                                          context,
+                                          zone,
+                                          state.selectedZone == zone,
+                                          zone,
+                                        ),
+                                      )),
+                            ],
+                          ),
+                        ),
+
                         // Search Bar
                         Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 16.0),
@@ -72,7 +102,7 @@ class _CustomersPageState extends State<CustomersPage> {
                               context.read<CustomerBloc>().add(SearchCustomers(value));
                             },
                             decoration: InputDecoration(
-                              hintText: 'Search with Name or Zone...',
+                              hintText: 'Search with Name or Phone...',
                               prefixIcon: const Icon(Icons.search, color: Colors.grey),
                               filled: true,
                               fillColor: Colors.grey[200], // Simple faint grey
@@ -158,6 +188,27 @@ class _CustomersPageState extends State<CustomersPage> {
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildZoneChip(BuildContext context, String label, bool isSelected, String? zone) {
+    return ChoiceChip(
+      label: Text(label),
+      selected: isSelected,
+      onSelected: (selected) {
+        context.read<CustomerBloc>().add(FilterByZone(zone));
+      },
+      selectedColor: const Color(0xFF0D1117),
+      backgroundColor: Colors.white,
+      labelStyle: TextStyle(
+        color: isSelected ? Colors.white : Colors.black87,
+        fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+      ),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(20),
+        side: BorderSide(color: isSelected ? Colors.transparent : Colors.grey.shade300),
+      ),
+      showCheckmark: false,
     );
   }
   

@@ -29,6 +29,7 @@ class CustomerBloc extends Bloc<CustomerEvent, CustomerState> {
     on<UpdateCustomerStatus>(_onUpdateCustomerStatus);
     on<UpdateCustomer>(_onUpdateCustomer);
     on<SettleCustomer>(_onSettleCustomer);
+    on<FilterByZone>(_onFilterByZone);
   }
 
   Future<void> _onLoadCustomers(
@@ -46,7 +47,7 @@ class CustomerBloc extends Bloc<CustomerEvent, CustomerState> {
         return state.copyWith(
           status: CustomerStatus.success,
           customers: customers,
-          filteredCustomers: customers, 
+          filteredCustomers: _applyFilters(customers, state.searchQuery, state.selectedZone), 
           totalCustomers: customers.length,
           activeCustomers: activeCount,
           inactiveCustomers: inactiveCount,
@@ -98,17 +99,42 @@ class CustomerBloc extends Bloc<CustomerEvent, CustomerState> {
     SearchCustomers event,
     Emitter<CustomerState> emit,
   ) {
-    if (event.query.isEmpty) {
-      emit(state.copyWith(filteredCustomers: state.customers, successMessage: null));
-    } else {
-      final queryLower = event.query.toLowerCase();
-      final filtered = state.customers.where((customer) {
-        return customer.name.toLowerCase().contains(queryLower) ||
-               customer.phone.contains(queryLower) ||
-               customer.zone.toLowerCase().contains(queryLower);
-      }).toList();
-      emit(state.copyWith(filteredCustomers: filtered, successMessage: null));
-    }
+    final filtered = _applyFilters(state.customers, event.query, state.selectedZone);
+    emit(state.copyWith(
+      filteredCustomers: filtered, 
+      searchQuery: event.query,
+      successMessage: null,
+    ));
+  }
+
+  void _onFilterByZone(
+    FilterByZone event,
+    Emitter<CustomerState> emit,
+  ) {
+    // If selecting the same zone, clear it
+    final newZone = state.selectedZone == event.zone ? null : event.zone;
+    final filtered = _applyFilters(state.customers, state.searchQuery, newZone);
+    emit(state.copyWith(
+      selectedZone: newZone,
+      clearSelectedZone: newZone == null,
+      filteredCustomers: filtered,
+      successMessage: null,
+    ));
+  }
+
+  List<Customer> _applyFilters(List<Customer> customers, String query, String? zone) {
+    final filtered = customers.where((customer) {
+      final matchesSearch = query.isEmpty ||
+          customer.name.toLowerCase().contains(query.toLowerCase()) ||
+          customer.phone.contains(query.toLowerCase());
+      
+      final matchesZone = zone == null || customer.zone == zone;
+      
+      return matchesSearch && matchesZone;
+    }).toList();
+
+    // Sort alphabetically by name
+    return filtered..sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
   }
 
   Future<void> _onUpdateCustomerStatus(

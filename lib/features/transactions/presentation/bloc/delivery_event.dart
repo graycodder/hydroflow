@@ -35,3 +35,12 @@ class SubmitTransaction extends DeliveryEvent {
   @override
   List<Object?> get props => [transaction];
 }
+
+class FilterDeliveryByZone extends DeliveryEvent {
+  final String? zone;
+
+  const FilterDeliveryByZone(this.zone);
+
+  @override
+  List<Object?> get props => [zone];
+}

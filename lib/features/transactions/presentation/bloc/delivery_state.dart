@@ -16,6 +16,8 @@ class DeliveryState extends Equatable {
   final int totalReturned;
   final String? errorMessage;
   final int currentStock;
+  final String? selectedZone;
+  final List<Customer> filteredCustomers;
 
   const DeliveryState({
     this.status = DeliveryStatus.initial,
@@ -29,6 +31,8 @@ class DeliveryState extends Equatable {
     this.totalReturned = 0,
     this.errorMessage,
     this.currentStock = 0,
+    this.selectedZone,
+    this.filteredCustomers = const [],
   });
 
   DeliveryState copyWith({
@@ -44,6 +48,9 @@ class DeliveryState extends Equatable {
     int? totalReturned,
     String? errorMessage,
     int? currentStock,
+    String? selectedZone,
+    bool clearSelectedZone = false,
+    List<Customer>? filteredCustomers,
   }) {
     return DeliveryState(
       status: status ?? this.status,
@@ -57,6 +64,8 @@ class DeliveryState extends Equatable {
       totalReturned: totalReturned ?? this.totalReturned,
       errorMessage: errorMessage ?? this.errorMessage,
       currentStock: currentStock ?? this.currentStock,
+      selectedZone: clearSelectedZone ? null : (selectedZone ?? this.selectedZone),
+      filteredCustomers: filteredCustomers ?? this.filteredCustomers,
     );
   }
 
@@ -73,5 +82,7 @@ class DeliveryState extends Equatable {
         totalReturned,
         errorMessage,
         currentStock,
+        selectedZone,
+        filteredCustomers,
       ];
 }
