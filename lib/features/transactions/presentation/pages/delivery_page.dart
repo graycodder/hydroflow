@@ -34,6 +34,8 @@ class DeliveryView extends StatefulWidget {
 
 class _DeliveryViewState extends State<DeliveryView> {
   final _formKey = GlobalKey<FormState>();
+  final ScrollController _scrollController = ScrollController();
+  final Map<String, GlobalKey> _chipKeys = {};
   
   // Controllers
   final TextEditingController _fullCansController = TextEditingController(text: '0');
@@ -62,7 +64,24 @@ class _DeliveryViewState extends State<DeliveryView> {
     _pricePerBottleController.dispose();
     _priceController.dispose();
     _amountReceivedController.dispose();
+    _scrollController.dispose();
     super.dispose();
+  }
+
+  void _scrollToSelected(String? zone) {
+    if (zone == null) return;
+    
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final key = _chipKeys[zone];
+      if (key?.currentContext != null) {
+        Scrollable.ensureVisible(
+          key!.currentContext!,
+          duration: const Duration(milliseconds: 500),
+          curve: Curves.easeInOut,
+          alignment: 0.0, // Scroll to start
+        );
+      }
+    });
   }
 
   void _calculateTotal() {
@@ -81,8 +100,15 @@ class _DeliveryViewState extends State<DeliveryView> {
   @override
   Widget build(BuildContext context) {
     return BlocConsumer<DeliveryBloc, DeliveryState>(
-      listenWhen: (previous, current) => previous.status != current.status,
+      listenWhen: (previous, current) => 
+          previous.status != current.status || 
+          previous.selectedZone != current.selectedZone,
       listener: (context, state) {
+        // Trigger scroll if zone is selected
+        if (state.selectedZone != null) {
+          _scrollToSelected(state.selectedZone);
+        }
+
         // 1. Handle submission loader dismissal (if active)
         if (state.status != DeliveryStatus.submitting && 
             ModalRoute.of(context)?.isCurrent == false) {
@@ -140,12 +166,9 @@ class _DeliveryViewState extends State<DeliveryView> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    // Stats Header
-                  //  _buildStatsHeader(state),
-                   // const SizedBox(height: 24),
-                    
                     // Zone Filters
                     SingleChildScrollView(
+                      controller: _scrollController,
                       scrollDirection: Axis.horizontal,
                       padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 8),
                       child: Row(
@@ -164,6 +187,7 @@ class _DeliveryViewState extends State<DeliveryView> {
                                       zone,
                                       state.selectedZone == zone,
                                       zone,
+                                      key: _chipKeys.putIfAbsent(zone, () => GlobalKey()),
                                     ),
                                   )),
                         ],
@@ -711,8 +735,9 @@ class _DeliveryViewState extends State<DeliveryView> {
     );
   }
 
-  Widget _buildZoneChip(BuildContext context, String label, bool isSelected, String? zone) {
+  Widget _buildZoneChip(BuildContext context, String label, bool isSelected, String? zone, {Key? key}) {
     return ChoiceChip(
+      key: key,
       label: Text(label),
       selected: isSelected,
       onSelected: (selected) {

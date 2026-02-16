@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:rxdart/rxdart.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:hydroflow/features/transactions/presentation/bloc/delivery_event.dart';
 import 'package:hydroflow/features/transactions/presentation/bloc/delivery_state.dart';
 import 'package:hydroflow/features/transactions/domain/usecases/add_transaction_usecase.dart';
@@ -17,16 +18,21 @@ class DeliveryBloc extends Bloc<DeliveryEvent, DeliveryState> {
   final GetTodayTransactionsUseCase _getTodayTransactionsUseCase;
   final CustomerRepository _customerRepository;
   final AuthRepository _authRepository;
+  final SharedPreferences _prefs;
+
+  static const String _zoneKey = 'PREF_SELECTED_ZONE_DELIVERY';
   
   DeliveryBloc({
     required AddTransactionUseCase addTransactionUseCase,
     required GetTodayTransactionsUseCase getTodayTransactionsUseCase,
     required CustomerRepository customerRepository,
     required AuthRepository authRepository,
+    required SharedPreferences prefs,
   })  : _addTransactionUseCase = addTransactionUseCase,
         _getTodayTransactionsUseCase = getTodayTransactionsUseCase,
         _customerRepository = customerRepository,
         _authRepository = authRepository,
+        _prefs = prefs,
         super(const DeliveryState()) {
     on<LoadDeliveryPage>(_onLoadDeliveryPage);
     on<SelectCustomer>(_onSelectCustomer);
@@ -38,9 +44,12 @@ class DeliveryBloc extends Bloc<DeliveryEvent, DeliveryState> {
     LoadDeliveryPage event,
     Emitter<DeliveryState> emit,
   ) async {
+    final savedZone = _prefs.getString(_zoneKey);
     emit(state.copyWith(
       status: DeliveryStatus.loading,
       clearSelectedCustomer: true,
+      selectedZone: savedZone,
+      clearSelectedZone: savedZone == null,
     ));
     
     final customerStream = _customerRepository.getCustomers(event.salesmanId);
@@ -94,6 +103,14 @@ class DeliveryBloc extends Bloc<DeliveryEvent, DeliveryState> {
   ) {
     // If selecting the same zone, clear it
     final newZone = state.selectedZone == event.zone ? null : event.zone;
+    
+    // Persist selection
+    if (newZone == null) {
+      _prefs.remove(_zoneKey);
+    } else {
+      _prefs.setString(_zoneKey, newZone);
+    }
+
     final filtered = _applyZoneFilter(state.customers, newZone);
     emit(state.copyWith(
       selectedZone: newZone,

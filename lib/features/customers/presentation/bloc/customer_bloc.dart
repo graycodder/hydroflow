@@ -7,6 +7,7 @@ import 'package:hydroflow/features/customers/domain/usecases/update_customer_use
 import 'package:hydroflow/features/customers/domain/usecases/settle_customer_usecase.dart';
 import 'package:hydroflow/features/customers/presentation/bloc/customer_event.dart';
 import 'package:hydroflow/features/customers/presentation/bloc/customer_state.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class CustomerBloc extends Bloc<CustomerEvent, CustomerState> {
   final GetCustomersUseCase getCustomers;
@@ -14,6 +15,9 @@ class CustomerBloc extends Bloc<CustomerEvent, CustomerState> {
   final UpdateCustomerStatusUseCase updateCustomerStatus;
   final UpdateCustomerUseCase updateCustomer;
   final SettleCustomerUseCase settleCustomer;
+  final SharedPreferences _prefs;
+
+  static const String _zoneKey = 'PREF_SELECTED_ZONE_CUSTOMERS';
 
   CustomerBloc({
     required this.getCustomers,
@@ -21,7 +25,9 @@ class CustomerBloc extends Bloc<CustomerEvent, CustomerState> {
     required this.updateCustomerStatus,
     required this.updateCustomer,
     required this.settleCustomer,
-  }) : super(const CustomerState()) {
+    required SharedPreferences prefs,
+  }) : _prefs = prefs,
+       super(const CustomerState()) {
     on<LoadCustomers>(_onLoadCustomers);
 
     on<AddCustomer>(_onAddCustomer);
@@ -36,7 +42,12 @@ class CustomerBloc extends Bloc<CustomerEvent, CustomerState> {
     LoadCustomers event,
     Emitter<CustomerState> emit,
   ) async {
-    emit(state.copyWith(status: CustomerStatus.loading));
+    final savedZone = _prefs.getString(_zoneKey);
+    emit(state.copyWith(
+      status: CustomerStatus.loading,
+      selectedZone: savedZone,
+      clearSelectedZone: savedZone == null,
+    ));
     
     await emit.forEach<List<Customer>>(
       getCustomers(event.salesmanId),
@@ -113,6 +124,14 @@ class CustomerBloc extends Bloc<CustomerEvent, CustomerState> {
   ) {
     // If selecting the same zone, clear it
     final newZone = state.selectedZone == event.zone ? null : event.zone;
+    
+    // Persist selection
+    if (newZone == null) {
+      _prefs.remove(_zoneKey);
+    } else {
+      _prefs.setString(_zoneKey, newZone);
+    }
+
     final filtered = _applyFilters(state.customers, state.searchQuery, newZone);
     emit(state.copyWith(
       selectedZone: newZone,

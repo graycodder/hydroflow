@@ -108,6 +108,7 @@ Future<void> init() async {
       updateCustomerStatus: sl(),
       updateCustomer: sl(),
       settleCustomer: sl(),
+      prefs: sl(),
     ),
   );
 
@@ -141,6 +142,7 @@ Future<void> init() async {
       getTodayTransactionsUseCase: sl(),
       customerRepository: sl(),
       authRepository: sl(),
+      prefs: sl(),
     ),
   );
   sl.registerFactory(

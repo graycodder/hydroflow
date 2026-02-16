@@ -23,6 +23,9 @@ class CustomersPage extends StatefulWidget {
 }
 
 class _CustomersPageState extends State<CustomersPage> {
+  final ScrollController _scrollController = ScrollController();
+  final Map<String, GlobalKey> _chipKeys = {};
+
   @override
   void initState() {
     super.initState();
@@ -30,6 +33,28 @@ class _CustomersPageState extends State<CustomersPage> {
     if (authState is AuthAuthenticated) {
       context.read<CustomerBloc>().add(LoadCustomers(authState.salesman.id));
     }
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _scrollToSelected(String? zone) {
+    if (zone == null) return;
+    
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final key = _chipKeys[zone];
+      if (key?.currentContext != null) {
+        Scrollable.ensureVisible(
+          key!.currentContext!,
+          duration: const Duration(milliseconds: 500),
+          curve: Curves.easeInOut,
+          alignment: 0.0, // Scroll to start
+        );
+      }
+    });
   }
 
   @override
@@ -46,6 +71,11 @@ class _CustomersPageState extends State<CustomersPage> {
                   builder: (context, state) {
                     if (state.status == CustomerStatus.loading) {
                       return const HydroFlowLoader(message: 'Loading Customers...', isOverlay: false);
+                    }
+                    
+                    // Trigger scroll on first load or zone change
+                    if (state.selectedZone != null) {
+                      _scrollToSelected(state.selectedZone);
                     }
                     
                     return Column(
@@ -68,6 +98,7 @@ class _CustomersPageState extends State<CustomersPage> {
                         
                         // Zone Filters
                         SingleChildScrollView(
+                          controller: _scrollController,
                           scrollDirection: Axis.horizontal,
                           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                           child: Row(
@@ -83,13 +114,14 @@ class _CustomersPageState extends State<CustomersPage> {
                                 ..sort())
                                   .map((zone) => Padding(
                                         padding: const EdgeInsets.only(left: 8.0),
-                                        child: _buildZoneChip(
-                                          context,
-                                          zone,
-                                          state.selectedZone == zone,
-                                          zone,
-                                        ),
-                                      )),
+                                    child: _buildZoneChip(
+                                      context,
+                                      zone,
+                                      state.selectedZone == zone,
+                                      zone,
+                                      key: _chipKeys.putIfAbsent(zone, () => GlobalKey()),
+                                    ),
+                                  )),
                             ],
                           ),
                         ),
@@ -191,8 +223,9 @@ class _CustomersPageState extends State<CustomersPage> {
     );
   }
 
-  Widget _buildZoneChip(BuildContext context, String label, bool isSelected, String? zone) {
+  Widget _buildZoneChip(BuildContext context, String label, bool isSelected, String? zone, {Key? key}) {
     return ChoiceChip(
+      key: key,
       label: Text(label),
       selected: isSelected,
       onSelected: (selected) {
