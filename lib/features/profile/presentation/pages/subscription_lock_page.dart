@@ -278,7 +278,7 @@ class SubscriptionLockPage extends StatelessWidget {
                             SizedBox(
                               width: double.infinity,
                               child: ElevatedButton.icon(
-                                onPressed: () => _makePhoneCall('9995226139'), 
+                                onPressed: () => _makePhoneCall('8075050701'), 
                                 icon: const Icon(Icons.phone),
                                 label: Text(isDeactivated ? 'Request Activation' : 'Call Admin'),
                                 style: ElevatedButton.styleFrom(
