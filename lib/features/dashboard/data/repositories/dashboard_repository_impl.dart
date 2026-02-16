@@ -20,20 +20,21 @@ class DashboardRepositoryImpl implements DashboardRepository {
     salesmanRef.keepSynced(true);
     logRef.keepSynced(true);
 
-    final salesmanStream = salesmanRef.onValue;
-    final logStream = logRef.onValue;
+    final salesmanStream = salesmanRef.onValue.map<DataSnapshot?>((e) => e.snapshot).startWith(null);
+    final logStream = logRef.onValue.map<DataSnapshot?>((e) => e.snapshot).startWith(null);
 
-    return Rx.combineLatest2<DatabaseEvent, DatabaseEvent, DashboardSummary>(
+
+    return Rx.combineLatest2<DataSnapshot?, DataSnapshot?, DashboardSummary>(
       salesmanStream,
       logStream,
-      (salesmanEvent, logEvent) {
+      (salesmanSnapshot, logSnapshot) {
         // 1. Parse Salesman Data (Stock and Customer Counts)
         int currentStock = 0;
         int activeCount = 0;
         int customerCount = 0;
         
-        if (salesmanEvent.snapshot.exists) {
-          final data = Map<String, dynamic>.from(salesmanEvent.snapshot.value as Map);
+        if (salesmanSnapshot != null && salesmanSnapshot.exists) {
+          final data = Map<String, dynamic>.from(salesmanSnapshot.value as Map);
           currentStock = (data['currentStock'] as num?)?.toInt() ?? 0;
           activeCount = (data['activeCustomers'] as num?)?.toInt() ?? 0;
           customerCount = (data['customerCount'] as num?)?.toInt() ?? 0;
@@ -44,12 +45,13 @@ class DashboardRepositoryImpl implements DashboardRepository {
         double todayCollection = 0.0;
         int todayDeliveries = 0;
 
-        if (logEvent.snapshot.exists) {
-          final data = Map<String, dynamic>.from(logEvent.snapshot.value as Map);
+        if (logSnapshot != null && logSnapshot.exists) {
+          final data = Map<String, dynamic>.from(logSnapshot.value as Map);
           todaySales = (data['totalSalesValue'] as num?)?.toDouble() ?? 0.0;
           todayCollection = (data['todayCollection'] as num?)?.toDouble() ?? 0.0;
           todayDeliveries = (data['totalDelivered'] as num?)?.toInt() ?? 0;
         }
+
 
         return DashboardSummaryModel.fromValues(
           currentStock: currentStock,

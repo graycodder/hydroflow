@@ -158,7 +158,8 @@ class _StockPageState extends State<StockPage> {
                             crossAxisAlignment: CrossAxisAlignment.stretch,
                             children: [
                               // Opening Stock Section
-                              if (salesman.currentStock == 0 && !state.hasAnyLogs)
+                              if (!state.hasAnyLogs)
+
                                 Container(
                                   padding: const EdgeInsets.all(20),
                                   decoration: BoxDecoration(
@@ -263,7 +264,8 @@ class _StockPageState extends State<StockPage> {
                                   ),
                                 ),
 
-                              if (salesman.currentStock > 0 && state.hasAnyLogs) ...[
+                              if (state.hasAnyLogs) ...[
+
                                 // Refill Stock Section
                                 AnimatedCrossFade(
                                   firstChild: SizedBox(
@@ -577,7 +579,7 @@ class _StockPageState extends State<StockPage> {
               );
             }
             return const Scaffold(
-              body: Center(child: CircularProgressIndicator()),
+              body: Center(child: HydroFlowLoader(message: '', isOverlay: false)),
             );
           },
         ),

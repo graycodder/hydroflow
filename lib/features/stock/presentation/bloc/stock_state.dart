@@ -3,13 +3,14 @@ import 'package:hydroflow/features/stock/domain/entities/stock_log.dart';
 
 abstract class StockState extends Equatable {
   final StockLog? todayLog;
-  final bool hasAnyLogs; // New field
+  final bool hasAnyLogs; 
   
-  const StockState({this.todayLog, this.hasAnyLogs = true}); // Default to true
+  const StockState({this.todayLog, this.hasAnyLogs = false}); 
 
   @override
   List<Object?> get props => [todayLog, hasAnyLogs];
 }
+
 
 class StockInitial extends StockState {
   const StockInitial({super.todayLog, super.hasAnyLogs});
@@ -37,6 +38,7 @@ class StockFailure extends StockState {
 
 // Added internal data updated state
 class StockDataUpdated extends StockState {
-  const StockDataUpdated({StockLog? todayLog, bool hasAnyLogs = true}) 
+  const StockDataUpdated({StockLog? todayLog, bool hasAnyLogs = false}) 
       : super(todayLog: todayLog, hasAnyLogs: hasAnyLogs);
 }
+
