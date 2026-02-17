@@ -28,6 +28,9 @@ class SalesmanModel extends Salesman {
 
   factory SalesmanModel.fromSnapshot(DataSnapshot snapshot) {
     // In RTDB, snapshot.value gives the data map directly
+    if (snapshot.value == null) {
+      throw Exception('Salesman data is null for key: ${snapshot.key}');
+    }
     final data = Map<String, dynamic>.from(snapshot.value as Map);
 
     return SalesmanModel(
@@ -38,11 +41,11 @@ class SalesmanModel extends Salesman {
       password: data['password'] as String? ?? '',
       currentStock: (data['currentStock'] as num?)?.toInt() ?? 0,
       isActive: data['isActive'] as bool? ?? false,
-      subscriptionExpiry: data['subEndDate'] != null 
+      subscriptionExpiry: data['subEndDate'] != null
           ? DateTime.tryParse(data['subEndDate'].toString())
-          : (data['subscriptionExpiry'] != null 
-              ? DateTime.tryParse(data['subscriptionExpiry'].toString())
-              : null),
+          : (data['subscriptionExpiry'] != null
+                ? DateTime.tryParse(data['subscriptionExpiry'].toString())
+                : null),
       totalDepositsHeld: (data['totalDepositsHeld'] as num?)?.toDouble() ?? 0.0,
       planId: data['planId'] as String?,
       customerCount: (data['customerCount'] as num?)?.toInt() ?? 0,
@@ -52,16 +55,16 @@ class SalesmanModel extends Salesman {
       phoneNumber: data['phoneNumber'] as String? ?? '',
       zone: data['zone'] as String? ?? '',
       subId: data['subId'] as String?,
-      subStartDate: data['subStartDate'] != null 
+      subStartDate: data['subStartDate'] != null
           ? DateTime.tryParse(data['subStartDate'].toString())
           : null,
-      subEndDate: data['subEndDate'] != null 
+      subEndDate: data['subEndDate'] != null
           ? DateTime.tryParse(data['subEndDate'].toString())
           : null,
-      joinDate: data['joinDate'] != null 
+      joinDate: data['joinDate'] != null
           ? DateTime.tryParse(data['joinDate'].toString())
           : null,
-      lastNotification: data['lastNotification'] != null 
+      lastNotification: data['lastNotification'] != null
           ? DateTime.tryParse(data['lastNotification'].toString())
           : null,
     );

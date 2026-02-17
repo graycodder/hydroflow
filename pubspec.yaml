@@ -86,6 +86,14 @@ flutter_launcher_icons:
     background_color: "#ffffff"
     theme_color: "#ffffff"
 
+flutter_native_splash:
+  color: "#ffffff"
+  image: "assets/images/logo.png"
+  android: true
+  ios: true
+  web: true
+  fullscreen: true
+
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
 

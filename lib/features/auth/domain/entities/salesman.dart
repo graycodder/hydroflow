@@ -47,7 +47,8 @@ class Salesman extends Equatable {
     this.lastNotification,
   });
 
-  String get displayName => (agencyName != null && agencyName!.isNotEmpty) ? agencyName! : name;
+  String get displayName =>
+      (agencyName != null && agencyName!.isNotEmpty) ? agencyName! : name;
 
   @override
   List<Object?> get props => [

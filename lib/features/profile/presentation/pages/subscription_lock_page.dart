@@ -27,7 +27,7 @@ class SubscriptionLockPage extends StatelessWidget {
     final Uri launchUri = Uri(
       scheme: 'mailto',
       path: 'graycodder@gmail.com',
-      query: 'subject=Subscription Renewal - ${salesman.name}',
+      query: 'subject=Subscription Renewal - ${salesman.displayName}',
     );
     if (await canLaunchUrl(launchUri)) {
       await launchUrl(launchUri, mode: LaunchMode.externalApplication);

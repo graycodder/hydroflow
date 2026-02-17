@@ -313,7 +313,7 @@ class TransactionReceiptDialog extends StatelessWidget {
                     const SizedBox(height: 16),
                     const Divider(height: 1),
                     const SizedBox(height: 16),
-                    
+
                     Text(
                       'BALANCE SUMMARY',
                       style: TextStyle(
@@ -323,7 +323,7 @@ class TransactionReceiptDialog extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 8),
-                    
+
                     _buildBalanceRow(
                       'Previous Balance:',
                       '₹${(customer.pendingBalance - (transaction.amount - transaction.amountReceived)).toStringAsFixed(0)}',
@@ -368,36 +368,36 @@ class TransactionReceiptDialog extends StatelessWidget {
                     const SizedBox(height: 24),
 
                     if (transaction.amountReceived > 0)
-                    Center(
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 8,
-                        ),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFE8F5E9),
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        child: const Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              Icons.check,
-                              size: 16,
-                              color: Color(0xFF2E7D32),
-                            ),
-                            SizedBox(width: 8),
-                            Text(
-                              'PAYMENT RECEIVED',
-                              style: TextStyle(
+                      Center(
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 8,
+                          ),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFE8F5E9),
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: const Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.check,
+                                size: 16,
                                 color: Color(0xFF2E7D32),
-                                fontWeight: FontWeight.bold,
                               ),
-                            ),
-                          ],
+                              SizedBox(width: 8),
+                              Text(
+                                'PAYMENT RECEIVED',
+                                style: TextStyle(
+                                  color: Color(0xFF2E7D32),
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                       ),
-                    ),
                     const SizedBox(height: 16),
                     const Center(
                       child: Text(
@@ -441,12 +441,14 @@ class TransactionReceiptDialog extends StatelessWidget {
                       width: double.infinity,
                       child: ElevatedButton.icon(
                         onPressed: () {
-                           // Balance Logic (Same as PDF)
-                           final bill = (transaction.cansDelivered > 0) ? transaction.amount : 0.0;
-                           final paid = transaction.amountReceived;
-                           final change = bill - paid;
-                           final newBal = customer.pendingBalance; 
-                           final oldBal = newBal - change;
+                          // Balance Logic (Same as PDF)
+                          final bill = (transaction.cansDelivered > 0)
+                              ? transaction.amount
+                              : 0.0;
+                          final paid = transaction.amountReceived;
+                          final change = bill - paid;
+                          final newBal = customer.pendingBalance;
+                          final oldBal = newBal - change;
 
                           WhatsappHelper.sendReceipt(
                             phone: customer.phone,
@@ -457,7 +459,9 @@ class TransactionReceiptDialog extends StatelessWidget {
                             bottleBalance: customer.bottleBalance,
                             amount: transaction.amount,
                             amountReceived: transaction.amountReceived,
-                            isPaid: transaction.amountReceived >= transaction.amount,
+                            isPaid:
+                                transaction.amountReceived >=
+                                transaction.amount,
                             oldBalance: oldBal,
                             newBalance: newBal,
                             paymentMode: transaction.paymentMode,
@@ -465,7 +469,7 @@ class TransactionReceiptDialog extends StatelessWidget {
                             salesmanName: salesmanName,
                           );
                         },
-                        icon: const Icon(Icons.send), 
+                        icon: const Icon(Icons.send),
                         label: const Text('Send Text Receipt via WhatsApp'),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: const Color(0xFF00C853),
@@ -482,32 +486,36 @@ class TransactionReceiptDialog extends StatelessWidget {
                       width: double.infinity,
                       child: OutlinedButton.icon(
                         onPressed: () async {
-                           // Logic for PDF Balance:
-                           // We assume customer.pendingBalance is UPDATED (New Balance) because BLoC stream updates state.
-                           // So New Balance = customer.pendingBalance
-                           // Old Balance = New Balance - Change
-                           
-                           final bill = (transaction.cansDelivered > 0) ? transaction.amount : 0.0;
-                           final paid = transaction.amountReceived;
-                           final change = bill - paid;
-                           
-                           final newBal = customer.pendingBalance; // Current state is likely New
-                           final oldBal = newBal - change;
-                           
-                           await ReceiptPdfGenerator.generateAndShare(
-                             customerName: customer.name,
-                             phone: customer.phone,
-                             address: customer.address,
-                             delivered: transaction.cansDelivered,
-                             emptyCollected: transaction.emptyCollected,
-                             paymentAmount: transaction.amount, // Total Bill
-                             amountReceived: transaction.amountReceived, // Actual Paid
-                             paymentMode: transaction.paymentMode,
-                             oldBalance: oldBal,
-                             newBalance: newBal,
-                             date: transaction.timestamp,
-                             salesmanName: salesmanName,
-                           );
+                          // Logic for PDF Balance:
+                          // We assume customer.pendingBalance is UPDATED (New Balance) because BLoC stream updates state.
+                          // So New Balance = customer.pendingBalance
+                          // Old Balance = New Balance - Change
+
+                          final bill = (transaction.cansDelivered > 0)
+                              ? transaction.amount
+                              : 0.0;
+                          final paid = transaction.amountReceived;
+                          final change = bill - paid;
+
+                          final newBal = customer
+                              .pendingBalance; // Current state is likely New
+                          final oldBal = newBal - change;
+
+                          await ReceiptPdfGenerator.generateAndShare(
+                            customerName: customer.name,
+                            phone: customer.phone,
+                            address: customer.address,
+                            delivered: transaction.cansDelivered,
+                            emptyCollected: transaction.emptyCollected,
+                            paymentAmount: transaction.amount, // Total Bill
+                            amountReceived:
+                                transaction.amountReceived, // Actual Paid
+                            paymentMode: transaction.paymentMode,
+                            oldBalance: oldBal,
+                            newBalance: newBal,
+                            date: transaction.timestamp,
+                            salesmanName: salesmanName,
+                          );
                         },
                         icon: const Icon(Icons.picture_as_pdf),
                         label: const Text('Share PDF Receipt'),
@@ -571,7 +579,11 @@ class TransactionReceiptDialog extends StatelessWidget {
         Text(label, style: TextStyle(color: Colors.grey[600], fontSize: 13)),
         Text(
           value,
-          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: color),
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            fontSize: 13,
+            color: color,
+          ),
         ),
       ],
     );
