@@ -14,6 +14,8 @@ import 'package:hydroflow/core/widgets/hydro_flow_app_bar.dart';
 import 'package:hydroflow/features/customers/presentation/widgets/pending_balance_adjustment_dialog.dart';
 import 'package:hydroflow/features/customers/presentation/widgets/bottle_balance_adjustment_dialog.dart';
 import 'package:hydroflow/core/widgets/hydro_flow_loader.dart';
+import 'package:dropdown_search/dropdown_search.dart';
+
 
 class CustomersPage extends StatefulWidget {
   const CustomersPage({super.key});
@@ -23,9 +25,6 @@ class CustomersPage extends StatefulWidget {
 }
 
 class _CustomersPageState extends State<CustomersPage> {
-  final ScrollController _scrollController = ScrollController();
-  final Map<String, GlobalKey> _chipKeys = {};
-
   @override
   void initState() {
     super.initState();
@@ -36,29 +35,8 @@ class _CustomersPageState extends State<CustomersPage> {
   }
 
   @override
-  void dispose() {
-    _scrollController.dispose();
-    super.dispose();
-  }
-
-  void _scrollToSelected(String? zone) {
-    if (zone == null) return;
-    
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      final key = _chipKeys[zone];
-      if (key?.currentContext != null) {
-        Scrollable.ensureVisible(
-          key!.currentContext!,
-          duration: const Duration(milliseconds: 500),
-          curve: Curves.easeInOut,
-          alignment: 0.0, // Scroll to start
-        );
-      }
-    });
-  }
-
-  @override
   Widget build(BuildContext context) {
+
     return BlocBuilder<AuthBloc, AuthState>(
       builder: (context, authState) {
         if (authState is AuthAuthenticated) {
@@ -73,14 +51,9 @@ class _CustomersPageState extends State<CustomersPage> {
                       return const HydroFlowLoader(message: 'Loading Customers...', isOverlay: false);
                     }
                     
-                    // Trigger scroll on first load or zone change
-                    if (state.selectedZone != null) {
-                      _scrollToSelected(state.selectedZone);
-                    }
-                    
                     return Column(
-                       mainAxisAlignment: MainAxisAlignment.start,
-                            crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisAlignment: MainAxisAlignment.start,
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         // Stats Header
                         Container(
@@ -91,40 +64,68 @@ class _CustomersPageState extends State<CustomersPage> {
                             children: [
                               _buildStatItem('${state.totalCustomers}', 'Total', Colors.blue),
                               _buildStatItem('${state.activeCustomers}', 'Active', Colors.green),
-                              _buildStatItem('${state.inactiveCustomers}', 'Inactive', Colors.orange), // Assuming inactive is orange based on screenshot (or red)
+                              _buildStatItem('${state.inactiveCustomers}', 'Inactive', Colors.orange),
                             ],
                           ),
                         ),
                         
-                        // Zone Filters
-                        SingleChildScrollView(
-                          controller: _scrollController,
-                          scrollDirection: Axis.horizontal,
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.start,
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              _buildZoneChip(context, 'All', state.selectedZone == null, null),
-                              ...(state.customers
+                        // Zone Filters Dropdown
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                          child: DropdownSearch<String>(
+                            items: (filter, loadProps) {
+                              final zones = state.customers
                                   .map((c) => c.zone)
                                   .where((z) => z.isNotEmpty)
                                   .toSet()
                                   .toList()
-                                ..sort())
-                                  .map((zone) => Padding(
-                                        padding: const EdgeInsets.only(left: 8.0),
-                                    child: _buildZoneChip(
-                                      context,
-                                      zone,
-                                      state.selectedZone == zone,
-                                      zone,
-                                      key: _chipKeys.putIfAbsent(zone, () => GlobalKey()),
-                                    ),
-                                  )),
-                            ],
+                                ..sort();
+                              return ['All', ...zones];
+                            },
+                            decoratorProps: DropDownDecoratorProps(
+                              decoration: InputDecoration(
+                                labelText: 'Filter by Zone',
+                                hintText: 'Select or Search Zone',
+                                prefixIcon: const Icon(Icons.grid_view_rounded, color: Colors.blueGrey),
+                                filled: true,
+                                fillColor: Colors.white,
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                  borderSide: BorderSide(color: Colors.grey.shade300),
+                                ),
+                                enabledBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                  borderSide: BorderSide(color: Colors.grey.shade300),
+                                ),
+                                contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                              ),
+                            ),
+                            popupProps: PopupProps.menu(
+                              showSearchBox: true,
+                              searchDelay: Duration.zero,
+                              searchFieldProps: const TextFieldProps(
+                                decoration: InputDecoration(
+                                  hintText: "Search Zone...",
+                                  prefixIcon: Icon(Icons.search),
+                                  border: OutlineInputBorder(),
+                                  contentPadding: EdgeInsets.symmetric(horizontal: 12),
+                                ),
+                              ),
+                              itemBuilder: (context, item, isSelected, isHovered) {
+                                return ListTile(
+                                  title: Text(item, style: const TextStyle(fontSize: 14)),
+                                  selected: isSelected,
+                                  dense: true,
+                                );
+                              },
+                            ),
+                            selectedItem: state.selectedZone ?? 'All',
+                            onChanged: (String? value) {
+                              context.read<CustomerBloc>().add(FilterByZone(value == 'All' ? null : value));
+                            },
                           ),
                         ),
+
 
                         // Search Bar
                         Padding(
@@ -223,27 +224,6 @@ class _CustomersPageState extends State<CustomersPage> {
     );
   }
 
-  Widget _buildZoneChip(BuildContext context, String label, bool isSelected, String? zone, {Key? key}) {
-    return ChoiceChip(
-      key: key,
-      label: Text(label),
-      selected: isSelected,
-      onSelected: (selected) {
-        context.read<CustomerBloc>().add(FilterByZone(zone));
-      },
-      selectedColor: const Color(0xFF0D1117),
-      backgroundColor: Colors.white,
-      labelStyle: TextStyle(
-        color: isSelected ? Colors.white : Colors.black87,
-        fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-      ),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(20),
-        side: BorderSide(color: isSelected ? Colors.transparent : Colors.grey.shade300),
-      ),
-      showCheckmark: false,
-    );
-  }
   
   Widget _buildCustomerCard(dynamic customer) {
     // customer is Customer

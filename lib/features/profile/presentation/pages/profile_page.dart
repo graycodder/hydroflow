@@ -157,6 +157,23 @@ class ProfilePage extends StatelessWidget {
                              'Member since ${DateFormat('MMMM yyyy').format(profile.membershipDate)}',
                              style: const TextStyle(color: Colors.grey),
                            ),
+                           const SizedBox(height: 16),
+                           Row(
+                             mainAxisAlignment: MainAxisAlignment.center,
+                             children: [
+                               TextButton.icon(
+                                 onPressed: () => context.push('/terms'),
+                                 icon: const Icon(Icons.description_outlined, size: 18, color: Colors.blue),
+                                 label: const Text('Terms', style: TextStyle(color: Colors.blue)),
+                               ),
+                               const SizedBox(width: 16),
+                               TextButton.icon(
+                                 onPressed: () => context.push('/privacy'),
+                                 icon: const Icon(Icons.privacy_tip_outlined, size: 18, color: Colors.blue),
+                                 label: const Text('Privacy', style: TextStyle(color: Colors.blue)),
+                               ),
+                             ],
+                           ),
                            const SizedBox(height: 24),
                         ],
                       ),

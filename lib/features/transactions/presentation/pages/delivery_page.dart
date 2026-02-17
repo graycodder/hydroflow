@@ -34,8 +34,7 @@ class DeliveryView extends StatefulWidget {
 
 class _DeliveryViewState extends State<DeliveryView> {
   final _formKey = GlobalKey<FormState>();
-  final ScrollController _scrollController = ScrollController();
-  final Map<String, GlobalKey> _chipKeys = {};
+
   
   // Controllers
   final TextEditingController _fullCansController = TextEditingController(text: '0');
@@ -64,25 +63,10 @@ class _DeliveryViewState extends State<DeliveryView> {
     _pricePerBottleController.dispose();
     _priceController.dispose();
     _amountReceivedController.dispose();
-    _scrollController.dispose();
     super.dispose();
   }
 
-  void _scrollToSelected(String? zone) {
-    if (zone == null) return;
-    
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      final key = _chipKeys[zone];
-      if (key?.currentContext != null) {
-        Scrollable.ensureVisible(
-          key!.currentContext!,
-          duration: const Duration(milliseconds: 500),
-          curve: Curves.easeInOut,
-          alignment: 0.0, // Scroll to start
-        );
-      }
-    });
-  }
+
 
   void _calculateTotal() {
     // Calculate total based on count and price per bottle
@@ -104,10 +88,7 @@ class _DeliveryViewState extends State<DeliveryView> {
           previous.status != current.status || 
           previous.selectedZone != current.selectedZone,
       listener: (context, state) {
-        // Trigger scroll if zone is selected
-        if (state.selectedZone != null) {
-          _scrollToSelected(state.selectedZone);
-        }
+
 
         // 1. Handle submission loader dismissal (if active)
         if (state.status != DeliveryStatus.submitting && 
@@ -166,34 +147,64 @@ class _DeliveryViewState extends State<DeliveryView> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    // Zone Filters
-                    SingleChildScrollView(
-                      controller: _scrollController,
-                      scrollDirection: Axis.horizontal,
-                      padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 8),
-                      child: Row(
-                        children: [
-                          _buildZoneChip(context, 'All', state.selectedZone == null, null),
-                          ...(state.customers
+                    // Zone Filters Dropdown
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 8.0),
+                      child: DropdownSearch<String>(
+                        items: (filter, loadProps) {
+                          final zones = state.customers
                               .map((c) => c.zone)
                               .where((z) => z.isNotEmpty)
                               .toSet()
                               .toList()
-                            ..sort())
-                              .map((zone) => Padding(
-                                    padding: const EdgeInsets.only(left: 8.0),
-                                    child: _buildZoneChip(
-                                      context,
-                                      zone,
-                                      state.selectedZone == zone,
-                                      zone,
-                                      key: _chipKeys.putIfAbsent(zone, () => GlobalKey()),
-                                    ),
-                                  )),
-                        ],
+                            ..sort();
+                          return ['All', ...zones];
+                        },
+                        decoratorProps: DropDownDecoratorProps(
+                          decoration: InputDecoration(
+                            labelText: 'Filter by Zone',
+                            hintText: 'Select or Search Zone',
+                            prefixIcon: const Icon(Icons.grid_view_rounded, color: Colors.blueGrey),
+                            filled: true,
+                            fillColor: Colors.white,
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: BorderSide(color: Colors.grey[300]!),
+                            ),
+                            enabledBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: BorderSide(color: Colors.grey[300]!),
+                            ),
+                            contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                          ),
+                        ),
+                        popupProps: PopupProps.menu(
+                          showSearchBox: true,
+                          searchDelay: Duration.zero,
+                          searchFieldProps: const TextFieldProps(
+                            decoration: InputDecoration(
+                              hintText: "Search Zone...",
+                              prefixIcon: Icon(Icons.search),
+                              border: OutlineInputBorder(),
+                              contentPadding: EdgeInsets.symmetric(horizontal: 12),
+                            ),
+                          ),
+                          itemBuilder: (context, item, isSelected, isHovered) {
+                            return ListTile(
+                              title: Text(item, style: const TextStyle(fontSize: 14)),
+                              selected: isSelected,
+                              dense: true,
+                            );
+                          },
+                        ),
+                        selectedItem: state.selectedZone ?? 'All',
+                        onChanged: (String? value) {
+                          context.read<DeliveryBloc>().add(FilterDeliveryByZone(value == 'All' ? null : value));
+                        },
                       ),
                     ),
                     const SizedBox(height: 8),
+
 
                     // Form Card
                     _buildDeliveryForm(context, state, salesmanId),
@@ -735,27 +746,7 @@ class _DeliveryViewState extends State<DeliveryView> {
     );
   }
 
-  Widget _buildZoneChip(BuildContext context, String label, bool isSelected, String? zone, {Key? key}) {
-    return ChoiceChip(
-      key: key,
-      label: Text(label),
-      selected: isSelected,
-      onSelected: (selected) {
-        context.read<DeliveryBloc>().add(FilterDeliveryByZone(zone));
-      },
-      selectedColor: const Color(0xFF0D1117),
-      backgroundColor: Colors.white,
-      labelStyle: TextStyle(
-        color: isSelected ? Colors.white : Colors.black87,
-        fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-      ),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(20),
-        side: BorderSide(color: isSelected ? Colors.transparent : Colors.grey.shade300),
-      ),
-      showCheckmark: false,
-    );
-  }
+
   
   String _formatTime(DateTime time) {
     // Simple formatter

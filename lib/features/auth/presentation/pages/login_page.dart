@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hydroflow/features/auth/presentation/bloc/auth_bloc.dart';
@@ -17,6 +18,7 @@ class _LoginPageState extends State<LoginPage> {
   final _passwordController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
   bool _isPasswordVisible = false;
+  bool _termsAccepted = false;
 
   @override
   void dispose() {
@@ -27,6 +29,15 @@ class _LoginPageState extends State<LoginPage> {
 
   void _onLoginPressed() {
     if (_formKey.currentState!.validate()) {
+      if (!_termsAccepted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Please accept the Terms & Conditions to continue'),
+            backgroundColor: Colors.orange,
+          ),
+        );
+        return;
+      }
       context.read<AuthBloc>().add(
             AuthLoginRequested(
               username: _usernameController.text,
@@ -115,6 +126,54 @@ class _LoginPageState extends State<LoginPage> {
                         value!.isEmpty ? 'Please enter your password' : null,
                   ),
                   const SizedBox(height: 24),
+                  
+                  // Terms Acceptance Checkbox
+                  Row(
+                    children: [
+                      Checkbox(
+                        value: _termsAccepted,
+                        activeColor: const Color(0xFF2962FF),
+                        onChanged: (value) {
+                          setState(() {
+                            _termsAccepted = value ?? false;
+                          });
+                        },
+                      ),
+                      Expanded(
+                        child: RichText(
+                          text: TextSpan(
+                            style: TextStyle(color: Colors.grey[800], fontSize: 13),
+                            children: [
+                              const TextSpan(text: 'I accept the '),
+                              TextSpan(
+                                text: 'Terms & Conditions',
+                                style: const TextStyle(
+                                  color: Color(0xFF2962FF),
+                                  fontWeight: FontWeight.bold,
+                                  decoration: TextDecoration.underline,
+                                ),
+                                recognizer: TapGestureRecognizer()
+                                  ..onTap = () => context.push('/terms'),
+                              ),
+                              const TextSpan(text: ' and '),
+                              TextSpan(
+                                text: 'Privacy Policy',
+                                style: const TextStyle(
+                                  color: Color(0xFF2962FF),
+                                  fontWeight: FontWeight.bold,
+                                  decoration: TextDecoration.underline,
+                                ),
+                                recognizer: TapGestureRecognizer()
+                                  ..onTap = () => context.push('/privacy'),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  
                   BlocBuilder<AuthBloc, AuthState>(
                     builder: (context, state) {
                       return ElevatedButton(
@@ -129,6 +188,7 @@ class _LoginPageState extends State<LoginPage> {
                       );
                     },
                   ),
+                  const SizedBox(height: 16),
                 ],
               ),
             ),
