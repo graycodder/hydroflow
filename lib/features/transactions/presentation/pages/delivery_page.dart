@@ -115,13 +115,14 @@ class _DeliveryViewState extends State<DeliveryView> {
                   (c) => c.id == tx.customerId,
                   orElse: () => const Customer(id: '', salesmanId: '', name: 'Unknown', phone: '', address: '', status: '', securityDeposit: 0, pendingBalance: 0, bottleBalance: 0),
                 );
-               showDialog(
-                 context: context,
-                 builder: (_) => TransactionReceiptDialog(
-                   transaction: tx,
-                   customer: customer,
-                 ),
-               );
+                showDialog(
+                  context: context,
+                  builder: (_) => TransactionReceiptDialog(
+                    transaction: tx,
+                    customer: customer,
+                    salesmanName: (context.read<AuthBloc>().state as AuthAuthenticated).salesman.displayName,
+                  ),
+                );
             }
             _resetForm();
         } else if (state.status == DeliveryStatus.failure) {

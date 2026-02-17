@@ -5,6 +5,7 @@ class SalesmanModel extends Salesman {
   const SalesmanModel({
     required super.id,
     required super.name,
+    super.agencyName,
     required super.username,
     required super.password,
     super.currentStock = 0,
@@ -32,6 +33,7 @@ class SalesmanModel extends Salesman {
     return SalesmanModel(
       id: snapshot.key!, // The key of the node (e.g., S001)
       name: data['name'] as String? ?? '',
+      agencyName: data['agencyName'] as String?,
       username: data['username'] as String? ?? '',
       password: data['password'] as String? ?? '',
       currentStock: (data['currentStock'] as num?)?.toInt() ?? 0,
@@ -68,6 +70,7 @@ class SalesmanModel extends Salesman {
   Map<String, dynamic> toMap() {
     return {
       'name': name,
+      'agencyName': agencyName,
       'username': username,
       'password': password,
       'currentStock': currentStock,

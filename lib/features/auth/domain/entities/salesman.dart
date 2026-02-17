@@ -3,6 +3,7 @@ import 'package:equatable/equatable.dart';
 class Salesman extends Equatable {
   final String id;
   final String name;
+  final String? agencyName;
   final String username;
   final String password;
   final int currentStock;
@@ -25,6 +26,7 @@ class Salesman extends Equatable {
   const Salesman({
     required this.id,
     required this.name,
+    this.agencyName,
     required this.username,
     required this.password,
     this.currentStock = 0,
@@ -45,10 +47,13 @@ class Salesman extends Equatable {
     this.lastNotification,
   });
 
+  String get displayName => (agencyName != null && agencyName!.isNotEmpty) ? agencyName! : name;
+
   @override
   List<Object?> get props => [
     id,
     name,
+    agencyName,
     username,
     password,
     currentStock,

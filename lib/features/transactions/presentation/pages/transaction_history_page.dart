@@ -8,6 +8,8 @@ import 'package:hydroflow/features/transactions/presentation/bloc/customer_trans
 import 'package:hydroflow/core/service_locator.dart';
 import 'package:hydroflow/core/widgets/hydro_flow_loader.dart';
 import 'package:hydroflow/core/utils/whatsapp_helper.dart';
+import 'package:hydroflow/features/auth/presentation/bloc/auth_bloc.dart';
+import 'package:hydroflow/features/auth/presentation/bloc/auth_state.dart';
 
 class TransactionHistoryPage extends StatelessWidget {
   final Customer customer;
@@ -116,6 +118,9 @@ class TransactionHistoryPage extends StatelessWidget {
                                 IconButton(
                                   icon: const Icon(Icons.share, color: Color(0xFF00C853)),
                                   onPressed: () {
+                                    final authState = context.read<AuthBloc>().state;
+                                    final salesmanName = (authState is AuthAuthenticated) ? authState.salesman.displayName : 'HydroFlow';
+                                    
                                     WhatsappHelper.sendReceipt(
                                       phone: customer.phone,
                                       customerName: customer.name,
@@ -130,6 +135,7 @@ class TransactionHistoryPage extends StatelessWidget {
                                       newBalance: txNewBalance,
                                       paymentMode: tx.paymentMode,
                                       date: tx.timestamp,
+                                      salesmanName: salesmanName,
                                     );
                                   },
                                   tooltip: 'Share via WhatsApp',
