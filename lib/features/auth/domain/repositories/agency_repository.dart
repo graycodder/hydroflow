@@ -1,0 +1,12 @@
+import 'package:hydroflow/features/auth/domain/entities/agency.dart';
+import 'package:hydroflow/features/auth/domain/entities/salesman.dart';
+
+abstract class AgencyRepository {
+  Future<void> createAgency(Agency agency);
+  Future<Agency?> getAgencyDetails(String agencyId);
+  Future<List<Salesman>> getSalesmenByAgency(String agencyId);
+  Future<void> updateWarehouseStock(String agencyId, int quantity, String type);
+  Future<void> resetDeviceBinding(String salesmanId);
+  Future<void> addSalesman(Salesman salesman);
+  Future<void> updateSalesman(Salesman salesman);
+}

@@ -5,6 +5,8 @@ class Plan extends Equatable {
   final double price;
   final String billingCycle;
   final int maxCustomers; // -1 for unlimited
+  final int maxSalesmen;
+  final String type; // 'individual' or 'agency'
   final Map<String, bool> features;
 
   const Plan({
@@ -12,6 +14,8 @@ class Plan extends Equatable {
     required this.price,
     required this.billingCycle,
     required this.maxCustomers,
+    required this.maxSalesmen,
+    required this.type,
     required this.features,
   });
 
@@ -21,6 +25,8 @@ class Plan extends Equatable {
         price,
         billingCycle,
         maxCustomers,
+        maxSalesmen,
+        type,
         features,
       ];
 }

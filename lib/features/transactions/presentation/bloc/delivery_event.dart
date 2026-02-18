@@ -44,3 +44,21 @@ class FilterDeliveryByZone extends DeliveryEvent {
   @override
   List<Object?> get props => [zone];
 }
+
+class LoadAgencyDeliveries extends DeliveryEvent {
+  final String agencyId;
+
+  const LoadAgencyDeliveries(this.agencyId);
+
+  @override
+  List<Object?> get props => [agencyId];
+}
+
+class FilterDeliveryBySalesman extends DeliveryEvent {
+  final String? salesmanId;
+
+  const FilterDeliveryBySalesman(this.salesmanId);
+
+  @override
+  List<Object?> get props => [salesmanId];
+}

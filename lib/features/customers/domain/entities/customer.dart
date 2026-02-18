@@ -2,6 +2,7 @@ import 'package:equatable/equatable.dart';
 
 class Customer extends Equatable {
   final String id;
+  final String agencyId;
   final String salesmanId;
   final String name;
   final String phone;
@@ -17,6 +18,7 @@ class Customer extends Equatable {
 
   const Customer({
     required this.id,
+    required this.agencyId,
     required this.salesmanId,
     required this.name,
     required this.phone,
@@ -33,6 +35,7 @@ class Customer extends Equatable {
 
   Customer copyWith({
     String? id,
+    String? agencyId,
     String? salesmanId,
     String? name,
     String? phone,
@@ -48,6 +51,7 @@ class Customer extends Equatable {
   }) {
     return Customer(
       id: id ?? this.id,
+      agencyId: agencyId ?? this.agencyId,
       salesmanId: salesmanId ?? this.salesmanId,
       name: name ?? this.name,
       phone: phone ?? this.phone,
@@ -66,6 +70,7 @@ class Customer extends Equatable {
   @override
   List<Object?> get props => [
     id,
+    agencyId,
     salesmanId,
     name,
     phone,

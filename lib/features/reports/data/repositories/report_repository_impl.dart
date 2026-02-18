@@ -95,10 +95,13 @@ class ReportRepositoryImpl implements ReportRepository {
         // 3. Parse Salesman Data
         int currentStock = 0;
         double totalDepositsHeld = 0.0;
+        String salesmanName = "Unknown Salesman";
+
         if (salesmanEvent.snapshot.exists) {
           final data = Map<String, dynamic>.from(salesmanEvent.snapshot.value as Map);
           currentStock = (data['currentStock'] as num?)?.toInt() ?? 0;
           totalDepositsHeld = (data['totalDepositsHeld'] as num?)?.toDouble() ?? 0.0;
+          salesmanName = data['name'] as String? ?? "Unknown Salesman";
         }
 
         // 4. Calculate Aggregate Metrics from Transactions
@@ -208,6 +211,8 @@ class ReportRepositoryImpl implements ReportRepository {
           activeCustomers: 0,
           newCustomers: 0,
           inactiveCustomers: 0,
+          salesmanId: salesmanId,
+          salesmanName: salesmanName,
         );
       },
     );
@@ -282,10 +287,13 @@ class ReportRepositoryImpl implements ReportRepository {
         // 3. Parse Salesman Data
         int currentStock = 0;
         double totalDepositsHeld = 0.0;
+        String salesmanName = "Unknown Salesman";
+
         if (salesmanEvent.snapshot.exists) {
           final data = Map<String, dynamic>.from(salesmanEvent.snapshot.value as Map);
           currentStock = (data['currentStock'] as num?)?.toInt() ?? 0;
           totalDepositsHeld = (data['totalDepositsHeld'] as num?)?.toDouble() ?? 0.0;
+          salesmanName = data['name'] as String? ?? "Unknown Salesman";
         }
 
         // 4. Aggregate Metrics from Transactions
@@ -423,8 +431,255 @@ class ReportRepositoryImpl implements ReportRepository {
           activeCustomers: activeCustomerIds.length,
           inactiveCustomers: relevantCustomers.length - activeCustomerIds.length,
           newCustomers: 0, 
+          salesmanId: salesmanId,
+          salesmanName: salesmanName,
         );
       },
+    );
+  }
+  @override
+  Stream<ReportEntity> getAgencyDailyReport(String agencyId, DateTime date) {
+    // 1. Fetch all salesmen for the agency
+    final agencySalesmenStream = _database
+        .ref()
+        .child('Salesmen')
+        .orderByChild('agencyId')
+        .equalTo(agencyId)
+        .onValue
+        .map((event) {
+      if (event.snapshot.exists) {
+        final data = Map<String, dynamic>.from(event.snapshot.value as Map);
+        return data.keys.cast<String>().toList();
+      }
+      return <String>[];
+    });
+
+    return agencySalesmenStream.switchMap((salesmenIds) {
+      if (salesmenIds.isEmpty) {
+        return Stream.value(_emptyReport(date));
+      }
+
+      // 2. Create a stream of reports for EACH salesman
+      final reportStreams = salesmenIds.map((id) => getDailyReport(id, date)).toList();
+
+      // 3. Combine and Aggregate
+      return CombineLatestStream.list<ReportEntity>(reportStreams).map((reports) {
+        return _aggregateReports(reports, date);
+      });
+    });
+  }
+
+  @override
+  Stream<ReportEntity> getAgencyMonthlyReport(String agencyId, DateTime month) {
+    final agencySalesmenStream = _database
+        .ref()
+        .child('Salesmen')
+        .orderByChild('agencyId')
+        .equalTo(agencyId)
+        .onValue
+        .map((event) {
+      if (event.snapshot.exists) {
+        final data = Map<String, dynamic>.from(event.snapshot.value as Map);
+        return data.keys.cast<String>().toList();
+      }
+      return <String>[];
+    });
+
+    return agencySalesmenStream.switchMap((salesmenIds) {
+      if (salesmenIds.isEmpty) {
+        return Stream.value(_emptyReport(month));
+      }
+
+      final reportStreams = salesmenIds.map((id) => getMonthlyReport(id, month)).toList();
+
+      return CombineLatestStream.list<ReportEntity>(reportStreams).map((reports) {
+        return _aggregateReports(reports, month);
+      });
+    });
+  }
+
+  ReportEntity _aggregateReports(List<ReportEntity> reports, DateTime date) {
+    if (reports.isEmpty) return _emptyReport(date);
+
+    double totalRevenue = 0;
+    int totalDeliveries = 0;
+    int openingStock = 0;
+    int stockLoaded = 0;
+    int totalAvailable = 0;
+    int deliveredStock = 0;
+    int damagedStock = 0;
+    int closingStock = 0;
+    int stockMismatch = 0;
+    int bottlesDelivered = 0;
+    int bottlesReturned = 0;
+    int netBottlesOut = 0;
+    int totalBottlesWithCustomers = 0;
+    double salesRevenue = 0;
+    double totalCollected = 0;
+    double totalCreditPending = 0;
+    double cashSales = 0;
+    double onlineSales = 0;
+    double securityDepositsCollected = 0;
+    double securityDepositsCollectedCash = 0;
+    double securityDepositsCollectedOnline = 0;
+    double securityDepositsRefunded = 0;
+    double securityDepositsRefundedCash = 0;
+    double securityDepositsRefundedOnline = 0;
+    double netDeposits = 0;
+    double totalDepositsHeld = 0;
+    double cashInHand = 0;
+    double upiCollections = 0;
+    
+    // Weighted Averages
+    double totalAvgPriceWeighted = 0;
+    int totalDeliveredForPrice = 0;
+    
+    double totalTurnoverWeighted = 0;
+    int totalAvailableForTurnover = 0;
+    
+    int totalCustomers = 0;
+    int activeCustomers = 0;
+    int newCustomers = 0;
+    int inactiveCustomers = 0;
+    
+    int maxWorkingDays = 0;
+
+    for (var r in reports) {
+      totalRevenue += r.totalRevenue;
+      totalDeliveries += r.totalDeliveries;
+      openingStock += r.openingStock;
+      stockLoaded += r.stockLoaded;
+      totalAvailable += r.totalAvailable;
+      deliveredStock += r.deliveredStock;
+      damagedStock += r.damagedStock;
+      closingStock += r.closingStock;
+      stockMismatch += r.stockMismatch;
+      bottlesDelivered += r.bottlesDelivered;
+      bottlesReturned += r.bottlesReturned;
+      netBottlesOut += r.netBottlesOut;
+      totalBottlesWithCustomers += r.totalBottlesWithCustomers;
+      salesRevenue += r.salesRevenue;
+      totalCollected += r.totalCollected;
+      totalCreditPending += r.totalCreditPending;
+      cashSales += r.cashSales;
+      onlineSales += r.onlineSales;
+      securityDepositsCollected += r.securityDepositsCollected;
+      securityDepositsCollectedCash += r.securityDepositsCollectedCash;
+      securityDepositsCollectedOnline += r.securityDepositsCollectedOnline;
+      securityDepositsRefunded += r.securityDepositsRefunded;
+      securityDepositsRefundedCash += r.securityDepositsRefundedCash;
+      securityDepositsRefundedOnline += r.securityDepositsRefundedOnline;
+      netDeposits += r.netDeposits;
+      totalDepositsHeld += r.totalDepositsHeld;
+      cashInHand += r.cashInHand;
+      upiCollections += r.upiCollections;
+      
+      totalDeliveredForPrice += r.totalDeliveries;
+      totalAvgPriceWeighted += (r.avgPricePerCan * r.totalDeliveries);
+      
+      totalAvailableForTurnover += r.totalAvailable;
+      totalTurnoverWeighted += (r.stockTurnover * r.totalAvailable);
+      
+      totalCustomers += r.totalCustomers;
+      activeCustomers += r.activeCustomers;
+      newCustomers += r.newCustomers;
+      inactiveCustomers += r.inactiveCustomers;
+      
+      if (r.workingDays > maxWorkingDays) maxWorkingDays = r.workingDays;
+    }
+
+    final avgPrice = totalDeliveredForPrice > 0 ? totalAvgPriceWeighted / totalDeliveredForPrice : 0.0;
+    final avgTurnover = totalAvailableForTurnover > 0 ? totalTurnoverWeighted / totalAvailableForTurnover : 0.0;
+    
+    // For agency daily averages, we can divide Total Agency Stats by Max Working Days (or current working days).
+    // Or we can sum up average daily revenues? No, sum of averages != average of sums usually, but for daily revenue it is.
+    // Let's stick to Total / WorkingDays logic.
+    final workingDays = maxWorkingDays; // Or calculation based on date range?
+    
+    // If it's a daily report, working days is 1 (if active).
+    final isDaily = date.month == DateTime.now().month && date.day == DateTime.now().day; // Rough check
+    // Actually `maxWorkingDays` from monthly reports will be valid. For daily reports, it will be 0 or 1.
+    
+    final avgDailyRev = workingDays > 0 ? totalRevenue / workingDays : (isDaily ? totalRevenue : 0.0);
+    final avgDailyDel = workingDays > 0 ? totalDeliveries / workingDays : (isDaily ? totalDeliveries.toDouble() : 0.0);
+
+    return ReportEntity(
+      date: date,
+      totalRevenue: totalRevenue,
+      totalDeliveries: totalDeliveries,
+      openingStock: openingStock,
+      stockLoaded: stockLoaded,
+      totalAvailable: totalAvailable,
+      deliveredStock: deliveredStock,
+      damagedStock: damagedStock,
+      closingStock: closingStock,
+      stockMismatch: stockMismatch,
+      bottlesDelivered: bottlesDelivered,
+      bottlesReturned: bottlesReturned,
+      netBottlesOut: netBottlesOut,
+      totalBottlesWithCustomers: totalBottlesWithCustomers,
+      salesRevenue: salesRevenue,
+      totalCollected: totalCollected,
+      totalCreditPending: totalCreditPending,
+      cashSales: cashSales,
+      onlineSales: onlineSales,
+      securityDepositsCollected: securityDepositsCollected,
+      securityDepositsCollectedCash: securityDepositsCollectedCash,
+      securityDepositsCollectedOnline: securityDepositsCollectedOnline,
+      securityDepositsRefunded: securityDepositsRefunded,
+      securityDepositsRefundedCash: securityDepositsRefundedCash,
+      securityDepositsRefundedOnline: securityDepositsRefundedOnline,
+      netDeposits: netDeposits,
+      totalDepositsHeld: totalDepositsHeld,
+      cashInHand: cashInHand,
+      upiCollections: upiCollections,
+      avgPricePerCan: avgPrice,
+      stockTurnover: avgTurnover,
+      workingDays: workingDays,
+      avgDailyRevenue: avgDailyRev,
+      avgDailyDeliveries: avgDailyDel,
+      totalCustomers: totalCustomers,
+      activeCustomers: activeCustomers,
+      newCustomers: newCustomers,
+      inactiveCustomers: inactiveCustomers,
+      subReports: reports,
+    );
+  }
+
+
+  ReportEntity _emptyReport(DateTime date) {
+    return ReportEntity(
+      date: date,
+      totalRevenue: 0,
+      totalDeliveries: 0,
+      openingStock: 0,
+      stockLoaded: 0,
+      totalAvailable: 0,
+      deliveredStock: 0,
+      damagedStock: 0,
+      closingStock: 0,
+      stockMismatch: 0,
+      bottlesDelivered: 0,
+      bottlesReturned: 0,
+      netBottlesOut: 0,
+      totalBottlesWithCustomers: 0,
+      salesRevenue: 0,
+      totalCollected: 0,
+      totalCreditPending: 0,
+      cashSales: 0,
+      onlineSales: 0,
+      securityDepositsCollected: 0,
+      securityDepositsCollectedCash: 0,
+      securityDepositsCollectedOnline: 0,
+      securityDepositsRefunded: 0,
+      securityDepositsRefundedCash: 0,
+      securityDepositsRefundedOnline: 0,
+      netDeposits: 0,
+      totalDepositsHeld: 0,
+      cashInHand: 0,
+      upiCollections: 0,
+      avgPricePerCan: 0,
+      stockTurnover: 0,
     );
   }
 }

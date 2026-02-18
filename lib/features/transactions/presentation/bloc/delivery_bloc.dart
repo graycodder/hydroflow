@@ -9,8 +9,10 @@ import 'package:hydroflow/features/transactions/domain/usecases/get_today_transa
 import 'package:hydroflow/features/transactions/domain/entities/transaction_entity.dart';
 import 'package:hydroflow/features/customers/domain/repositories/customer_repository.dart';
 import 'package:hydroflow/features/customers/domain/entities/customer.dart';
+import 'package:hydroflow/features/stock/domain/repositories/inventory_repository.dart';
 
 import 'package:hydroflow/features/auth/domain/repositories/auth_repository.dart';
+import 'package:hydroflow/features/auth/domain/repositories/agency_repository.dart';
 import 'package:hydroflow/features/auth/domain/entities/salesman.dart';
 
 class DeliveryBloc extends Bloc<DeliveryEvent, DeliveryState> {
@@ -18,6 +20,8 @@ class DeliveryBloc extends Bloc<DeliveryEvent, DeliveryState> {
   final GetTodayTransactionsUseCase _getTodayTransactionsUseCase;
   final CustomerRepository _customerRepository;
   final AuthRepository _authRepository;
+  final AgencyRepository _agencyRepository;
+  final InventoryRepository _inventoryRepository;
   final SharedPreferences _prefs;
 
   static const String _zoneKey = 'PREF_SELECTED_ZONE_DELIVERY';
@@ -27,17 +31,23 @@ class DeliveryBloc extends Bloc<DeliveryEvent, DeliveryState> {
     required GetTodayTransactionsUseCase getTodayTransactionsUseCase,
     required CustomerRepository customerRepository,
     required AuthRepository authRepository,
+    required AgencyRepository agencyRepository,
+    required InventoryRepository inventoryRepository,
     required SharedPreferences prefs,
   })  : _addTransactionUseCase = addTransactionUseCase,
         _getTodayTransactionsUseCase = getTodayTransactionsUseCase,
         _customerRepository = customerRepository,
         _authRepository = authRepository,
+        _agencyRepository = agencyRepository,
+        _inventoryRepository = inventoryRepository,
         _prefs = prefs,
         super(const DeliveryState()) {
     on<LoadDeliveryPage>(_onLoadDeliveryPage);
+    on<LoadAgencyDeliveries>(_onLoadAgencyDeliveries);
     on<SelectCustomer>(_onSelectCustomer);
     on<SubmitTransaction>(_onSubmitTransaction);
     on<FilterDeliveryByZone>(_onFilterDeliveryByZone);
+    on<FilterDeliveryBySalesman>(_onFilterBySalesman);
   }
 
   Future<void> _onLoadDeliveryPage(
@@ -52,21 +62,30 @@ class DeliveryBloc extends Bloc<DeliveryEvent, DeliveryState> {
       clearSelectedZone: savedZone == null,
     ));
     
-    final customerStream = _customerRepository.getCustomers(event.salesmanId);
-    final transactionStream = _getTodayTransactionsUseCase(event.salesmanId);
     final salesmanStream = _authRepository.getSalesmanStream(event.salesmanId);
 
     await emit.forEach<Map<String, dynamic>>(
-      CombineLatestStream.combine3<List<Customer>, List<TransactionEntity>, Salesman, Map<String, dynamic>>(
-        customerStream,
-        transactionStream,
-        salesmanStream,
-        (customers, transactions, salesman) => {
-          'customers': customers,
-          'transactions': transactions,
-          'currentStock': salesman.currentStock,
-        },
-      ),
+      salesmanStream.switchMap((salesman) {
+        // Create fresh streams for each subscription cycle to avoid "Stream already listened to"
+        final customerStream = _customerRepository.getCustomers(event.salesmanId);
+        final transactionStream = _getTodayTransactionsUseCase(event.salesmanId);
+        
+        // If Owner, listen to Warehouse stock. If Salesman, use current value from this flow.
+        final stockStream = salesman.role == 'owner'
+            ? _inventoryRepository.getAgencyWarehouseStock(salesman.agencyId).map((s) => s['fullCans'] ?? 0)
+            : Stream.value(salesman.currentStock);
+
+        return CombineLatestStream.combine3<List<Customer>, List<TransactionEntity>, int, Map<String, dynamic>>(
+          customerStream,
+          transactionStream,
+          stockStream,
+          (customers, transactions, currentStock) => {
+            'customers': customers,
+            'transactions': transactions,
+            'currentStock': currentStock,
+          },
+        );
+      }),
       onData: (data) {
         final customers = data['customers'] as List<Customer>;
         final transactions = data['transactions'] as List<TransactionEntity>;
@@ -89,6 +108,53 @@ class DeliveryBloc extends Bloc<DeliveryEvent, DeliveryState> {
       ),
     );
   }
+
+  Future<void> _onLoadAgencyDeliveries(
+    LoadAgencyDeliveries event,
+    Emitter<DeliveryState> emit,
+  ) async {
+    final savedZone = _prefs.getString(_zoneKey);
+    emit(state.copyWith(
+      status: DeliveryStatus.loading,
+      selectedZone: savedZone,
+      clearSelectedZone: savedZone == null,
+    ));
+
+    // Get all salesmen for this agency to aggregate transactions
+    final salesmenStream = Stream.fromFuture(_agencyRepository.getSalesmenByAgency(event.agencyId));
+    
+    await emit.forEach<Map<String, dynamic>>(
+      salesmenStream.switchMap((salesmen) {
+        final ids = salesmen.map((s) => s.id).toList();
+        
+        final customerStream = _customerRepository.getCustomersByAgency(event.agencyId);
+        final transactionStream = _getTodayTransactionsUseCase.byAgency(ids);
+        final stockStream = _inventoryRepository.getAgencyWarehouseStock(event.agencyId).map((s) => s['fullCans'] ?? 0);
+
+        return CombineLatestStream.combine3<List<Customer>, List<TransactionEntity>, int, Map<String, dynamic>>(
+          customerStream,
+          transactionStream,
+          stockStream,
+          (customers, transactions, currentStock) => {
+            'customers': customers,
+            'transactions': transactions,
+            'currentStock': currentStock,
+          },
+        );
+      }),
+      onData: (data) {
+        final customers = data['customers'] as List<Customer>;
+        final transactions = data['transactions'] as List<TransactionEntity>;
+        final currentStock = data['currentStock'] as int;
+
+        return _calculateUpdatedState(transactions, customers, currentStock);
+      },
+      onError: (e, stackTrace) => state.copyWith(
+        status: DeliveryStatus.failure,
+        errorMessage: e.toString(),
+      ),
+    );
+  }
   
   void _onSelectCustomer(
     SelectCustomer event,
@@ -102,7 +168,7 @@ class DeliveryBloc extends Bloc<DeliveryEvent, DeliveryState> {
     Emitter<DeliveryState> emit,
   ) {
     // If selecting the same zone, clear it
-    final newZone = state.selectedZone == event.zone ? null : event.zone;
+    final newZone = event.zone;
     
     // Persist selection
     if (newZone == null) {
@@ -111,19 +177,62 @@ class DeliveryBloc extends Bloc<DeliveryEvent, DeliveryState> {
       _prefs.setString(_zoneKey, newZone);
     }
 
-    final filtered = _applyZoneFilter(state.customers, newZone);
+    final filtered = _applyFilters(state.customers, state.allTodayTransactions, newZone, state.selectedSalesmanId);
     emit(state.copyWith(
       selectedZone: newZone,
       clearSelectedZone: newZone == null,
-      filteredCustomers: filtered,
+      filteredCustomers: filtered['customers'] as List<Customer>,
+      todayTransactions: filtered['transactions'] as List<TransactionEntity>,
       clearSelectedCustomer: true, // Clear selected customer when filtering changes
     ));
   }
 
-  List<Customer> _applyZoneFilter(List<Customer> customers, String? zone) {
-    final filtered = zone == null ? customers : customers.where((c) => c.zone == zone).toList();
+  void _onFilterBySalesman(
+    FilterDeliveryBySalesman event,
+    Emitter<DeliveryState> emit,
+  ) {
+    final newSalesmanId = event.salesmanId;
+    
+    final filtered = _applyFilters(state.customers, state.allTodayTransactions, state.selectedZone, newSalesmanId);
+    emit(state.copyWith(
+      selectedSalesmanId: newSalesmanId,
+      clearSelectedSalesman: newSalesmanId == null,
+      filteredCustomers: filtered['customers'] as List<Customer>,
+      todayTransactions: filtered['transactions'] as List<TransactionEntity>,
+      clearSelectedCustomer: true,
+    ));
+  }
+
+  Map<String, dynamic> _applyFilters(List<Customer> customers, List<TransactionEntity> transactions, String? zone, String? salesmanId) {
+    final filteredCustomers = customers.where((c) {
+      final matchesZone = zone == null || c.zone == zone;
+      final matchesSalesman = salesmanId == null || c.salesmanId == salesmanId;
+      return matchesZone && matchesSalesman;
+    }).toList();
+
+    final filteredTransactions = transactions.where((tx) {
+      final matchesSalesman = salesmanId == null || tx.salesmanId == salesmanId;
+      
+      // Filter by Zone if selected
+      bool matchesZone = true;
+      if (zone != null) {
+        final customer = customers.cast<Customer?>().firstWhere(
+          (c) => c?.id == tx.customerId,
+          orElse: () => null,
+        );
+        matchesZone = customer?.zone == zone;
+      }
+      
+      return matchesSalesman && matchesZone;
+    }).toList();
+
     // Sort alphabetically by name
-    return filtered..sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
+    filteredCustomers.sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
+    
+    return {
+      'customers': filteredCustomers,
+      'transactions': filteredTransactions,
+    };
   }
 
   Future<void> _onSubmitTransaction(
@@ -162,15 +271,17 @@ class DeliveryBloc extends Bloc<DeliveryEvent, DeliveryState> {
     int currentStock, {
     Customer? updatedSelectedCustomer,
   }) {
+    final filtered = _applyFilters(customers, transactions, state.selectedZone, state.selectedSalesmanId);
+    final filteredTransactions = filtered['transactions'] as List<TransactionEntity>;
+
     double sales = 0;
     double cash = 0;
     double upi = 0;
     int delivered = 0;
     int returned = 0;
 
-    for (var tx in transactions) {
-       // Today's Sales should be based on actual amount RECEIVED (Cash + Online)
-       // tx.amount is the total bill value, but sales metric usually means revenue collected.
+    for (var tx in filteredTransactions) {
+       // stats now based on FILTERED transactions
        sales += tx.amountReceived;
        if (tx.paymentMode == 'Cash') cash += tx.amountReceived;
        if (tx.paymentMode == 'UPI' || tx.paymentMode == 'Online') upi += tx.amountReceived;
@@ -181,7 +292,8 @@ class DeliveryBloc extends Bloc<DeliveryEvent, DeliveryState> {
     return state.copyWith(
       status: state.status == DeliveryStatus.submitting ? DeliveryStatus.submitting : DeliveryStatus.success,
       customers: customers,
-      todayTransactions: transactions,
+      allTodayTransactions: transactions,
+      todayTransactions: filteredTransactions,
       selectedCustomer: updatedSelectedCustomer, // Sync the reference
       totalSales: sales,
       totalCash: cash,
@@ -189,7 +301,7 @@ class DeliveryBloc extends Bloc<DeliveryEvent, DeliveryState> {
       totalDelivered: delivered,
       totalReturned: returned,
       currentStock: currentStock,
-      filteredCustomers: _applyZoneFilter(customers, state.selectedZone),
+      filteredCustomers: filtered['customers'] as List<Customer>,
     );
   }
 }

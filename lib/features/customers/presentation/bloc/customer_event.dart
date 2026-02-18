@@ -17,6 +17,15 @@ class LoadCustomers extends CustomerEvent {
   List<Object> get props => [salesmanId];
 }
 
+class LoadAgencyCustomers extends CustomerEvent {
+  final String agencyId;
+
+  const LoadAgencyCustomers(this.agencyId);
+
+  @override
+  List<Object> get props => [agencyId];
+}
+
 class SearchCustomers extends CustomerEvent {
   final String query;
 
@@ -27,6 +36,7 @@ class SearchCustomers extends CustomerEvent {
 }
 
 class AddCustomer extends CustomerEvent {
+  final String agencyId;
   final String salesmanId;
   final String name;
   final String phone;
@@ -36,6 +46,7 @@ class AddCustomer extends CustomerEvent {
   final String paymentMode;
 
   const AddCustomer({
+    required this.agencyId,
     required this.salesmanId,
     required this.name,
     required this.phone,
@@ -46,7 +57,7 @@ class AddCustomer extends CustomerEvent {
   });
 
   @override
-  List<Object> get props => [salesmanId, name, phone, address, zone, securityDeposit, paymentMode];
+  List<Object> get props => [agencyId, salesmanId, name, phone, address, zone, securityDeposit, paymentMode];
 }
 
 class UpdateCustomerStatus extends CustomerEvent {
@@ -84,4 +95,13 @@ class FilterByZone extends CustomerEvent {
 
   @override
   List<Object> get props => [zone ?? ''];
+}
+
+class FilterBySalesman extends CustomerEvent {
+  final String? salesmanId;
+
+  const FilterBySalesman(this.salesmanId);
+
+  @override
+  List<Object> get props => [salesmanId ?? ''];
 }

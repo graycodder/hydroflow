@@ -58,6 +58,11 @@ class ReportEntity extends Equatable {
   final int newCustomers;
   final int inactiveCustomers;
 
+  // Salesman Info (for breakdown)
+  final String? salesmanId;
+  final String? salesmanName;
+  final List<ReportEntity> subReports;
+
   const ReportEntity({
     required this.date,
     required this.totalRevenue,
@@ -97,6 +102,9 @@ class ReportEntity extends Equatable {
     this.activeCustomers = 0,
     this.newCustomers = 0,
     this.inactiveCustomers = 0,
+    this.salesmanId,
+    this.salesmanName,
+    this.subReports = const [],
   });
 
   @override
@@ -139,5 +147,8 @@ class ReportEntity extends Equatable {
         activeCustomers,
         newCustomers,
         inactiveCustomers,
+        salesmanId,
+        salesmanName,
+        subReports,
       ];
 }

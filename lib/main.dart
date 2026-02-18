@@ -128,7 +128,7 @@ class HydroFlowApp extends StatelessWidget {
 
           if (state is AuthAuthenticated) {
             context.read<NotificationBloc>().add(LoadNotifications(state.salesman.id));
-            context.read<DashboardBloc>().add(LoadDashboard(state.salesman.id));
+            context.read<DashboardBloc>().add(LoadDashboard(salesmanId: state.salesman.id));
             // Navigation handled by SplashPage or Router Redirect?
             // Actually, if we use SplashPage, we should rely on SplashPage to navigate once ready.
             // But if the user is already on a page and re-authenticates/logout, we might need global listener.
@@ -150,7 +150,6 @@ class HydroFlowApp extends StatelessWidget {
             return ConnectivityWrapper(child: child!);
           },
         ),
-
 
       ),
     );

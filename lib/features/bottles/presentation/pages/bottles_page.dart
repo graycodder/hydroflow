@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_fonts/google_fonts.dart'; // Assuming google_fonts is available
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:hydroflow/core/service_locator.dart';
 import 'package:hydroflow/core/widgets/app_bottom_bar.dart';
 import 'package:hydroflow/features/auth/presentation/bloc/auth_bloc.dart';
@@ -37,11 +38,20 @@ class _BottlesPageState extends State<BottlesPage> {
         builder: (context, authState) {
           if (authState is AuthAuthenticated) {
             final salesman = authState.salesman;
-            // Ensure bloc is triggered if it wasn't already (though initState handles it for the initial context, 
-            // the BlocProvider creates a NEW bloc instance, so we need to add event TO THAT INSTANCE)
-            // Actually, best practice: create bloc in provider and add event there using cascade
+            // Ensure bloc is triggered correctly based on view preference
             return BlocProvider(
-              create: (_) => sl<BottleBloc>()..add(LoadBottleLedger(salesman.id)),
+              create: (context) {
+                final bloc = sl<BottleBloc>();
+                final prefs = sl<SharedPreferences>();
+                final isAgencyView = prefs.getBool('dashboard_is_agency_view') ?? false;
+                
+                if (salesman.role == 'owner' && isAgencyView) {
+                  bloc.add(LoadAgencyBottleLedger(salesman.agencyId));
+                } else {
+                  bloc.add(LoadBottleLedger(salesman.id));
+                }
+                return bloc;
+              },
               child: Scaffold(
                 backgroundColor: Colors.grey[50],
                 appBar: const HydroFlowAppBar(),
@@ -52,13 +62,17 @@ class _BottlesPageState extends State<BottlesPage> {
                     } else if (state is BottleFailure) {
                       return Center(child: Text('Error: ${state.error}'));
                     } else if (state is BottleLoaded) {
+                      final prefs = sl<SharedPreferences>();
+                      final isAgencyView = prefs.getBool('dashboard_is_agency_view') ?? false;
+                      final isAgency = salesman.role == 'owner' && isAgencyView;
+
                       return SingleChildScrollView(
                         padding: const EdgeInsets.all(16.0),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'Bottle Debt Ledger',
+                              isAgency ? 'Agency Bottle Ledger' : 'Bottle Debt Ledger',
                               style: GoogleFonts.inter(
                                 fontSize: 24,
                                 fontWeight: FontWeight.bold,
@@ -67,7 +81,7 @@ class _BottlesPageState extends State<BottlesPage> {
                             ),
                             const SizedBox(height: 4),
                             Text(
-                              'Track bottles held by customers',
+                              isAgency ? 'Consolidated view of all salesmen' : 'Track bottles held by customers',
                               style: TextStyle(
                                 fontSize: 16,
                                 color: Colors.grey[600],

@@ -2,7 +2,7 @@ import 'package:firebase_database/firebase_database.dart';
 import 'package:hydroflow/features/transactions/domain/entities/transaction_entity.dart';
 import 'package:hydroflow/features/transactions/domain/repositories/transaction_repository.dart';
 import 'package:hydroflow/features/transactions/data/models/transaction_model.dart';
-
+import 'package:rxdart/rxdart.dart';
 import 'package:intl/intl.dart';
 
 class TransactionRepositoryImpl implements TransactionRepository {
@@ -177,24 +177,39 @@ class TransactionRepositoryImpl implements TransactionRepository {
         return Transaction.success(customerMap);
       });
 
-      // C. Update Salesman Inventory
+      // C. Update Stock based on Role
       final salesmanRef = _database.ref().child('Salesmen/${transaction.salesmanId}');
       
-      // Fetch current stock BEFORE updating it to use for log initialization if needed
-      final salesmanSnapshot = await salesmanRef.child('currentStock').get();
-      final currentStockInVanBeforeTx = (salesmanSnapshot.value as num?)?.toInt() ?? 0;
+      // Fetch whole salesman data to check role and agencyId
+      final salesmanSnapshot = await salesmanRef.get();
+      if (!salesmanSnapshot.exists) throw Exception('Salesman data not found');
+      
+      final salesmanData = salesmanSnapshot.value as Map<dynamic, dynamic>;
+      final String role = salesmanData['role'] as String? ?? 'salesman';
+      final String agencyId = salesmanData['agencyId'] as String? ?? '';
+      
+      final currentStockInVanBeforeTx = (salesmanData['currentStock'] as num?)?.toInt() ?? 0;
 
-      await salesmanRef.runTransaction((Object? post) {
-        if (post == null) {
-           return Transaction.abort();
-        }
-        final salesmanMap = Map<String, dynamic>.from(post as Map);
-        
-        // Decrease Full Cans (currentStock)
-        salesmanMap.update('currentStock', (value) => (value as num).toInt() - transaction.cansDelivered, ifAbsent: () => 0);
-        
-        return Transaction.success(salesmanMap);
-      });
+      if (role == 'owner' && agencyId.isNotEmpty) {
+        // OWNERS deduct directly from WAREHOUSE
+        final agencyStockRef = _database.ref().child('Agencies/$agencyId/stock');
+        await agencyStockRef.runTransaction((Object? post) {
+          if (post == null) return Transaction.abort();
+          final stockMap = Map<String, dynamic>.from(post as Map);
+          final int currentFull = (stockMap['fullCans'] as num?)?.toInt() ?? 0;
+          stockMap['fullCans'] = currentFull - transaction.cansDelivered;
+          return Transaction.success(stockMap);
+        });
+      } else {
+        // SALESMEN deduct from VEHICLE (Salesman node)
+        await salesmanRef.runTransaction((Object? post) {
+          if (post == null) return Transaction.abort();
+          final salesmanMap = Map<String, dynamic>.from(post as Map);
+          int currentStock = (salesmanMap['currentStock'] as num?)?.toInt() ?? 0;
+          salesmanMap['currentStock'] = currentStock - transaction.cansDelivered;
+          return Transaction.success(salesmanMap);
+        });
+      }
 
       // D. Update Today's Stock Log
       final dateFormatted = transaction.timestamp.toIso8601String().substring(0, 10);
@@ -298,17 +313,35 @@ class TransactionRepositoryImpl implements TransactionRepository {
       // from contexts (like Edit Customer) where the Customer Balance is manually updated 
       // via 'UpdateCustomer'. We avoid double-counting.
 
-      // 3. Update Salesman Inventory (Only if cans delivered > 0, which is unlikely for adjustment but safe to keep)
+      // 3. Update Stock based on Role (Only if cans delivered > 0)
       if (transaction.cansDelivered > 0) {
         final salesmanRef = _database.ref().child('Salesmen/${transaction.salesmanId}');
-        await salesmanRef.runTransaction((Object? post) {
-          if (post == null) {
-             return Transaction.abort();
+        final salesmanSnapshot = await salesmanRef.get();
+        if (salesmanSnapshot.exists) {
+          final salesmanData = salesmanSnapshot.value as Map<dynamic, dynamic>;
+          final String role = salesmanData['role'] as String? ?? 'salesman';
+          final String agencyId = salesmanData['agencyId'] as String? ?? '';
+
+          if (role == 'owner' && agencyId.isNotEmpty) {
+            // OWNERS deduct from WAREHOUSE
+            final agencyStockRef = _database.ref().child('Agencies/$agencyId/stock');
+            await agencyStockRef.runTransaction((Object? post) {
+              if (post == null) return Transaction.abort();
+              final stockMap = Map<String, dynamic>.from(post as Map);
+              final int currentFull = (stockMap['fullCans'] as num?)?.toInt() ?? 0;
+              stockMap['fullCans'] = currentFull - transaction.cansDelivered;
+              return Transaction.success(stockMap);
+            });
+          } else {
+            // SALESMEN deduct from VEHICLE
+            await salesmanRef.runTransaction((Object? post) {
+              if (post == null) return Transaction.abort();
+              final salesmanMap = Map<String, dynamic>.from(post as Map);
+              salesmanMap.update('currentStock', (value) => (value as num).toInt() - transaction.cansDelivered, ifAbsent: () => 0);
+              return Transaction.success(salesmanMap);
+            });
           }
-          final salesmanMap = Map<String, dynamic>.from(post as Map);
-          salesmanMap.update('currentStock', (value) => (value as num).toInt() - transaction.cansDelivered, ifAbsent: () => 0);
-          return Transaction.success(salesmanMap);
-        });
+        }
       }
 
       // 4. Update Today's Stock Log (Crucial for Reports)
@@ -386,6 +419,20 @@ class TransactionRepositoryImpl implements TransactionRepository {
   @override
   Stream<List<TransactionEntity>> getTodayTransactions(String salesmanId) {
     return getTransactionsByDate(salesmanId, DateTime.now());
+  }
+
+  @override
+  Stream<List<TransactionEntity>> getTodayTransactionsByAgency(List<String> salesmenIds) {
+    if (salesmenIds.isEmpty) return Stream.value([]);
+    
+    // Aggregate streams for all salesmen
+    final streams = salesmenIds.map((id) => getTodayTransactions(id)).toList();
+    
+    return CombineLatestStream.list<List<TransactionEntity>>(streams).map((lists) {
+      final allTransactions = lists.expand((list) => list).toList();
+      allTransactions.sort((a, b) => b.timestamp.compareTo(a.timestamp));
+      return allTransactions;
+    });
   }
 
   @override

@@ -26,11 +26,97 @@ class InventoryRepositoryImpl implements InventoryRepository {
         return StockLogModel.fromMap(data);
       }
       return null;
+    }).handleError((error) {
+       print('Error in getTodayStockLogStream: $error');
+       throw error; 
     });
   }
 
   @override
-  Future<void> addStock({required String salesmanId, required int quantity}) async {
+  Stream<Map<String, int>> getAgencyWarehouseStock(String agencyId) {
+    final ref = _database.ref().child('Agencies').child(agencyId).child('stock');
+    ref.keepSynced(true);
+    
+    return ref.onValue.map((event) {
+      if (event.snapshot.exists && event.snapshot.value != null) {
+        final data = Map<String, dynamic>.from(event.snapshot.value as Map);
+        return {
+          'fullCans': (data['fullCans'] as num?)?.toInt() ?? 0,
+          'emptyCans': (data['emptyCans'] as num?)?.toInt() ?? 0,
+          'damagedCans': (data['damagedCans'] as num?)?.toInt() ?? 0,
+        };
+      }
+      return {'fullCans': 0, 'emptyCans': 0, 'damagedCans': 0};
+    }).handleError((error) {
+       print('Error in getAgencyWarehouseStock: $error');
+       throw error;
+    });
+  }
+
+  @override
+  Future<void> addWarehouseStock({required String agencyId, required int quantity}) async {
+    final ref = _database.ref().child('Agencies').child(agencyId).child('stock');
+    await ref.runTransaction((Object? currentData) {
+      final stockMap = currentData == null 
+          ? <String, dynamic>{} 
+          : Map<String, dynamic>.from(currentData as Map);
+          
+      stockMap['fullCans'] ??= 0;
+      final currentFull = (stockMap['fullCans'] as num).toInt();
+      stockMap['fullCans'] = currentFull + quantity;
+      
+      return Transaction.success(stockMap);
+    });
+    
+    // Log this action in Agency History (Optional but good for audit)
+    final historyRef = _database.ref().child('Agency_Stock_History').push();
+    await historyRef.set({
+      'agencyId': agencyId,
+      'date': DateTime.now().toIso8601String(),
+      'type': 'Purchase',
+      'quantity': quantity,
+      'timestamp': ServerValue.timestamp,
+    });
+  }
+
+  @override
+  Future<void> addStock({required String salesmanId, required int quantity, String? agencyId}) async {
+    // 1. If AgencyId is provided (Trading Mode), we must DEDUCT from Warehouse first
+    if (agencyId != null && agencyId.isNotEmpty) {
+      final warehouseRef = _database.ref().child('Agencies').child(agencyId).child('stock');
+      final transactionResult = await warehouseRef.runTransaction((Object? currentData) {
+        final stockMap = currentData == null 
+            ? <String, dynamic>{} 
+            : Map<String, dynamic>.from(currentData as Map);
+            
+        stockMap['fullCans'] ??= 0;
+        final currentFull = (stockMap['fullCans'] as num).toInt();
+        
+        if (currentFull < quantity) {
+          return Transaction.abort(); // Not enough stock in Godown
+        }
+        
+        stockMap['fullCans'] = currentFull - quantity;
+        return Transaction.success(stockMap);
+      });
+
+      if (!transactionResult.committed) {
+         throw Exception("Insufficient stock in Warehouse/Godown to load vehicle.");
+      }
+      
+      // Log the Load Action
+      final historyRef = _database.ref().child('Agency_Stock_History').push();
+      await historyRef.set({
+        'agencyId': agencyId,
+        'date': DateTime.now().toIso8601String(),
+        'type': 'Load',
+        'quantity': quantity,
+        'targetUserId': salesmanId,
+        'timestamp': ServerValue.timestamp,
+      });
+    }
+
+    // 2. Proceed to Add to Salesman Vehicle using existing logic
     final dateKey = DateTime.now().toIso8601String().substring(0, 10).replaceAll('-', '_');
     final logRef = _database.ref().child('Stock_logs').child('LOG_${dateKey}_$salesmanId');
     final salesmanStockRef = _database.ref().child('Salesmen').child(salesmanId).child('currentStock');
@@ -64,7 +150,7 @@ class InventoryRepositoryImpl implements InventoryRepository {
 
     final openingStockToUse = carryForwardStock > 0 ? carryForwardStock : currentStockInVan;
 
-    // 1. Update log
+    // 3. Update log
     await logRef.runTransaction((Object? post) {
       final logMap = post == null 
           ? <String, dynamic>{} 
@@ -74,6 +160,7 @@ class InventoryRepositoryImpl implements InventoryRepository {
       if (!logMap.containsKey('date')) {
         logMap['date'] = DateTime.now().toIso8601String().substring(0, 10);
         logMap['salesmanId'] = salesmanId;
+        if (agencyId != null) logMap['agencyId'] = agencyId; // Add agencyId to logs too
       }
       
       // Initialize counters if missing (e.g. if log was created by a deposit)
@@ -89,13 +176,6 @@ class InventoryRepositoryImpl implements InventoryRepository {
       logMap['todayCollection'] ??= 0.0;
       logMap['cashCollected'] ??= 0.0;
       logMap['onlineCollected'] ??= 0.0;
-
-      // Now apply the specific update
-      final bool isFirstSetup = !logMap.containsKey('openingStock_set'); // Internal flag for "Opening Stock" logic if needed, but we'll use value
-      
-      // Note: If this is the FIRST time we are setting stock today and it's not a refill...
-      // but 'addStock' is generally used for refills now after 'setOpeningStock' replaced initial add.
-      // Wait, let's look at how addStock is used. It's for "Refill Stock".
       
       final currentLoaded = (logMap['loaded'] as num?)?.toInt() ?? 0;
       logMap['loaded'] = currentLoaded + quantity;
@@ -116,7 +196,7 @@ class InventoryRepositoryImpl implements InventoryRepository {
       return Transaction.success(logMap);
     });
 
-    // 2. Increment currentStock
+    // 4. Increment currentStock
     await salesmanStockRef.runTransaction((Object? currentData) {
       final currentStock = (currentData as num?)?.toInt() ?? 0;
       return Transaction.success(currentStock + quantity);
@@ -215,66 +295,91 @@ class InventoryRepositoryImpl implements InventoryRepository {
   }
 
   @override
-  Future<void> setOpeningStock({required String salesmanId, required int quantity}) async {
-    final dateKey = DateTime.now().toIso8601String().substring(0, 10).replaceAll('-', '_');
-    final logRef = _database.ref().child('Stock_logs').child('LOG_${dateKey}_$salesmanId');
-    
-    await logRef.runTransaction((Object? post) {
-      final logMap = post == null 
+  Future<void> setOpeningStock({required String salesmanId, required int quantity, String? agencyId}) async {
+  // 1. If AgencyId is provided (Trading Mode), we must DEDUCT from Warehouse first
+  if (agencyId != null && agencyId.isNotEmpty) {
+    final warehouseRef = _database.ref().child('Agencies').child(agencyId).child('stock');
+    final transactionResult = await warehouseRef.runTransaction((Object? currentData) {
+      final stockMap = currentData == null 
           ? <String, dynamic>{} 
-          : Map<String, dynamic>.from(post as Map);
-
-      // Robust Initialization
-      if (!logMap.containsKey('date')) {
-        logMap['date'] = DateTime.now().toIso8601String().substring(0, 10);
-        logMap['salesmanId'] = salesmanId;
+          : Map<String, dynamic>.from(currentData as Map);
+          
+      stockMap['fullCans'] ??= 0;
+      final currentFull = (stockMap['fullCans'] as num).toInt();
+      
+      if (currentFull < quantity) {
+        return Transaction.abort(); // Not enough stock in Godown
       }
       
-      logMap['openingStock'] ??= 0;
-      logMap['loaded'] ??= 0;
-      logMap['totalDelivered'] ??= 0;
-      logMap['totalEmptyCollected'] ??= 0;
-      logMap['damaged'] ??= 0;
-      logMap['closingStock'] ??= 0;
-      logMap['actualClosingStock'] ??= 0;
-      logMap['mismatchCount'] ??= 0;
-      logMap['isReconciled'] ??= false;
-      logMap['todayCollection'] ??= 0.0;
-      logMap['cashCollected'] ??= 0.0;
-      logMap['onlineCollected'] ??= 0.0;
-
-      final loaded = (logMap['loaded'] as num?)?.toInt() ?? 0;
-      final delivered = (logMap['totalDelivered'] as num?)?.toInt() ?? 0;
-      final damaged = (logMap['damaged'] as num?)?.toInt() ?? 0;
-      
-      final expectedClosing = quantity + loaded - delivered - damaged;
-      
-      logMap['openingStock'] = quantity;
-      logMap['closingStock'] = expectedClosing;
-      logMap['openingStock_set'] = true; // Flag for UI/Repository logic
-
-      return Transaction.success(logMap);
+      stockMap['fullCans'] = currentFull - quantity;
+      return Transaction.success(stockMap);
     });
 
-    
-    // Recalculate solely for the purpose of updating Salesman currentStock mostly accurately
-    // We can just rely on the same calculation as above.
-    // Fetch fresh or just blindly trust the recent calc? 
-    // Ideally we trust the transaction result but we are in a separate one for Salesmen.
-    // Let's just update Salesman currentStock.
-    // To be perfectly safe, we could read the log again, but given we just set it...
-    // Let's assume the transaction succeeded. 
-    
-    // We need 'loaded' etc to calc currentStock for Salesman update.
-    // The transaction above updated the log. Let's read it back or re-calc.
-    // Re-reading is safer.
-    final snapshot = await logRef.get();
-    if (snapshot.exists) {
-       final data = Map<String, dynamic>.from(snapshot.value as Map);
-       final closing = (data['closingStock'] as num?)?.toInt() ?? quantity;
-       await _database.ref().child('Salesmen').child(salesmanId).child('currentStock').set(closing);
+    if (!transactionResult.committed) {
+       throw Exception("Insufficient stock in Warehouse/Godown to set opening stock.");
     }
+    
+    // Log the Setup Action
+    final historyRef = _database.ref().child('Agency_Stock_History').push();
+    await historyRef.set({
+      'agencyId': agencyId,
+      'date': DateTime.now().toIso8601String(),
+      'type': 'Setup(Opening)',
+      'quantity': quantity,
+      'targetUserId': salesmanId,
+      'timestamp': ServerValue.timestamp,
+    });
   }
+
+  final dateKey = DateTime.now().toIso8601String().substring(0, 10).replaceAll('-', '_');
+  final logRef = _database.ref().child('Stock_logs').child('LOG_${dateKey}_$salesmanId');
+  
+  await logRef.runTransaction((Object? post) {
+    final logMap = post == null 
+        ? <String, dynamic>{} 
+        : Map<String, dynamic>.from(post as Map);
+
+    // Robust Initialization
+    if (!logMap.containsKey('date')) {
+      logMap['date'] = DateTime.now().toIso8601String().substring(0, 10);
+      logMap['salesmanId'] = salesmanId;
+      if (agencyId != null) logMap['agencyId'] = agencyId; 
+    }
+    
+    logMap['openingStock'] ??= 0;
+    logMap['loaded'] ??= 0;
+    logMap['totalDelivered'] ??= 0;
+    logMap['totalEmptyCollected'] ??= 0;
+    logMap['damaged'] ??= 0;
+    logMap['closingStock'] ??= 0;
+    logMap['actualClosingStock'] ??= 0;
+    logMap['mismatchCount'] ??= 0;
+    logMap['isReconciled'] ??= false;
+    logMap['todayCollection'] ??= 0.0;
+    logMap['cashCollected'] ??= 0.0;
+    logMap['onlineCollected'] ??= 0.0;
+
+    final loaded = (logMap['loaded'] as num?)?.toInt() ?? 0;
+    final delivered = (logMap['totalDelivered'] as num?)?.toInt() ?? 0;
+    final damaged = (logMap['damaged'] as num?)?.toInt() ?? 0;
+    
+    final expectedClosing = quantity + loaded - delivered - damaged;
+    
+    logMap['openingStock'] = quantity;
+    logMap['closingStock'] = expectedClosing;
+    logMap['openingStock_set'] = true; // Flag for UI/Repository logic
+
+    return Transaction.success(logMap);
+  });
+
+  // Re-reading log to sync currentStock
+  final snapshot = await logRef.get();
+  if (snapshot.exists) {
+     final data = Map<String, dynamic>.from(snapshot.value as Map);
+     final closing = (data['closingStock'] as num?)?.toInt() ?? quantity;
+     await _database.ref().child('Salesmen').child(salesmanId).child('currentStock').set(closing);
+  }
+}
 
   @override
   Future<void> reconcileStock({required String salesmanId, required int physicalCount}) async {
@@ -328,7 +433,7 @@ class InventoryRepositoryImpl implements InventoryRepository {
           .child('Stock_logs')
           .orderByChild('salesmanId')
           .equalTo(salesmanId);
-      final snapshot = await query.get();
+      final snapshot = await query.get().timeout(const Duration(seconds: 5));
       
       if (!snapshot.exists) return false;
       
@@ -351,4 +456,211 @@ class InventoryRepositoryImpl implements InventoryRepository {
     }
   }
 
+  // ---------------- AGENCY STOCK LOG IMPLEMENTATION ----------------
+
+  @override
+  Stream<StockLog?> getAgencyStockLogStream(String agencyId) {
+    final dateKey = DateTime.now().toIso8601String().substring(0, 10).replaceAll('-', '_');
+    final logRef = _database.ref().child('Stock_logs').child('LOG_${dateKey}_$agencyId');
+    
+    logRef.keepSynced(true);
+    _database.ref().child('Agencies').child(agencyId).child('stock').keepSynced(true);
+
+    return logRef.onValue.map((event) {
+      if (event.snapshot.exists && event.snapshot.value != null) {
+        final data = Map<String, dynamic>.from(event.snapshot.value as Map);
+        return StockLogModel.fromMap(data);
+      }
+      return null;
+    }).handleError((error) {
+       print('Error in getAgencyStockLogStream: $error');
+       throw error; 
+    });
+  }
+
+  @override
+  Future<void> setAgencyOpeningStock({required String agencyId, required int quantity}) async {
+    final dateKey = DateTime.now().toIso8601String().substring(0, 10).replaceAll('-', '_');
+    final logRef = _database.ref().child('Stock_logs').child('LOG_${dateKey}_$agencyId');
+    
+    await logRef.runTransaction((Object? post) {
+      final logMap = post == null 
+          ? <String, dynamic>{} 
+          : Map<String, dynamic>.from(post as Map);
+
+      if (!logMap.containsKey('date')) {
+        logMap['date'] = DateTime.now().toIso8601String().substring(0, 10);
+        logMap['agencyId'] = agencyId; 
+        logMap['salesmanId'] = ''; // Empty for Agency Logs
+      }
+      
+      logMap['openingStock'] ??= 0;
+      logMap['loaded'] ??= 0;
+      logMap['totalDelivered'] ??= 0; // Distributed to Salesmen
+      logMap['damaged'] ??= 0;
+      logMap['closingStock'] ??= 0;
+      
+      logMap['openingStock'] = quantity;
+      
+      final loaded = (logMap['loaded'] as num?)?.toInt() ?? 0;
+      final delivered = (logMap['totalDelivered'] as num?)?.toInt() ?? 0;
+      final damaged = (logMap['damaged'] as num?)?.toInt() ?? 0;
+      
+      logMap['closingStock'] = quantity + loaded - delivered - damaged;
+      logMap['openingStock_set'] = true;
+
+      return Transaction.success(logMap);
+    });
+
+    // Sync to Agency Warehouse Stock
+    final snapshot = await logRef.get();
+    if (snapshot.exists) {
+       final data = Map<String, dynamic>.from(snapshot.value as Map);
+       final closing = (data['closingStock'] as num?)?.toInt() ?? quantity;
+       await _updateAgencyWarehouseCount(agencyId, closing);
+    }
+  }
+
+  @override
+  Future<void> addAgencyRefillStock({required String agencyId, required int quantity}) async {
+    final dateKey = DateTime.now().toIso8601String().substring(0, 10).replaceAll('-', '_');
+    final logRef = _database.ref().child('Stock_logs').child('LOG_${dateKey}_$agencyId');
+
+    // Fetch current warehouse stock (Yesterday's closing / Today's opening)
+    // This acts as the carry-forward value if today's log doesn't exist yet.
+    final stockSnapshot = await _database.ref().child('Agencies').child(agencyId).child('stock').get();
+    final stockData = stockSnapshot.value as Map?;
+    final currentWarehouseStock = (stockData?['fullCans'] as num?)?.toInt() ?? 0;
+
+    await logRef.runTransaction((Object? post) {
+      final logMap = post == null 
+          ? <String, dynamic>{} 
+          : Map<String, dynamic>.from(post as Map);
+
+      if (!logMap.containsKey('date')) {
+        logMap['date'] = DateTime.now().toIso8601String().substring(0, 10);
+        logMap['agencyId'] = agencyId;
+        logMap['salesmanId'] = '';
+      }
+      
+      logMap['openingStock'] ??= 0;
+      
+      // Carry Forward Logic: If opening stock isn't set, use current warehouse stock
+      if ((logMap['openingStock'] == 0) && !logMap.containsKey('openingStock_set')) {
+        logMap['openingStock'] = currentWarehouseStock;
+      }
+
+      logMap['loaded'] ??= 0;
+      logMap['totalDelivered'] ??= 0;
+      logMap['damaged'] ??= 0;
+      
+      final currentLoaded = (logMap['loaded'] as num?)?.toInt() ?? 0;
+      logMap['loaded'] = currentLoaded + quantity;
+      
+      final opening = (logMap['openingStock'] as num?)?.toInt() ?? 0;
+      final delivered = (logMap['totalDelivered'] as num?)?.toInt() ?? 0;
+      final damaged = (logMap['damaged'] as num?)?.toInt() ?? 0;
+      
+      logMap['closingStock'] = opening + logMap['loaded'] - delivered - damaged;
+
+      return Transaction.success(logMap);
+    });
+
+    // Update Agency Warehouse Stock
+    final snapshot = await logRef.get();
+    if (snapshot.exists) {
+       final data = Map<String, dynamic>.from(snapshot.value as Map);
+       final closing = (data['closingStock'] as num?)?.toInt() ?? 0;
+       await _updateAgencyWarehouseCount(agencyId, closing);
+    }
+  }
+
+  @override
+  Future<void> recordAgencyDamagedStock({required String agencyId, required int quantity}) async {
+    final dateKey = DateTime.now().toIso8601String().substring(0, 10).replaceAll('-', '_');
+    final logRef = _database.ref().child('Stock_logs').child('LOG_${dateKey}_$agencyId');
+    
+    // Fetch current warehouse stock (Yesterday's closing / Today's opening)
+    final stockSnapshot = await _database.ref().child('Agencies').child(agencyId).child('stock').get();
+    final stockData = stockSnapshot.value as Map?;
+    final currentWarehouseStock = (stockData?['fullCans'] as num?)?.toInt() ?? 0;
+
+    await logRef.runTransaction((Object? post) {
+       final logMap = post == null 
+           ? <String, dynamic>{} 
+           : Map<String, dynamic>.from(post as Map);
+
+      if (!logMap.containsKey('date')) {
+        logMap['date'] = DateTime.now().toIso8601String().substring(0, 10);
+        logMap['agencyId'] = agencyId;
+        logMap['salesmanId'] = '';
+      }
+      
+      logMap['openingStock'] ??= 0;
+      
+      // Carry Forward Logic
+      if ((logMap['openingStock'] == 0) && !logMap.containsKey('openingStock_set')) {
+        logMap['openingStock'] = currentWarehouseStock;
+      }
+
+      logMap['loaded'] ??= 0;
+      logMap['totalDelivered'] ??= 0;
+      logMap['damaged'] ??= 0;
+      
+      final currentDamaged = (logMap['damaged'] as num?)?.toInt() ?? 0;
+      logMap['damaged'] = currentDamaged + quantity;
+      
+      final opening = (logMap['openingStock'] as num?)?.toInt() ?? 0;
+      final loaded = (logMap['loaded'] as num?)?.toInt() ?? 0;
+      final delivered = (logMap['totalDelivered'] as num?)?.toInt() ?? 0;
+      
+      logMap['closingStock'] = opening + loaded - delivered - logMap['damaged'];
+
+       return Transaction.success(logMap);
+    });
+
+    // Update Agency Warehouse Stock (Full Cans)
+    final snapshot = await logRef.get();
+    if (snapshot.exists) {
+       final data = Map<String, dynamic>.from(snapshot.value as Map);
+       final closing = (data['closingStock'] as num?)?.toInt() ?? 0;
+       await _updateAgencyWarehouseCount(agencyId, closing);
+       
+       // Also increment damagedCans in Agency node
+       await _database.ref().child('Agencies').child(agencyId).child('stock').child('damagedCans').runTransaction((Object? val) {
+          final current = (val as num?)?.toInt() ?? 0;
+          return Transaction.success(current + quantity);
+       });
+    }
+  }
+
+  @override
+  Future<bool> checkAgencyStockLogsExist(String agencyId) async {
+    try {
+      final query = _database.ref()
+          .child('Stock_logs')
+          .orderByChild('agencyId')
+          .equalTo(agencyId);
+      final snapshot = await query.get().timeout(const Duration(seconds: 5));
+      
+      if (!snapshot.exists) return false;
+      
+      final data = Map<dynamic, dynamic>.from(snapshot.value as Map);
+      return data.values.any((log) {
+        if (log is Map) {
+          final int openingStock = (log['openingStock'] as num?)?.toInt() ?? 0;
+          return openingStock > 0;
+        }
+        return false;
+      });
+    } catch (e) {
+      return false; 
+    }
+  }
+
+  Future<void> _updateAgencyWarehouseCount(String agencyId, int count) async {
+    await _database.ref().child('Agencies').child(agencyId).child('stock').update({
+      'fullCans': count
+    });
+  }
 }

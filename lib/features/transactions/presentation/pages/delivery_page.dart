@@ -15,6 +15,12 @@ import 'package:hydroflow/features/transactions/presentation/bloc/delivery_event
 import 'package:hydroflow/features/transactions/presentation/bloc/delivery_state.dart';
 import 'package:hydroflow/core/widgets/hydro_flow_loader.dart';
 import 'package:hydroflow/features/transactions/presentation/widgets/transaction_receipt_dialog.dart';
+import 'package:hydroflow/features/auth/presentation/bloc/agency_bloc.dart';
+import 'package:hydroflow/features/auth/presentation/bloc/agency_state.dart';
+import 'package:hydroflow/features/auth/presentation/bloc/agency_event.dart';
+import 'package:hydroflow/features/auth/domain/entities/salesman.dart';
+import 'package:hydroflow/core/service_locator.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class DeliveryPage extends StatelessWidget {
   const DeliveryPage({super.key});
@@ -58,10 +64,18 @@ class _DeliveryViewState extends State<DeliveryView> {
   @override
   void initState() {
     super.initState();
-    // Trigger load if needed.
+    // Trigger load based on view type
     final authState = context.read<AuthBloc>().state;
     if (authState is AuthAuthenticated) {
-      context.read<DeliveryBloc>().add(LoadDeliveryPage(authState.salesman.id));
+      final salesman = authState.salesman;
+      final prefs = sl<SharedPreferences>();
+      final isAgencyView = prefs.getBool('dashboard_is_agency_view') ?? false;
+
+      if (salesman.role == 'owner' && isAgencyView) {
+        context.read<DeliveryBloc>().add(LoadAgencyDeliveries(salesman.agencyId));
+      } else {
+        context.read<DeliveryBloc>().add(LoadDeliveryPage(salesman.id));
+      }
     }
   }
 
@@ -121,6 +135,7 @@ class _DeliveryViewState extends State<DeliveryView> {
               orElse: () => const Customer(
                 id: '',
                 salesmanId: '',
+                agencyId: '',
                 name: 'Unknown',
                 phone: '',
                 address: '',
@@ -152,123 +167,238 @@ class _DeliveryViewState extends State<DeliveryView> {
         }
       },
       builder: (context, state) {
-        final authState = context
-            .watch<AuthBloc>()
-            .state; // Use watch for updates
-        final salesman = (authState is AuthAuthenticated)
-            ? authState.salesman
-            : null;
+        final authState = context.read<AuthBloc>().state;
+        final salesman = (authState is AuthAuthenticated) ? authState.salesman : null;
         final salesmanId = salesman?.id ?? '';
 
-        return Scaffold(
-          backgroundColor: Colors.grey[50],
-          appBar: const HydroFlowAppBar(),
-          body: state.status == DeliveryStatus.loading
-              ? const HydroFlowLoader(
-                  message: 'Syncing Delivery Data...',
-                  isOverlay: false,
-                )
-              : SingleChildScrollView(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      // Zone Filters Dropdown
-                      Padding(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 0,
-                          vertical: 8.0,
-                        ),
-                        child: DropdownSearch<String>(
-                          items: (filter, loadProps) {
-                            final zones =
-                                state.customers
-                                    .map((c) => c.zone)
-                                    .where((z) => z.isNotEmpty)
-                                    .toSet()
-                                    .toList()
-                                  ..sort();
-                            return ['All', ...zones];
-                          },
-                          decoratorProps: DropDownDecoratorProps(
-                            decoration: InputDecoration(
-                              labelText: 'Filter by Zone',
-                              hintText: 'Select or Search Zone',
-                              prefixIcon: const Icon(
-                                Icons.grid_view_rounded,
-                                color: Colors.blueGrey,
+        final prefs = sl<SharedPreferences>();
+        final isAgencyView = prefs.getBool('dashboard_is_agency_view') ?? false;
+        final isAgency = salesman?.role == 'owner' && isAgencyView;
+
+        Widget content = state.status == DeliveryStatus.loading
+            ? const HydroFlowLoader(
+                message: 'Syncing Delivery Data...',
+                isOverlay: false,
+              )
+            : SingleChildScrollView(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    // Salesman Filter (Only in Agency View)
+                    if (isAgency)
+                      BlocBuilder<AgencyBloc, AgencyState>(
+                        builder: (context, agencyState) {
+                          if (agencyState is AgencySalesmenLoaded) {
+                            final salesmen = agencyState.salesmen;
+                            return Padding(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 0,
+                                vertical: 8.0,
                               ),
-                              filled: true,
-                              fillColor: Colors.white,
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(12),
-                                borderSide: BorderSide(
-                                  color: Colors.grey[300]!,
-                                ),
-                              ),
-                              enabledBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(12),
-                                borderSide: BorderSide(
-                                  color: Colors.grey[300]!,
-                                ),
-                              ),
-                              contentPadding: const EdgeInsets.symmetric(
-                                horizontal: 12,
-                                vertical: 8,
-                              ),
-                            ),
-                          ),
-                          popupProps: PopupProps.menu(
-                            showSearchBox: true,
-                            searchDelay: Duration.zero,
-                            searchFieldProps: const TextFieldProps(
-                              decoration: InputDecoration(
-                                hintText: "Search Zone...",
-                                prefixIcon: Icon(Icons.search),
-                                border: OutlineInputBorder(),
-                                contentPadding: EdgeInsets.symmetric(
-                                  horizontal: 12,
-                                ),
-                              ),
-                            ),
-                            itemBuilder:
-                                (context, item, isSelected, isHovered) {
-                                  return ListTile(
-                                    title: Text(
-                                      item,
-                                      style: const TextStyle(fontSize: 14),
+                              child: DropdownSearch<Salesman>(
+                                items: (filter, loadProps) {
+                                  var filteredSalesmen = salesmen;
+                                  if (state.selectedZone != null) {
+                                    final activeInZone = state.customers
+                                        .where((c) => c.zone == state.selectedZone)
+                                        .map((c) => c.salesmanId)
+                                        .toSet();
+                                    filteredSalesmen = salesmen
+                                        .where((s) => activeInZone.contains(s.id))
+                                        .toList();
+                                  }
+                                  return [
+                                    const Salesman(
+                                      id: 'all',
+                                      name: 'All Salesmen',
+                                      agencyId: '',
+                                      username: '',
+                                      password: '',
+                                      phoneNumber: '',
                                     ),
-                                    selected: isSelected,
-                                    dense: true,
-                                  );
+                                    ...filteredSalesmen,
+                                  ];
                                 },
-                          ),
-                          selectedItem: state.selectedZone ?? 'All',
-                          onChanged: (String? value) {
-                            context.read<DeliveryBloc>().add(
-                              FilterDeliveryByZone(
-                                value == 'All' ? null : value,
+                                itemAsString: (Salesman s) => s.id == 'all'
+                                    ? s.name
+                                    : '${s.name} (${s.phoneNumber})',
+                                decoratorProps: DropDownDecoratorProps(
+                                  decoration: InputDecoration(
+                                    labelText: 'Filter by Salesman',
+                                    hintText: 'Select Salesman',
+                                    prefixIcon: const Icon(
+                                      Icons.person_outline,
+                                      color: Colors.blueGrey,
+                                    ),
+                                    filled: true,
+                                    fillColor: Colors.white,
+                                    border: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                      borderSide:
+                                          BorderSide(color: Colors.grey[300]!),
+                                    ),
+                                    enabledBorder: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                      borderSide:
+                                          BorderSide(color: Colors.grey[300]!),
+                                    ),
+                                    contentPadding: const EdgeInsets.symmetric(
+                                      horizontal: 12,
+                                      vertical: 8,
+                                    ),
+                                  ),
+                                ),
+                                popupProps: PopupProps.menu(
+                                  showSearchBox: true,
+                                  searchFieldProps: const TextFieldProps(
+                                    decoration: InputDecoration(
+                                      hintText: "Search Salesman...",
+                                      prefixIcon: Icon(Icons.search),
+                                      border: OutlineInputBorder(),
+                                    ),
+                                  ),
+                                ),
+                                selectedItem: state.selectedSalesmanId == null
+                                    ? const Salesman(
+                                        id: 'all',
+                                        name: 'All Salesmen',
+                                        agencyId: '',
+                                        username: '',
+                                        password: '',
+                                        phoneNumber: '',
+                                      )
+                                    : salesmen.firstWhere(
+                                        (s) => s.id == state.selectedSalesmanId,
+                                        orElse: () => const Salesman(
+                                          id: 'all',
+                                          name: 'All Salesmen',
+                                          agencyId: '',
+                                          username: '',
+                                          password: '',
+                                          phoneNumber: '',
+                                        ),
+                                      ),
+                                onChanged: (Salesman? value) {
+                                  context.read<DeliveryBloc>().add(
+                                        FilterDeliveryBySalesman(
+                                          value?.id == 'all' ? null : value?.id,
+                                        ),
+                                      );
+                                },
+                                compareFn: (s1, s2) => s1.id == s2.id,
                               ),
+                            );
+                          }
+                          return const SizedBox.shrink();
+                        },
+                      ),
+
+                    // Zone Filters Dropdown
+                    Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 0,
+                        vertical: 8.0,
+                      ),
+                      child: DropdownSearch<String>(
+                        items: (filter, loadProps) {
+                          final relevantCustomers = state.selectedSalesmanId == null
+                              ? state.customers
+                              : state.customers.where((c) => c.salesmanId == state.selectedSalesmanId);
+                              
+                          final zones = relevantCustomers
+                              .map((c) => c.zone)
+                              .where((z) => z.isNotEmpty)
+                              .toSet()
+                              .toList()
+                            ..sort();
+                          return ['All', ...zones];
+                        },
+                        decoratorProps: DropDownDecoratorProps(
+                          decoration: InputDecoration(
+                            labelText: 'Filter by Zone',
+                            hintText: 'Select or Search Zone',
+                            prefixIcon: const Icon(
+                              Icons.grid_view_rounded,
+                              color: Colors.blueGrey,
+                            ),
+                            filled: true,
+                            fillColor: Colors.white,
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: BorderSide(color: Colors.grey[300]!),
+                            ),
+                            enabledBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: BorderSide(color: Colors.grey[300]!),
+                            ),
+                            contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 8,
+                            ),
+                          ),
+                        ),
+                        popupProps: PopupProps.menu(
+                          showSearchBox: true,
+                          searchDelay: Duration.zero,
+                          searchFieldProps: const TextFieldProps(
+                            decoration: InputDecoration(
+                              hintText: "Search Zone...",
+                              prefixIcon: Icon(Icons.search),
+                              border: OutlineInputBorder(),
+                              contentPadding:
+                                  EdgeInsets.symmetric(horizontal: 12),
+                            ),
+                          ),
+                          itemBuilder: (context, item, isSelected, isHovered) {
+                            return ListTile(
+                              title: Text(item, style: const TextStyle(fontSize: 14)),
+                              selected: isSelected,
+                              dense: true,
                             );
                           },
                         ),
+                        selectedItem: state.selectedZone ?? 'All',
+                        onChanged: (String? value) {
+                          context.read<DeliveryBloc>().add(
+                                FilterDeliveryByZone(
+                                  value == 'All' ? null : value,
+                                ),
+                              );
+                        },
                       ),
-                      const SizedBox(height: 8),
+                    ),
+                    const SizedBox(height: 8),
 
-                      // Form Card
+                    // Form Card (Only for Salesman, hidden for Agency)
+                    if (!isAgency)
                       _buildDeliveryForm(context, state, salesmanId),
 
-                      const SizedBox(height: 24),
+                    const SizedBox(height: 10),
 
-                      // Transactions List
-                      _buildTransactionsList(state),
-                    ],
-                  ),
+                    // Transactions List
+                    _buildTransactionsList(state),
+                  ],
                 ),
-          bottomNavigationBar: AppBottomBar(
+              );
+
+        Widget scaffold = Scaffold(
+          backgroundColor: Colors.grey[50],
+          appBar: const HydroFlowAppBar(),
+          body: content,
+          bottomNavigationBar: const AppBottomBar(
             currentIndex: 4,
-          ), // Index 4 for Delivery
+          ),
         );
+
+        if (salesman != null && isAgency) {
+          return BlocProvider(
+            create: (context) => sl<AgencyBloc>()
+              ..add(LoadAgencySalesmen(salesman.agencyId)),
+            child: scaffold,
+          );
+        }
+        return scaffold;
       },
     );
   }
@@ -775,6 +905,7 @@ class _DeliveryViewState extends State<DeliveryView> {
                   orElse: () => const Customer(
                     id: '',
                     salesmanId: '',
+                    agencyId: '',
                     name: 'Unknown',
                     phone: '',
                     address: '',

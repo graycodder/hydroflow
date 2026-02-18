@@ -10,11 +10,12 @@ abstract class DashboardEvent extends Equatable {
 
 class LoadDashboard extends DashboardEvent {
   final String salesmanId;
+  final String? agencyId;
 
-  const LoadDashboard(this.salesmanId);
+  const LoadDashboard({required this.salesmanId, this.agencyId});
 
   @override
-  List<Object?> get props => [salesmanId];
+  List<Object?> get props => [salesmanId, agencyId];
 }
 
 class DashboardUpdated extends DashboardEvent {

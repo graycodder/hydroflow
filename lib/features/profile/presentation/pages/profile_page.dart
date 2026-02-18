@@ -111,6 +111,24 @@ class ProfilePage extends StatelessWidget {
                           CurrentSubscriptionCard(history: state.subscriptionHistory),
                           const SizedBox(height: 24),
                           SubscriptionHistoryList(history: state.subscriptionHistory),
+
+                          
+                          if (profile.role == 'owner') ...[
+                             const SizedBox(height: 24),
+                             SizedBox(
+                               width: double.infinity,
+                               child: OutlinedButton.icon(
+                                 onPressed: () => context.push('/agency_employees'),
+                                 icon: const Icon(Icons.people_outline),
+                                 label: const Text('Manage Staff & Devices'),
+                                 style: OutlinedButton.styleFrom(
+                                   padding: const EdgeInsets.symmetric(vertical: 16),
+                                   side: const BorderSide(color: Colors.blue),
+                                   foregroundColor: Colors.blue,
+                                 ),
+                               ),
+                             ),
+                          ],
                         ],
                       ),
                     ),

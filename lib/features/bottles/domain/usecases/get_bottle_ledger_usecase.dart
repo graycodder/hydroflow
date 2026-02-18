@@ -1,5 +1,6 @@
 import 'package:hydroflow/features/customers/domain/repositories/customer_repository.dart';
 import 'package:hydroflow/features/bottles/domain/entities/bottle_ledger_stats.dart';
+import 'package:hydroflow/features/customers/domain/entities/customer.dart';
 
 class GetBottleLedgerUseCase {
   final CustomerRepository repository;
@@ -7,7 +8,15 @@ class GetBottleLedgerUseCase {
   GetBottleLedgerUseCase(this.repository);
 
   Stream<BottleLedgerStats> call(String salesmanId) {
-    return repository.getCustomers(salesmanId).map((customers) {
+    return _mapToStats(repository.getCustomers(salesmanId));
+  }
+
+  Stream<BottleLedgerStats> getAgencyBottleLedger(String agencyId) {
+    return _mapToStats(repository.getCustomersByAgency(agencyId));
+  }
+
+  Stream<BottleLedgerStats> _mapToStats(Stream<List<Customer>> customerStream) {
+    return customerStream.map((customers) {
       int totalBottles = 0;
       int highBalanceCount = 0;
 

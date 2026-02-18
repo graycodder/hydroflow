@@ -1,0 +1,72 @@
+{
+    "rules": {
+        "Agencies": {
+            ".read": true,
+            ".write": true,
+            ".indexOn": [
+                "ownerId"
+            ]
+        },
+        "Salesmen": {
+            ".read": true,
+            ".write": true,
+            ".indexOn": [
+                "agencyId",
+                "phone",
+                "username"
+            ]
+        },
+        "Customers": {
+            ".read": true,
+            ".write": true,
+            ".indexOn": [
+                "agencyId",
+                "salesmanId",
+                "phone"
+            ]
+        },
+        "Stock_logs": {
+            ".read": true,
+            ".write": true,
+            ".indexOn": [
+                "salesmanId",
+                "date"
+            ]
+        },
+        "Transactions": {
+            ".read": true,
+            ".write": true,
+            ".indexOn": [
+                "agencyId",
+                "salesmanId",
+                "customerId",
+                "timestamp"
+            ]
+        },
+        "Notifications": {
+            ".read": true,
+            ".write": true
+        },
+        "Plans": {
+            ".read": true,
+            ".write": true
+        },
+        "Subscriptions": {
+            ".read": true,
+            ".write": true,
+            ".indexOn": [
+                "salesmanId",
+                "status",
+                "expiryDate"
+            ]
+        },
+        "app_config": {
+            ".read": true,
+            ".write": false
+        },
+        "Agency_Stock_History": {
+            ".read": true,
+            ".write": true
+        }
+    }
+}

@@ -7,8 +7,11 @@ import 'package:hydroflow/features/reports/presentation/bloc/reports_bloc.dart';
 import 'package:hydroflow/core/widgets/app_bottom_bar.dart';
 import 'package:hydroflow/core/widgets/hydro_flow_app_bar.dart';
 import 'package:hydroflow/core/widgets/hydro_flow_loader.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../widgets/daily_report_view.dart';
 import '../widgets/monthly_report_view.dart';
+import '../widgets/agency_daily_report_view.dart';
+import '../widgets/agency_monthly_report_view.dart';
 
 class ReportsPage extends StatefulWidget {
   const ReportsPage({super.key});
@@ -25,13 +28,25 @@ class _ReportsPageState extends State<ReportsPage> {
   @override
   Widget build(BuildContext context) {
     final authState = context.read<AuthBloc>().state;
-    String salesmanId = '';
+    String id = '';
+    bool isAgencyView = false;
+    
     if (authState is AuthAuthenticated) {
-      salesmanId = authState.salesman.id;
+      final prefs = sl<SharedPreferences>();
+      isAgencyView = (prefs.getBool('dashboard_is_agency_view') ?? false) && authState.salesman.role == 'owner';
+      id = isAgencyView ? authState.salesman.agencyId : authState.salesman.id;
     }
 
     return BlocProvider(
-      create: (context) => sl<ReportsBloc>()..add(LoadDailyReport(salesmanId, selectedDate)),
+      create: (context) {
+        final bloc = sl<ReportsBloc>();
+        if (isAgencyView) {
+          bloc.add(LoadAgencyDailyReport(id, selectedDate));
+        } else {
+          bloc.add(LoadDailyReport(id, selectedDate));
+        }
+        return bloc;
+      },
       child: Builder(
         builder: (context) {
           return Scaffold(
@@ -39,7 +54,23 @@ class _ReportsPageState extends State<ReportsPage> {
             appBar: const HydroFlowAppBar(),
             body: Column(
               children: [
-                _buildTopTabs(context, salesmanId),
+                if (isAgencyView)
+                  Container(
+                    width: double.infinity,
+                    color: Colors.orange.withOpacity(0.1),
+                    padding: const EdgeInsets.symmetric(vertical: 8),
+                    child: const Center(
+                      child: Text(
+                        "Agency View - Consolidated Reports",
+                        style: TextStyle(
+                          color: Colors.orange,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ),
+                  ),
+                _buildTopTabs(context, id, isAgencyView),
                 Expanded(
                   child: BlocBuilder<ReportsBloc, ReportsState>(
                     builder: (context, state) {
@@ -54,48 +85,92 @@ class _ReportsPageState extends State<ReportsPage> {
                         return SingleChildScrollView(
                           padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8),
                           child: isMonthly 
-                            ? MonthlyReportView(
-                                report: state.report,
-                                salesmanId: salesmanId,
-                                selectedMonth: selectedMonth,
-                                isCurrentMonth: isCurrentMonth,
-                                onLeftChevronPressed: () {
-                                  setState(() {
-                                    selectedMonth = DateTime(selectedMonth.year, selectedMonth.month - 1);
-                                  });
-                                  context.read<ReportsBloc>().add(LoadMonthlyReport(salesmanId, selectedMonth));
-                                },
-                                onRightChevronPressed: () {
-                                  setState(() {
-                                    selectedMonth = DateTime(selectedMonth.year, selectedMonth.month + 1);
-                                  });
-                                  context.read<ReportsBloc>().add(LoadMonthlyReport(salesmanId, selectedMonth));
-                                },
-                                onExportPressed: () {},
-                                onSharePressed: () {},
-                              )
-                            : DailyReportView(
-                                report: state.report,
-                                salesmanId: salesmanId,
-                                selectedDate: selectedDate,
-                                isCurrentDate: selectedDate.year == now.year && 
-                                               selectedDate.month == now.month && 
-                                               selectedDate.day == now.day,
-                                onSharedPressed: () {},
-                                onSelectDatePressed: () => _showPicker(context, salesmanId),
-                                onLeftChevronPressed: () {
-                                  setState(() {
-                                    selectedDate = selectedDate.subtract(const Duration(days: 1));
-                                  });
-                                  context.read<ReportsBloc>().add(LoadDailyReport(salesmanId, selectedDate));
-                                },
-                                onRightChevronPressed: () {
-                                  setState(() {
-                                    selectedDate = selectedDate.add(const Duration(days: 1));
-                                  });
-                                  context.read<ReportsBloc>().add(LoadDailyReport(salesmanId, selectedDate));
-                                },
-                              ),
+                            ? (isAgencyView 
+                                ? AgencyMonthlyReportView(
+                                    report: state.report,
+                                    agencyId: id,
+                                    selectedMonth: selectedMonth,
+                                    isCurrentMonth: isCurrentMonth,
+                                    onLeftChevronPressed: () {
+                                      setState(() {
+                                        selectedMonth = DateTime(selectedMonth.year, selectedMonth.month - 1);
+                                      });
+                                      context.read<ReportsBloc>().add(LoadAgencyMonthlyReport(id, selectedMonth));
+                                    },
+                                    onRightChevronPressed: () {
+                                      setState(() {
+                                        selectedMonth = DateTime(selectedMonth.year, selectedMonth.month + 1);
+                                      });
+                                      context.read<ReportsBloc>().add(LoadAgencyMonthlyReport(id, selectedMonth));
+                                    },
+                                    onExportPressed: () {},
+                                    onSharePressed: () {},
+                                  )
+                                : MonthlyReportView(
+                                    report: state.report,
+                                    salesmanId: id,
+                                    selectedMonth: selectedMonth,
+                                    isCurrentMonth: isCurrentMonth,
+                                    onLeftChevronPressed: () {
+                                      setState(() {
+                                        selectedMonth = DateTime(selectedMonth.year, selectedMonth.month - 1);
+                                      });
+                                      context.read<ReportsBloc>().add(LoadMonthlyReport(id, selectedMonth));
+                                    },
+                                    onRightChevronPressed: () {
+                                      setState(() {
+                                        selectedMonth = DateTime(selectedMonth.year, selectedMonth.month + 1);
+                                      });
+                                      context.read<ReportsBloc>().add(LoadMonthlyReport(id, selectedMonth));
+                                    },
+                                    onExportPressed: () {},
+                                    onSharePressed: () {},
+                                  ))
+                            : (isAgencyView
+                                ? AgencyDailyReportView(
+                                    report: state.report,
+                                    agencyId: id,
+                                    selectedDate: selectedDate,
+                                    isCurrentDate: selectedDate.year == now.year && 
+                                                   selectedDate.month == now.month && 
+                                                   selectedDate.day == now.day,
+                                    onSharedPressed: () {},
+                                    onSelectDatePressed: () => _showPicker(context, id, isAgencyView),
+                                    onLeftChevronPressed: () {
+                                      setState(() {
+                                        selectedDate = selectedDate.subtract(const Duration(days: 1));
+                                      });
+                                      context.read<ReportsBloc>().add(LoadAgencyDailyReport(id, selectedDate));
+                                    },
+                                    onRightChevronPressed: () {
+                                      setState(() {
+                                        selectedDate = selectedDate.add(const Duration(days: 1));
+                                      });
+                                      context.read<ReportsBloc>().add(LoadAgencyDailyReport(id, selectedDate));
+                                    },
+                                  )
+                                : DailyReportView(
+                                    report: state.report,
+                                    salesmanId: id,
+                                    selectedDate: selectedDate,
+                                    isCurrentDate: selectedDate.year == now.year && 
+                                                   selectedDate.month == now.month && 
+                                                   selectedDate.day == now.day,
+                                    onSharedPressed: () {},
+                                    onSelectDatePressed: () => _showPicker(context, id, isAgencyView),
+                                    onLeftChevronPressed: () {
+                                      setState(() {
+                                        selectedDate = selectedDate.subtract(const Duration(days: 1));
+                                      });
+                                      context.read<ReportsBloc>().add(LoadDailyReport(id, selectedDate));
+                                    },
+                                    onRightChevronPressed: () {
+                                      setState(() {
+                                        selectedDate = selectedDate.add(const Duration(days: 1));
+                                      });
+                                      context.read<ReportsBloc>().add(LoadDailyReport(id, selectedDate));
+                                    },
+                                  )),
                         );
                       }
                       return const Center(child: Text("Initializing..."));
@@ -111,7 +186,7 @@ class _ReportsPageState extends State<ReportsPage> {
     );
   }
 
-  Widget _buildTopTabs(BuildContext context, String salesmanId) {
+  Widget _buildTopTabs(BuildContext context, String id, bool isAgencyView) {
     return Container(
       margin: const EdgeInsets.all(16),
       padding: const EdgeInsets.all(4),
@@ -127,7 +202,10 @@ class _ReportsPageState extends State<ReportsPage> {
               isSelected: !isMonthly,
               onTap: () {
                 setState(() => isMonthly = false);
-                context.read<ReportsBloc>().add(LoadDailyReport(salesmanId, selectedDate));
+                final event = isAgencyView 
+                    ? LoadAgencyDailyReport(id, selectedDate)
+                    : LoadDailyReport(id, selectedDate);
+                context.read<ReportsBloc>().add(event);
               },
             ),
           ),
@@ -137,7 +215,10 @@ class _ReportsPageState extends State<ReportsPage> {
               isSelected: isMonthly,
               onTap: () {
                 setState(() => isMonthly = true);
-                context.read<ReportsBloc>().add(LoadMonthlyReport(salesmanId, selectedMonth));
+                final event = isAgencyView 
+                    ? LoadAgencyMonthlyReport(id, selectedMonth)
+                    : LoadMonthlyReport(id, selectedMonth);
+                context.read<ReportsBloc>().add(event);
               },
             ),
           ),
@@ -171,7 +252,7 @@ class _ReportsPageState extends State<ReportsPage> {
     );
   }
 
-  Future<void> _showPicker(BuildContext context, String salesmanId) async {
+  Future<void> _showPicker(BuildContext context, String id, bool isAgencyView) async {
     final now = DateTime.now();
     if (isMonthly) {
       final picked = await showDatePicker(
@@ -185,7 +266,10 @@ class _ReportsPageState extends State<ReportsPage> {
         setState(() {
           selectedMonth = DateTime(picked.year, picked.month);
         });
-        context.read<ReportsBloc>().add(LoadMonthlyReport(salesmanId, selectedMonth));
+        final event = isAgencyView 
+            ? LoadAgencyMonthlyReport(id, selectedMonth)
+            : LoadMonthlyReport(id, selectedMonth);
+        context.read<ReportsBloc>().add(event);
       }
     } else {
       final picked = await showDatePicker(
@@ -198,7 +282,10 @@ class _ReportsPageState extends State<ReportsPage> {
         setState(() {
           selectedDate = picked;
         });
-        context.read<ReportsBloc>().add(LoadDailyReport(salesmanId, selectedDate));
+        final event = isAgencyView 
+            ? LoadAgencyDailyReport(id, selectedDate)
+            : LoadDailyReport(id, selectedDate);
+        context.read<ReportsBloc>().add(event);
       }
     }
   }

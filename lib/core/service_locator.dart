@@ -28,6 +28,8 @@ import 'package:hydroflow/features/reports/data/repositories/report_repository_i
 import 'package:hydroflow/features/reports/domain/repositories/report_repository.dart';
 import 'package:hydroflow/features/reports/domain/usecases/get_daily_report_usecase.dart';
 import 'package:hydroflow/features/reports/domain/usecases/get_monthly_report_usecase.dart';
+import 'package:hydroflow/features/reports/domain/usecases/get_agency_daily_report_usecase.dart';
+import 'package:hydroflow/features/reports/domain/usecases/get_agency_monthly_report_usecase.dart';
 import 'package:hydroflow/features/reports/presentation/bloc/reports_bloc.dart';
 import 'package:hydroflow/features/subscription/data/repositories/subscription_repository_impl.dart';
 import 'package:hydroflow/features/subscription/domain/repositories/subscription_repository.dart';
@@ -52,6 +54,9 @@ import 'package:hydroflow/features/dashboard/presentation/bloc/dashboard_bloc.da
 import 'package:hydroflow/features/dashboard/presentation/bloc/dashboard_event.dart';
 import 'package:hydroflow/features/dashboard/presentation/bloc/dashboard_state.dart';
 import 'package:hydroflow/core/bloc/connectivity/connectivity_bloc.dart';
+import 'package:hydroflow/features/auth/presentation/bloc/agency_bloc.dart';
+import 'package:hydroflow/features/auth/domain/repositories/agency_repository.dart';
+import 'package:hydroflow/features/auth/data/repositories/agency_repository_impl.dart';
 
 
 
@@ -124,10 +129,14 @@ Future<void> init() async {
     () => ReportsBloc(
       getDailyReportUseCase: sl(),
       getMonthlyReportUseCase: sl(),
+      getAgencyDailyReportUseCase: sl(),
+      getAgencyMonthlyReportUseCase: sl(),
     ),
   );
   sl.registerLazySingleton(() => GetDailyReportUseCase(sl()));
   sl.registerLazySingleton(() => GetMonthlyReportUseCase(sl()));
+  sl.registerLazySingleton(() => GetAgencyDailyReportUseCase(sl()));
+  sl.registerLazySingleton(() => GetAgencyMonthlyReportUseCase(sl()));
   sl.registerLazySingleton<ReportRepository>(
     () => ReportRepositoryImpl(
       database: sl(),
@@ -142,6 +151,8 @@ Future<void> init() async {
       getTodayTransactionsUseCase: sl(),
       customerRepository: sl(),
       authRepository: sl(),
+      agencyRepository: sl(),
+      inventoryRepository: sl(),
       prefs: sl(),
     ),
   );
@@ -190,5 +201,10 @@ Future<void> init() async {
   sl.registerLazySingleton(() => GetDashboardSummaryUseCase(sl()));
   sl.registerLazySingleton(() => ConnectivityBloc());
   sl.registerFactory(() => DashboardBloc(getDashboardSummary: sl()));
+  // Agency Feature
+  sl.registerLazySingleton<AgencyRepository>(
+    () => AgencyRepositoryImpl(database: sl()),
+  );
+  sl.registerFactory(() => AgencyBloc(agencyRepository: sl()));
 }
 

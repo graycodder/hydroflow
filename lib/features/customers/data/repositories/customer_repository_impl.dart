@@ -30,6 +30,23 @@ class CustomerRepositoryImpl implements CustomerRepository {
   }
 
   @override
+  Stream<List<Customer>> getCustomersByAgency(String agencyId) {
+    final ref = _database.ref().child('Customers');
+    ref.keepSynced(true);
+    // Query customers by agencyId
+    return ref.orderByChild('agencyId').equalTo(agencyId).onValue.map((event) {
+      if (event.snapshot.exists) {
+        final data = event.snapshot.value as Map<dynamic, dynamic>;
+        return data.entries.map((entry) {
+             final map = Map<String, dynamic>.from(entry.value as Map);
+             map['id'] = entry.key; // Inject ID
+             return CustomerModel.fromMap(map);
+        }).toList();
+      }
+      return [];
+    });
+  }
+  @override
   Future<int> getTotalBottleBalance(String salesmanId) async {
     try {
       final ref = _database.ref().child('Customers');
@@ -53,18 +70,74 @@ class CustomerRepositoryImpl implements CustomerRepository {
   @override
   Future<void> addCustomer(Customer customer) async {
     try {
-      // 1. Generate Custom Customer ID
+      final salesmanId = customer.salesmanId;
+      final agencyId = customer.agencyId;
+      
+      // 1. Check Salesman Quota and Agency Limit (Atomic)
+      final salesmanRef = _database.ref().child('Salesmen').child(salesmanId);
+      final agencyRef = _database.ref().child('Agencies').child(agencyId);
+
+      // Increment Salesman Count with Limit Check
+      final salesmanTx = await salesmanRef.runTransaction((Object? data) {
+        if (data == null) return Transaction.abort();
+        final map = Map<String, dynamic>.from(data as Map);
+        final count = (map['customerCount'] as num?)?.toInt() ?? 0;
+        final max = (map['maxCustomers'] as num?)?.toInt() ?? 0;
+        
+        if (count >= max && max > 0) {
+          return Transaction.abort(); // Quota reached
+        }
+        
+        map['customerCount'] = count + 1;
+        map['activeCustomers'] = ((map['activeCustomers'] as num?)?.toInt() ?? 0) + 1;
+        map['totalDepositsHeld'] = ((map['totalDepositsHeld'] as num?)?.toDouble() ?? 0.0) + customer.securityDeposit;
+        return Transaction.success(map);
+      });
+
+      if (!salesmanTx.committed) {
+        throw Exception('Customer quota for this salesman has been reached.');
+      }
+
+      // Increment Agency Total Count with Limit Check
+      if (agencyId.isNotEmpty) {
+        final agencyTx = await agencyRef.runTransaction((Object? data) {
+          if (data == null) return Transaction.abort();
+          final map = Map<String, dynamic>.from(data as Map);
+          final totalCount = (map['totalCustomersCount'] as num?)?.toInt() ?? 0;
+          final maxTotal = (map['maxCustomers'] as num?)?.toInt() ?? 500;
+
+          if (totalCount >= maxTotal) {
+            return Transaction.abort(); // Agency limit reached
+          }
+
+          map['totalCustomersCount'] = totalCount + 1;
+          return Transaction.success(map);
+        });
+
+        if (!agencyTx.committed) {
+          // Rollback Salesman increment if Agency limit fails
+          await salesmanRef.update({
+            'customerCount': ServerValue.increment(-1),
+            'activeCustomers': ServerValue.increment(-1),
+            'totalDepositsHeld': ServerValue.increment(-customer.securityDeposit),
+          });
+          throw Exception('Agency-wide customer limit (Subscription) has been reached.');
+        }
+      }
+
+      // 2. Add Customer Record
       final now = DateTime.now();
       final dateStr = DateFormat('yyyyMMdd').format(now);
       final timeStr = DateFormat('HHmmss').format(now);
-      final safeSalesmanId = customer.salesmanId.replaceAll(RegExp(r'[.#$\[\]]'), '_'); 
+      final safeSalesmanId = salesmanId.replaceAll(RegExp(r'[.#$\[\]]'), '_'); 
       final customCustomerId = '${dateStr}_${safeSalesmanId}_$timeStr';
 
       final ref = _database.ref().child('Customers').child(customCustomerId);
       
       final customerModel = CustomerModel(
         id: customCustomerId,
-        salesmanId: customer.salesmanId,
+        agencyId: agencyId,
+        salesmanId: salesmanId,
         name: customer.name,
         phone: customer.phone,
         address: customer.address,
@@ -79,14 +152,6 @@ class CustomerRepositoryImpl implements CustomerRepository {
       );
       
       await ref.set(customerModel.toMap());
-
-      // Increment salesman's customer count and active customer count
-      final salesmanRef = _database.ref().child('Salesmen').child(customer.salesmanId);
-      await salesmanRef.update({
-        'customerCount': ServerValue.increment(1),
-        'activeCustomers': ServerValue.increment(1),
-        'totalDepositsHeld': ServerValue.increment(customer.securityDeposit),
-      });
 
       // Record Deposit Transaction
       if (customer.securityDeposit > 0) {
@@ -224,6 +289,7 @@ class CustomerRepositoryImpl implements CustomerRepository {
       // 2. Update Customer Data
       final customerModel = CustomerModel(
         id: customer.id,
+        agencyId: customer.agencyId,
         salesmanId: customer.salesmanId,
         name: customer.name,
         phone: customer.phone,
@@ -366,12 +432,21 @@ class CustomerRepositoryImpl implements CustomerRepository {
         'lastSettledDate': DateTime.now().toIso8601String(),
       });
 
-      // 2. Update Salesman (Reduce Total Deposits Held)
+      // 2. Update Salesman (Reduce Total Deposits Held and Count)
       final salesmanRef = _database.ref().child('Salesmen/${customer.salesmanId}');
       await salesmanRef.update({
         'totalDepositsHeld': ServerValue.increment(-deposit), // Reduce by full original deposit
         'activeCustomers': ServerValue.increment(-1),
+        'customerCount': ServerValue.increment(-1), // Free up Quota
       });
+
+      // 3. Update Agency Total Count (Free up Subscription space)
+      if (customer.agencyId.isNotEmpty) {
+        final agencyRef = _database.ref().child('Agencies/${customer.agencyId}');
+        await agencyRef.update({
+          'totalCustomersCount': ServerValue.increment(-1),
+        });
+      }
 
       // 3. Record Transactions
       

@@ -8,6 +8,7 @@ class DeliveryState extends Equatable {
   final DeliveryStatus status;
   final List<Customer> customers;
   final List<TransactionEntity> todayTransactions;
+  final List<TransactionEntity> allTodayTransactions;
   final Customer? selectedCustomer;
   final double totalSales;
   final double totalCash;
@@ -17,12 +18,14 @@ class DeliveryState extends Equatable {
   final String? errorMessage;
   final int currentStock;
   final String? selectedZone;
+  final String? selectedSalesmanId;
   final List<Customer> filteredCustomers;
 
   const DeliveryState({
     this.status = DeliveryStatus.initial,
     this.customers = const [],
     this.todayTransactions = const [],
+    this.allTodayTransactions = const [],
     this.selectedCustomer,
     this.totalSales = 0,
     this.totalCash = 0,
@@ -32,6 +35,7 @@ class DeliveryState extends Equatable {
     this.errorMessage,
     this.currentStock = 0,
     this.selectedZone,
+    this.selectedSalesmanId,
     this.filteredCustomers = const [],
   });
 
@@ -39,6 +43,7 @@ class DeliveryState extends Equatable {
     DeliveryStatus? status,
     List<Customer>? customers,
     List<TransactionEntity>? todayTransactions,
+    List<TransactionEntity>? allTodayTransactions,
     Customer? selectedCustomer,
     bool clearSelectedCustomer = false,
     double? totalSales,
@@ -50,12 +55,15 @@ class DeliveryState extends Equatable {
     int? currentStock,
     String? selectedZone,
     bool clearSelectedZone = false,
+    String? selectedSalesmanId,
+    bool clearSelectedSalesman = false,
     List<Customer>? filteredCustomers,
   }) {
     return DeliveryState(
       status: status ?? this.status,
       customers: customers ?? this.customers,
       todayTransactions: todayTransactions ?? this.todayTransactions,
+      allTodayTransactions: allTodayTransactions ?? this.allTodayTransactions,
       selectedCustomer: clearSelectedCustomer ? null : (selectedCustomer ?? this.selectedCustomer),
       totalSales: totalSales ?? this.totalSales,
       totalCash: totalCash ?? this.totalCash,
@@ -65,6 +73,7 @@ class DeliveryState extends Equatable {
       errorMessage: errorMessage ?? this.errorMessage,
       currentStock: currentStock ?? this.currentStock,
       selectedZone: clearSelectedZone ? null : (selectedZone ?? this.selectedZone),
+      selectedSalesmanId: clearSelectedSalesman ? null : (selectedSalesmanId ?? this.selectedSalesmanId),
       filteredCustomers: filteredCustomers ?? this.filteredCustomers,
     );
   }
@@ -74,6 +83,7 @@ class DeliveryState extends Equatable {
         status,
         customers,
         todayTransactions,
+        allTodayTransactions,
         selectedCustomer,
         totalSales,
         totalCash,
@@ -83,6 +93,7 @@ class DeliveryState extends Equatable {
         errorMessage,
         currentStock,
         selectedZone,
+        selectedSalesmanId,
         filteredCustomers,
       ];
 }

@@ -12,6 +12,7 @@ class BottleBloc extends Bloc<BottleEvent, BottleState> {
       : _getBottleLedger = getBottleLedger,
         super(BottleInitial()) {
     on<LoadBottleLedger>(_onLoadBottleLedger);
+    on<LoadAgencyBottleLedger>(_onLoadAgencyBottleLedger);
   }
 
   Future<void> _onLoadBottleLedger(
@@ -28,6 +29,23 @@ class BottleBloc extends Bloc<BottleEvent, BottleState> {
         avgBalance: stats.avgBalance,
       ),
       onError: (e, stackTrace) => BottleFailure('Failed to load bottle ledger: $e'),
+    );
+  }
+
+  Future<void> _onLoadAgencyBottleLedger(
+    LoadAgencyBottleLedger event,
+    Emitter<BottleState> emit,
+  ) async {
+    emit(BottleLoading());
+    await emit.forEach<BottleLedgerStats>(
+      _getBottleLedger.getAgencyBottleLedger(event.agencyId),
+      onData: (stats) => BottleLoaded(
+        customers: stats.customers,
+        totalBottles: stats.totalBottles,
+        highBalanceCount: stats.highBalanceCount,
+        avgBalance: stats.avgBalance,
+      ),
+      onError: (e, stackTrace) => BottleFailure('Failed to load agency bottle ledger: $e'),
     );
   }
 }

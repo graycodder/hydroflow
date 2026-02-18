@@ -6,7 +6,7 @@ class GetDashboardSummaryUseCase {
 
   GetDashboardSummaryUseCase(this.repository);
 
-  Stream<DashboardSummary> call(String salesmanId) {
-    return repository.getDashboardSummary(salesmanId);
+  Stream<DashboardSummary> call({required String salesmanId, String? agencyId}) {
+    return repository.getDashboardSummary(salesmanId: salesmanId, agencyId: agencyId);
   }
 }

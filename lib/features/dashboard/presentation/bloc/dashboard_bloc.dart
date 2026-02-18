@@ -20,7 +20,10 @@ class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
   Future<void> _onLoadDashboard(LoadDashboard event, Emitter<DashboardState> emit) async {
     emit(DashboardLoading());
     await _dashboardSubscription?.cancel();
-    _dashboardSubscription = _getDashboardSummary(event.salesmanId).listen(
+    _dashboardSubscription = _getDashboardSummary(
+      salesmanId: event.salesmanId,
+      agencyId: event.agencyId,
+    ).listen(
       (summary) {
         if (!isClosed) {
           add(DashboardUpdated(summary));

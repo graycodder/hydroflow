@@ -4,15 +4,18 @@ import 'package:hydroflow/features/customers/presentation/bloc/customer_bloc.dar
 import 'package:hydroflow/features/customers/presentation/bloc/customer_event.dart';
 import 'package:hydroflow/features/customers/presentation/bloc/customer_state.dart';
 import 'package:flutter/services.dart';
+import 'package:hydroflow/features/auth/domain/entities/salesman.dart';
+import 'package:hydroflow/features/auth/domain/repositories/agency_repository.dart';
+import 'package:hydroflow/core/service_locator.dart' as di;
 import 'package:hydroflow/core/widgets/hydro_flow_loader.dart';
 
 class AddCustomerDialog extends StatefulWidget {
-  final String salesmanId;
+  final Salesman currentUser;
   final CustomerBloc bloc;
 
   const AddCustomerDialog({
     super.key,
-    required this.salesmanId,
+    required this.currentUser,
     required this.bloc,
   });
 
@@ -28,7 +31,43 @@ class _AddCustomerDialogState extends State<AddCustomerDialog> {
   final _zoneController = TextEditingController();
   final _depositController = TextEditingController();
   String? _paymentMode;
+  String? _selectedSalesmanId;
+  List<Salesman> _availableSalesmen = [];
+  bool _isLoadingSalesmen = false;
   bool _isSubmitting = false;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.currentUser.role == 'owner') {
+      _selectedSalesmanId = widget.currentUser.id; // Default to owner
+      _fetchSalesmen();
+    } else {
+      _selectedSalesmanId = widget.currentUser.id;
+    }
+  }
+
+  Future<void> _fetchSalesmen() async {
+    setState(() => _isLoadingSalesmen = true);
+    try {
+      final repo = di.sl<AgencyRepository>();
+      final salesmen = await repo.getSalesmenByAgency(widget.currentUser.agencyId);
+      if (mounted) {
+        setState(() {
+          _availableSalesmen = salesmen;
+          // Ensure selected ID is valid (it should be since owner is in the list usually, 
+          // or we pick the first one if owner not found for some reason)
+           if (!_availableSalesmen.any((s) => s.id == _selectedSalesmanId) && _availableSalesmen.isNotEmpty) {
+             _selectedSalesmanId = _availableSalesmen.first.id;
+           }
+          _isLoadingSalesmen = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) setState(() => _isLoadingSalesmen = false);
+      print('Error fetching salesmen: $e');
+    }
+  }
 
   @override
   void dispose() {
@@ -71,7 +110,7 @@ class _AddCustomerDialogState extends State<AddCustomerDialog> {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Row(
+                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       const SizedBox(width: 24),
@@ -89,6 +128,42 @@ class _AddCustomerDialogState extends State<AddCustomerDialog> {
                     ],
                   ),
                   const SizedBox(height: 20),
+
+                  if (widget.currentUser.role == 'owner') ...[
+                    _buildLabel('Assign To Salesman', isMandatory: true),
+                    if (_isLoadingSalesmen)
+                      const Padding(padding: EdgeInsets.all(8.0), child: Center(child: CircularProgressIndicator()))
+                    else
+                      DropdownButtonFormField<String>(
+                        value: _selectedSalesmanId,
+                        isExpanded: true,
+                        hint: const Text('Select Salesman'),
+                        items: _availableSalesmen.map((s) {
+                          return DropdownMenuItem(
+                            value: s.id,
+                            child: Text('${s.name} (${s.role})'),
+                          );
+                        }).toList(),
+                        onChanged: (val) {
+                          setState(() => _selectedSalesmanId = val);
+                        },
+                         decoration: InputDecoration(
+                          filled: true,
+                          fillColor: Colors.grey[100],
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                            borderSide: BorderSide(color: Colors.grey.shade300),
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                            borderSide: BorderSide(color: Colors.grey.shade300),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                  ],
+
                   _buildLabel('Customer Name', isMandatory: true),
                   _buildTextFormField(
                     _nameController,
@@ -225,11 +300,28 @@ class _AddCustomerDialogState extends State<AddCustomerDialog> {
                     child: ElevatedButton(
                       onPressed: () {
                         if (_formKey.currentState!.validate()) {
+                          if (_selectedSalesmanId == null) {
+                             ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please select a salesman')));
+                             return;
+                          }
+
                           final name = _nameController.text.trim();
                           final phone = _phoneController.text.trim();
                           final address = _addressController.text.trim();
                           final zone = _zoneController.text.trim();
                           final deposit = double.parse(_depositController.text.trim());
+
+                          // Quota Check
+                          final targetSalesman = widget.currentUser.role == 'owner' 
+                              ? _availableSalesmen.firstWhere((s) => s.id == _selectedSalesmanId, orElse: () => widget.currentUser)
+                              : widget.currentUser;
+
+                          if (targetSalesman.customerCount >= targetSalesman.maxCustomers && targetSalesman.maxCustomers > 0) {
+                             ScaffoldMessenger.of(context).showSnackBar(
+                               SnackBar(content: Text('Quota reached for ${targetSalesman.name} (${targetSalesman.customerCount}/${targetSalesman.maxCustomers})'))
+                             );
+                             return;
+                          }
 
                           showDialog(
                             context: context,
@@ -248,7 +340,8 @@ class _AddCustomerDialogState extends State<AddCustomerDialog> {
                                     });
                                     Navigator.pop(confirmContext);
                                     widget.bloc.add(AddCustomer(
-                                      salesmanId: widget.salesmanId,
+                                      agencyId: widget.currentUser.agencyId,
+                                      salesmanId: _selectedSalesmanId!,
                                       name: name,
                                       phone: phone,
                                       address: address,

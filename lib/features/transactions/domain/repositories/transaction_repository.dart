@@ -4,6 +4,7 @@ abstract class TransactionRepository {
   Future<void> recordTransaction(TransactionEntity transaction);
   Future<void> recordAdjustment(TransactionEntity transaction);
   Stream<List<TransactionEntity>> getTodayTransactions(String salesmanId);
+  Stream<List<TransactionEntity>> getTodayTransactionsByAgency(List<String> salesmenIds);
   Stream<List<TransactionEntity>> getTransactionsByDate(String salesmanId, DateTime date);
   Stream<List<TransactionEntity>> getTransactionsByMonth(String salesmanId, DateTime month);
   Stream<List<TransactionEntity>> getTransactionsByCustomer(String customerId);

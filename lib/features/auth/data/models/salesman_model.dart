@@ -6,6 +6,8 @@ class SalesmanModel extends Salesman {
     required super.id,
     required super.name,
     super.agencyName,
+    required super.agencyId,
+    super.role = 'salesman',
     required super.username,
     required super.password,
     super.currentStock = 0,
@@ -24,6 +26,8 @@ class SalesmanModel extends Salesman {
     super.subEndDate,
     super.joinDate,
     super.lastNotification,
+    super.deviceId,
+    super.createdAt,
   });
 
   factory SalesmanModel.fromSnapshot(DataSnapshot snapshot) {
@@ -37,6 +41,8 @@ class SalesmanModel extends Salesman {
       id: snapshot.key!, // The key of the node (e.g., S001)
       name: data['name'] as String? ?? '',
       agencyName: data['agencyName'] as String?,
+      agencyId: data['agencyId'] as String? ?? '', // Fallback empty for migration
+      role: data['role'] as String? ?? 'salesman',
       username: data['username'] as String? ?? '',
       password: data['password'] as String? ?? '',
       currentStock: (data['currentStock'] as num?)?.toInt() ?? 0,
@@ -67,6 +73,10 @@ class SalesmanModel extends Salesman {
       lastNotification: data['lastNotification'] != null
           ? DateTime.tryParse(data['lastNotification'].toString())
           : null,
+      deviceId: data['deviceId'] as String?,
+      createdAt: data['createdAt'] != null
+          ? DateTime.tryParse(data['createdAt'].toString())
+          : null,
     );
   }
 
@@ -74,6 +84,8 @@ class SalesmanModel extends Salesman {
     return {
       'name': name,
       'agencyName': agencyName,
+      'agencyId': agencyId,
+      'role': role,
       'username': username,
       'password': password,
       'currentStock': currentStock,
@@ -92,6 +104,8 @@ class SalesmanModel extends Salesman {
       'subEndDate': subEndDate?.toIso8601String(),
       'joinDate': joinDate?.toIso8601String(),
       'lastNotification': lastNotification?.toIso8601String(),
+      'deviceId': deviceId,
+      'createdAt': createdAt?.toIso8601String(),
     };
   }
 }

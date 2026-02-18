@@ -15,3 +15,12 @@ class LoadBottleLedger extends BottleEvent {
   @override
   List<Object?> get props => [salesmanId];
 }
+
+class LoadAgencyBottleLedger extends BottleEvent {
+  final String agencyId;
+
+  const LoadAgencyBottleLedger(this.agencyId);
+
+  @override
+  List<Object?> get props => [agencyId];
+}

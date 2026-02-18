@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:hydroflow/core/service_locator.dart';
 import 'package:hydroflow/core/widgets/app_bottom_bar.dart';
 import 'package:hydroflow/features/auth/presentation/bloc/auth_bloc.dart';
@@ -8,6 +9,9 @@ import 'package:hydroflow/features/auth/presentation/bloc/auth_state.dart';
 import 'package:hydroflow/features/customers/presentation/bloc/customer_bloc.dart';
 import 'package:hydroflow/features/customers/presentation/bloc/customer_event.dart';
 import 'package:hydroflow/features/customers/presentation/bloc/customer_state.dart';
+import 'package:hydroflow/features/auth/presentation/bloc/agency_bloc.dart';
+import 'package:hydroflow/features/auth/presentation/bloc/agency_state.dart';
+import 'package:hydroflow/features/auth/presentation/bloc/agency_event.dart';
 import 'package:hydroflow/features/customers/presentation/widgets/customer_details_dialog.dart';
 import 'package:hydroflow/features/customers/presentation/widgets/add_customer_dialog.dart';
 import 'package:hydroflow/core/widgets/hydro_flow_app_bar.dart';
@@ -15,6 +19,7 @@ import 'package:hydroflow/features/customers/presentation/widgets/pending_balanc
 import 'package:hydroflow/features/customers/presentation/widgets/bottle_balance_adjustment_dialog.dart';
 import 'package:hydroflow/core/widgets/hydro_flow_loader.dart';
 import 'package:dropdown_search/dropdown_search.dart';
+import 'package:hydroflow/features/auth/domain/entities/salesman.dart';
 
 
 class CustomersPage extends StatefulWidget {
@@ -30,7 +35,15 @@ class _CustomersPageState extends State<CustomersPage> {
     super.initState();
     final authState = context.read<AuthBloc>().state;
     if (authState is AuthAuthenticated) {
-      context.read<CustomerBloc>().add(LoadCustomers(authState.salesman.id));
+      final salesman = authState.salesman;
+      final prefs = sl<SharedPreferences>();
+      final isAgencyView = prefs.getBool('dashboard_is_agency_view') ?? false;
+
+      if (salesman.role == 'owner' && isAgencyView) {
+        context.read<CustomerBloc>().add(LoadAgencyCustomers(salesman.agencyId));
+      } else {
+        context.read<CustomerBloc>().add(LoadCustomers(salesman.id));
+      }
     }
   }
 
@@ -51,11 +64,26 @@ class _CustomersPageState extends State<CustomersPage> {
                       return const HydroFlowLoader(message: 'Loading Customers...', isOverlay: false);
                     }
                     
-                    return Column(
+                    final prefs = sl<SharedPreferences>();
+                    final isAgencyView = prefs.getBool('dashboard_is_agency_view') ?? false;
+                    final isAgency = salesman.role == 'owner' && isAgencyView;
+                    
+                    Widget body = Column(
                       mainAxisAlignment: MainAxisAlignment.start,
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // Stats Header
+                        // Stats Header with Title
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+                          child: Text(
+                            isAgency ? 'Agency Customers' : 'My Customers',
+                            style: GoogleFonts.inter(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.black87,
+                            ),
+                          ),
+                        ),
                         Container(
                           padding: const EdgeInsets.symmetric(vertical: 16),
                           color: Colors.grey[50],
@@ -68,13 +96,83 @@ class _CustomersPageState extends State<CustomersPage> {
                             ],
                           ),
                         ),
+
+                                                // Salesman Filter (Only in Agency View)
+                        if (isAgency)
+                          BlocBuilder<AgencyBloc, AgencyState>(
+                            builder: (context, agencyState) {
+                              if (agencyState is AgencySalesmenLoaded) {
+                                final salesmen = agencyState.salesmen;
+                                return Padding(
+                                  padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                                  child: DropdownSearch<Salesman>(
+                                    items: (filter, loadProps) {
+                                      var filteredSalesmen = salesmen;
+                                      if (state.selectedZone != null) {
+                                        final activeInZone = state.customers
+                                            .where((c) => c.zone == state.selectedZone)
+                                            .map((c) => c.salesmanId)
+                                            .toSet();
+                                        filteredSalesmen = salesmen.where((s) => activeInZone.contains(s.id)).toList();
+                                      }
+                                      return [
+                                        const Salesman(id: 'all', name: 'All Salesmen', agencyId: '', username: '', password: '', phoneNumber: ''),
+                                        ...filteredSalesmen,
+                                      ];
+                                    },
+                                    itemAsString: (Salesman s) => s.id == 'all' ? s.name : '${s.name} (${s.phoneNumber})',
+                                    decoratorProps: DropDownDecoratorProps(
+                                      decoration: InputDecoration(
+                                        labelText: 'Filter by Salesman',
+                                        hintText: 'Select Salesman',
+                                        prefixIcon: const Icon(Icons.person_outline, color: Colors.blueGrey),
+                                        filled: true,
+                                        fillColor: Colors.white,
+                                        border: OutlineInputBorder(
+                                          borderRadius: BorderRadius.circular(12),
+                                          borderSide: BorderSide(color: Colors.grey.shade300),
+                                        ),
+                                        enabledBorder: OutlineInputBorder(
+                                          borderRadius: BorderRadius.circular(12),
+                                          borderSide: BorderSide(color: Colors.grey.shade300),
+                                        ),
+                                        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                      ),
+                                    ),
+                                    popupProps: PopupProps.menu(
+                                      showSearchBox: true,
+                                      searchFieldProps: const TextFieldProps(
+                                        decoration: InputDecoration(
+                                          hintText: "Search Salesman...",
+                                          prefixIcon: Icon(Icons.search),
+                                          border: OutlineInputBorder(),
+                                        ),
+                                      ),
+                                    ),
+                                    selectedItem: state.selectedSalesmanId == null 
+                                        ? const Salesman(id: 'all', name: 'All Salesmen', agencyId: '', username: '', password: '', phoneNumber: '')
+                                        : salesmen.firstWhere((s) => s.id == state.selectedSalesmanId, orElse: () => const Salesman(id: 'all', name: 'All Salesmen', agencyId: '', username: '', password: '', phoneNumber: '')),
+                                    onChanged: (Salesman? value) {
+                                      context.read<CustomerBloc>().add(FilterBySalesman(value?.id == 'all' ? null : value?.id));
+                                    },
+                                    compareFn: (s1, s2) => s1.id == s2.id,
+                                  ),
+                                );
+                              }
+                              return const SizedBox.shrink();
+                            },
+                          ),
                         
                         // Zone Filters Dropdown
                         Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
                           child: DropdownSearch<String>(
                             items: (filter, loadProps) {
-                              final zones = state.customers
+                              final relevantCustomers = state.selectedSalesmanId == null
+                                  ? state.customers
+                                  : state.customers.where((c) => c.salesmanId == state.selectedSalesmanId);
+                                  
+                              final zones = relevantCustomers
                                   .map((c) => c.zone)
                                   .where((z) => z.isNotEmpty)
                                   .toSet()
@@ -125,8 +223,6 @@ class _CustomersPageState extends State<CustomersPage> {
                             },
                           ),
                         ),
-
-
                         // Search Bar
                         Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 16.0),
@@ -157,22 +253,24 @@ class _CustomersPageState extends State<CustomersPage> {
                             separatorBuilder: (_, __) => const SizedBox(height: 12),
                             itemBuilder: (context, index) {
                               final customer = state.filteredCustomers[index];
-                              return _buildCustomerCard(customer);
+                              return _buildCustomerCard(customer, salesman);
                             },
                           ),
                         ),
                         
-                       // Add Customer Button (Bottom docked look from screenshot)
+                       // Add Customer Button (Only shown in Personal View for clarity)
+                       if (!isAgency)
                        Padding(
                          padding: const EdgeInsets.all(16.0),
                          child: SizedBox(
                            width: double.infinity,
                            child: ElevatedButton.icon(
                               onPressed: () {
-                                if (salesman.customerCount >= salesman.maxCustomers) {
-                                  _showLimitExceededDialog(context);
+                                // 1. Strict Quota Enforcement
+                                if (salesman.maxCustomers > 0 && salesman.customerCount >= salesman.maxCustomers) {
+                                  _showLimitExceededDialog(context, 'You have reached your assigned quota of ${salesman.maxCustomers} customers. Please contact your administrator.');
                                 } else {
-                                  _showAddCustomerDialog(context, salesman.id);
+                                  _showAddCustomerDialog(context, salesman);
                                 }
                               },
                              icon: const Icon(Icons.add),
@@ -191,14 +289,22 @@ class _CustomersPageState extends State<CustomersPage> {
                        ),
                       ],
                     );
+
+                    if (isAgency) {
+                      return BlocProvider(
+                        create: (context) => sl<AgencyBloc>()..add(LoadAgencySalesmen(salesman.agencyId)),
+                        child: body,
+                      );
+                    }
+                    return body;
                   },
                 ),
                 bottomNavigationBar: const AppBottomBar(currentIndex: 3),
               );
-            }
-            return const Scaffold(body: HydroFlowLoader(message: 'Authenticating...', isOverlay: false));
-          },
-        );
+        }
+        return const Scaffold(body: HydroFlowLoader(message: 'Authenticating...', isOverlay: false));
+      },
+    );
   }
 
   Widget _buildStatItem(String value, String label, Color color) {
@@ -225,7 +331,7 @@ class _CustomersPageState extends State<CustomersPage> {
   }
 
   
-  Widget _buildCustomerCard(dynamic customer) {
+  Widget _buildCustomerCard(dynamic customer, Salesman salesman) {
     // customer is Customer
     final bool isActive = customer.status == 'Active';
     
@@ -235,6 +341,7 @@ class _CustomersPageState extends State<CustomersPage> {
           context: context,
           builder: (_) => CustomerDetailsDialog(
             customer: customer,
+            currentUser: salesman,
             customerBloc: context.read<CustomerBloc>(),
           ),
         );
@@ -383,28 +490,20 @@ class _CustomersPageState extends State<CustomersPage> {
     );
   }
 
-  void _showLimitExceededDialog(BuildContext context) {
+  void _showLimitExceededDialog(BuildContext context, [String? message]) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Row(
-          children: [
-            Icon(Icons.warning_amber_rounded, color: Colors.orange, size: 28),
-            SizedBox(width: 12),
-            Text('Limit Reached'),
-          ],
-        ),
-        content: const Column(
+        title: const Text('Limit Exceeded'),
+        content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              'Your plan limit is over.',
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-            ),
-            SizedBox(height: 8),
-            Text(
+            if (message != null) ...[
+              Text(message),
+              const SizedBox(height: 12),
+            ],
+            const Text(
               'Please contact customer support to upgrade your plan and add more customers.',
               style: TextStyle(color: Colors.black87),
             ),
@@ -429,10 +528,10 @@ class _CustomersPageState extends State<CustomersPage> {
     );
   }
 
-  void _showAddCustomerDialog(BuildContext pageContext, String salesmanId) {
+  void _showAddCustomerDialog(BuildContext pageContext, Salesman salesman) {
     showDialog(
       context: pageContext,
-      builder: (context) => AddCustomerDialog(salesmanId: salesmanId, bloc: pageContext.read<CustomerBloc>()),
+      builder: (context) => AddCustomerDialog(currentUser: salesman, bloc: pageContext.read<CustomerBloc>()),
     );
   }
 }

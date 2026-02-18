@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:hydroflow/features/customers/domain/entities/customer.dart';
+import 'package:hydroflow/features/auth/domain/entities/salesman.dart';
 import 'package:hydroflow/features/customers/presentation/bloc/customer_bloc.dart';
 import 'package:hydroflow/features/customers/presentation/bloc/customer_event.dart';
 import 'package:hydroflow/features/customers/presentation/bloc/customer_state.dart';
@@ -13,11 +14,13 @@ import 'package:hydroflow/core/widgets/hydro_flow_loader.dart';
 
 class CustomerDetailsDialog extends StatefulWidget {
   final Customer customer;
+  final Salesman currentUser;
   final CustomerBloc customerBloc;
 
   const CustomerDetailsDialog({
     super.key,
     required this.customer,
+    required this.currentUser,
     required this.customerBloc,
   });
 
@@ -475,6 +478,7 @@ class _CustomerDetailsDialogState extends State<CustomerDetailsDialog> {
                         context: context,
                         builder: (context) => EditCustomerDialog(
                           customer: widget.customer.copyWith(status: isActive ? 'Active' : 'Inactive'),
+                          currentUser: widget.currentUser,
                           customerBloc: widget.customerBloc,
                         ),
                       );

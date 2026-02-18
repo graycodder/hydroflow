@@ -13,6 +13,7 @@ class CustomerState extends Equatable {
   final int activeCustomers;
   final int inactiveCustomers;
   final String? selectedZone;
+  final String? selectedSalesmanId;
   final String searchQuery;
 
   const CustomerState({
@@ -25,6 +26,7 @@ class CustomerState extends Equatable {
     this.activeCustomers = 0,
     this.inactiveCustomers = 0,
     this.selectedZone,
+    this.selectedSalesmanId,
     this.searchQuery = '',
   });
 
@@ -39,6 +41,8 @@ class CustomerState extends Equatable {
     int? inactiveCustomers,
     String? selectedZone,
     bool clearSelectedZone = false,
+    String? selectedSalesmanId,
+    bool clearSelectedSalesman = false,
     String? searchQuery,
   }) {
     return CustomerState(
@@ -51,6 +55,7 @@ class CustomerState extends Equatable {
       activeCustomers: activeCustomers ?? this.activeCustomers,
       inactiveCustomers: inactiveCustomers ?? this.inactiveCustomers,
       selectedZone: clearSelectedZone ? null : (selectedZone ?? this.selectedZone),
+      selectedSalesmanId: clearSelectedSalesman ? null : (selectedSalesmanId ?? this.selectedSalesmanId),
       searchQuery: searchQuery ?? this.searchQuery,
     );
   }
@@ -66,6 +71,7 @@ class CustomerState extends Equatable {
     activeCustomers,
     inactiveCustomers,
     selectedZone,
+    selectedSalesmanId,
     searchQuery,
   ];
 }

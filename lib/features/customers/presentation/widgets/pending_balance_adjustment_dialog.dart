@@ -288,6 +288,7 @@ class _PendingBalanceAdjustmentDialogState extends State<PendingBalanceAdjustmen
                   final updatedCustomer = Customer(
                     id: widget.customer.id,
                     salesmanId: widget.customer.salesmanId,
+                    agencyId: widget.customer.agencyId,
                     name: widget.customer.name,
                     phone: widget.customer.phone,
                     address: widget.customer.address,

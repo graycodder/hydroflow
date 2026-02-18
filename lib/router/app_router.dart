@@ -22,6 +22,8 @@ import 'package:hydroflow/features/auth/domain/entities/salesman.dart';
 import 'package:hydroflow/features/customers/domain/entities/customer.dart';
 import 'package:hydroflow/core/utils/router_refresh_listenable.dart';
 
+import 'package:hydroflow/features/auth/presentation/pages/agency_employees_page.dart';
+
 final router = GoRouter(
   initialLocation: '/splash',
   refreshListenable: routerRefreshListenable,
@@ -137,6 +139,10 @@ final router = GoRouter(
         final customer = state.extra as Customer;
         return TransactionHistoryPage(customer: customer);
       },
+    ),
+    GoRoute(
+      path: '/agency_employees',
+      builder: (context, state) => const AgencyEmployeesPage(),
     ),
   ],
 );

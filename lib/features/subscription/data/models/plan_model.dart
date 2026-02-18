@@ -6,6 +6,8 @@ class PlanModel extends Plan {
     required super.price,
     required super.billingCycle,
     required super.maxCustomers,
+    required super.maxSalesmen,
+    required super.type,
     required super.features,
   });
 
@@ -15,6 +17,8 @@ class PlanModel extends Plan {
       price: (map['price'] as num?)?.toDouble() ?? 0.0,
       billingCycle: map['billingCycle'] as String? ?? 'Monthly',
       maxCustomers: (map['maxCustomers'] as num?)?.toInt() ?? 0,
+      maxSalesmen: (map['maxSalesmen'] as num?)?.toInt() ?? 1,
+      type: map['type'] as String? ?? 'individual',
       features: Map<String, bool>.from(map['features'] as Map? ?? {}),
     );
   }
@@ -25,6 +29,8 @@ class PlanModel extends Plan {
       'price': price,
       'billingCycle': billingCycle,
       'maxCustomers': maxCustomers,
+      'maxSalesmen': maxSalesmen,
+      'type': type,
       'features': features,
     };
   }

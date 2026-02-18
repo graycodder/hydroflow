@@ -9,4 +9,8 @@ class GetTodayTransactionsUseCase {
   Stream<List<TransactionEntity>> call(String salesmanId) async* {
     yield* repository.getTodayTransactions(salesmanId);
   }
+
+  Stream<List<TransactionEntity>> byAgency(List<String> salesmenIds) async* {
+    yield* repository.getTodayTransactionsByAgency(salesmenIds);
+  }
 }

@@ -3,6 +3,7 @@ import 'package:hydroflow/features/customers/domain/entities/customer.dart';
 class CustomerModel extends Customer {
   const CustomerModel({
     required super.id,
+    required super.agencyId,
     required super.salesmanId,
     required super.name,
     required super.phone,
@@ -20,6 +21,7 @@ class CustomerModel extends Customer {
   factory CustomerModel.fromMap(Map<String, dynamic> data) {
     return CustomerModel(
       id: data['id'] as String? ?? '',
+      agencyId: data['agencyId'] as String? ?? '',
       salesmanId: data['salesmanId'] as String? ?? '',
       name: data['name'] as String? ?? '',
       phone: data['phone'] as String? ?? '',
@@ -39,6 +41,7 @@ class CustomerModel extends Customer {
 
   Map<String, dynamic> toMap() {
     return {
+      'agencyId': agencyId,
       'salesmanId': salesmanId,
       'name': name,
       'phone': phone,

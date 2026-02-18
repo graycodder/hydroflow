@@ -1,14 +1,19 @@
 import 'package:flutter/material.dart';
+import 'package:hydroflow/features/auth/domain/entities/salesman.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hydroflow/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:hydroflow/features/auth/presentation/bloc/auth_state.dart';
 import 'package:hydroflow/core/widgets/app_bottom_bar.dart';
 import 'package:hydroflow/features/dashboard/presentation/bloc/dashboard_bloc.dart';
+import 'package:hydroflow/features/dashboard/presentation/bloc/dashboard_event.dart';
 import 'package:hydroflow/features/dashboard/presentation/bloc/dashboard_state.dart';
 import 'package:hydroflow/core/widgets/hydro_flow_app_bar.dart';
 import 'package:hydroflow/core/widgets/hydro_flow_loader.dart';
 import 'package:intl/intl.dart';
+
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:hydroflow/core/service_locator.dart'; // Import sl for SharedPreferences
 
 class DashboardPage extends StatefulWidget {
   const DashboardPage({super.key});
@@ -19,10 +24,41 @@ class DashboardPage extends StatefulWidget {
 
 class _DashboardPageState extends State<DashboardPage> {
   bool _showSubscriptionReminder = true;
+  bool _isAgencyView = false; // Default to personal view
   
   @override
   void initState() {
     super.initState();
+    _loadPersistedView();
+  }
+
+  Future<void> _loadPersistedView() async {
+    final prefs = sl<SharedPreferences>();
+    final savedIsAgency = prefs.getBool('dashboard_is_agency_view') ?? false;
+    
+    // Only update if different from default and if widget is mounted
+    if (savedIsAgency != _isAgencyView) {
+      if (mounted) {
+        setState(() {
+          _isAgencyView = savedIsAgency;
+        });
+        
+        // We might need to reload data if auth state is ready, but typically build() handles 
+        // the initial data load. However, since `build` might run before this async complete,
+        // we need to be careful. 
+        // Actually, the `build` method triggers `_loadDashboardData` if state is Initial.
+        // If we change `_isAgencyView` here, we should probably trigger a reload if data was already loaded 
+        // or if the initial load hasn't happened yet but depends on this flag.
+        // For simplicity, let's let the `build` method handle the initial fetch, 
+        // but if data is already there (e.g. from a previous session but memory was cleared?), 
+        // we might want to refresh.
+        
+        final authState = context.read<AuthBloc>().state;
+        if (authState is AuthAuthenticated) {
+           _loadDashboardData(authState.salesman);
+        }
+      }
+    }
   }
 
   @override
@@ -36,6 +72,13 @@ class _DashboardPageState extends State<DashboardPage> {
       builder: (context, authState) {
         if (authState is AuthAuthenticated) {
           final salesman = authState.salesman;
+          // Trigger initial load if not already loaded or if view changed - simplified for now to just load on build for this example, 
+          // but ideally we should check if bloc has data or use a separate init method.
+          // For this specific flow, let's trigger it once via a post-frame callback if needed, or rely on the user interacting.
+          // However, to ensure data is loaded:
+          if (context.read<DashboardBloc>().state is DashboardInitial) {
+             _loadDashboardData(salesman);
+          }
           
           // Subscription Logic
           final expiry = salesman.subscriptionExpiry;
@@ -53,6 +96,62 @@ class _DashboardPageState extends State<DashboardPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
+                  // --- AGENCY DASHBOARD FILTER ---
+                  if (salesman.role == 'owner' && salesman.agencyId.isNotEmpty) 
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 16.0),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: Colors.grey.shade300),
+                        ),
+                        child: DropdownButtonHideUnderline(
+                          child: DropdownButton<String>(
+                            value: _isAgencyView ? 'agency' : 'personal',
+                            isExpanded: true,
+                            items: const [
+                              DropdownMenuItem(
+                                value: 'personal',
+                                child: Row(
+                                  children: [
+                                    Icon(Icons.person, size: 20, color: Colors.blue),
+                                    SizedBox(width: 8),
+                                    Text("My Personal Stats"),
+                                  ],
+                                ),
+                              ),
+                              DropdownMenuItem(
+                                value: 'agency',
+                                child: Row(
+                                  children: [
+                                    Icon(Icons.business, size: 20, color: Colors.purple),
+                                    SizedBox(width: 8),
+                                    Text("Agency Stats (Warehouse)"),
+                                  ],
+                                ),
+                              ),
+                            ],
+                            onChanged: (value) async {
+                              if (value != null) {
+                                final isAgency = value == 'agency';
+                                setState(() {
+                                  _isAgencyView = isAgency;
+                                });
+                                
+                                // Save preference
+                                final prefs = sl<SharedPreferences>();
+                                await prefs.setBool('dashboard_is_agency_view', isAgency);
+
+                                _loadDashboardData(salesman);
+                              }
+                            },
+                          ),
+                        ),
+                      ),
+                    ),
+
                   if(_showSubscriptionReminder && expiry != null && daysRemaining <= 7) ...[
                     // Subscription Reminder Card
                     Container(
@@ -262,6 +361,13 @@ class _DashboardPageState extends State<DashboardPage> {
         return const HydroFlowLoader(isOverlay: false);
       },
     );
+  }
+
+  void _loadDashboardData(Salesman salesman) {
+    context.read<DashboardBloc>().add(LoadDashboard(
+      salesmanId: salesman.id,
+      agencyId: _isAgencyView ? salesman.agencyId : null,
+    ));
   }
 
   Widget _buildStatCard({

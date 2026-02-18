@@ -11,11 +11,12 @@ abstract class StockEvent extends Equatable {
 class StockLoadRequested extends StockEvent {
   final String salesmanId;
   final int quantity;
+  final String? agencyId; // For trading mode
 
-  const StockLoadRequested({required this.salesmanId, required this.quantity});
+  const StockLoadRequested({required this.salesmanId, required this.quantity, this.agencyId});
 
   @override
-  List<Object?> get props => [salesmanId, quantity];
+  List<Object?> get props => [salesmanId, quantity, agencyId];
 }
 
 class StockDamagedReported extends StockEvent {
@@ -47,11 +48,12 @@ class StockLogUpdated extends StockEvent {
 class StockOpeningStockSet extends StockEvent {
   final String salesmanId;
   final int quantity;
+  final String? agencyId;
 
-  const StockOpeningStockSet({required this.salesmanId, required this.quantity});
+  const StockOpeningStockSet({required this.salesmanId, required this.quantity, this.agencyId});
 
   @override
-  List<Object?> get props => [salesmanId, quantity];
+  List<Object?> get props => [salesmanId, quantity, agencyId];
 }
 
 class StockReconciled extends StockEvent {
@@ -62,4 +64,52 @@ class StockReconciled extends StockEvent {
 
   @override
   List<Object?> get props => [salesmanId, physicalCount];
+}
+
+class StockAgencyPurchase extends StockEvent {
+  final String agencyId;
+  final int quantity;
+
+  const StockAgencyPurchase({required this.agencyId, required this.quantity});
+
+  @override
+  List<Object?> get props => [agencyId, quantity];
+}
+
+class LoadAgencyStock extends StockEvent {
+  final String agencyId;
+  const LoadAgencyStock(this.agencyId);
+  @override
+  List<Object?> get props => [agencyId];
+}
+
+class AgencyStockUpdated extends StockEvent {
+  final Map<String, int> stock;
+  const AgencyStockUpdated(this.stock);
+  @override
+  List<Object?> get props => [stock];
+}
+
+class AgencyStockOpeningStockSet extends StockEvent {
+  final String agencyId;
+  final int quantity;
+  const AgencyStockOpeningStockSet({required this.agencyId, required this.quantity});
+  @override
+  List<Object?> get props => [agencyId, quantity];
+}
+
+class AgencyStockRefillRequested extends StockEvent {
+  final String agencyId;
+  final int quantity;
+  const AgencyStockRefillRequested({required this.agencyId, required this.quantity});
+  @override
+  List<Object?> get props => [agencyId, quantity];
+}
+
+class AgencyStockDamagedReported extends StockEvent {
+  final String agencyId;
+  final int quantity;
+  const AgencyStockDamagedReported({required this.agencyId, required this.quantity});
+  @override
+  List<Object?> get props => [agencyId, quantity];
 }

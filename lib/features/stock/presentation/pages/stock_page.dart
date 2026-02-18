@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:shared_preferences/shared_preferences.dart'; // Added import
 import 'package:go_router/go_router.dart';
 import 'package:hydroflow/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:hydroflow/features/auth/presentation/bloc/auth_state.dart';
@@ -11,6 +12,7 @@ import 'package:hydroflow/features/stock/presentation/bloc/stock_event.dart';
 import 'package:hydroflow/features/stock/presentation/bloc/stock_state.dart';
 import 'package:hydroflow/core/widgets/hydro_flow_app_bar.dart';
 import 'package:hydroflow/core/widgets/hydro_flow_loader.dart';
+import 'package:hydroflow/features/auth/domain/entities/salesman.dart';
 
 class StockPage extends StatefulWidget {
   const StockPage({super.key});
@@ -37,18 +39,26 @@ class _StockPageState extends State<StockPage> {
   Widget build(BuildContext context) {
     return BlocProvider(
       create: (context) {
-        final salesman = context.read<AuthBloc>().state is AuthAuthenticated 
-            ? (context.read<AuthBloc>().state as AuthAuthenticated).salesman 
-            : null;
+        final authState = context.read<AuthBloc>().state;
+        final salesman = authState is AuthAuthenticated ? authState.salesman : null;
         final bloc = sl<StockBloc>();
+        
         if (salesman != null) {
-          bloc.add(LoadStockPage(salesman.id));
+          final prefs = sl<SharedPreferences>();
+          final isAgencyView = prefs.getBool('dashboard_is_agency_view') ?? false;
+          
+          // Only owners can have agency view, and only if preference is set
+          if (salesman.role == 'owner' && isAgencyView) {
+             bloc.add(LoadAgencyStock(salesman.agencyId));
+          } else {
+             bloc.add(LoadStockPage(salesman.id));
+          }
         }
         return bloc;
       },
       child: BlocListener<StockBloc, StockState>(
         listener: (context, state) {
-          if (state is StockLoading) {
+          if (state is StockActionLoading) {
             FocusManager.instance.primaryFocus?.unfocus();
             HydroFlowLoader.show(context, message: 'Updating Stock...');
           } else if (state is StockActionSuccess) {
@@ -74,160 +84,498 @@ class _StockPageState extends State<StockPage> {
           builder: (context, authState) {
             if (authState is AuthAuthenticated) {
               final salesman = authState.salesman;
+              
+              // Recalculate isAgency based on prefs (needs to match BlocProvider logic)
+              // Ideally this should be state-driven, but reading prefs here ensures UI consistency with data load
+              final prefs = sl<SharedPreferences>();
+              final isAgencyView = prefs.getBool('dashboard_is_agency_view') ?? false;
+              final isAgency = salesman.role == 'owner' && isAgencyView; // Only show Agency UI if owner AND preference is Agency
+
               return Scaffold(
                 backgroundColor: Colors.grey[50],
                 appBar: const HydroFlowAppBar(),
-                body: SingleChildScrollView(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      // Current Stock Card
-                      Container(
-                        padding: const EdgeInsets.all(24.0),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF2962FF),
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text(
-                              'Current Stock',
-                              style: TextStyle(
-                                color: Colors.white70,
-                                fontSize: 16,
-                              ),
+                body: BlocBuilder<StockBloc, StockState>(
+                  builder: (context, state) {
+                    if (state is StockInitial || state is StockLoading) {
+                       return const Center(child: HydroFlowLoader(message: 'Fetching Stock...', isOverlay: false));
+                    }
+
+                    // Determine current stock to display
+                    final currentStock = isAgency 
+                        ? (state.agencyStock?['fullCans'] ?? 0)
+                        : salesman.currentStock;
+
+                    return SingleChildScrollView(
+                      padding: const EdgeInsets.all(16.0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          // Current Stock Card
+                          Container(
+                            padding: const EdgeInsets.all(24.0),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF2962FF),
+                              borderRadius: BorderRadius.circular(16),
                             ),
-                            const SizedBox(height: 16),
-                            Row(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Container(
-                                  padding: const EdgeInsets.all(12),
-                                  decoration: BoxDecoration(
-                                    color: Colors.white.withOpacity(0.2),
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                  child: const Icon(
-                                    Icons.inventory_2_outlined,
-                                    color: Colors.white,
-                                    size: 32,
+                                const Text(
+                                  'Current Stock',
+                                  style: TextStyle(
+                                    color: Colors.white70,
+                                    fontSize: 16,
                                   ),
                                 ),
-                                const SizedBox(width: 16),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      FittedBox(
-                                        fit: BoxFit.scaleDown,
-                                        child: Text(
-                                          '${salesman.currentStock}',
-                                          style: const TextStyle(
-                                            color: Colors.white,
-                                            fontSize: 48,
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                        ),
+                                const SizedBox(height: 16),
+                                Row(
+                                  children: [
+                                    Container(
+                                      padding: const EdgeInsets.all(12),
+                                      decoration: BoxDecoration(
+                                        color: Colors.white.withOpacity(0.2),
+                                        borderRadius: BorderRadius.circular(12),
                                       ),
-                                      const Text(
-                                        'Cans Available',
-                                        style: TextStyle(
-                                          color: Colors.white,
-                                          fontSize: 14,
-                                        ),
+                                      child: const Icon(
+                                        Icons.inventory_2_outlined,
+                                        color: Colors.white,
+                                        size: 32,
                                       ),
-                                    ],
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(height: 24),
-
-                      // Opeinning Stock Section
-                      BlocBuilder<StockBloc, StockState>(
-                        builder: (context, state) {
-                          if (state is StockInitial) {
-                            return const Center(child: HydroFlowLoader(message: 'Fetching Stock...', isOverlay: false));
-                          }
-
-                          return Column(
-                            crossAxisAlignment: CrossAxisAlignment.stretch,
-                            children: [
-                              // Opening Stock Section
-                              if (!state.hasAnyLogs)
-
-                                Container(
-                                  padding: const EdgeInsets.all(20),
-                                  decoration: BoxDecoration(
-                                    color: Colors.white,
-                                    borderRadius: BorderRadius.circular(16),
-                                    border: Border.all(color: Colors.grey.withOpacity(0.2)),
-                                  ),
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Row(
+                                    ),
+                                    const SizedBox(width: 16),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
                                         children: [
-                                          const Icon(Icons.inventory, color: Colors.blue),
-                                          const SizedBox(width: 8),
-                                          const Text(
-                                            'Opening Stock Add',
-                                            style: TextStyle(
-                                              fontSize: 18,
-                                              fontWeight: FontWeight.bold,
+                                          FittedBox(
+                                            fit: BoxFit.scaleDown,
+                                            child: Text(
+                                              '$currentStock',
+                                              style: const TextStyle(
+                                                color: Colors.white,
+                                                fontSize: 48,
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                            ),
+                                          ),
+                                          Text(
+                                            isAgency ? 'Agency Warehouse Stock' : 'Cans Available',
+                                            style: const TextStyle(
+                                              color: Colors.white,
+                                              fontSize: 14,
                                             ),
                                           ),
                                         ],
                                       ),
-                                      const SizedBox(height: 4),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: 24),
+
+                          // Opening Stock Section (Unset)
+                          // For Agency: If they have logs OR have current stock > 0, we consider setup done.
+                          // For Salesman: Only if they have logs (or carry forward logic handled by repo/bloc)
+                          if (!state.hasAnyLogs && (!isAgency || currentStock == 0))
+                            Container(
+                              padding: const EdgeInsets.all(20),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(16),
+                                border: Border.all(color: Colors.grey.withOpacity(0.2)),
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    children: [
+                                      const Icon(Icons.inventory, color: Colors.blue),
+                                      const SizedBox(width: 8),
                                       Text(
-                                        '',
-                                        style: TextStyle(
-                                          fontSize: 14,
-                                          color: Colors.grey[600],
+                                        isAgency ? 'Agency Opening Stock Setup' : 'Opening Stock Add',
+                                        style: const TextStyle(
+                                          fontSize: 18,
+                                          fontWeight: FontWeight.bold,
                                         ),
                                       ),
-                                      const SizedBox(height: 16),
-                                      const Text(
-                                        'Enter Opening Stock',
-                                        style: TextStyle(fontWeight: FontWeight.w600),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    'One-time setup to initialize your stock. This will be your starting balance.',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      color: Colors.blue[700],
+                                      fontStyle: FontStyle.italic,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 16),
+                                  const Text(
+                                    'Enter Opening Stock',
+                                    style: TextStyle(fontWeight: FontWeight.w600),
+                                  ),
+                                  const SizedBox(height: 8),
+                                  TextFormField(
+                                    autofocus: false,
+                                    controller: _openingStockController,
+                                      keyboardType: TextInputType.number,
+                                      inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                                      decoration: InputDecoration(
+                                      hintText: 'Enter Opening Stock',
+                                      filled: true,
+                                      fillColor: Colors.grey[100],
+                                      border: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(8),
+                                        borderSide: BorderSide.none,
                                       ),
-                                      const SizedBox(height: 8),
-                                      TextFormField(
-                                        autofocus: false,
-                                        controller: _openingStockController,
-                                          keyboardType: TextInputType.number,
-                                          inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                                          decoration: InputDecoration(
-                                          hintText: 'Enter Opening Stock',
-                                          filled: true,
-                                          fillColor: Colors.grey[100],
-                                          border: OutlineInputBorder(
-                                            borderRadius: BorderRadius.circular(8),
-                                            borderSide: BorderSide.none,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 16),
+                                  SizedBox(
+                                    width: double.infinity,
+                                    child: ElevatedButton.icon(
+                                      onPressed: () {
+                                        final qtyText = _openingStockController.text;
+                                        final qty = int.tryParse(qtyText) ?? 0;
+                                        if (qty <= 0) return;
+
+                                        FocusManager.instance.primaryFocus?.unfocus();
+
+                                        showDialog(
+                                          context: context,
+                                          builder: (dialogContext) => AlertDialog(
+                                            title: const Text('Confirm Opening Stock'),
+                                            content: Text('Are you sure you want to set opening stock to $qty cans?'),
+                                            actions: [
+                                              TextButton(
+                                                onPressed: () => Navigator.pop(dialogContext),
+                                                child: const Text('Cancel'),
+                                              ),
+                                              ElevatedButton(
+                                                onPressed: () {
+                                                  FocusManager.instance.primaryFocus?.unfocus();
+                                                  Navigator.pop(dialogContext);
+                                                  if (isAgency) {
+                                                     context.read<StockBloc>().add(AgencyStockOpeningStockSet(
+                                                      agencyId: salesman.agencyId,
+                                                      quantity: qty,
+                                                     ));
+                                                  } else {
+                                                     context.read<StockBloc>().add(StockOpeningStockSet(
+                                                      salesmanId: salesman.id, 
+                                                      quantity: qty,
+                                                      agencyId: salesman.agencyId,
+                                                     ));
+                                                  }
+                                                  
+                                                  _openingStockController.clear();
+                                                },
+                                                style: ElevatedButton.styleFrom(backgroundColor: Colors.blue),
+                                                child: const Text('Confirm', style: TextStyle(color: Colors.white)),
+                                              ),
+                                            ],
+                                          ),
+                                        );
+                                      },
+                                      icon: const Icon(Icons.check),
+                                      label: const Text('Set Opening Stock'),
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: Colors.blue,
+                                        foregroundColor: Colors.white,
+                                        padding: const EdgeInsets.symmetric(vertical: 16),
+                                        elevation: 0,
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(8),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+
+                          if (state.hasAnyLogs) ...[
+
+                            // Refill Stock Section
+                            AnimatedCrossFade(
+                              firstChild: SizedBox(
+                                width: double.infinity,
+                                child: ElevatedButton.icon(
+                                  onPressed: () {
+                                    setState(() {
+                                      _isLoadStockExpanded = true;
+                                    });
+                                  },
+                                  icon: const Icon(Icons.add),
+                                  label: Text(isAgency ? 'Agency Purchase/Refill' : 'Refill Stock'),
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: const Color(0xFF0D1117),
+                                    foregroundColor: Colors.white,
+                                    padding: const EdgeInsets.symmetric(vertical: 16),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    textStyle: const TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              secondChild: Container(
+                                padding: const EdgeInsets.all(20),
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(16),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.grey.withOpacity(0.1),
+                                      blurRadius: 10,
+                                      offset: const Offset(0, 4),
+                                    ),
+                                  ],
+                                ),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                     isAgency ? 'Agency Refill Stock' : 'Refill Stock',
+                                      style: const TextStyle(
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      isAgency 
+                                          ? 'Add stock purchases to Agency Warehouse.' 
+                                          : 'Transfer full cans from Agency Warehouse to your Vehicle.',
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        color: Colors.blue[700],
+                                        fontStyle: FontStyle.italic,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 16),
+                                    const Text(
+                                      'Number of Cans',
+                                      style: TextStyle(fontWeight: FontWeight.w600),
+                                    ),
+                                    const SizedBox(height: 8),
+                                    TextFormField(
+                                      controller: _loadStockController,
+                                      autofocus: false,
+                                      keyboardType: TextInputType.number,
+                                      inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                                      decoration: InputDecoration(
+                                        hintText: 'Enter quantity',
+                                        filled: true,
+                                        fillColor: Colors.grey[100],
+                                        border: OutlineInputBorder(
+                                          borderRadius: BorderRadius.circular(8),
+                                          borderSide: BorderSide.none,
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(height: 16),
+                                    Row(
+                                      children: [
+                                        Expanded(
+                                          flex: 2,
+                                          child: Builder(
+                                            builder: (context) {
+                                              return ElevatedButton(
+                                                onPressed: () {
+                                                  final qtyText = _loadStockController.text;
+                                                  final qty = int.tryParse(qtyText) ?? 0;
+                                                  if (qty <= 0) return;
+
+                                                  FocusManager.instance.primaryFocus?.unfocus();
+                                                  showDialog(
+                                                    context: context,
+                                                    builder: (dialogContext) => AlertDialog(
+                                                      title: const Text('Confirm Refill'),
+                                                      content: Text('Are you sure you want to add $qty cans to your stock?'),
+                                                      actions: [
+                                                        TextButton(
+                                                          onPressed: () => Navigator.pop(dialogContext),
+                                                          child: const Text('Cancel'),
+                                                        ),
+                                                          ElevatedButton(
+                                                            onPressed: () {
+                                                              FocusManager.instance.primaryFocus?.unfocus();
+                                                              Navigator.pop(dialogContext);
+                                                              if (isAgency) {
+                                                                context.read<StockBloc>().add(AgencyStockRefillRequested(
+                                                                  agencyId: salesman.agencyId,
+                                                                  quantity: qty,
+                                                                ));
+                                                              } else {
+                                                                context.read<StockBloc>().add(StockLoadRequested(
+                                                                  salesmanId: salesman.id, 
+                                                                  quantity: qty,
+                                                                  agencyId: salesman.agencyId,
+                                                                ));
+                                                              }
+                                                            },
+                                                          style: ElevatedButton.styleFrom(backgroundColor: Colors.black),
+                                                          child: const Text('Confirm', style: TextStyle(color: Colors.white)),
+                                                        ),
+                                                      ],
+                                                    ),
+                                                  );
+                                                },
+                                                style: ElevatedButton.styleFrom(
+                                                  backgroundColor: const Color(0xFF0D1117),
+                                                  foregroundColor: Colors.white,
+                                                  padding: const EdgeInsets.symmetric(vertical: 16),
+                                                  shape: RoundedRectangleBorder(
+                                                    borderRadius: BorderRadius.circular(8),
+                                                  ),
+                                                ),
+                                                child: const Text('Refill Cans'),
+                                              );
+                                            }
                                           ),
                                         ),
+                                        const SizedBox(width: 12),
+                                        Expanded(
+                                          child: OutlinedButton(
+                                            onPressed: () {
+                                              setState(() {
+                                                _isLoadStockExpanded = false;
+                                              });
+                                            },
+                                            style: OutlinedButton.styleFrom(
+                                              padding: const EdgeInsets.symmetric(vertical: 16),
+                                              shape: RoundedRectangleBorder(
+                                                borderRadius: BorderRadius.circular(8),
+                                              ),
+                                            ),
+                                            child: const Text('Cancel'),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              crossFadeState: _isLoadStockExpanded
+                                  ? CrossFadeState.showSecond
+                                  : CrossFadeState.showFirst,
+                              duration: const Duration(milliseconds: 300),
+                            ),
+                            
+                            const SizedBox(height: 24),
+                            
+                            // Damaged / Return Section
+                            Container(
+                              padding: const EdgeInsets.all(20),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(16),
+                                border: Border.all(color: Colors.grey.withOpacity(0.2)),
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    children: [
+                                      const Icon(Icons.error_outline, color: Colors.orange),
+                                      const SizedBox(width: 8),
+                                      Text(
+                                        isAgency ? 'Agency Damaged / Return' : 'Damaged / Return',
+                                        style: const TextStyle(
+                                          fontSize: 18,
+                                          fontWeight: FontWeight.bold,
+                                        ),
                                       ),
-                                      const SizedBox(height: 16),
-                                      SizedBox(
-                                        width: double.infinity,
-                                        child: ElevatedButton.icon(
+                                    ],
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    'Log damaged cans or returns',
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      color: Colors.grey[600],
+                                    ),
+                                  ),
+                                  const SizedBox(height: 16),
+                                  const Text(
+                                    'Number of Cans',
+                                    style: TextStyle(fontWeight: FontWeight.w600),
+                                  ),
+                                  const SizedBox(height: 8),
+                                  TextFormField(
+                                    autofocus: false,
+                                    controller: _damagedStockController,
+                                    keyboardType: TextInputType.number,
+                                    inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                                    decoration: InputDecoration(
+                                      hintText: 'Enter quantity',
+                                      filled: true,
+                                      fillColor: Colors.grey[100],
+                                      border: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(8),
+                                        borderSide: BorderSide.none,
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 16),
+                                  SizedBox(
+                                    width: double.infinity,
+                                    child: Builder(
+                                      builder: (context) {
+                                        return ElevatedButton.icon(
                                           onPressed: () {
-                                            final qtyText = _openingStockController.text;
+                                            final qtyText = _damagedStockController.text;
                                             final qty = int.tryParse(qtyText) ?? 0;
                                             if (qty <= 0) return;
 
                                             FocusManager.instance.primaryFocus?.unfocus();
 
+                                            // Check if stock is sufficient
+                                            if (qty > currentStock) {
+                                              showDialog(
+                                                context: context,
+                                                builder: (dialogContext) => AlertDialog(
+                                                  title: const Row(
+                                                    children: [
+                                                      Icon(Icons.error_outline, color: Colors.deepOrange),
+                                                      SizedBox(width: 8),
+                                                      Text('Insufficient Stock'),
+                                                    ],
+                                                  ),
+                                                  content: Column(
+                                                    mainAxisSize: MainAxisSize.min,
+                                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                                    children: [
+                                                        Text('You are trying to remove $qty cans, but you only have $currentStock cans in stock.'),
+                                                        const SizedBox(height: 12),
+                                                        const Text(
+                                                          'This action is blocked to prevent negative stock.',
+                                                          style: TextStyle(fontSize: 12, color: Colors.grey),
+                                                        ),
+                                                    ],
+                                                  ),
+                                                  actions: [
+                                                    TextButton(
+                                                      onPressed: () => Navigator.pop(dialogContext),
+                                                      child: const Text('OK'),
+                                                    ),
+                                                  ],
+                                                ),
+                                              );
+                                              return;
+                                            }
+
                                             showDialog(
                                               context: context,
                                               builder: (dialogContext) => AlertDialog(
-                                                title: const Text('Confirm Opening Stock'),
-                                                content: Text('Are you sure you want to set opening stock to $qty cans?'),
+                                                title: const Text('Confirm Removal'),
+                                                content: Text('Are you sure you want to remove $qty cans from your stock (Damaged/Return)?'),
                                                 actions: [
                                                   TextButton(
                                                     onPressed: () => Navigator.pop(dialogContext),
@@ -237,20 +585,29 @@ class _StockPageState extends State<StockPage> {
                                                     onPressed: () {
                                                       FocusManager.instance.primaryFocus?.unfocus();
                                                       Navigator.pop(dialogContext);
-                                                      context.read<StockBloc>().add(StockOpeningStockSet(salesmanId: salesman.id, quantity: qty));
-                                                      _openingStockController.clear();
+                                                      if (isAgency) {
+                                                         context.read<StockBloc>().add(AgencyStockDamagedReported(
+                                                          agencyId: salesman.agencyId,
+                                                          quantity: qty
+                                                         ));
+                                                      } else {
+                                                         context.read<StockBloc>().add(StockDamagedReported(
+                                                          salesmanId: salesman.id, 
+                                                          quantity: qty
+                                                         ));
+                                                      }
                                                     },
-                                                    style: ElevatedButton.styleFrom(backgroundColor: Colors.blue),
+                                                    style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
                                                     child: const Text('Confirm', style: TextStyle(color: Colors.white)),
                                                   ),
                                                 ],
                                               ),
                                             );
                                           },
-                                          icon: const Icon(Icons.check),
-                                          label: const Text('Set Opening Stock'),
+                                          icon: const Icon(Icons.remove),
+                                          label: const Text('Remove from Stock'),
                                           style: ElevatedButton.styleFrom(
-                                            backgroundColor: Colors.blue,
+                                            backgroundColor: const Color(0xFFEF5350).withOpacity(0.8),
                                             foregroundColor: Colors.white,
                                             padding: const EdgeInsets.symmetric(vertical: 16),
                                             elevation: 0,
@@ -258,322 +615,18 @@ class _StockPageState extends State<StockPage> {
                                               borderRadius: BorderRadius.circular(8),
                                             ),
                                           ),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-
-                              if (state.hasAnyLogs) ...[
-
-                                // Refill Stock Section
-                                AnimatedCrossFade(
-                                  firstChild: SizedBox(
-                                    width: double.infinity,
-                                    child: ElevatedButton.icon(
-                                      onPressed: () {
-                                        setState(() {
-                                          _isLoadStockExpanded = true;
-                                        });
+                                        );
                                       },
-                                      icon: const Icon(Icons.add),
-                                      label: const Text('Refill Stock'),
-                                      style: ElevatedButton.styleFrom(
-                                        backgroundColor: const Color(0xFF0D1117),
-                                        foregroundColor: Colors.white,
-                                        padding: const EdgeInsets.symmetric(vertical: 16),
-                                        shape: RoundedRectangleBorder(
-                                          borderRadius: BorderRadius.circular(12),
-                                        ),
-                                        textStyle: const TextStyle(
-                                          fontSize: 16,
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
                                     ),
                                   ),
-                                  secondChild: Container(
-                                    padding: const EdgeInsets.all(20),
-                                    decoration: BoxDecoration(
-                                      color: Colors.white,
-                                      borderRadius: BorderRadius.circular(16),
-                                      boxShadow: [
-                                        BoxShadow(
-                                          color: Colors.grey.withOpacity(0.1),
-                                          blurRadius: 10,
-                                          offset: const Offset(0, 4),
-                                        ),
-                                      ],
-                                    ),
-                                    child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        const Text(
-                                         'Refill Stock',
-                                          style: TextStyle(
-                                            fontSize: 18,
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                        ),
-                                        const SizedBox(height: 4),
-                                        Text(
-                                          'Add extra cans to your inventory',
-                                          style: TextStyle(
-                                            fontSize: 14,
-                                            color: Colors.grey[600],
-                                          ),
-                                        ),
-                                        const SizedBox(height: 16),
-                                        const Text(
-                                          'Number of Cans',
-                                          style: TextStyle(fontWeight: FontWeight.w600),
-                                        ),
-                                        const SizedBox(height: 8),
-                                        TextFormField(
-                                          controller: _loadStockController,
-                                          autofocus: false,
-                                          keyboardType: TextInputType.number,
-                                          inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                                          decoration: InputDecoration(
-                                            hintText: 'Enter quantity',
-                                            filled: true,
-                                            fillColor: Colors.grey[100],
-                                            border: OutlineInputBorder(
-                                              borderRadius: BorderRadius.circular(8),
-                                              borderSide: BorderSide.none,
-                                            ),
-                                          ),
-                                        ),
-                                        const SizedBox(height: 16),
-                                        Row(
-                                          children: [
-                                            Expanded(
-                                              flex: 2,
-                                              child: Builder(
-                                                builder: (context) {
-                                                  return ElevatedButton(
-                                                    onPressed: () {
-                                                      final qtyText = _loadStockController.text;
-                                                      final qty = int.tryParse(qtyText) ?? 0;
-                                                      if (qty <= 0) return;
-
-                                                      FocusManager.instance.primaryFocus?.unfocus();
-                                                      showDialog(
-                                                        context: context,
-                                                        builder: (dialogContext) => AlertDialog(
-                                                          title: const Text('Confirm Refill'),
-                                                          content: Text('Are you sure you want to add $qty cans to your stock?'),
-                                                          actions: [
-                                                            TextButton(
-                                                              onPressed: () => Navigator.pop(dialogContext),
-                                                              child: const Text('Cancel'),
-                                                            ),
-                                                              ElevatedButton(
-                                                                onPressed: () {
-                                                                  FocusManager.instance.primaryFocus?.unfocus();
-                                                                  Navigator.pop(dialogContext);
-                                                                  context.read<StockBloc>().add(StockLoadRequested(salesmanId: salesman.id, quantity: qty));
-                                                                },
-                                                              style: ElevatedButton.styleFrom(backgroundColor: Colors.black),
-                                                              child: const Text('Confirm', style: TextStyle(color: Colors.white)),
-                                                            ),
-                                                          ],
-                                                        ),
-                                                      );
-                                                    },
-                                                    style: ElevatedButton.styleFrom(
-                                                      backgroundColor: const Color(0xFF0D1117),
-                                                      foregroundColor: Colors.white,
-                                                      padding: const EdgeInsets.symmetric(vertical: 16),
-                                                      shape: RoundedRectangleBorder(
-                                                        borderRadius: BorderRadius.circular(8),
-                                                      ),
-                                                    ),
-                                                    child: const Text('Refill Cans'),
-                                                  );
-                                                }
-                                              ),
-                                            ),
-                                            const SizedBox(width: 12),
-                                            Expanded(
-                                              child: OutlinedButton(
-                                                onPressed: () {
-                                                  setState(() {
-                                                    _isLoadStockExpanded = false;
-                                                  });
-                                                },
-                                                style: OutlinedButton.styleFrom(
-                                                  padding: const EdgeInsets.symmetric(vertical: 16),
-                                                  shape: RoundedRectangleBorder(
-                                                    borderRadius: BorderRadius.circular(8),
-                                                  ),
-                                                ),
-                                                child: const Text('Cancel'),
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                  crossFadeState: _isLoadStockExpanded
-                                      ? CrossFadeState.showSecond
-                                      : CrossFadeState.showFirst,
-                                  duration: const Duration(milliseconds: 300),
-                                ),
-                                
-                                const SizedBox(height: 24),
-                                
-                                // Damaged / Return Section
-                                Container(
-                                  padding: const EdgeInsets.all(20),
-                                  decoration: BoxDecoration(
-                                    color: Colors.white,
-                                    borderRadius: BorderRadius.circular(16),
-                                    border: Border.all(color: Colors.grey.withOpacity(0.2)),
-                                  ),
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Row(
-                                        children: [
-                                          const Icon(Icons.error_outline, color: Colors.orange),
-                                          const SizedBox(width: 8),
-                                          const Text(
-                                            'Damaged / Return',
-                                            style: TextStyle(
-                                              fontSize: 18,
-                                              fontWeight: FontWeight.bold,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                      const SizedBox(height: 4),
-                                      Text(
-                                        'Log damaged cans or returns',
-                                        style: TextStyle(
-                                          fontSize: 14,
-                                          color: Colors.grey[600],
-                                        ),
-                                      ),
-                                      const SizedBox(height: 16),
-                                      const Text(
-                                        'Number of Cans',
-                                        style: TextStyle(fontWeight: FontWeight.w600),
-                                      ),
-                                      const SizedBox(height: 8),
-                                      TextFormField(
-                                        autofocus: false,
-                                        controller: _damagedStockController,
-                                        keyboardType: TextInputType.number,
-                                        inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                                        decoration: InputDecoration(
-                                          hintText: 'Enter quantity',
-                                          filled: true,
-                                          fillColor: Colors.grey[100],
-                                          border: OutlineInputBorder(
-                                            borderRadius: BorderRadius.circular(8),
-                                            borderSide: BorderSide.none,
-                                          ),
-                                        ),
-                                      ),
-                                      const SizedBox(height: 16),
-                                      SizedBox(
-                                        width: double.infinity,
-                                        child: Builder(
-                                          builder: (context) {
-                                            return ElevatedButton.icon(
-                                              onPressed: () {
-                                                final qtyText = _damagedStockController.text;
-                                                final qty = int.tryParse(qtyText) ?? 0;
-                                                if (qty <= 0) return;
-
-                                                FocusManager.instance.primaryFocus?.unfocus();
-
-                                                // Check if stock is sufficient
-                                                if (qty > salesman.currentStock) {
-                                                  showDialog(
-                                                    context: context,
-                                                    builder: (dialogContext) => AlertDialog(
-                                                      title: const Row(
-                                                        children: [
-                                                          Icon(Icons.error_outline, color: Colors.deepOrange),
-                                                          SizedBox(width: 8),
-                                                          Text('Insufficient Stock'),
-                                                        ],
-                                                      ),
-                                                      content: Column(
-                                                        mainAxisSize: MainAxisSize.min,
-                                                        crossAxisAlignment: CrossAxisAlignment.start,
-                                                        children: [
-                                                          Text('You are trying to remove $qty cans, but you only have ${salesman.currentStock} cans in stock.'),
-                                                          const SizedBox(height: 12),
-                                                          const Text(
-                                                            'This action is blocked to prevent negative stock.',
-                                                            style: TextStyle(fontSize: 12, color: Colors.grey),
-                                                          ),
-                                                        ],
-                                                      ),
-                                                      actions: [
-                                                        TextButton(
-                                                          onPressed: () => Navigator.pop(dialogContext),
-                                                          child: const Text('OK'),
-                                                        ),
-                                                      ],
-                                                    ),
-                                                  );
-                                                  return;
-                                                }
-
-                                                showDialog(
-                                                  context: context,
-                                                  builder: (dialogContext) => AlertDialog(
-                                                    title: const Text('Confirm Removal'),
-                                                    content: Text('Are you sure you want to remove $qty cans from your stock (Damaged/Return)?'),
-                                                    actions: [
-                                                      TextButton(
-                                                        onPressed: () => Navigator.pop(dialogContext),
-                                                        child: const Text('Cancel'),
-                                                      ),
-                                                      ElevatedButton(
-                                                        onPressed: () {
-                                                          FocusManager.instance.primaryFocus?.unfocus();
-                                                          Navigator.pop(dialogContext);
-                                                          context.read<StockBloc>().add(StockDamagedReported(salesmanId: salesman.id, quantity: qty));
-                                                        },
-                                                        style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-                                                        child: const Text('Confirm', style: TextStyle(color: Colors.white)),
-                                                      ),
-                                                    ],
-                                                  ),
-                                                );
-                                              },
-                                              icon: const Icon(Icons.remove),
-                                              label: const Text('Remove from Stock'),
-                                              style: ElevatedButton.styleFrom(
-                                                backgroundColor: const Color(0xFFEF5350).withOpacity(0.8),
-                                                foregroundColor: Colors.white,
-                                                padding: const EdgeInsets.symmetric(vertical: 16),
-                                                elevation: 0,
-                                                shape: RoundedRectangleBorder(
-                                                  borderRadius: BorderRadius.circular(8),
-                                                ),
-                                              ),
-                                            );
-                                          },
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ],
-                            ],
-                          );
-                        },
+                                ],
+                              ),
+                            ),
+                          ],
+                        ],
                       ),
-
-                    ],
-                  ),
+                    );
+                  },
                 ),
                 bottomNavigationBar: const AppBottomBar(currentIndex: 1),
               );

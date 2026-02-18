@@ -1,5 +1,7 @@
 import 'dart:async';
 import 'package:firebase_database/firebase_database.dart';
+import 'dart:io';
+import 'package:device_info_plus/device_info_plus.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:hydroflow/features/auth/domain/repositories/auth_repository.dart';
@@ -56,7 +58,7 @@ class AuthRepositoryImpl implements AuthRepository {
 
     // Query Salesmen node ordering by 'username'
     final ref = _database.ref().child('Salesmen');
-    
+
     try {
       final snapshot = await ref
           .orderByChild('username')
@@ -71,26 +73,66 @@ class AuthRepositoryImpl implements AuthRepository {
         final userData = userNode.value as Map; // safely cast
 
         final storedPassword = userData['password'];
-        
 
-        
         if (storedPassword == password) {
-             final uid = userNode.key!;
+          final uid = userNode.key!;
+          final agencyId = userData['agencyId'] as String? ?? '';
+          final role = userData['role'] as String? ?? 'salesman';
+          final storedDeviceId = userData['deviceId'] as String?;
 
-             await _prefs.setString(_userKey, uid);
-             _authStateController.add(uid);
+          // Get Current Device ID
+          String? currentDeviceId;
+          try {
+            currentDeviceId = await _getDeviceId();
+          } catch (e) {
+            print('Error getting device ID: $e');
+            // Fail open or closed? 
+            // For security, maybe fail closed, but for usability/web, maybe open.
+            // Let's assume mobile app primarily.
+          }
+
+          if (role == 'salesman') { // Only lock salesmen, not owners
+             if (currentDeviceId != null) {
+                if (storedDeviceId == null || storedDeviceId.isEmpty) {
+                  // First login: Bind device
+                  await ref.child(uid).update({'deviceId': currentDeviceId});
+                } else if (storedDeviceId != currentDeviceId) {
+                  // Mismatch: Block login
+                  throw Exception('This account is linked to another device. Contact admin to reset.');
+                }
+             }
+          }
+
+          await _prefs.setString(_userKey, uid);
+          await _prefs.setString('agencyId', agencyId);
+          await _prefs.setString('role', role);
+
+          _authStateController.add(uid);
         } else {
-
-             throw Exception('Invalid username or password');
+          throw Exception('Invalid username or password');
         }
       } else {
-
         throw Exception('Invalid username or password');
       }
     } catch (e) {
-
       rethrow;
     }
+  }
+
+  Future<String?> _getDeviceId() async {
+    final DeviceInfoPlugin deviceInfo = DeviceInfoPlugin();
+    try {
+      if (Platform.isAndroid) {
+        final AndroidDeviceInfo androidInfo = await deviceInfo.androidInfo;
+        return androidInfo.id; // Unique ID on Android
+      } else if (Platform.isIOS) {
+        final IosDeviceInfo iosInfo = await deviceInfo.iosInfo;
+        return iosInfo.identifierForVendor; // Unique ID on iOS
+      }
+    } catch (e) {
+      print('Failed to get device ID: $e');
+    }
+    return null;
   }
 
   @override
