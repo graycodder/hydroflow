@@ -5,66 +5,81 @@
             ".write": true,
             ".indexOn": [
                 "ownerId"
-            ]
+            ],
+            "$agencyId": {
+                "stock": {
+                    ".validate": true
+                },
+                "stats": {
+                    ".validate": true
+                }
+            }
         },
         "Salesmen": {
-            ".read": true,
-            ".write": true,
             ".indexOn": [
                 "agencyId",
                 "phone",
                 "username"
-            ]
+            ],
+            ".read": true,
+            ".write": true
         },
         "Customers": {
-            ".read": true,
-            ".write": true,
             ".indexOn": [
                 "agencyId",
                 "salesmanId",
-                "phone"
-            ]
-        },
-        "Stock_logs": {
+                "phone",
+                "zone"
+            ],
             ".read": true,
-            ".write": true,
-            ".indexOn": [
-                "salesmanId",
-                "date"
-            ]
+            ".write": true
         },
         "Transactions": {
-            ".read": true,
-            ".write": true,
             ".indexOn": [
                 "agencyId",
                 "salesmanId",
                 "customerId",
                 "timestamp"
-            ]
-        },
-        "Notifications": {
+            ],
             ".read": true,
             ".write": true
+        },
+        "Stock_logs": {
+            ".indexOn": [
+                "salesmanId",
+                "date",
+                "agencyId"
+            ],
+            ".read": true,
+            ".write": true
+        },
+        "Agency_Stock_History": {
+            ".read": true,
+            ".write": true
+        },
+        "Subscription_logs": {
+            ".read": true,
+            ".write": false
         },
         "Plans": {
             ".read": true,
             ".write": true
         },
         "Subscriptions": {
-            ".read": true,
-            ".write": true,
             ".indexOn": [
                 "salesmanId",
                 "status",
-                "expiryDate"
-            ]
+                "expiryDate",
+                "agencyId"
+            ],
+            ".read": true,
+            ".write": true
         },
         "app_config": {
             ".read": true,
             ".write": false
         },
-        "Agency_Stock_History": {
+        "Notifications": {
             ".read": true,
             ".write": true
         }

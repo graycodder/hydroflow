@@ -41,6 +41,7 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
   Future<void> _onLoadProfile(LoadProfile event, Emitter<ProfileState> emit) async {
     emit(const ProfileLoading(isAgencyView: false));
     
+    _currentAgency = null;
     await _profileSubscription?.cancel();
     await _historySubscription?.cancel();
 
@@ -175,17 +176,15 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
       // Preserve existing agency data and view mode if possible, 
       // but _InternalUpdate doesn't know about them.
       // We checks state.
-      Agency? currentAgency;
       bool isAgencyView = false;
       
       if (state is ProfileLoaded) {
-        currentAgency = (state as ProfileLoaded).agency;
         isAgencyView = state.isAgencyView;
       } else if (state is ProfileLoading) {
          isAgencyView = state.isAgencyView;
       }
 
-      emit(ProfileLoaded(updatedProfile, history, agency: currentAgency, isAgencyView: isAgencyView));
+      emit(ProfileLoaded(updatedProfile, history, agency: _currentAgency, isAgencyView: isAgencyView));
     }
   }
 
