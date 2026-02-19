@@ -217,12 +217,13 @@ class InventoryRepositoryImpl implements InventoryRepository {
       logMap['cashCollected'] ??= 0.0;
       logMap['onlineCollected'] ??= 0.0;
       
-      final currentLoaded = (logMap['loaded'] as num?)?.toInt() ?? 0;
-      logMap['loaded'] = currentLoaded + quantity;
-      
-      // If openingStock was never set (e.g. created by deposit), we should set it to openingStockToUse
+      // If openingStock was never set (e.g. first load of the day), we treat this as Opening Stock
       if (logMap['openingStock'] == 0 && !logMap.containsKey('openingStock_set')) {
-        logMap['openingStock'] = openingStockToUse;
+        logMap['openingStock'] = openingStockToUse + quantity;
+        logMap['openingStock_set'] = true; // Mark as set so subsequent loads go to 'loaded'
+      } else {
+        final currentLoaded = (logMap['loaded'] as num?)?.toInt() ?? 0;
+        logMap['loaded'] = currentLoaded + quantity;
       }
 
       final opening = (logMap['openingStock'] as num?)?.toInt() ?? 0;
