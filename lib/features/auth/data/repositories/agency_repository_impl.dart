@@ -210,13 +210,24 @@ class AgencyRepositoryImpl implements AgencyRepository {
   @override
   Future<bool> isPhoneNumberUnique(String phoneNumber, {String? excludeSalesmanId}) async {
     try {
+      final normalizedPhone = phoneNumber.trim();
+      if (normalizedPhone.isEmpty) return true;
+
       final ref = _database.ref().child('Salesmen');
-      final snapshot = await ref.orderByChild('phoneNumber').equalTo(phoneNumber).get();
+      final snapshot = await ref.orderByChild('phoneNumber').equalTo(normalizedPhone).get();
 
       if (snapshot.exists) {
         for (final child in snapshot.children) {
-          if (excludeSalesmanId == null || child.key != excludeSalesmanId) {
-            return false; // Found another salesman with this phone number
+          final data = child.value as Map?;
+          if (data == null) continue;
+          
+          final foundPhone = (data['phoneNumber'] ?? '').toString().trim();
+          
+          // Secondary check for robustness against unindexed queries returning full nodes
+          if (foundPhone == normalizedPhone) {
+            if (excludeSalesmanId == null || child.key != excludeSalesmanId) {
+              return false; // Found another salesman with this phone number
+            }
           }
         }
       }

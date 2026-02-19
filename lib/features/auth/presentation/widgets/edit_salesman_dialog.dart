@@ -25,27 +25,37 @@ class _EditSalesmanDialogState extends State<EditSalesmanDialog> {
   final _formKey = GlobalKey<FormState>();
   late TextEditingController _nameController;
   late TextEditingController _phoneController;
-  late TextEditingController _usernameController;
+ // late TextEditingController _usernameController;
   final _passwordController = TextEditingController(); // Empty by default
   late TextEditingController _zoneController;
   late TextEditingController _quotaController;
   bool _isChecking = false;
+  String? _phoneError;
 
   @override
   void initState() {
     super.initState();
     _nameController = TextEditingController(text: widget.salesman.name);
     _phoneController = TextEditingController(text: widget.salesman.phoneNumber);
-    _usernameController = TextEditingController(text: widget.salesman.username);
+    _phoneController.addListener(_onPhoneChanged);
+   // _usernameController = TextEditingController(text: widget.salesman.username);
     _zoneController = TextEditingController(text: widget.salesman.zone);
     _quotaController = TextEditingController(text: widget.salesman.maxCustomers.toString());
+  }
+
+  void _onPhoneChanged() {
+    if (_phoneError != null) {
+      setState(() {
+        _phoneError = null;
+      });
+    }
   }
 
   @override
   void dispose() {
     _nameController.dispose();
     _phoneController.dispose();
-    _usernameController.dispose();
+  //  _usernameController.dispose();
     _passwordController.dispose();
     _zoneController.dispose();
     _quotaController.dispose();
@@ -66,13 +76,10 @@ class _EditSalesmanDialogState extends State<EditSalesmanDialog> {
         HydroFlowLoader.hide(context);
 
         if (!isUnique) {
-          setState(() => _isChecking = false);
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Phone number already in use by another salesman'),
-              backgroundColor: Colors.red,
-            ),
-          );
+          setState(() {
+            _isChecking = false;
+            _phoneError = 'Phone number already in use';
+          });
           return;
         }
 
@@ -134,7 +141,10 @@ class _EditSalesmanDialogState extends State<EditSalesmanDialog> {
               const SizedBox(height: 12),
               TextFormField(
                 controller: _phoneController,
-                decoration: const InputDecoration(labelText: 'Phone Number'),
+                decoration: InputDecoration(
+                  labelText: 'Phone Number',
+                  errorText: _phoneError,
+                ),
                 keyboardType: TextInputType.phone,
                 inputFormatters: [
                   FilteringTextInputFormatter.digitsOnly,
@@ -150,17 +160,17 @@ class _EditSalesmanDialogState extends State<EditSalesmanDialog> {
                   return null;
                 },
               ),
-              const SizedBox(height: 12),
-              TextFormField(
-                controller: _usernameController,
-                decoration: const InputDecoration(
-                  labelText: 'Username',
-                  helperText: 'Cannot be changed',
-                  enabled: false, 
-                  filled: true,
-                ),
-                readOnly: true,
-              ),
+              // const SizedBox(height: 12),
+              // TextFormField(
+              //   controller: _usernameController,
+              //   decoration: const InputDecoration(
+              //     labelText: 'Username',
+              //     helperText: 'Cannot be changed',
+              //     enabled: false, 
+              //     filled: true,
+              //   ),
+              //   readOnly: true,
+              // ),
               const SizedBox(height: 12),
               TextFormField(
                 controller: _passwordController,
