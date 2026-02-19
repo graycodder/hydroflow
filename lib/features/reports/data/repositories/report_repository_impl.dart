@@ -65,11 +65,13 @@ class ReportRepositoryImpl implements ReportRepository {
         int? snapshotTotalBottles;
 
         // Determine Opening Stock from Previous Day Closing if available
-        int carriedForwardOpening = 0;
-        if (prevLogEvent.snapshot.exists) {
-           final prevData = Map<String, dynamic>.from(prevLogEvent.snapshot.value as Map);
-           carriedForwardOpening = (prevData['closingStock'] as num?)?.toInt() ?? 0;
-        }
+      int carriedForwardOpening = 0;
+      if (prevLogEvent.snapshot.exists) {
+         final prevData = Map<String, dynamic>.from(prevLogEvent.snapshot.value as Map);
+         // PROPER FIX: Prioritize 'actualClosingStock' (physical count) over calculated 'closingStock'
+         carriedForwardOpening = (prevData['actualClosingStock'] as num?)?.toInt() ?? 
+                                 (prevData['closingStock'] as num?)?.toInt() ?? 0;
+      }
         
         if (logEvent.snapshot.exists) {
           final data = Map<String, dynamic>.from(logEvent.snapshot.value as Map);
@@ -449,9 +451,17 @@ class ReportRepositoryImpl implements ReportRepository {
         .map((event) {
       if (event.snapshot.exists) {
         final data = Map<String, dynamic>.from(event.snapshot.value as Map);
-        return data.keys.cast<String>().toList();
+        final ids = data.keys.cast<String>().toList();
+        ids.sort(); // Sort to ensure consistent comparison for distinct()
+        return ids;
       }
       return <String>[];
+    }).distinct((prev, curr) {
+      if (prev.length != curr.length) return false;
+      for (int i = 0; i < prev.length; i++) {
+        if (prev[i] != curr[i]) return false;
+      }
+      return true;
     });
 
     return agencySalesmenStream.switchMap((salesmenIds) {
@@ -483,9 +493,17 @@ class ReportRepositoryImpl implements ReportRepository {
         .map((event) {
       if (event.snapshot.exists) {
         final data = Map<String, dynamic>.from(event.snapshot.value as Map);
-        return data.keys.cast<String>().toList();
+        final ids = data.keys.cast<String>().toList();
+        ids.sort(); // Sort to ensure consistent comparison for distinct()
+        return ids;
       }
       return <String>[];
+    }).distinct((prev, curr) {
+      if (prev.length != curr.length) return false;
+      for (int i = 0; i < prev.length; i++) {
+        if (prev[i] != curr[i]) return false;
+      }
+      return true;
     });
 
     return agencySalesmenStream.switchMap((salesmenIds) {
