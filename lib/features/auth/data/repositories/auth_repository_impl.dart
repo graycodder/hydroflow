@@ -91,16 +91,20 @@ class AuthRepositoryImpl implements AuthRepository {
             // Let's assume mobile app primarily.
           }
 
-          if (role == 'salesman') { // Only lock salesmen, not owners
-             if (currentDeviceId != null) {
-                if (storedDeviceId == null || storedDeviceId.isEmpty) {
-                  // First login: Bind device
-                  await ref.child(uid).update({'deviceId': currentDeviceId});
-                } else if (storedDeviceId != currentDeviceId) {
-                  // Mismatch: Block login
-                  throw Exception('This account is linked to another device. Contact admin to reset.');
-                }
-             }
+          if (currentDeviceId != null) {
+            if (role == 'salesman') {
+              if (storedDeviceId == null || storedDeviceId.isEmpty) {
+                // First login: Bind device
+                await ref.child(uid).update({'deviceId': currentDeviceId});
+              } else if (storedDeviceId != currentDeviceId) {
+                // Mismatch: Block login
+                throw Exception('This account is linked to another device. Contact admin to reset.');
+              }
+            } else {
+              // For other roles (like owner), just update deviceId for tracking
+              // but don't enforce locking.
+              await ref.child(uid).update({'deviceId': currentDeviceId});
+            }
           }
 
           await _prefs.setString(_userKey, uid);
