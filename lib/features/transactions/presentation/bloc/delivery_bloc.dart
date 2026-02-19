@@ -71,10 +71,8 @@ class DeliveryBloc extends Bloc<DeliveryEvent, DeliveryState> {
         final customerStream = _customerRepository.getCustomers(event.salesmanId);
         final transactionStream = _getTodayTransactionsUseCase(event.salesmanId);
         
-        // If Owner, listen to Warehouse stock. If Salesman, use current value from this flow.
-        final stockStream = salesman.role == 'owner'
-            ? _inventoryRepository.getAgencyWarehouseStock(salesman.agencyId).map((s) => s['fullCans'] ?? 0)
-            : Stream.value(salesman.currentStock);
+        // Use salesman's individual current stock for all roles in delivery view
+      final stockStream = Stream.value(salesman.currentStock);
 
         return CombineLatestStream.combine3<List<Customer>, List<TransactionEntity>, int, Map<String, dynamic>>(
           customerStream,

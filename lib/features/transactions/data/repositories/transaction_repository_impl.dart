@@ -190,26 +190,14 @@ class TransactionRepositoryImpl implements TransactionRepository {
       
       final currentStockInVanBeforeTx = (salesmanData['currentStock'] as num?)?.toInt() ?? 0;
 
-      if (role == 'owner' && agencyId.isNotEmpty) {
-        // OWNERS deduct directly from WAREHOUSE
-        final agencyStockRef = _database.ref().child('Agencies/$agencyId/stock');
-        await agencyStockRef.runTransaction((Object? post) {
-          if (post == null) return Transaction.abort();
-          final stockMap = Map<String, dynamic>.from(post as Map);
-          final int currentFull = (stockMap['fullCans'] as num?)?.toInt() ?? 0;
-          stockMap['fullCans'] = currentFull - transaction.cansDelivered;
-          return Transaction.success(stockMap);
-        });
-      } else {
-        // SALESMEN deduct from VEHICLE (Salesman node)
-        await salesmanRef.runTransaction((Object? post) {
-          if (post == null) return Transaction.abort();
-          final salesmanMap = Map<String, dynamic>.from(post as Map);
-          int currentStock = (salesmanMap['currentStock'] as num?)?.toInt() ?? 0;
-          salesmanMap['currentStock'] = currentStock - transaction.cansDelivered;
-          return Transaction.success(salesmanMap);
-        });
-      }
+      // C. Update Stock (All roles deduct from VEHICLE / Salesman node)
+      await salesmanRef.runTransaction((Object? post) {
+        if (post == null) return Transaction.abort();
+        final salesmanMap = Map<String, dynamic>.from(post as Map);
+        int currentStock = (salesmanMap['currentStock'] as num?)?.toInt() ?? 0;
+        salesmanMap['currentStock'] = currentStock - transaction.cansDelivered;
+        return Transaction.success(salesmanMap);
+      });
 
       // D. Update Today's Stock Log
       final dateFormatted = transaction.timestamp.toIso8601String().substring(0, 10);
@@ -322,25 +310,13 @@ class TransactionRepositoryImpl implements TransactionRepository {
           final String role = salesmanData['role'] as String? ?? 'salesman';
           final String agencyId = salesmanData['agencyId'] as String? ?? '';
 
-          if (role == 'owner' && agencyId.isNotEmpty) {
-            // OWNERS deduct from WAREHOUSE
-            final agencyStockRef = _database.ref().child('Agencies/$agencyId/stock');
-            await agencyStockRef.runTransaction((Object? post) {
-              if (post == null) return Transaction.abort();
-              final stockMap = Map<String, dynamic>.from(post as Map);
-              final int currentFull = (stockMap['fullCans'] as num?)?.toInt() ?? 0;
-              stockMap['fullCans'] = currentFull - transaction.cansDelivered;
-              return Transaction.success(stockMap);
-            });
-          } else {
-            // SALESMEN deduct from VEHICLE
-            await salesmanRef.runTransaction((Object? post) {
-              if (post == null) return Transaction.abort();
-              final salesmanMap = Map<String, dynamic>.from(post as Map);
-              salesmanMap.update('currentStock', (value) => (value as num).toInt() - transaction.cansDelivered, ifAbsent: () => 0);
-              return Transaction.success(salesmanMap);
-            });
-          }
+          // All roles deduct from VEHICLE
+          await salesmanRef.runTransaction((Object? post) {
+            if (post == null) return Transaction.abort();
+            final salesmanMap = Map<String, dynamic>.from(post as Map);
+            salesmanMap.update('currentStock', (value) => (value as num).toInt() - transaction.cansDelivered, ifAbsent: () => 0);
+            return Transaction.success(salesmanMap);
+          });
         }
       }
 
