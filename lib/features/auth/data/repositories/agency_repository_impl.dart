@@ -206,4 +206,23 @@ class AgencyRepositoryImpl implements AgencyRepository {
       throw Exception('Failed to update salesman: $e');
     }
   }
+
+  @override
+  Future<bool> isPhoneNumberUnique(String phoneNumber, {String? excludeSalesmanId}) async {
+    try {
+      final ref = _database.ref().child('Salesmen');
+      final snapshot = await ref.orderByChild('phoneNumber').equalTo(phoneNumber).get();
+
+      if (snapshot.exists) {
+        for (final child in snapshot.children) {
+          if (excludeSalesmanId == null || child.key != excludeSalesmanId) {
+            return false; // Found another salesman with this phone number
+          }
+        }
+      }
+      return true; // Unique
+    } catch (e) {
+      throw Exception('Failed to check phone number uniqueness: $e');
+    }
+  }
 }

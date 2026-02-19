@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:hydroflow/features/auth/domain/entities/salesman.dart';
+import 'package:hydroflow/features/auth/domain/repositories/agency_repository.dart';
+import 'package:hydroflow/core/service_locator.dart' as di;
+import 'package:hydroflow/core/widgets/hydro_flow_loader.dart';
 
 class EditSalesmanDialog extends StatefulWidget {
   final Salesman salesman;
@@ -26,6 +29,7 @@ class _EditSalesmanDialogState extends State<EditSalesmanDialog> {
   final _passwordController = TextEditingController(); // Empty by default
   late TextEditingController _zoneController;
   late TextEditingController _quotaController;
+  bool _isChecking = false;
 
   @override
   void initState() {
@@ -48,19 +52,50 @@ class _EditSalesmanDialogState extends State<EditSalesmanDialog> {
     super.dispose();
   }
 
-  void _submit() {
+  Future<void> _submit() async {
     if (_formKey.currentState!.validate()) {
-      final updatedSalesman = widget.salesman.copyWith(
-        name: _nameController.text.trim(),
-        phoneNumber: _phoneController.text.trim(),
-        zone: _zoneController.text.trim(),
-        maxCustomers: int.tryParse(_quotaController.text) ?? widget.salesman.maxCustomers,
-        password: _passwordController.text.trim().isNotEmpty 
-            ? _passwordController.text.trim() 
-            : widget.salesman.password, 
-      );
+      setState(() => _isChecking = true);
+      HydroFlowLoader.show(context, message: 'Checking phone number...');
 
-      Navigator.pop(context, updatedSalesman);
+      try {
+        final repo = di.sl<AgencyRepository>();
+        final phone = _phoneController.text.trim();
+        final isUnique = await repo.isPhoneNumberUnique(phone, excludeSalesmanId: widget.salesman.id);
+
+        if (!mounted) return;
+        HydroFlowLoader.hide(context);
+
+        if (!isUnique) {
+          setState(() => _isChecking = false);
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Phone number already in use by another salesman'),
+              backgroundColor: Colors.red,
+            ),
+          );
+          return;
+        }
+
+        final updatedSalesman = widget.salesman.copyWith(
+          name: _nameController.text.trim(),
+          phoneNumber: phone,
+          zone: _zoneController.text.trim(),
+          maxCustomers: int.tryParse(_quotaController.text) ?? widget.salesman.maxCustomers,
+          password: _passwordController.text.trim().isNotEmpty 
+              ? _passwordController.text.trim() 
+              : widget.salesman.password, 
+        );
+
+        Navigator.pop(context, updatedSalesman);
+      } catch (e) {
+        if (mounted) {
+          HydroFlowLoader.hide(context);
+          setState(() => _isChecking = false);
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Error validating phone number: $e')),
+          );
+        }
+      }
     }
   }
 
@@ -82,17 +117,38 @@ class _EditSalesmanDialogState extends State<EditSalesmanDialog> {
             children: [
               TextFormField(
                 controller: _nameController,
+                inputFormatters: [
+                  FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z0-9 ]')),
+                ],
                 decoration: const InputDecoration(labelText: 'Full Name'),
-                validator: (value) =>
-                    value == null || value.isEmpty ? 'Required' : null,
+                validator: (value) {
+                  if (value == null || value.trim().isEmpty) {
+                    return 'Please enter name';
+                  }
+                  if (value.trim().length > 20) {
+                    return 'Name must be at most 20 characters';
+                  }
+                  return null;
+                },
               ),
               const SizedBox(height: 12),
               TextFormField(
                 controller: _phoneController,
                 decoration: const InputDecoration(labelText: 'Phone Number'),
                 keyboardType: TextInputType.phone,
-                validator: (value) =>
-                    value == null || value.isEmpty ? 'Required' : null,
+                inputFormatters: [
+                  FilteringTextInputFormatter.digitsOnly,
+                  LengthLimitingTextInputFormatter(10),
+                ],
+                validator: (value) {
+                  if (value == null || value.trim().isEmpty) {
+                    return 'Please enter phone number';
+                  }
+                  if (value.trim().length != 10) {
+                    return 'Phone number must be exactly 10 digits';
+                  }
+                  return null;
+                },
               ),
               const SizedBox(height: 12),
               TextFormField(
@@ -115,7 +171,7 @@ class _EditSalesmanDialogState extends State<EditSalesmanDialog> {
                 obscureText: true,
                 validator: (value) {
                   if (value != null && value.isNotEmpty && value.length < 6) {
-                    return 'Min 6 chars';
+                    return 'Min 6 characters';
                   }
                   return null;
                 },
@@ -123,6 +179,9 @@ class _EditSalesmanDialogState extends State<EditSalesmanDialog> {
               const SizedBox(height: 12),
               TextFormField(
                 controller: _zoneController,
+                inputFormatters: [
+                  FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z0-9 ]')),
+                ],
                 decoration: const InputDecoration(labelText: 'Zone (Optional)'),
               ),
               const SizedBox(height: 12),
@@ -136,9 +195,9 @@ class _EditSalesmanDialogState extends State<EditSalesmanDialog> {
                 keyboardType: TextInputType.number,
                 inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                 validator: (value) {
-                  if (value == null || value.isEmpty) return 'Required';
+                  if (value == null || value.isEmpty) return 'Please enter quota';
                   final qty = int.tryParse(value);
-                  if (qty == null) return 'Enter a valid number';
+                  if (qty == null || qty < 0) return 'Enter a valid number';
                   
                   if (qty > remainingForThisUser) {
                     return 'Exceeds Agency Limit ($remainingForThisUser remaining)';
@@ -156,8 +215,10 @@ class _EditSalesmanDialogState extends State<EditSalesmanDialog> {
           child: const Text('Cancel'),
         ),
         ElevatedButton(
-          onPressed: _submit,
-          child: const Text('Update'),
+          onPressed: _isChecking ? null : _submit,
+          child: _isChecking 
+            ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))
+            : const Text('Update'),
         ),
       ],
     );

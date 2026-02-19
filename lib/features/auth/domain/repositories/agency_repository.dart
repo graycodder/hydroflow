@@ -9,4 +9,5 @@ abstract class AgencyRepository {
   Future<void> resetDeviceBinding(String salesmanId);
   Future<void> addSalesman(Salesman salesman);
   Future<void> updateSalesman(Salesman salesman);
+  Future<bool> isPhoneNumberUnique(String phoneNumber, {String? excludeSalesmanId});
 }
