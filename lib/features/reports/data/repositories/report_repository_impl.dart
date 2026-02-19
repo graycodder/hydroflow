@@ -58,6 +58,7 @@ class ReportRepositoryImpl implements ReportRepository {
         // 2. Parse Stock Logs
         int openingStock = 0;
         int loaded = 0;
+        int logDelivered = 0;
         int damaged = 0;
         int stockMismatch = 0;
         
@@ -77,6 +78,7 @@ class ReportRepositoryImpl implements ReportRepository {
           final data = Map<String, dynamic>.from(logEvent.snapshot.value as Map);
           openingStock = (data['openingStock'] as num?)?.toInt() ?? 0;
           loaded = (data['loaded'] as num?)?.toInt() ?? 0;
+          logDelivered = (data['totalDelivered'] as num?)?.toInt() ?? 0;
           damaged = (data['damaged'] as num?)?.toInt() ?? 0;
           stockMismatch = (data['mismatchCount'] as num?)?.toInt() ?? 0;
           
@@ -160,12 +162,14 @@ class ReportRepositoryImpl implements ReportRepository {
           delivered += tx.cansDelivered.toInt();
           returned += tx.emptyCollected.toInt();
         }
+        // Use logDelivered if transactions are 0 (e.g. Agency warehouse transfers)
+        final effectiveDelivered = delivered > 0 ? delivered : logDelivered;
         
         // 5. Stock Reconciliation
         // Use our corrected openingStock
         final finalOpening = openingStock;
         final finalAvailable = finalOpening + loaded;
-        final calculatedClosing = finalAvailable - delivered - damaged;
+        final calculatedClosing = finalAvailable - effectiveDelivered - damaged;
         
         // If log exists, closingStock is usually what's in there, but if we corrected opening,
         // we should probably trust our calculated closing for consistency in the report view.
@@ -184,13 +188,13 @@ class ReportRepositoryImpl implements ReportRepository {
           openingStock: finalOpening,
           stockLoaded: loaded,
           totalAvailable: finalAvailable,
-          deliveredStock: delivered,
+          deliveredStock: effectiveDelivered,
           damagedStock: damaged,
           closingStock: finalClosing,
           stockMismatch: stockMismatch,
-          bottlesDelivered: delivered,
+          bottlesDelivered: effectiveDelivered,
           bottlesReturned: returned,
-          netBottlesOut: delivered - returned,
+          netBottlesOut: effectiveDelivered - returned,
           totalBottlesWithCustomers: snapshotTotalBottles ?? relevantCustomers.fold(0, (sum, c) => sum + c.bottleBalance),
           salesRevenue: salesRevenue,
           totalCollected: totalCollected,
@@ -256,6 +260,7 @@ class ReportRepositoryImpl implements ReportRepository {
 
         // 3. Aggregate Stock Logs for the month
         int totalLoaded = 0;
+        int totalLogDelivered = 0;
         int totalDamaged = 0;
         int totalMismatch = 0;
         int monthlyOpeningStock = 0;
@@ -280,6 +285,7 @@ class ReportRepositoryImpl implements ReportRepository {
             if (key.toString().contains(monthPrefix)) {
               final log = Map<String, dynamic>.from(value as Map);
               totalLoaded += (log['loaded'] as num?)?.toInt() ?? 0;
+              totalLogDelivered += (log['totalDelivered'] as num?)?.toInt() ?? 0;
               totalDamaged += (log['damaged'] as num?)?.toInt() ?? 0;
               totalMismatch += (log['mismatchCount'] as num?)?.toInt() ?? 0;
             }
@@ -353,6 +359,8 @@ class ReportRepositoryImpl implements ReportRepository {
           returned += tx.emptyCollected.toInt();
         }
 
+        final effectiveDelivered = delivered > 0 ? delivered : totalLogDelivered;
+
         // 5. Financials & Stock Reconciliation
         final netDeposits = securityDepositsCollected - securityDepositsRefunded;
         final cashInHand = cashSales + cashFromDeposits - securityDepositsRefunded;
@@ -370,12 +378,12 @@ class ReportRepositoryImpl implements ReportRepository {
         if (isCurrentMonth) {
           calculatedOpening = hasOpeningStock 
               ? monthlyOpeningStock 
-              : (currentStock + delivered + totalDamaged - totalLoaded);
+              : (currentStock + effectiveDelivered + totalDamaged - totalLoaded);
           calculatedClosing = currentStock;
         } else {
           // Past month: Do not use currentStock
           calculatedOpening = hasOpeningStock ? monthlyOpeningStock : 0;
-          calculatedClosing = calculatedOpening + totalLoaded - delivered - totalDamaged;
+          calculatedClosing = calculatedOpening + totalLoaded - effectiveDelivered - totalDamaged;
         }
 
         // Safety clamp
@@ -401,13 +409,13 @@ class ReportRepositoryImpl implements ReportRepository {
           openingStock: calculatedOpening,
           stockLoaded: totalLoaded,
           totalAvailable: totalAvailable,
-          deliveredStock: delivered,
+          deliveredStock: effectiveDelivered,
           damagedStock: totalDamaged,
           closingStock: calculatedClosing,
           stockMismatch: totalMismatch,
-          bottlesDelivered: delivered,
+          bottlesDelivered: effectiveDelivered,
           bottlesReturned: returned,
-          netBottlesOut: delivered - returned,
+          netBottlesOut: effectiveDelivered - returned,
           totalBottlesWithCustomers: totalBottlesWithCustomers,
           salesRevenue: salesRevenue,
           totalCollected: totalCollected,
@@ -472,7 +480,7 @@ class ReportRepositoryImpl implements ReportRepository {
       // 2. Create a stream of reports for EACH salesman + Warehouse
       final reportStreams = [
         getDailyReport(agencyId, date), // Warehouse Report
-        ...salesmenIds.map((id) => getDailyReport(id, date)), // Salesmen Reports
+        ...salesmenIds.where((id) => id != agencyId).map((id) => getDailyReport(id, date)), // Salesmen Reports
       ];
       
       // 3. Combine and Aggregate
@@ -513,7 +521,7 @@ class ReportRepositoryImpl implements ReportRepository {
 
       final reportStreams = [
         getMonthlyReport(agencyId, month), // Warehouse Report
-        ...salesmenIds.map((id) => getMonthlyReport(id, month)), // Salesmen Reports
+        ...salesmenIds.where((id) => id != agencyId).map((id) => getMonthlyReport(id, month)), // Salesmen Reports
       ];
 
       return CombineLatestStream.list<ReportEntity>(reportStreams).map((reports) {
@@ -558,9 +566,6 @@ class ReportRepositoryImpl implements ReportRepository {
     double totalAvgPriceWeighted = 0;
     int totalDeliveredForPrice = 0;
     
-    double totalTurnoverWeighted = 0;
-    int totalAvailableForTurnover = 0;
-    
     int totalCustomers = 0;
     int activeCustomers = 0;
     int newCustomers = 0;
@@ -574,27 +579,24 @@ class ReportRepositoryImpl implements ReportRepository {
       totalRevenue += r.totalRevenue;
       
       // Consolidated counts: 
-      // OpeningStock = Sum(all)
-      // ClosingStock = Sum(all)
-      // Damaged/Mismatch = Sum(all)
-      openingStock += r.openingStock;
-      closingStock += r.closingStock;
-      damagedStock += r.damagedStock;
-      stockMismatch += r.stockMismatch;
+      if (isWarehouse) {
+        openingStock = r.openingStock;
+        closingStock = r.closingStock;
+        damagedStock = r.damagedStock;
+        stockMismatch = r.stockMismatch;
+      }
       
       if (isWarehouse) {
         // Warehouse specific: Only external refills go here
         stockLoaded += r.stockLoaded;
-        // Internal distributions (totalDeliveries in warehouse report) are IGNORED in agency customer delivery count
+        // Internal distributions (warehouse -> salesman) ARE the deliveries for the warehouse report
+        deliveredStock = r.deliveredStock; 
       } else {
-        // Salesman specific: Only customer deliveries go here
+        // Salesman specific: Only customer deliveries go here for the summary card
         totalDeliveries += r.totalDeliveries;
-        deliveredStock += r.deliveredStock;
-        // Internal loads (stockLoaded in salesman report) are IGNORED in agency refill count
+        // Salesman's deliveredStock (customer sales) is NOT added to the warehouse's own deliveredStock total
       }
 
-      totalAvailable += r.totalAvailable; // Still useful for turnover? Sum of available isn't great, better Opening+Loaded
-      
       bottlesDelivered += r.bottlesDelivered;
       bottlesReturned += r.bottlesReturned;
       netBottlesOut += r.netBottlesOut;
@@ -619,9 +621,6 @@ class ReportRepositoryImpl implements ReportRepository {
       totalDeliveredForPrice += r.totalDeliveries;
       totalAvgPriceWeighted += (r.avgPricePerCan * r.totalDeliveries);
       
-      // Turnover at agency level: sum(Delivered) / sum(Opening + External Refills)
-      // Handled outside the loop.
-      
       totalCustomers += r.totalCustomers;
       activeCustomers += r.activeCustomers;
       newCustomers += r.newCustomers;
@@ -630,10 +629,12 @@ class ReportRepositoryImpl implements ReportRepository {
       if (r.workingDays > maxWorkingDays) maxWorkingDays = r.workingDays;
     }
 
+    final agencyTotalAvailable = openingStock + stockLoaded;
+    totalAvailable = agencyTotalAvailable;
+
     final avgPrice = totalDeliveredForPrice > 0 ? totalAvgPriceWeighted / totalDeliveredForPrice : 0.0;
     
     // Correct Agency Level Turnover
-    final agencyTotalAvailable = openingStock + stockLoaded;
     final avgTurnover = agencyTotalAvailable > 0 ? (deliveredStock / agencyTotalAvailable) * 100 : 0.0;
     
     // For agency daily averages, we can divide Total Agency Stats by Max Working Days (or current working days).
@@ -687,7 +688,10 @@ class ReportRepositoryImpl implements ReportRepository {
       activeCustomers: activeCustomers,
       newCustomers: newCustomers,
       inactiveCustomers: inactiveCustomers,
-      subReports: reports,
+      subReports: reports.where((r) {
+        final isWh = r.salesmanId == agencyId || r.salesmanId == '' || r.salesmanId == null;
+        return !isWh;
+      }).toList(),
     );
   }
 

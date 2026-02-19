@@ -182,7 +182,7 @@ class AgencyMonthlyReportView extends StatelessWidget {
       children: [
         Expanded(
           child: buildLargeSummaryCard(
-            title: "Total Agency Sales",
+            title: "Total Sales",
             value: "₹${NumberFormat('#,##,###').format(report.totalRevenue)}",
             subtitle: "${report.workingDays} working days",
             color: const Color(0xFF9155FD), // Purple
