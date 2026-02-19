@@ -272,13 +272,12 @@ class _CustomersPageState extends State<CustomersPage> {
                             separatorBuilder: (_, __) => const SizedBox(height: 12),
                             itemBuilder: (context, index) {
                               final customer = state.filteredCustomers[index];
-                              return _buildCustomerCard(customer, salesman);
+                              return _buildCustomerCard(customer, salesman, isAgency);
                             },
                           ),
                         ),
                         
-                       // Add Customer Button (Only shown in Personal View for clarity)
-                       if (!isAgency)
+                      
                        Padding(
                          padding: const EdgeInsets.all(16.0),
                          child: SizedBox(
@@ -289,7 +288,7 @@ class _CustomersPageState extends State<CustomersPage> {
                                 if (salesman.maxCustomers > 0 && salesman.customerCount >= salesman.maxCustomers) {
                                   _showLimitExceededDialog(context, 'You have reached your assigned quota of ${salesman.maxCustomers} customers. Please contact your administrator.');
                                 } else {
-                                  _showAddCustomerDialog(context, salesman);
+                                  _showAddCustomerDialog(context, salesman, isAgency);
                                 }
                               },
                              icon: const Icon(Icons.add),
@@ -350,7 +349,7 @@ class _CustomersPageState extends State<CustomersPage> {
   }
 
   
-  Widget _buildCustomerCard(dynamic customer, Salesman salesman) {
+  Widget _buildCustomerCard(dynamic customer, Salesman salesman, bool isAgency) {
     // customer is Customer
     final bool isActive = customer.status == 'Active';
     
@@ -362,6 +361,7 @@ class _CustomersPageState extends State<CustomersPage> {
             customer: customer,
             currentUser: salesman,
             customerBloc: context.read<CustomerBloc>(),
+            isAgencyView: isAgency,
           ),
         );
       },
@@ -547,10 +547,14 @@ class _CustomersPageState extends State<CustomersPage> {
     );
   }
 
-  void _showAddCustomerDialog(BuildContext pageContext, Salesman salesman) {
+  void _showAddCustomerDialog(BuildContext pageContext, Salesman salesman, bool isAgency) {
     showDialog(
       context: pageContext,
-      builder: (context) => AddCustomerDialog(currentUser: salesman, bloc: pageContext.read<CustomerBloc>()),
+      builder: (context) => AddCustomerDialog(
+        currentUser: salesman, 
+        bloc: pageContext.read<CustomerBloc>(),
+        isAgencyView: isAgency,
+      ),
     );
   }
 }

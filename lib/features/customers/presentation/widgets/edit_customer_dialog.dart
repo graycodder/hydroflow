@@ -17,12 +17,14 @@ class EditCustomerDialog extends StatefulWidget {
   final Customer customer;
   final Salesman currentUser;
   final CustomerBloc customerBloc;
+  final bool isAgencyView;
 
   const EditCustomerDialog({
     super.key,
     required this.customer,
     required this.currentUser,
     required this.customerBloc,
+    this.isAgencyView = false,
   });
 
   @override
@@ -54,7 +56,7 @@ class _EditCustomerDialogState extends State<EditCustomerDialog> {
     
     _selectedSalesmanId = widget.customer.salesmanId;
     
-    if (widget.currentUser.role == 'owner') {
+    if (widget.isAgencyView) {
       _fetchSalesmen();
     }
   }
@@ -146,7 +148,7 @@ class _EditCustomerDialogState extends State<EditCustomerDialog> {
                 ),
                 const SizedBox(height: 20),
 
-                if (widget.currentUser.role == 'owner') ...[
+                if (widget.isAgencyView) ...[
                     Align(alignment: Alignment.centerLeft, child: _buildLabel('Assign To Salesman', isMandatory: true)),
                     if (_isLoadingSalesmen)
                       const Padding(padding: EdgeInsets.all(8.0), child: Center(child: CircularProgressIndicator()))

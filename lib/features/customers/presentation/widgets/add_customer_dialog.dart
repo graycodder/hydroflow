@@ -12,11 +12,13 @@ import 'package:hydroflow/core/widgets/hydro_flow_loader.dart';
 class AddCustomerDialog extends StatefulWidget {
   final Salesman currentUser;
   final CustomerBloc bloc;
+  final bool isAgencyView;
 
   const AddCustomerDialog({
     super.key,
     required this.currentUser,
     required this.bloc,
+    this.isAgencyView = false,
   });
 
   @override
@@ -39,8 +41,8 @@ class _AddCustomerDialogState extends State<AddCustomerDialog> {
   @override
   void initState() {
     super.initState();
-    if (widget.currentUser.role == 'owner') {
-      _selectedSalesmanId = widget.currentUser.id; // Default to owner
+    if (widget.isAgencyView) {
+      _selectedSalesmanId = widget.currentUser.id; // Default to current user
       _fetchSalesmen();
     } else {
       _selectedSalesmanId = widget.currentUser.id;
@@ -129,7 +131,7 @@ class _AddCustomerDialogState extends State<AddCustomerDialog> {
                   ),
                   const SizedBox(height: 20),
 
-                  if (widget.currentUser.role == 'owner') ...[
+                  if (widget.isAgencyView) ...[
                     _buildLabel('Assign To Salesman', isMandatory: true),
                     if (_isLoadingSalesmen)
                       const Padding(padding: EdgeInsets.all(8.0), child: Center(child: CircularProgressIndicator()))
@@ -312,7 +314,7 @@ class _AddCustomerDialogState extends State<AddCustomerDialog> {
                           final deposit = double.parse(_depositController.text.trim());
 
                           // Quota Check
-                          final targetSalesman = widget.currentUser.role == 'owner' 
+                          final targetSalesman = widget.isAgencyView 
                               ? _availableSalesmen.firstWhere((s) => s.id == _selectedSalesmanId, orElse: () => widget.currentUser)
                               : widget.currentUser;
 

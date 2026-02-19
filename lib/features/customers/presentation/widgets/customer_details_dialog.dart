@@ -16,12 +16,14 @@ class CustomerDetailsDialog extends StatefulWidget {
   final Customer customer;
   final Salesman currentUser;
   final CustomerBloc customerBloc;
+  final bool isAgencyView;
 
   const CustomerDetailsDialog({
     super.key,
     required this.customer,
     required this.currentUser,
     required this.customerBloc,
+    this.isAgencyView = false,
   });
 
   @override
@@ -480,6 +482,7 @@ class _CustomerDetailsDialogState extends State<CustomerDetailsDialog> {
                           customer: widget.customer.copyWith(status: isActive ? 'Active' : 'Inactive'),
                           currentUser: widget.currentUser,
                           customerBloc: widget.customerBloc,
+                          isAgencyView: widget.isAgencyView,
                         ),
                       );
                     },
