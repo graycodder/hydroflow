@@ -16,6 +16,16 @@ class LoadProfile extends ProfileEvent {
   List<Object?> get props => [uid];
 }
 
+class LoadAgencyProfile extends ProfileEvent {
+  final String uid;
+  final String agencyId;
+
+  const LoadAgencyProfile(this.uid, this.agencyId);
+
+  @override
+  List<Object?> get props => [uid, agencyId];
+}
+
 // Internal Events for Stream Updates
 class _InternalUpdate extends ProfileEvent {
   final ProfileEntity? profile;

@@ -49,12 +49,32 @@ class _ReportsPageState extends State<ReportsPage> {
       },
       child: Builder(
         builder: (context) {
+          final reportsState = context.watch<ReportsBloc>().state;
+          final prefs = sl<SharedPreferences>();
+          final salesman = (authState is AuthAuthenticated) ? authState.salesman : null;
+          final isAgencyViewPref = (prefs.getBool('dashboard_is_agency_view') ?? false) && (salesman?.role == 'owner');
+          
+          if (salesman != null && salesman.role == 'owner') {
+             if (isAgencyViewPref != reportsState.isAgencyView) {
+                WidgetsBinding.instance.addPostFrameCallback((_) {
+                   if (isAgencyViewPref) {
+                      context.read<ReportsBloc>().add(LoadAgencyDailyReport(salesman.agencyId, selectedDate));
+                   } else {
+                      context.read<ReportsBloc>().add(LoadDailyReport(salesman.id, selectedDate));
+                   }
+                });
+                return const Scaffold(body: Center(child: HydroFlowLoader(message: 'Switching View...', isOverlay: false)));
+             }
+          }
+          
+          final isAgency = reportsState.isAgencyView;
+
           return Scaffold(
             backgroundColor: Colors.white,
             appBar: const HydroFlowAppBar(),
             body: Column(
               children: [
-                if (isAgencyView)
+                if (isAgency)
                   Container(
                     width: double.infinity,
                     color: Colors.orange.withOpacity(0.1),
@@ -70,7 +90,7 @@ class _ReportsPageState extends State<ReportsPage> {
                       ),
                     ),
                   ),
-                _buildTopTabs(context, id, isAgencyView),
+                _buildTopTabs(context, id, isAgency),
                 Expanded(
                   child: BlocBuilder<ReportsBloc, ReportsState>(
                     builder: (context, state) {
@@ -85,7 +105,7 @@ class _ReportsPageState extends State<ReportsPage> {
                         return SingleChildScrollView(
                           padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8),
                           child: isMonthly 
-                            ? (isAgencyView 
+                            ? (isAgency 
                                 ? AgencyMonthlyReportView(
                                     report: state.report,
                                     agencyId: id,
@@ -126,7 +146,7 @@ class _ReportsPageState extends State<ReportsPage> {
                                     onExportPressed: () {},
                                     onSharePressed: () {},
                                   ))
-                            : (isAgencyView
+                            : (isAgency
                                 ? AgencyDailyReportView(
                                     report: state.report,
                                     agencyId: id,
@@ -135,7 +155,7 @@ class _ReportsPageState extends State<ReportsPage> {
                                                    selectedDate.month == now.month && 
                                                    selectedDate.day == now.day,
                                     onSharedPressed: () {},
-                                    onSelectDatePressed: () => _showPicker(context, id, isAgencyView),
+                                    onSelectDatePressed: () => _showPicker(context, id, isAgency),
                                     onLeftChevronPressed: () {
                                       setState(() {
                                         selectedDate = selectedDate.subtract(const Duration(days: 1));
@@ -157,7 +177,7 @@ class _ReportsPageState extends State<ReportsPage> {
                                                    selectedDate.month == now.month && 
                                                    selectedDate.day == now.day,
                                     onSharedPressed: () {},
-                                    onSelectDatePressed: () => _showPicker(context, id, isAgencyView),
+                                    onSelectDatePressed: () => _showPicker(context, id, isAgency),
                                     onLeftChevronPressed: () {
                                       setState(() {
                                         selectedDate = selectedDate.subtract(const Duration(days: 1));

@@ -11,6 +11,7 @@ class SubscriptionRecord extends Equatable {
   final String duration;
   final bool isAutoRenew;
   final String paymentMethod;
+  final String agencyId;
   final String salesmanId;
   final String salesmanName;
   final String salesmanPhone;
@@ -29,6 +30,7 @@ class SubscriptionRecord extends Equatable {
     required this.isAutoRenew,
     required this.paymentMethod,
     required this.salesmanId,
+    this.agencyId = '',
     required this.salesmanName,
     required this.salesmanPhone,
     required this.status,
@@ -47,7 +49,9 @@ class SubscriptionRecord extends Equatable {
         duration,
         isAutoRenew,
         paymentMethod,
+        paymentMethod,
         salesmanId,
+        agencyId,
         salesmanName,
         salesmanPhone,
         status,

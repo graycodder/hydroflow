@@ -45,9 +45,9 @@ class StockBloc extends Bloc<StockEvent, StockState> {
 
     // Emit preliminary state
     if (state is StockDataUpdated) {
-       emit(StockDataUpdated(todayLog: state.todayLog, hasAnyLogs: hasLogs, agencyStock: state.agencyStock));
+       emit(StockDataUpdated(todayLog: state.todayLog, hasAnyLogs: hasLogs, agencyStock: state.agencyStock, isAgencyView: false));
     } else {
-       emit(StockDataUpdated(todayLog: state.todayLog, hasAnyLogs: hasLogs, agencyStock: state.agencyStock));
+       emit(StockDataUpdated(todayLog: state.todayLog, hasAnyLogs: hasLogs, agencyStock: state.agencyStock, isAgencyView: false));
     }
 
     _logSubscription = _inventoryRepository
@@ -60,7 +60,7 @@ class StockBloc extends Bloc<StockEvent, StockState> {
       },
       onError: (error) {
         if (!isClosed) {
-          emit(StockFailure('Stock Stream Error: $error', todayLog: state.todayLog, hasAnyLogs: state.hasAnyLogs));
+          emit(StockFailure('Stock Stream Error: $error', todayLog: state.todayLog, hasAnyLogs: state.hasAnyLogs, agencyStock: state.agencyStock, isAgencyView: false));
         }
       },
     );
@@ -73,7 +73,7 @@ class StockBloc extends Bloc<StockEvent, StockState> {
     // If we get a log, it only counts as "setup done" if openingStock > 0.
     // Otherwise, we preserve the history-based state.hasAnyLogs.
     final hasLogs = (event.todayLog != null && event.todayLog!.openingStock > 0) || state.hasAnyLogs;
-    emit(StockDataUpdated(todayLog: event.todayLog, hasAnyLogs: hasLogs, agencyStock: state.agencyStock));
+    emit(StockDataUpdated(todayLog: event.todayLog, hasAnyLogs: hasLogs, agencyStock: state.agencyStock, isAgencyView: state.isAgencyView));
   }
 
   Future<void> _onStockLoadRequested(
@@ -81,20 +81,20 @@ class StockBloc extends Bloc<StockEvent, StockState> {
     Emitter<StockState> emit,
   ) async {
     if (event.quantity <= 0) {
-      emit(StockFailure('Quantity must be greater than 0', todayLog: state.todayLog, hasAnyLogs: state.hasAnyLogs));
+      emit(StockFailure('Quantity must be greater than 0', todayLog: state.todayLog, hasAnyLogs: state.hasAnyLogs, agencyStock: state.agencyStock, isAgencyView: state.isAgencyView));
       return;
     }
 
-    emit(StockActionLoading(todayLog: state.todayLog, hasAnyLogs: state.hasAnyLogs, agencyStock: state.agencyStock));
+    emit(StockActionLoading(todayLog: state.todayLog, hasAnyLogs: state.hasAnyLogs, agencyStock: state.agencyStock, isAgencyView: state.isAgencyView));
     try {
       await _inventoryRepository.addStock(
         salesmanId: event.salesmanId,
         quantity: event.quantity,
         agencyId: event.agencyId,
       );
-      emit(StockActionSuccess('Stock loaded successfully', todayLog: state.todayLog, hasAnyLogs: state.hasAnyLogs, agencyStock: state.agencyStock));
+      emit(StockActionSuccess('Stock loaded successfully', todayLog: state.todayLog, hasAnyLogs: state.hasAnyLogs, agencyStock: state.agencyStock, isAgencyView: state.isAgencyView));
     } catch (e) {
-      emit(StockFailure('Failed to load stock: $e', todayLog: state.todayLog, hasAnyLogs: state.hasAnyLogs, agencyStock: state.agencyStock));
+      emit(StockFailure('Failed to load stock: $e', todayLog: state.todayLog, hasAnyLogs: state.hasAnyLogs, agencyStock: state.agencyStock, isAgencyView: state.isAgencyView));
     }
   }
 
@@ -103,19 +103,19 @@ class StockBloc extends Bloc<StockEvent, StockState> {
     Emitter<StockState> emit,
   ) async {
     if (event.quantity <= 0) {
-      emit(StockFailure('Quantity must be greater than 0', todayLog: state.todayLog, hasAnyLogs: state.hasAnyLogs, agencyStock: state.agencyStock));
+      emit(StockFailure('Quantity must be greater than 0', todayLog: state.todayLog, hasAnyLogs: state.hasAnyLogs, agencyStock: state.agencyStock, isAgencyView: state.isAgencyView));
       return;
     }
 
-    emit(StockActionLoading(todayLog: state.todayLog, hasAnyLogs: state.hasAnyLogs, agencyStock: state.agencyStock));
+    emit(StockActionLoading(todayLog: state.todayLog, hasAnyLogs: state.hasAnyLogs, agencyStock: state.agencyStock, isAgencyView: state.isAgencyView));
     try {
       await _inventoryRepository.recordDamagedStock(
         salesmanId: event.salesmanId,
         quantity: event.quantity,
       );
-      emit(StockActionSuccess('Damaged stock recorded', todayLog: state.todayLog, hasAnyLogs: state.hasAnyLogs, agencyStock: state.agencyStock));
+      emit(StockActionSuccess('Damaged stock recorded', todayLog: state.todayLog, hasAnyLogs: state.hasAnyLogs, agencyStock: state.agencyStock, isAgencyView: state.isAgencyView));
     } catch (e) {
-      emit(StockFailure('Failed to record damaged stock: $e', todayLog: state.todayLog, hasAnyLogs: state.hasAnyLogs, agencyStock: state.agencyStock));
+      emit(StockFailure('Failed to record damaged stock: $e', todayLog: state.todayLog, hasAnyLogs: state.hasAnyLogs, agencyStock: state.agencyStock, isAgencyView: state.isAgencyView));
     }
   }
 
@@ -123,16 +123,16 @@ class StockBloc extends Bloc<StockEvent, StockState> {
     StockOpeningStockSet event,
     Emitter<StockState> emit,
   ) async {
-    emit(StockActionLoading(todayLog: state.todayLog, hasAnyLogs: state.hasAnyLogs, agencyStock: state.agencyStock));
+    emit(StockActionLoading(todayLog: state.todayLog, hasAnyLogs: state.hasAnyLogs, agencyStock: state.agencyStock, isAgencyView: state.isAgencyView));
     try {
       await _inventoryRepository.setOpeningStock(
         salesmanId: event.salesmanId,
         quantity: event.quantity,
         agencyId: event.agencyId,
       );
-      emit(StockActionSuccess('Opening stock fixed', todayLog: state.todayLog, hasAnyLogs: state.hasAnyLogs, agencyStock: state.agencyStock));
+      emit(StockActionSuccess('Opening stock fixed', todayLog: state.todayLog, hasAnyLogs: state.hasAnyLogs, agencyStock: state.agencyStock, isAgencyView: state.isAgencyView));
     } catch (e) {
-      emit(StockFailure('Failed to set opening stock: $e', todayLog: state.todayLog, hasAnyLogs: state.hasAnyLogs, agencyStock: state.agencyStock));
+      emit(StockFailure('Failed to set opening stock: $e', todayLog: state.todayLog, hasAnyLogs: state.hasAnyLogs, agencyStock: state.agencyStock, isAgencyView: state.isAgencyView));
     }
   }
 
@@ -140,7 +140,7 @@ class StockBloc extends Bloc<StockEvent, StockState> {
     StockReconciled event,
     Emitter<StockState> emit,
   ) async {
-    emit(StockActionLoading(todayLog: state.todayLog, hasAnyLogs: state.hasAnyLogs, agencyStock: state.agencyStock));
+    emit(StockActionLoading(todayLog: state.todayLog, hasAnyLogs: state.hasAnyLogs, agencyStock: state.agencyStock, isAgencyView: state.isAgencyView));
     try {
       // 1. Reconcile Stock
       await _inventoryRepository.reconcileStock(
@@ -160,9 +160,9 @@ class StockBloc extends Bloc<StockEvent, StockState> {
         print('Failed to snapshot bottle balance: $e');
       }
 
-      emit(StockActionSuccess('Reconciliation completed', todayLog: state.todayLog, hasAnyLogs: state.hasAnyLogs, agencyStock: state.agencyStock));
+      emit(StockActionSuccess('Reconciliation completed', todayLog: state.todayLog, hasAnyLogs: state.hasAnyLogs, agencyStock: state.agencyStock, isAgencyView: state.isAgencyView));
     } catch (e) {
-      emit(StockFailure('Reconciliation failed: $e', todayLog: state.todayLog, hasAnyLogs: state.hasAnyLogs, agencyStock: state.agencyStock));
+      emit(StockFailure('Reconciliation failed: $e', todayLog: state.todayLog, hasAnyLogs: state.hasAnyLogs, agencyStock: state.agencyStock, isAgencyView: state.isAgencyView));
     }
   }
 
@@ -171,19 +171,19 @@ class StockBloc extends Bloc<StockEvent, StockState> {
     Emitter<StockState> emit,
   ) async {
     if (event.quantity <= 0) {
-      emit(StockFailure('Quantity must be greater than 0', todayLog: state.todayLog, hasAnyLogs: state.hasAnyLogs, agencyStock: state.agencyStock));
+      emit(StockFailure('Quantity must be greater than 0', todayLog: state.todayLog, hasAnyLogs: state.hasAnyLogs, agencyStock: state.agencyStock, isAgencyView: state.isAgencyView));
       return;
     }
 
-    emit(StockActionLoading(todayLog: state.todayLog, hasAnyLogs: state.hasAnyLogs, agencyStock: state.agencyStock));
+    emit(StockActionLoading(todayLog: state.todayLog, hasAnyLogs: state.hasAnyLogs, agencyStock: state.agencyStock, isAgencyView: state.isAgencyView));
     try {
       await _inventoryRepository.addWarehouseStock(
         agencyId: event.agencyId,
         quantity: event.quantity,
       );
-      emit(StockActionSuccess('Warehouse Purchase Added', todayLog: state.todayLog, hasAnyLogs: state.hasAnyLogs, agencyStock: state.agencyStock));
+      emit(StockActionSuccess('Warehouse Purchase Added', todayLog: state.todayLog, hasAnyLogs: state.hasAnyLogs, agencyStock: state.agencyStock, isAgencyView: state.isAgencyView));
     } catch (e) {
-      emit(StockFailure('Failed to add warehouse stock: $e', todayLog: state.todayLog, hasAnyLogs: state.hasAnyLogs, agencyStock: state.agencyStock));
+      emit(StockFailure('Failed to add warehouse stock: $e', todayLog: state.todayLog, hasAnyLogs: state.hasAnyLogs, agencyStock: state.agencyStock, isAgencyView: state.isAgencyView));
     }
   }
 
@@ -199,7 +199,7 @@ class StockBloc extends Bloc<StockEvent, StockState> {
 
     if (isClosed) return;
 
-    emit(StockLoading(todayLog: state.todayLog, hasAnyLogs: hasLogs, agencyStock: state.agencyStock));
+    emit(StockLoading(todayLog: state.todayLog, hasAnyLogs: hasLogs, agencyStock: state.agencyStock, isAgencyView: true));
     
     // 1. Listen to Agency Log Stream
     _logSubscription = _inventoryRepository
@@ -229,7 +229,7 @@ class StockBloc extends Bloc<StockEvent, StockState> {
       },
       onError: (error) {
         if (!isClosed) {
-          emit(StockFailure('Agency Stock Error: $error', todayLog: state.todayLog, hasAnyLogs: state.hasAnyLogs, agencyStock: state.agencyStock));
+          emit(StockFailure('Agency Stock Error: $error', todayLog: state.todayLog, hasAnyLogs: state.hasAnyLogs, agencyStock: state.agencyStock, isAgencyView: true));
         }
       },
     );
@@ -243,6 +243,7 @@ class StockBloc extends Bloc<StockEvent, StockState> {
       todayLog: state.todayLog,
       hasAnyLogs: state.hasAnyLogs,
       agencyStock: event.stock,
+      isAgencyView: state.isAgencyView,
     ));
   }
 
@@ -250,15 +251,15 @@ class StockBloc extends Bloc<StockEvent, StockState> {
     AgencyStockOpeningStockSet event,
     Emitter<StockState> emit,
   ) async {
-    emit(StockActionLoading(todayLog: state.todayLog, hasAnyLogs: state.hasAnyLogs, agencyStock: state.agencyStock));
+    emit(StockActionLoading(todayLog: state.todayLog, hasAnyLogs: state.hasAnyLogs, agencyStock: state.agencyStock, isAgencyView: state.isAgencyView));
     try {
       await _inventoryRepository.setAgencyOpeningStock(
         agencyId: event.agencyId,
         quantity: event.quantity,
       );
-      emit(StockActionSuccess('Agency Opening Stock Set', todayLog: state.todayLog, hasAnyLogs: state.hasAnyLogs, agencyStock: state.agencyStock));
+      emit(StockActionSuccess('Agency Opening Stock Set', todayLog: state.todayLog, hasAnyLogs: state.hasAnyLogs, agencyStock: state.agencyStock, isAgencyView: state.isAgencyView));
     } catch (e) {
-      emit(StockFailure('Failed to set opening stock: $e', todayLog: state.todayLog, hasAnyLogs: state.hasAnyLogs, agencyStock: state.agencyStock));
+      emit(StockFailure('Failed to set opening stock: $e', todayLog: state.todayLog, hasAnyLogs: state.hasAnyLogs, agencyStock: state.agencyStock, isAgencyView: state.isAgencyView));
     }
   }
 
@@ -267,18 +268,18 @@ class StockBloc extends Bloc<StockEvent, StockState> {
     Emitter<StockState> emit,
   ) async {
     if (event.quantity <= 0) {
-      emit(StockFailure('Quantity must be greater than 0', todayLog: state.todayLog, hasAnyLogs: state.hasAnyLogs, agencyStock: state.agencyStock));
+      emit(StockFailure('Quantity must be greater than 0', todayLog: state.todayLog, hasAnyLogs: state.hasAnyLogs, agencyStock: state.agencyStock, isAgencyView: state.isAgencyView));
       return;
     }
-    emit(StockActionLoading(todayLog: state.todayLog, hasAnyLogs: state.hasAnyLogs, agencyStock: state.agencyStock));
+    emit(StockActionLoading(todayLog: state.todayLog, hasAnyLogs: state.hasAnyLogs, agencyStock: state.agencyStock, isAgencyView: state.isAgencyView));
     try {
       await _inventoryRepository.addAgencyRefillStock(
         agencyId: event.agencyId,
         quantity: event.quantity,
       );
-      emit(StockActionSuccess('Refill Successful', todayLog: state.todayLog, hasAnyLogs: state.hasAnyLogs, agencyStock: state.agencyStock));
+      emit(StockActionSuccess('Refill Successful', todayLog: state.todayLog, hasAnyLogs: state.hasAnyLogs, agencyStock: state.agencyStock, isAgencyView: state.isAgencyView));
     } catch (e) {
-      emit(StockFailure('Refill Failed: $e', todayLog: state.todayLog, hasAnyLogs: state.hasAnyLogs, agencyStock: state.agencyStock));
+      emit(StockFailure('Refill Failed: $e', todayLog: state.todayLog, hasAnyLogs: state.hasAnyLogs, agencyStock: state.agencyStock, isAgencyView: state.isAgencyView));
     }
   }
 
@@ -287,18 +288,18 @@ class StockBloc extends Bloc<StockEvent, StockState> {
     Emitter<StockState> emit,
   ) async {
     if (event.quantity <= 0) {
-      emit(StockFailure('Quantity must be greater than 0', todayLog: state.todayLog, hasAnyLogs: state.hasAnyLogs, agencyStock: state.agencyStock));
+      emit(StockFailure('Quantity must be greater than 0', todayLog: state.todayLog, hasAnyLogs: state.hasAnyLogs, agencyStock: state.agencyStock, isAgencyView: state.isAgencyView));
       return;
     }
-    emit(StockActionLoading(todayLog: state.todayLog, hasAnyLogs: state.hasAnyLogs, agencyStock: state.agencyStock));
+    emit(StockActionLoading(todayLog: state.todayLog, hasAnyLogs: state.hasAnyLogs, agencyStock: state.agencyStock, isAgencyView: state.isAgencyView));
     try {
       await _inventoryRepository.recordAgencyDamagedStock(
         agencyId: event.agencyId,
         quantity: event.quantity,
       );
-      emit(StockActionSuccess('Damaged Stock Recorded', todayLog: state.todayLog, hasAnyLogs: state.hasAnyLogs, agencyStock: state.agencyStock));
+      emit(StockActionSuccess('Damaged Stock Recorded', todayLog: state.todayLog, hasAnyLogs: state.hasAnyLogs, agencyStock: state.agencyStock, isAgencyView: state.isAgencyView));
     } catch (e) {
-      emit(StockFailure('Failed to record damaged stock: $e', todayLog: state.todayLog, hasAnyLogs: state.hasAnyLogs, agencyStock: state.agencyStock));
+      emit(StockFailure('Failed to record damaged stock: $e', todayLog: state.todayLog, hasAnyLogs: state.hasAnyLogs, agencyStock: state.agencyStock, isAgencyView: state.isAgencyView));
     }
   }
 }

@@ -25,6 +25,7 @@ class DashboardPage extends StatefulWidget {
 class _DashboardPageState extends State<DashboardPage> {
   bool _showSubscriptionReminder = true;
   bool _isAgencyView = false; // Default to personal view
+  bool _isViewSwitching = false;
   
   @override
   void initState() {
@@ -96,7 +97,6 @@ class _DashboardPageState extends State<DashboardPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  // --- AGENCY DASHBOARD FILTER ---
                   if (salesman.role == 'owner' && salesman.agencyId.isNotEmpty) 
                     Padding(
                       padding: const EdgeInsets.only(bottom: 16.0),
@@ -135,16 +135,43 @@ class _DashboardPageState extends State<DashboardPage> {
                             ],
                             onChanged: (value) async {
                               if (value != null) {
-                                final isAgency = value == 'agency';
-                                setState(() {
-                                  _isAgencyView = isAgency;
-                                });
-                                
-                                // Save preference
-                                final prefs = sl<SharedPreferences>();
-                                await prefs.setBool('dashboard_is_agency_view', isAgency);
+                                if (value == (_isAgencyView ? 'agency' : 'personal')) return;
 
-                                _loadDashboardData(salesman);
+                                final shouldSwitch = await showDialog<bool>(
+                                  context: context,
+                                  builder: (context) => AlertDialog(
+                                    title: const Text('Switch View'),
+                                    content: Text(
+                                      value == 'agency' 
+                                        ? 'Are you sure you want to switch to Agency View?'
+                                        : 'Are you sure you want to switch to Personal View?'
+                                    ),
+                                    actions: [
+                                      TextButton(
+                                        onPressed: () => Navigator.pop(context, false),
+                                        child: const Text('Cancel'),
+                                      ),
+                                      TextButton(
+                                        onPressed: () => Navigator.pop(context, true),
+                                        child: const Text('Confirm'),
+                                      ),
+                                    ],
+                                  ),
+                                );
+
+                                if (shouldSwitch == true) {
+                                  final isAgency = value == 'agency';
+                                  setState(() {
+                                    _isAgencyView = isAgency;
+                                    _isViewSwitching = true;
+                                  });
+                                  
+                                  // Save preference
+                                  final prefs = sl<SharedPreferences>();
+                                  await prefs.setBool('dashboard_is_agency_view', isAgency);
+
+                                  _loadDashboardData(salesman);
+                                }
                               }
                             },
                           ),
@@ -277,8 +304,23 @@ class _DashboardPageState extends State<DashboardPage> {
                   ),
                   const SizedBox(height: 24),
                   // Stats Grid
-                  BlocBuilder<DashboardBloc, DashboardState>(
+                  BlocConsumer<DashboardBloc, DashboardState>(
+                    listener: (context, state) {
+                      if (state is DashboardLoaded || state is DashboardError) {
+                        if (_isViewSwitching) {
+                          setState(() {
+                            _isViewSwitching = false;
+                          });
+                        }
+                      }
+                    },
                     builder: (context, dashboardState) {
+                      if (_isViewSwitching || dashboardState is DashboardLoading) {
+                        return const Padding(
+                          padding: EdgeInsets.all(32.0),
+                          child: HydroFlowLoader(isOverlay: false),
+                        );
+                      }
                       if (dashboardState is DashboardLoaded) {
                         final summary = dashboardState.summary;
                         return GridView.count(
@@ -338,12 +380,6 @@ class _DashboardPageState extends State<DashboardPage> {
                              // onTap: () => context.push('/customers'),
                             ),
                           ],
-                        );
-                      }
-                      if (dashboardState is DashboardLoading) {
-                        return const Padding(
-                          padding: EdgeInsets.all(32.0),
-                          child: HydroFlowLoader(isOverlay: false),
                         );
                       }
                       if (dashboardState is DashboardError) {

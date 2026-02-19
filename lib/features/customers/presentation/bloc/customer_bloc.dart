@@ -49,6 +49,7 @@ class CustomerBloc extends Bloc<CustomerEvent, CustomerState> {
       status: CustomerStatus.loading,
       selectedZone: savedZone,
       clearSelectedZone: savedZone == null,
+      isAgencyView: false,
     ));
     
     await emit.forEach<List<Customer>>(
@@ -65,6 +66,7 @@ class CustomerBloc extends Bloc<CustomerEvent, CustomerState> {
           activeCustomers: activeCount,
           inactiveCustomers: inactiveCount,
           successMessage: null, // Clear message on routine update
+          isAgencyView: false,
         );
       },
       onError: (error, stackTrace) => state.copyWith(
@@ -84,6 +86,7 @@ class CustomerBloc extends Bloc<CustomerEvent, CustomerState> {
       status: CustomerStatus.loading,
       selectedZone: savedZone,
       clearSelectedZone: savedZone == null,
+      isAgencyView: true,
     ));
     
     await emit.forEach<List<Customer>>(
@@ -100,6 +103,7 @@ class CustomerBloc extends Bloc<CustomerEvent, CustomerState> {
           activeCustomers: activeCount,
           inactiveCustomers: inactiveCount,
           successMessage: null,
+          isAgencyView: true,
         );
       },
       onError: (error, stackTrace) => state.copyWith(

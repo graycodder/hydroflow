@@ -40,6 +40,7 @@ import 'package:hydroflow/features/profile/data/repositories/profile_repository_
 import 'package:hydroflow/features/profile/domain/repositories/profile_repository.dart';
 import 'package:hydroflow/features/profile/domain/usecases/get_profile_usecase.dart';
 import 'package:hydroflow/features/profile/domain/usecases/get_subscription_history_usecase.dart';
+import 'package:hydroflow/features/profile/domain/usecases/get_agency_profile_usecase.dart';
 import 'package:hydroflow/features/profile/presentation/bloc/profile_bloc.dart';
 import 'package:hydroflow/features/notifications/data/repositories/notification_repository_impl.dart';
 import 'package:hydroflow/features/notifications/domain/repositories/notification_repository.dart';
@@ -172,10 +173,13 @@ Future<void> init() async {
   );
   sl.registerLazySingleton(() => GetProfileUseCase(sl()));
   sl.registerLazySingleton(() => GetSubscriptionHistoryUseCase(sl()));
+  sl.registerLazySingleton(() => GetAgencyProfileUseCase(sl()));
   sl.registerFactory(
     () => ProfileBloc(
       getProfile: sl(),
       getSubscriptionHistory: sl(),
+      getAgencyProfile: sl(),
+      agencyRepository: sl(),
     ),
   );
 

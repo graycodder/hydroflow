@@ -50,10 +50,31 @@ class _CustomersPageState extends State<CustomersPage> {
   @override
   Widget build(BuildContext context) {
 
-    return BlocBuilder<AuthBloc, AuthState>(
+      return BlocBuilder<AuthBloc, AuthState>(
       builder: (context, authState) {
         if (authState is AuthAuthenticated) {
           final salesman = authState.salesman;
+          
+          final prefs = sl<SharedPreferences>();
+          final isAgencyViewPref = prefs.getBool('dashboard_is_agency_view') ?? false;
+          final isOwner = salesman.role == 'owner';
+
+          // Access CustomerBloc state
+          final customerState = context.watch<CustomerBloc>().state;
+
+          // Check for view mismatch
+          if (isOwner) {
+            if (isAgencyViewPref != customerState.isAgencyView) {
+               WidgetsBinding.instance.addPostFrameCallback((_) {
+                  if (isAgencyViewPref) {
+                     context.read<CustomerBloc>().add(LoadAgencyCustomers(salesman.agencyId));
+                  } else {
+                     context.read<CustomerBloc>().add(LoadCustomers(salesman.id));
+                  }
+               });
+               return const Scaffold(body: Center(child: HydroFlowLoader(message: 'Switching View...', isOverlay: false)));
+            }
+          }
           
           return Scaffold(
               backgroundColor: Colors.grey[50], 
@@ -64,9 +85,7 @@ class _CustomersPageState extends State<CustomersPage> {
                       return const HydroFlowLoader(message: 'Loading Customers...', isOverlay: false);
                     }
                     
-                    final prefs = sl<SharedPreferences>();
-                    final isAgencyView = prefs.getBool('dashboard_is_agency_view') ?? false;
-                    final isAgency = salesman.role == 'owner' && isAgencyView;
+                    final isAgency = state.isAgencyView;
                     
                     Widget body = Column(
                       mainAxisAlignment: MainAxisAlignment.start,

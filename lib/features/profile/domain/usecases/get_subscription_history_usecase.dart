@@ -6,7 +6,7 @@ class GetSubscriptionHistoryUseCase {
 
   GetSubscriptionHistoryUseCase(this.repository);
 
-  Stream<List<SubscriptionRecord>> call(String uid) {
-    return repository.getSubscriptionHistory(uid);
+  Stream<List<SubscriptionRecord>> call({String? uid, String? agencyId}) {
+    return repository.getSubscriptionHistory(uid: uid, agencyId: agencyId);
   }
 }

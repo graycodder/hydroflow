@@ -60,6 +60,7 @@ class DeliveryBloc extends Bloc<DeliveryEvent, DeliveryState> {
       clearSelectedCustomer: true,
       selectedZone: savedZone,
       clearSelectedZone: savedZone == null,
+      isAgencyView: false,
     ));
     
     final salesmanStream = _authRepository.getSalesmanStream(event.salesmanId);
@@ -100,7 +101,7 @@ class DeliveryBloc extends Bloc<DeliveryEvent, DeliveryState> {
           );
         }
 
-        return _calculateUpdatedState(transactions, customers, currentStock, updatedSelectedCustomer: updatedSelectedCustomer);
+        return _calculateUpdatedState(transactions, customers, currentStock, updatedSelectedCustomer: updatedSelectedCustomer).copyWith(isAgencyView: false);
       },
       onError: (e, stackTrace) => state.copyWith(
         status: DeliveryStatus.failure,
@@ -118,6 +119,7 @@ class DeliveryBloc extends Bloc<DeliveryEvent, DeliveryState> {
       status: DeliveryStatus.loading,
       selectedZone: savedZone,
       clearSelectedZone: savedZone == null,
+      isAgencyView: true,
     ));
 
     // Get all salesmen for this agency to aggregate transactions
@@ -147,7 +149,7 @@ class DeliveryBloc extends Bloc<DeliveryEvent, DeliveryState> {
         final transactions = data['transactions'] as List<TransactionEntity>;
         final currentStock = data['currentStock'] as int;
 
-        return _calculateUpdatedState(transactions, customers, currentStock);
+        return _calculateUpdatedState(transactions, customers, currentStock).copyWith(isAgencyView: true);
       },
       onError: (e, stackTrace) => state.copyWith(
         status: DeliveryStatus.failure,

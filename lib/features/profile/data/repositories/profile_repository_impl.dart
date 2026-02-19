@@ -2,6 +2,7 @@ import 'package:hydroflow/features/profile/data/datasources/profile_remote_data_
 import 'package:hydroflow/features/profile/domain/entities/profile_entity.dart';
 import 'package:hydroflow/features/profile/domain/entities/subscription_record.dart';
 import 'package:hydroflow/features/profile/domain/repositories/profile_repository.dart';
+import 'package:hydroflow/features/auth/domain/entities/agency.dart';
 
 class ProfileRepositoryImpl implements ProfileRepository {
   final ProfileRemoteDataSource _remoteDataSource;
@@ -14,7 +15,12 @@ class ProfileRepositoryImpl implements ProfileRepository {
   }
 
   @override
-  Stream<List<SubscriptionRecord>> getSubscriptionHistory(String uid) {
-    return _remoteDataSource.getSubscriptionHistory(uid);
+  Stream<Agency> getAgencyProfile(String agencyId) {
+    return _remoteDataSource.getAgencyProfile(agencyId);
+  }
+
+  @override
+  Stream<List<SubscriptionRecord>> getSubscriptionHistory({String? uid, String? agencyId}) {
+    return _remoteDataSource.getSubscriptionHistory(uid: uid, agencyId: agencyId);
   }
 }

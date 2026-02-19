@@ -38,24 +38,46 @@ class _BottlesPageState extends State<BottlesPage> {
         builder: (context, authState) {
           if (authState is AuthAuthenticated) {
             final salesman = authState.salesman;
-            // Ensure bloc is triggered correctly based on view preference
-            return BlocProvider(
-              create: (context) {
-                final bloc = sl<BottleBloc>();
-                final prefs = sl<SharedPreferences>();
-                final isAgencyView = prefs.getBool('dashboard_is_agency_view') ?? false;
-                
-                if (salesman.role == 'owner' && isAgencyView) {
-                  bloc.add(LoadAgencyBottleLedger(salesman.agencyId));
-                } else {
-                  bloc.add(LoadBottleLedger(salesman.id));
-                }
-                return bloc;
-              },
-              child: Scaffold(
-                backgroundColor: Colors.grey[50],
-                appBar: const HydroFlowAppBar(),
-                body: BlocBuilder<BottleBloc, BottleState>(
+            
+            // Recalculate isAgency based on prefs
+            final prefs = sl<SharedPreferences>();
+            final isAgencyViewPref = prefs.getBool('dashboard_is_agency_view') ?? false;
+            final isOwner = salesman.role == 'owner';
+
+            // Access BottleBloc state
+            final bottleState = context.watch<BottleBloc>().state;
+            
+            // Check for view mismatch and trigger reload
+            if (isOwner) {
+               bool currentBlocIsAgency = false;
+               if (bottleState is BottleLoaded) {
+                 currentBlocIsAgency = bottleState.isAgencyView;
+               } else if (bottleState is BottleLoading) {
+                 // For loading, we might need to rely on what we *expect* or add isAgencyView to Loading state too.
+                 // We added it to BottleState base, so we can cast/check property if available.
+                 // But since BottleState has isAgencyView getter in our implementation (via Equatable props? No, direct field),
+                 // actually we added `final bool isAgencyView;` to BottleState base class.
+                 currentBlocIsAgency = bottleState.isAgencyView;
+               } else if (bottleState is BottleFailure) {
+                 currentBlocIsAgency = bottleState.isAgencyView; // Assuming we added it to Failure too
+               }
+
+               if (isAgencyViewPref != currentBlocIsAgency) {
+                  WidgetsBinding.instance.addPostFrameCallback((_) {
+                     if (isAgencyViewPref) {
+                        context.read<BottleBloc>().add(LoadAgencyBottleLedger(salesman.agencyId));
+                     } else {
+                        context.read<BottleBloc>().add(LoadBottleLedger(salesman.id));
+                     }
+                  });
+                  return const Scaffold(body: Center(child: HydroFlowLoader(message: 'Switching View...', isOverlay: false)));
+               }
+            }
+
+            return Scaffold(
+              backgroundColor: Colors.grey[50],
+              appBar: const HydroFlowAppBar(),
+              body: BlocBuilder<BottleBloc, BottleState>(
                   builder: (context, state) {
                     if (state is BottleLoading) {
                       return const HydroFlowLoader(isOverlay: false);
@@ -308,10 +330,9 @@ class _BottlesPageState extends State<BottlesPage> {
                     return const Center(child: Text('Something went wrong'));
                   },
                 ),
-                bottomNavigationBar: const AppBottomBar(currentIndex: 2), // Index 2 for Bottles? Assuming
-              ),
-            );
-          }
+                bottomNavigationBar: const AppBottomBar(currentIndex: 2),
+              );
+            }
            return const Scaffold(body: HydroFlowLoader(isOverlay: false));
         },
       ),

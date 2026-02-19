@@ -47,28 +47,33 @@ class LoadAgencyMonthlyReport extends ReportsEvent {
 
 // State
 abstract class ReportsState extends Equatable {
-  const ReportsState();
+  final bool isAgencyView;
+  const ReportsState({this.isAgencyView = false});
   @override
-  List<Object?> get props => [];
+  List<Object?> get props => [isAgencyView];
 }
 
-class ReportsInitial extends ReportsState {}
+class ReportsInitial extends ReportsState {
+  const ReportsInitial({super.isAgencyView});
+}
 
-class ReportsLoading extends ReportsState {}
+class ReportsLoading extends ReportsState {
+  const ReportsLoading({super.isAgencyView});
+}
 
 class ReportsLoaded extends ReportsState {
   final ReportEntity report;
   final bool isMonthly;
-  const ReportsLoaded(this.report, {this.isMonthly = false});
+  const ReportsLoaded(this.report, {this.isMonthly = false, super.isAgencyView});
   @override
-  List<Object?> get props => [report, isMonthly];
+  List<Object?> get props => [report, isMonthly, isAgencyView];
 }
 
 class ReportsFailure extends ReportsState {
   final String message;
-  const ReportsFailure(this.message);
+  const ReportsFailure(this.message, {super.isAgencyView});
   @override
-  List<Object?> get props => [message];
+  List<Object?> get props => [message, isAgencyView];
 }
 
 // Bloc
@@ -96,41 +101,41 @@ class ReportsBloc extends Bloc<ReportsEvent, ReportsState> {
 
   Future<void> _onLoadDailyReport(
       LoadDailyReport event, Emitter<ReportsState> emit) async {
-    emit(ReportsLoading());
+    emit(const ReportsLoading(isAgencyView: false));
     await emit.forEach<ReportEntity>(
       _getDailyReportUseCase(event.salesmanId, event.date),
-      onData: (report) => ReportsLoaded(report, isMonthly: false),
-      onError: (e, stackTrace) => ReportsFailure(e.toString()),
+      onData: (report) => ReportsLoaded(report, isMonthly: false, isAgencyView: false),
+      onError: (e, stackTrace) => ReportsFailure(e.toString(), isAgencyView: false),
     );
   }
 
   Future<void> _onLoadMonthlyReport(
       LoadMonthlyReport event, Emitter<ReportsState> emit) async {
-    emit(ReportsLoading());
+    emit(const ReportsLoading(isAgencyView: false));
     await emit.forEach<ReportEntity>(
       _getMonthlyReportUseCase(event.salesmanId, event.month),
-      onData: (report) => ReportsLoaded(report, isMonthly: true),
-      onError: (e, stackTrace) => ReportsFailure(e.toString()),
+      onData: (report) => ReportsLoaded(report, isMonthly: true, isAgencyView: false),
+      onError: (e, stackTrace) => ReportsFailure(e.toString(), isAgencyView: false),
     );
   }
 
   Future<void> _onLoadAgencyDailyReport(
       LoadAgencyDailyReport event, Emitter<ReportsState> emit) async {
-    emit(ReportsLoading());
+    emit(const ReportsLoading(isAgencyView: true));
     await emit.forEach<ReportEntity>(
       _getAgencyDailyReportUseCase(event.agencyId, event.date),
-      onData: (report) => ReportsLoaded(report, isMonthly: false),
-      onError: (e, stackTrace) => ReportsFailure(e.toString()),
+      onData: (report) => ReportsLoaded(report, isMonthly: false, isAgencyView: true),
+      onError: (e, stackTrace) => ReportsFailure(e.toString(), isAgencyView: true),
     );
   }
 
   Future<void> _onLoadAgencyMonthlyReport(
       LoadAgencyMonthlyReport event, Emitter<ReportsState> emit) async {
-    emit(ReportsLoading());
+    emit(const ReportsLoading(isAgencyView: true));
     await emit.forEach<ReportEntity>(
       _getAgencyMonthlyReportUseCase(event.agencyId, event.month),
-      onData: (report) => ReportsLoaded(report, isMonthly: true),
-      onError: (e, stackTrace) => ReportsFailure(e.toString()),
+      onData: (report) => ReportsLoaded(report, isMonthly: true, isAgencyView: true),
+      onError: (e, stackTrace) => ReportsFailure(e.toString(), isAgencyView: true),
     );
   }
 }

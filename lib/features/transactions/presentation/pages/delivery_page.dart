@@ -172,8 +172,24 @@ class _DeliveryViewState extends State<DeliveryView> {
         final salesmanId = salesman?.id ?? '';
 
         final prefs = sl<SharedPreferences>();
-        final isAgencyView = prefs.getBool('dashboard_is_agency_view') ?? false;
-        final isAgency = salesman?.role == 'owner' && isAgencyView;
+        final isAgencyViewPref = prefs.getBool('dashboard_is_agency_view') ?? false;
+        final isOwner = salesman?.role == 'owner';
+        
+        // Check for view mismatch
+        if (isOwner) {
+           if (isAgencyViewPref != state.isAgencyView) {
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                 if (isAgencyViewPref) {
+                    context.read<DeliveryBloc>().add(LoadAgencyDeliveries(salesman!.agencyId));
+                 } else {
+                    context.read<DeliveryBloc>().add(LoadDeliveryPage(salesman!.id));
+                 }
+              });
+              return const Scaffold(body: Center(child: HydroFlowLoader(message: 'Switching View...', isOverlay: false)));
+           }
+        }
+
+        final isAgency = state.isAgencyView;
 
         Widget content = state.status == DeliveryStatus.loading
             ? const HydroFlowLoader(

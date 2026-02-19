@@ -20,6 +20,7 @@ class DeliveryState extends Equatable {
   final String? selectedZone;
   final String? selectedSalesmanId;
   final List<Customer> filteredCustomers;
+  final bool isAgencyView;
 
   const DeliveryState({
     this.status = DeliveryStatus.initial,
@@ -37,6 +38,7 @@ class DeliveryState extends Equatable {
     this.selectedZone,
     this.selectedSalesmanId,
     this.filteredCustomers = const [],
+    this.isAgencyView = false,
   });
 
   DeliveryState copyWith({
@@ -58,6 +60,7 @@ class DeliveryState extends Equatable {
     String? selectedSalesmanId,
     bool clearSelectedSalesman = false,
     List<Customer>? filteredCustomers,
+    bool? isAgencyView,
   }) {
     return DeliveryState(
       status: status ?? this.status,
@@ -75,6 +78,7 @@ class DeliveryState extends Equatable {
       selectedZone: clearSelectedZone ? null : (selectedZone ?? this.selectedZone),
       selectedSalesmanId: clearSelectedSalesman ? null : (selectedSalesmanId ?? this.selectedSalesmanId),
       filteredCustomers: filteredCustomers ?? this.filteredCustomers,
+      isAgencyView: isAgencyView ?? this.isAgencyView,
     );
   }
 
@@ -95,5 +99,6 @@ class DeliveryState extends Equatable {
         selectedZone,
         selectedSalesmanId,
         filteredCustomers,
+        isAgencyView,
       ];
 }

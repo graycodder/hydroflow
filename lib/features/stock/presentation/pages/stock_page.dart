@@ -86,10 +86,41 @@ class _StockPageState extends State<StockPage> {
               final salesman = authState.salesman;
               
               // Recalculate isAgency based on prefs (needs to match BlocProvider logic)
-              // Ideally this should be state-driven, but reading prefs here ensures UI consistency with data load
               final prefs = sl<SharedPreferences>();
-              final isAgencyView = prefs.getBool('dashboard_is_agency_view') ?? false;
-              final isAgency = salesman.role == 'owner' && isAgencyView; // Only show Agency UI if owner AND preference is Agency
+              final isAgencyViewPref = prefs.getBool('dashboard_is_agency_view') ?? false;
+              
+              // Check if we need to switch views
+              // We do this check here to ensure the Bloc is loaded with the correct data
+              // corresponding to the current global preference.
+              // Note: We use a post-frame callback or similar if we want to trigger a reload,
+              // but since we are in build, we should be careful. 
+              // Better approach: Check if state.isAgencyView matches pref. If not, trigger load.
+              
+              final isOwner = salesman.role == 'owner';
+              
+              // Use the state's view mode for UI rendering to ensure consistency with data
+              final stockState = context.watch<StockBloc>().state;
+              final isAgency = stockState.isAgencyView;
+
+              // Synchronization Logic
+              if (isOwner) {
+                 if (isAgencyViewPref != stockState.isAgencyView) {
+                    // Mismatch detected. Trigger reload.
+                    // We must do this asynchronously to avoid build conflicts.
+                    WidgetsBinding.instance.addPostFrameCallback((_) {
+                       if (isAgencyViewPref) {
+                          context.read<StockBloc>().add(LoadAgencyStock(salesman.agencyId));
+                       } else {
+                          context.read<StockBloc>().add(LoadStockPage(salesman.id));
+                       }
+                    });
+                    
+                    // Show loader while switching
+                    return const Scaffold(
+                      body: Center(child: HydroFlowLoader(message: 'Switching View...', isOverlay: false)),
+                    );
+                 }
+              }
 
               return Scaffold(
                 backgroundColor: Colors.grey[50],

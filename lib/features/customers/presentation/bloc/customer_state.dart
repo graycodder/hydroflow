@@ -15,6 +15,7 @@ class CustomerState extends Equatable {
   final String? selectedZone;
   final String? selectedSalesmanId;
   final String searchQuery;
+  final bool isAgencyView;
 
   const CustomerState({
     this.status = CustomerStatus.initial,
@@ -28,6 +29,7 @@ class CustomerState extends Equatable {
     this.selectedZone,
     this.selectedSalesmanId,
     this.searchQuery = '',
+    this.isAgencyView = false,
   });
 
   CustomerState copyWith({
@@ -44,6 +46,7 @@ class CustomerState extends Equatable {
     String? selectedSalesmanId,
     bool clearSelectedSalesman = false,
     String? searchQuery,
+    bool? isAgencyView,
   }) {
     return CustomerState(
       status: status ?? this.status,
@@ -57,6 +60,7 @@ class CustomerState extends Equatable {
       selectedZone: clearSelectedZone ? null : (selectedZone ?? this.selectedZone),
       selectedSalesmanId: clearSelectedSalesman ? null : (selectedSalesmanId ?? this.selectedSalesmanId),
       searchQuery: searchQuery ?? this.searchQuery,
+      isAgencyView: isAgencyView ?? this.isAgencyView,
     );
   }
 
@@ -73,5 +77,6 @@ class CustomerState extends Equatable {
     selectedZone,
     selectedSalesmanId,
     searchQuery,
+    isAgencyView,
   ];
 }
