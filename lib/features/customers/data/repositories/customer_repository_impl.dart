@@ -84,7 +84,7 @@ class CustomerRepositoryImpl implements CustomerRepository {
         final count = (map['customerCount'] as num?)?.toInt() ?? 0;
         final max = (map['maxCustomers'] as num?)?.toInt() ?? 0;
         
-        if (count >= max && max > 0) {
+        if (count >= max) {
           return Transaction.abort(); // Quota reached
         }
         

@@ -314,11 +314,11 @@ class _AddCustomerDialogState extends State<AddCustomerDialog> {
                           final deposit = double.parse(_depositController.text.trim());
 
                           // Quota Check
-                          final targetSalesman = widget.isAgencyView 
+                          final targetSalesman = widget.isAgencyView
                               ? _availableSalesmen.firstWhere((s) => s.id == _selectedSalesmanId, orElse: () => widget.currentUser)
                               : widget.currentUser;
 
-                          if (targetSalesman.customerCount >= targetSalesman.maxCustomers && targetSalesman.maxCustomers > 0) {
+                          if (targetSalesman.customerCount >= targetSalesman.maxCustomers) {
                              ScaffoldMessenger.of(context).showSnackBar(
                                SnackBar(content: Text('Quota reached for ${targetSalesman.name} (${targetSalesman.customerCount}/${targetSalesman.maxCustomers})'))
                              );
