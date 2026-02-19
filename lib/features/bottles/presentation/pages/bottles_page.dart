@@ -26,64 +26,59 @@ class _BottlesPageState extends State<BottlesPage> {
     super.initState();
     final authState = context.read<AuthBloc>().state;
     if (authState is AuthAuthenticated) {
-      context.read<BottleBloc>().add(LoadBottleLedger(authState.salesman.id));
+      final salesman = authState.salesman;
+      final prefs = sl<SharedPreferences>();
+      final isAgencyView = prefs.getBool('dashboard_is_agency_view') ?? false;
+
+      if (salesman.role == 'owner' && isAgencyView) {
+        context.read<BottleBloc>().add(LoadAgencyBottleLedger(salesman.agencyId));
+      } else {
+        context.read<BottleBloc>().add(LoadBottleLedger(salesman.id));
+      }
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (_) => sl<BottleBloc>(),
-      child: BlocBuilder<AuthBloc, AuthState>(
-        builder: (context, authState) {
-          if (authState is AuthAuthenticated) {
-            final salesman = authState.salesman;
-            
-            // Recalculate isAgency based on prefs
-            final prefs = sl<SharedPreferences>();
-            final isAgencyViewPref = prefs.getBool('dashboard_is_agency_view') ?? false;
-            final isOwner = salesman.role == 'owner';
+    return BlocBuilder<AuthBloc, AuthState>(
+      builder: (context, authState) {
+        if (authState is AuthAuthenticated) {
+          final salesman = authState.salesman;
+          
+          // Recalculate isAgency based on prefs
+          final prefs = sl<SharedPreferences>();
+          final isAgencyViewPref = prefs.getBool('dashboard_is_agency_view') ?? false;
+          final isOwner = salesman.role == 'owner';
 
-            // Access BottleBloc state
-            final bottleState = context.watch<BottleBloc>().state;
-            
-            // Check for view mismatch and trigger reload
-            if (isOwner) {
-               bool currentBlocIsAgency = false;
-               if (bottleState is BottleLoaded) {
-                 currentBlocIsAgency = bottleState.isAgencyView;
-               } else if (bottleState is BottleLoading) {
-                 // For loading, we might need to rely on what we *expect* or add isAgencyView to Loading state too.
-                 // We added it to BottleState base, so we can cast/check property if available.
-                 // But since BottleState has isAgencyView getter in our implementation (via Equatable props? No, direct field),
-                 // actually we added `final bool isAgencyView;` to BottleState base class.
-                 currentBlocIsAgency = bottleState.isAgencyView;
-               } else if (bottleState is BottleFailure) {
-                 currentBlocIsAgency = bottleState.isAgencyView; // Assuming we added it to Failure too
-               }
+          // Access BottleBloc state
+          final bottleState = context.watch<BottleBloc>().state;
+          
+          // Check for view mismatch and trigger reload
+          if (isOwner) {
+             bool currentBlocIsAgency = bottleState.isAgencyView;
 
-               if (isAgencyViewPref != currentBlocIsAgency) {
-                  WidgetsBinding.instance.addPostFrameCallback((_) {
-                     if (isAgencyViewPref) {
-                        context.read<BottleBloc>().add(LoadAgencyBottleLedger(salesman.agencyId));
-                     } else {
-                        context.read<BottleBloc>().add(LoadBottleLedger(salesman.id));
-                     }
-                  });
-                  return const Scaffold(body: Center(child: HydroFlowLoader(message: 'Switching View...', isOverlay: false)));
-               }
-            }
+             if (isAgencyViewPref != currentBlocIsAgency) {
+                WidgetsBinding.instance.addPostFrameCallback((_) {
+                   if (isAgencyViewPref) {
+                      context.read<BottleBloc>().add(LoadAgencyBottleLedger(salesman.agencyId));
+                   } else {
+                      context.read<BottleBloc>().add(LoadBottleLedger(salesman.id));
+                   }
+                });
+                return const Scaffold(body: Center(child: HydroFlowLoader(message: 'Switching View...', isOverlay: false)));
+             }
+          }
 
-            return Scaffold(
-              backgroundColor: Colors.grey[50],
-              appBar: const HydroFlowAppBar(),
-              body: BlocBuilder<BottleBloc, BottleState>(
-                  builder: (context, state) {
-                    if (state is BottleLoading) {
-                      return const HydroFlowLoader(isOverlay: false);
-                    } else if (state is BottleFailure) {
-                      return Center(child: Text('Error: ${state.error}'));
-                    } else if (state is BottleLoaded) {
+          return Scaffold(
+            backgroundColor: Colors.grey[50],
+            appBar: const HydroFlowAppBar(),
+            body: BlocBuilder<BottleBloc, BottleState>(
+                builder: (context, state) {
+                  if (state is BottleLoading || state is BottleInitial) {
+                    return const HydroFlowLoader(isOverlay: false);
+                  } else if (state is BottleFailure) {
+                    return Center(child: Text('Error: ${state.error}'));
+                  } else if (state is BottleLoaded) {
                       final prefs = sl<SharedPreferences>();
                       final isAgencyView = prefs.getBool('dashboard_is_agency_view') ?? false;
                       final isAgency = salesman.role == 'owner' && isAgencyView;
@@ -334,8 +329,7 @@ class _BottlesPageState extends State<BottlesPage> {
               );
             }
            return const Scaffold(body: HydroFlowLoader(isOverlay: false));
-        },
-      ),
+      },
     );
   }
 
