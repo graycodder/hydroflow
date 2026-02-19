@@ -106,13 +106,53 @@ class InventoryRepositoryImpl implements InventoryRepository {
       
       // Log the Load Action
       final historyRef = _database.ref().child('Agency_Stock_History').push();
+      final now = DateTime.now();
+      final dateKey = now.toIso8601String().substring(0, 10).replaceAll('-', '_');
+      
       await historyRef.set({
         'agencyId': agencyId,
-        'date': DateTime.now().toIso8601String(),
+        'date': now.toIso8601String(),
         'type': 'Load',
         'quantity': quantity,
         'targetUserId': salesmanId,
         'timestamp': ServerValue.timestamp,
+      });
+
+      // Update Warehouse Stock Log (Internal Distribution)
+      final warehouseLogRef = _database.ref().child('Stock_logs').child('LOG_${dateKey}_$agencyId');
+      final stockSnapshot = await _database.ref().child('Agencies').child(agencyId).child('stock').get();
+      final stockData = stockSnapshot.value as Map?;
+      final currentWarehouseStock = (stockData?['fullCans'] as num?)?.toInt() ?? 0;
+
+      await warehouseLogRef.runTransaction((Object? post) {
+        final logMap = post == null 
+            ? <String, dynamic>{} 
+            : Map<String, dynamic>.from(post as Map);
+
+        if (!logMap.containsKey('date')) {
+          logMap['date'] = now.toIso8601String().substring(0, 10);
+          logMap['agencyId'] = agencyId;
+          logMap['salesmanId'] = '';
+        }
+        
+        logMap['openingStock'] ??= 0;
+        if ((logMap['openingStock'] == 0) && !logMap.containsKey('openingStock_set')) {
+          logMap['openingStock'] = currentWarehouseStock + quantity; // +quantity because we already deducted from warehouseRef
+        }
+
+        logMap['loaded'] ??= 0;
+        final currentDelivered = (logMap['totalDelivered'] as num?)?.toInt() ?? 0;
+        logMap['totalDelivered'] = currentDelivered + quantity;
+        logMap['damaged'] ??= 0;
+        
+        final opening = (logMap['openingStock'] as num?)?.toInt() ?? 0;
+        final loaded = (logMap['loaded'] as num?)?.toInt() ?? 0;
+        final delivered = logMap['totalDelivered'] as int;
+        final damaged = (logMap['damaged'] as num?)?.toInt() ?? 0;
+        
+        logMap['closingStock'] = opening + loaded - delivered - damaged;
+
+        return Transaction.success(logMap);
       });
     }
 

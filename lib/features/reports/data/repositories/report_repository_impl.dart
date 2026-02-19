@@ -459,12 +459,15 @@ class ReportRepositoryImpl implements ReportRepository {
         return Stream.value(_emptyReport(date));
       }
 
-      // 2. Create a stream of reports for EACH salesman
-      final reportStreams = salesmenIds.map((id) => getDailyReport(id, date)).toList();
-
+      // 2. Create a stream of reports for EACH salesman + Warehouse
+      final reportStreams = [
+        getDailyReport(agencyId, date), // Warehouse Report
+        ...salesmenIds.map((id) => getDailyReport(id, date)), // Salesmen Reports
+      ];
+      
       // 3. Combine and Aggregate
       return CombineLatestStream.list<ReportEntity>(reportStreams).map((reports) {
-        return _aggregateReports(reports, date);
+        return _aggregateReports(reports, date, agencyId: agencyId);
       });
     });
   }
@@ -490,15 +493,18 @@ class ReportRepositoryImpl implements ReportRepository {
         return Stream.value(_emptyReport(month));
       }
 
-      final reportStreams = salesmenIds.map((id) => getMonthlyReport(id, month)).toList();
+      final reportStreams = [
+        getMonthlyReport(agencyId, month), // Warehouse Report
+        ...salesmenIds.map((id) => getMonthlyReport(id, month)), // Salesmen Reports
+      ];
 
       return CombineLatestStream.list<ReportEntity>(reportStreams).map((reports) {
-        return _aggregateReports(reports, month);
+        return _aggregateReports(reports, month, agencyId: agencyId);
       });
     });
   }
 
-  ReportEntity _aggregateReports(List<ReportEntity> reports, DateTime date) {
+  ReportEntity _aggregateReports(List<ReportEntity> reports, DateTime date, {String? agencyId}) {
     if (reports.isEmpty) return _emptyReport(date);
 
     double totalRevenue = 0;
@@ -545,19 +551,37 @@ class ReportRepositoryImpl implements ReportRepository {
     int maxWorkingDays = 0;
 
     for (var r in reports) {
+      final isWarehouse = r.salesmanId == agencyId || r.salesmanId == '';
+
       totalRevenue += r.totalRevenue;
-      totalDeliveries += r.totalDeliveries;
+      
+      // Consolidated counts: 
+      // OpeningStock = Sum(all)
+      // ClosingStock = Sum(all)
+      // Damaged/Mismatch = Sum(all)
       openingStock += r.openingStock;
-      stockLoaded += r.stockLoaded;
-      totalAvailable += r.totalAvailable;
-      deliveredStock += r.deliveredStock;
-      damagedStock += r.damagedStock;
       closingStock += r.closingStock;
+      damagedStock += r.damagedStock;
       stockMismatch += r.stockMismatch;
+      
+      if (isWarehouse) {
+        // Warehouse specific: Only external refills go here
+        stockLoaded += r.stockLoaded;
+        // Internal distributions (totalDeliveries in warehouse report) are IGNORED in agency customer delivery count
+      } else {
+        // Salesman specific: Only customer deliveries go here
+        totalDeliveries += r.totalDeliveries;
+        deliveredStock += r.deliveredStock;
+        // Internal loads (stockLoaded in salesman report) are IGNORED in agency refill count
+      }
+
+      totalAvailable += r.totalAvailable; // Still useful for turnover? Sum of available isn't great, better Opening+Loaded
+      
       bottlesDelivered += r.bottlesDelivered;
       bottlesReturned += r.bottlesReturned;
       netBottlesOut += r.netBottlesOut;
       totalBottlesWithCustomers += r.totalBottlesWithCustomers;
+
       salesRevenue += r.salesRevenue;
       totalCollected += r.totalCollected;
       totalCreditPending += r.totalCreditPending;
@@ -577,8 +601,8 @@ class ReportRepositoryImpl implements ReportRepository {
       totalDeliveredForPrice += r.totalDeliveries;
       totalAvgPriceWeighted += (r.avgPricePerCan * r.totalDeliveries);
       
-      totalAvailableForTurnover += r.totalAvailable;
-      totalTurnoverWeighted += (r.stockTurnover * r.totalAvailable);
+      // Turnover at agency level: sum(Delivered) / sum(Opening + External Refills)
+      // Handled outside the loop.
       
       totalCustomers += r.totalCustomers;
       activeCustomers += r.activeCustomers;
@@ -589,7 +613,10 @@ class ReportRepositoryImpl implements ReportRepository {
     }
 
     final avgPrice = totalDeliveredForPrice > 0 ? totalAvgPriceWeighted / totalDeliveredForPrice : 0.0;
-    final avgTurnover = totalAvailableForTurnover > 0 ? totalTurnoverWeighted / totalAvailableForTurnover : 0.0;
+    
+    // Correct Agency Level Turnover
+    final agencyTotalAvailable = openingStock + stockLoaded;
+    final avgTurnover = agencyTotalAvailable > 0 ? (deliveredStock / agencyTotalAvailable) * 100 : 0.0;
     
     // For agency daily averages, we can divide Total Agency Stats by Max Working Days (or current working days).
     // Or we can sum up average daily revenues? No, sum of averages != average of sums usually, but for daily revenue it is.

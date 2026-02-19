@@ -175,7 +175,7 @@ class AgencyDailyReportView extends StatelessWidget {
           children: [
             Expanded(
               child: buildLargeSummaryCard(
-                title: "Total Agency Sales",
+                title: "Total Sales",
                 value: "₹${report.totalRevenue.toStringAsFixed(0)}",
                 subtitle: "Total bill value",
                 color: const Color(0xFF2962FF),
