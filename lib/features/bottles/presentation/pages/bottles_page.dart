@@ -125,14 +125,14 @@ class _BottlesPageState extends State<BottlesPage> {
                                     label: '>5 Bottles',
                                     color: const Color(0xFFFF6D00), // Orange
                                   ),
-                                  const SizedBox(width: 12),
-                                  _buildStatCard(
-                                    context,
-                                    title: 'Avg Balance',
-                                    value: state.avgBalance.toStringAsFixed(1),
-                                    label: 'Per Customer',
-                                    color: const Color(0xFF00C853), // Green
-                                  ),
+                                  // const SizedBox(width: 12),
+                                  // _buildStatCard(
+                                  //   context,
+                                  //   title: 'Avg Balance',
+                                  //   value: state.avgBalance.toStringAsFixed(1),
+                                  //   label: 'Per Customer',
+                                  //   color: const Color(0xFF00C853), // Green
+                                  // ),
                                 ],
                               ),
                             const SizedBox(height: 24),
@@ -181,63 +181,64 @@ class _BottlesPageState extends State<BottlesPage> {
                               ),
                             if (state.highBalanceCount > 0) const SizedBox(height: 24),
 
-                            // Formula Card
-                            Container(
-                              width: double.infinity,
-                              padding: const EdgeInsets.all(16),
-                              decoration: BoxDecoration(
-                                color: const Color(0xFFE3F2FD), // Light Blue
-                                borderRadius: BorderRadius.circular(12),
-                                border: Border.all(color: const Color(0xFFBBDEFB)),
-                              ),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  const Row(
-                                    children: [
-                                      Icon(Icons.refresh, color: Color(0xFF1565C0), size: 20),
-                                      SizedBox(width: 8),
-                                      Text(
-                                        'Bottle Balance Formula',
-                                        style: TextStyle(
-                                          color: Color(0xFF0D47A1),
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 16,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                  const SizedBox(height: 12),
-                                  Container(
-                                    width: double.infinity,
-                                    padding: const EdgeInsets.all(12),
-                                    decoration: BoxDecoration(
-                                      color: Colors.white,
-                                      borderRadius: BorderRadius.circular(8),
-                                    ),
-                                    child: const Text(
-                                      'Net Bottles = (Previous Balance + Delivered) - Returned',
-                                      style: TextStyle(
-                                        fontFamily: 'Courier',
-                                        color: Color(0xFF263238),
-                                        fontWeight: FontWeight.w500,
-                                      ),
-                                    ),
-                                  ),
-                                  const SizedBox(height: 8),
-                                  const Text(
-                                    'This formula tracks the circular economy of bottle exchange',
-                                    style: TextStyle(
-                                      color: Color(0xFF1565C0),
-                                      fontSize: 12,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            const SizedBox(height: 32),
+                            // // Formula Card
+                            // Container(
+                            //   width: double.infinity,
+                            //   padding: const EdgeInsets.all(16),
+                            //   decoration: BoxDecoration(
+                            //     color: const Color(0xFFE3F2FD), // Light Blue
+                            //     borderRadius: BorderRadius.circular(12),
+                            //     border: Border.all(color: const Color(0xFFBBDEFB)),
+                            //   ),
+                            //   child: Column(
+                            //     crossAxisAlignment: CrossAxisAlignment.start,
+                            //     children: [
+                            //       const Row(
+                            //         children: [
+                            //           Icon(Icons.refresh, color: Color(0xFF1565C0), size: 20),
+                            //           SizedBox(width: 8),
+                            //           Text(
+                            //             'Bottle Balance Formula',
+                            //             style: TextStyle(
+                            //               color: Color(0xFF0D47A1),
+                            //               fontWeight: FontWeight.bold,
+                            //               fontSize: 16,
+                            //             ),
+                            //           ),
+                            //         ],
+                            //       ),
+                            //       const SizedBox(height: 12),
+                            //       Container(
+                            //         width: double.infinity,
+                            //         padding: const EdgeInsets.all(12),
+                            //         decoration: BoxDecoration(
+                            //           color: Colors.white,
+                            //           borderRadius: BorderRadius.circular(8),
+                            //         ),
+                            //         child: const Text(
+                            //           'Net Bottles = (Previous Balance + Delivered) - Returned',
+                            //           style: TextStyle(
+                            //             fontFamily: 'Courier',
+                            //             color: Color(0xFF263238),
+                            //             fontWeight: FontWeight.w500,
+                            //           ),
+                            //         ),
+                            //       ),
+                            //       const SizedBox(height: 8),
+                            //       const Text(
+                            //         'This formula tracks the circular economy of bottle exchange',
+                            //         style: TextStyle(
+                            //           color: Color(0xFF1565C0),
+                            //           fontSize: 12,
+                            //         ),
+                            //       ),
+                            //     ],
+                            //   ),
+                            // ),
+                            //const SizedBox(height: 10),
 
                             // Customer List Header
+                            if(state.customers.isNotEmpty)
                             const Text(
                               'Customer Bottle Ledger',
                               style: TextStyle(
@@ -245,7 +246,9 @@ class _BottlesPageState extends State<BottlesPage> {
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
+                             if(state.customers.isNotEmpty)
                             const SizedBox(height: 4),
+                             if(state.customers.isNotEmpty)
                             Text(
                               'Net bottles held by each customer',
                               style: TextStyle(
@@ -253,6 +256,7 @@ class _BottlesPageState extends State<BottlesPage> {
                                 color: Colors.grey[600],
                               ),
                             ),
+                             if(state.customers.isNotEmpty)
                             const SizedBox(height: 16),
 
                             // Customer List
@@ -354,7 +358,8 @@ class _BottlesPageState extends State<BottlesPage> {
               title,
               style: const TextStyle(
                 color: Colors.white70,
-                fontSize: 13,
+                fontSize: 16,
+                  fontWeight: FontWeight.w600,
               ),
             ),
             const SizedBox(height: 8),
@@ -373,7 +378,8 @@ class _BottlesPageState extends State<BottlesPage> {
               label,
               style: const TextStyle(
                 color: Colors.white70,
-                fontSize: 12,
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
               ),
             ),
           ],
