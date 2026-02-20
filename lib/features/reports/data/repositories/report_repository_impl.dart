@@ -166,8 +166,8 @@ class ReportRepositoryImpl implements ReportRepository {
         }
         // Use logDelivered if transactions are 0 (e.g. Agency warehouse transfers)
         final effectiveDelivered = delivered > 0 ? delivered : logDelivered;
-        // Semi-additive: Total returns is customer returns + manual collection from staff
-        final effectiveReturned = returned + logReturned;
+        // Salesman reports strictly only count customer returns
+        final effectiveReturned = returned;
         
         // 5. Stock Reconciliation
         // Use our corrected openingStock
@@ -366,8 +366,8 @@ class ReportRepositoryImpl implements ReportRepository {
         }
 
         final effectiveDelivered = delivered > 0 ? delivered : totalLogDelivered;
-        // Semi-additive: Total returns is customer returns + manual collection from staff
-        final effectiveReturned = returned + totalLogReturned;
+        // Salesman reports strictly only count customer returns
+        final effectiveReturned = returned;
         
         // 5. Financials & Stock Reconciliation
         final netDeposits = securityDepositsCollected - securityDepositsRefunded;
