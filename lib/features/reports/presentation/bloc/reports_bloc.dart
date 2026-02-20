@@ -1,4 +1,5 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:hydroflow/features/reports/domain/usecases/record_settlement_usecase.dart';
 import 'package:equatable/equatable.dart';
 import 'package:hydroflow/features/reports/domain/entities/report_entity.dart';
 import 'package:hydroflow/features/reports/domain/usecases/get_daily_report_usecase.dart';
@@ -45,6 +46,21 @@ class LoadAgencyMonthlyReport extends ReportsEvent {
   List<Object> get props => [agencyId, month];
 }
 
+class SettleSalesmanDailyCash extends ReportsEvent {
+  final String salesmanId;
+  final DateTime date;
+  final double amount;
+  final String recordedBy;
+  const SettleSalesmanDailyCash({
+    required this.salesmanId,
+    required this.date,
+    required this.amount,
+    required this.recordedBy,
+  });
+  @override
+  List<Object> get props => [salesmanId, date, amount, recordedBy];
+}
+
 // State
 abstract class ReportsState extends Equatable {
   final bool isAgencyView;
@@ -82,21 +98,25 @@ class ReportsBloc extends Bloc<ReportsEvent, ReportsState> {
   final GetMonthlyReportUseCase _getMonthlyReportUseCase;
   final GetAgencyDailyReportUseCase _getAgencyDailyReportUseCase;
   final GetAgencyMonthlyReportUseCase _getAgencyMonthlyReportUseCase;
+  final RecordSettlementUseCase _recordSettlementUseCase;
 
   ReportsBloc({
     required GetDailyReportUseCase getDailyReportUseCase,
     required GetMonthlyReportUseCase getMonthlyReportUseCase,
     required GetAgencyDailyReportUseCase getAgencyDailyReportUseCase,
     required GetAgencyMonthlyReportUseCase getAgencyMonthlyReportUseCase,
+    required RecordSettlementUseCase recordSettlementUseCase,
   })  : _getDailyReportUseCase = getDailyReportUseCase,
         _getMonthlyReportUseCase = getMonthlyReportUseCase,
         _getAgencyDailyReportUseCase = getAgencyDailyReportUseCase,
         _getAgencyMonthlyReportUseCase = getAgencyMonthlyReportUseCase,
-        super(ReportsInitial()) {
+        _recordSettlementUseCase = recordSettlementUseCase,
+        super(const ReportsInitial()) {
     on<LoadDailyReport>(_onLoadDailyReport);
     on<LoadMonthlyReport>(_onLoadMonthlyReport);
     on<LoadAgencyDailyReport>(_onLoadAgencyDailyReport);
     on<LoadAgencyMonthlyReport>(_onLoadAgencyMonthlyReport);
+    on<SettleSalesmanDailyCash>(_onSettleSalesmanDailyCash);
   }
 
   Future<void> _onLoadDailyReport(
@@ -137,5 +157,26 @@ class ReportsBloc extends Bloc<ReportsEvent, ReportsState> {
       onData: (report) => ReportsLoaded(report, isMonthly: true, isAgencyView: true),
       onError: (e, stackTrace) => ReportsFailure(e.toString(), isAgencyView: true),
     );
+  }
+
+  Future<void> _onSettleSalesmanDailyCash(
+      SettleSalesmanDailyCash event, Emitter<ReportsState> emit) async {
+    try {
+      await _recordSettlementUseCase(
+        salesmanId: event.salesmanId,
+        date: event.date,
+        amount: event.amount,
+        recordedBy: event.recordedBy,
+      );
+      // We don't need to manually emit a new loaded state or call load.
+      // Since the UI uses `emit.forEach` on the stream and the stream is based on
+      // Firebase `onValue` in the repository, when the `Settlements` node is updated,
+      // the real-time stream will automatically emit a new `ReportEntity` with `isSettled` = true.
+    } catch (e) {
+      // In case of error, just fallback or show failure. Since we are in the middle of a loaded stream,
+      // changing state to failure clears the UI. Better to just let UI catch exceptions or handle through a side effect.
+      // But for basic flow, we can just print it.
+      print("Error settling cash: $e");
+    }
   }
 }

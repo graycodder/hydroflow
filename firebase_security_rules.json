@@ -82,6 +82,10 @@
         "Notifications": {
             ".read": true,
             ".write": true
+        },
+        "Settlements": {
+            ".read": true,
+            ".write": true
         }
     }
 }

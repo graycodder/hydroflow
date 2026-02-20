@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 import 'package:hydroflow/features/reports/domain/entities/report_entity.dart';
+import 'package:hydroflow/features/reports/presentation/bloc/reports_bloc.dart';
 import 'report_ui_helpers.dart';
 
 class AgencyDailyReportView extends StatelessWidget {
@@ -34,7 +36,7 @@ class AgencyDailyReportView extends StatelessWidget {
         const SizedBox(height: 24),
         _buildSummaryCards(),
         const SizedBox(height: 16),
-        _buildSalesmanBreakdown(), // New Section
+        _buildSalesmanBreakdown(context), // Passed context here
         const SizedBox(height: 16),
         _buildStockReconciliation(),
         const SizedBox(height: 16),
@@ -48,7 +50,7 @@ class AgencyDailyReportView extends StatelessWidget {
     );
   }
 
-  Widget _buildSalesmanBreakdown() {
+  Widget _buildSalesmanBreakdown(BuildContext context) {
     if (report.subReports.isEmpty) return const SizedBox.shrink();
 
     return Column(
@@ -86,24 +88,78 @@ class AgencyDailyReportView extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      subReport.salesmanName ?? "Unknown",
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.black87,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Expanded(
+                          child: Text(
+                            subReport.salesmanName ?? "Unknown",
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.black87,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        if (subReport.isSettled)
+                          const Icon(
+                            Icons.check_circle,
+                            color: Colors.green,
+                            size: 20,
+                          ),
+                      ],
                     ),
                     const Divider(height: 24),
-                    _buildBreakdownRow("Total Sales", "₹${subReport.totalRevenue.toStringAsFixed(0)}", Colors.blue),
+                    _buildBreakdownRow(
+                      "Total Sales",
+                      "₹${subReport.totalRevenue.toStringAsFixed(0)}",
+                      Colors.blue,
+                    ),
                     const SizedBox(height: 8),
-                    _buildBreakdownRow("Cash in Hand", "₹${subReport.cashInHand.toStringAsFixed(0)}", Colors.green, isBold: true),
+                    _buildBreakdownRow(
+                      "Cash in Hand",
+                      "₹${subReport.cashInHand.toStringAsFixed(0)}",
+                      Colors.green,
+                      isBold: true,
+                    ),
                     const SizedBox(height: 8),
-                    _buildBreakdownRow("UPI Collected", "₹${subReport.upiCollections.toStringAsFixed(0)}", Colors.purple),
+                    _buildBreakdownRow(
+                      "UPI Collected",
+                      "₹${subReport.upiCollections.toStringAsFixed(0)}",
+                      Colors.purple,
+                    ),
                     const SizedBox(height: 8),
-                    _buildBreakdownRow("Closing Stock", "${subReport.closingStock} cans", Colors.orange),
+                    _buildBreakdownRow(
+                      "Closing Stock",
+                      "${subReport.closingStock} cans",
+                      Colors.orange,
+                    ),
+                    const SizedBox(height: 16),
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: subReport.isSettled
+                            ? null
+                            : () => _showSettlementDialog(context, subReport),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: subReport.isSettled
+                              ? Colors.grey[300]
+                              : const Color(0xFF2962FF),
+                          foregroundColor: subReport.isSettled
+                              ? Colors.grey[600]
+                              : Colors.white,
+                          elevation: 0,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                        ),
+                        child: Text(
+                          subReport.isSettled ? "Settled" : "Receive Payment",
+                        ),
+                      ),
+                    ),
                   ],
                 ),
               );
@@ -114,7 +170,79 @@ class AgencyDailyReportView extends StatelessWidget {
     );
   }
 
-  Widget _buildBreakdownRow(String label, String value, Color color, {bool isBold = false}) {
+  void _showSettlementDialog(BuildContext context, ReportEntity subReport) {
+    if (subReport.salesmanId == null) return;
+
+    final TextEditingController amountController = TextEditingController(
+      text: subReport.cashInHand > 0
+          ? subReport.cashInHand.toStringAsFixed(0)
+          : "",
+    );
+
+    showDialog(
+      context: context,
+      builder: (BuildContext dialogContext) {
+        return AlertDialog(
+          title: Text('Settle with ${subReport.salesmanName}'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Expected Cash in Hand: ₹${subReport.cashInHand.toStringAsFixed(0)}',
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: amountController,
+                keyboardType: TextInputType.number,
+                decoration: InputDecoration(
+                  labelText: 'Amount Received (₹)',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(),
+              child: const Text('Cancel', style: TextStyle(color: Colors.grey)),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                final double? amount = double.tryParse(amountController.text);
+                if (amount != null && amount >= 0) {
+                  context.read<ReportsBloc>().add(
+                    SettleSalesmanDailyCash(
+                      salesmanId: subReport.salesmanId!,
+                      date: selectedDate,
+                      amount: amount,
+                      recordedBy:
+                          agencyId, // using agencyId as the record creator
+                    ),
+                  );
+                  Navigator.of(dialogContext).pop();
+                }
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF2962FF),
+                foregroundColor: Colors.white,
+              ),
+              child: const Text('Confirm Settlement'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildBreakdownRow(
+    String label,
+    String value,
+    Color color, {
+    bool isBold = false,
+  }) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
@@ -150,7 +278,11 @@ class AgencyDailyReportView extends StatelessWidget {
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(Icons.calendar_today_outlined, size: 14, color: Colors.blue),
+              const Icon(
+                Icons.calendar_today_outlined,
+                size: 14,
+                color: Colors.blue,
+              ),
               const SizedBox(width: 8),
               Text(
                 DateFormat('EEEE, d MMMM y').format(selectedDate),
@@ -226,12 +358,28 @@ class AgencyDailyReportView extends StatelessWidget {
       child: Column(
         children: [
           buildRow("Total Opening Stock", "${report.openingStock} cans"),
-          buildRow(" + Total Stock Loaded", "+${report.stockLoaded} cans", valueColor: Colors.green),
+          buildRow(
+            " + Total Stock Loaded",
+            "+${report.stockLoaded} cans",
+            valueColor: Colors.green,
+          ),
           const Divider(height: 24),
-          buildRow("Total Available", "${report.totalAvailable} cans", isBold: true),
+          buildRow(
+            "Total Available",
+            "${report.totalAvailable} cans",
+            isBold: true,
+          ),
           const Divider(height: 24),
-          buildRow(" - Total Delivered", "-${report.deliveredStock} cans", valueColor: Colors.red),
-          buildRow(" - Total Damaged/Return", "-${report.damagedStock} cans", valueColor: Colors.red),
+          buildRow(
+            " - Total Delivered",
+            "-${report.deliveredStock} cans",
+            valueColor: Colors.red,
+          ),
+          buildRow(
+            " - Total Damaged/Return",
+            "-${report.damagedStock} cans",
+            valueColor: Colors.red,
+          ),
           const Divider(height: 24),
           buildRow(
             "Total Closing Stock",
@@ -262,7 +410,11 @@ class AgencyDailyReportView extends StatelessWidget {
               ),
               const SizedBox(width: 16),
               Expanded(
-                child: buildStatBox("Total Returned", "${report.bottlesReturned}", Colors.teal),
+                child: buildStatBox(
+                  "Total Returned",
+                  "${report.bottlesReturned}",
+                  Colors.teal,
+                ),
               ),
             ],
           ),
@@ -279,7 +431,9 @@ class AgencyDailyReportView extends StatelessWidget {
                 ),
               ),
               Text(
-                (report.netBottlesOut > 0 ? "+${report.netBottlesOut}" : "${report.netBottlesOut}"),
+                (report.netBottlesOut > 0
+                    ? "+${report.netBottlesOut}"
+                    : "${report.netBottlesOut}"),
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
@@ -288,7 +442,6 @@ class AgencyDailyReportView extends StatelessWidget {
               ),
             ],
           ),
-
         ],
       ),
     );
@@ -318,7 +471,10 @@ class AgencyDailyReportView extends StatelessWidget {
             child: Column(
               children: [
                 buildRow("• Cash", "₹${report.cashSales.toStringAsFixed(0)}"),
-                buildRow("• UPI/Online", "₹${report.onlineSales.toStringAsFixed(0)}"),
+                buildRow(
+                  "• UPI/Online",
+                  "₹${report.onlineSales.toStringAsFixed(0)}",
+                ),
               ],
             ),
           ),
@@ -367,30 +523,37 @@ class AgencyDailyReportView extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Expanded(
-                  flex:2,
+                  flex: 2,
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text("Total Cash in Hand", style: TextStyle(fontSize: 16, color: Colors.black87)),
+                      const Text(
+                        "Total Cash in Hand",
+                        style: TextStyle(fontSize: 16, color: Colors.black87),
+                      ),
                       Text(
                         "(Cash Sales + Deposits - Refunds)",
-                        style: const TextStyle(fontSize: 12, color: Colors.grey),
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: Colors.grey,
+                        ),
                       ),
                     ],
                   ),
                 ),
-                 Expanded(flex:1,
-                  child: 
-                Text(
-                  "₹${report.cashInHand.toStringAsFixed(0)}",
-                  overflow: TextOverflow.ellipsis,
-                        maxLines: 1,
-                  style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.green,
+                Expanded(
+                  flex: 1,
+                  child: Text(
+                    "₹${report.cashInHand.toStringAsFixed(0)}",
+                    overflow: TextOverflow.ellipsis,
+                    maxLines: 1,
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.green,
+                    ),
                   ),
-                )),
+                ),
               ],
             ),
           ),
@@ -402,34 +565,41 @@ class AgencyDailyReportView extends StatelessWidget {
               borderRadius: BorderRadius.circular(12),
             ),
             child: Row(
-               mainAxisAlignment: MainAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.start,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                  Expanded(
-                  flex:2,
+                Expanded(
+                  flex: 2,
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text("Total UPI Collections", style: TextStyle(fontSize: 16, color: Colors.black87)),
+                      const Text(
+                        "Total UPI Collections",
+                        style: TextStyle(fontSize: 16, color: Colors.black87),
+                      ),
                       Text(
                         "(To be transferred to bank)",
-                        style: const TextStyle(fontSize: 12, color: Colors.grey),
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: Colors.grey,
+                        ),
                       ),
                     ],
                   ),
                 ),
-                 Expanded(flex:1,
-                  child: 
-                Text(
-                  "₹${report.upiCollections.toStringAsFixed(0)}",
-                  overflow: TextOverflow.ellipsis,
-                        maxLines: 1,
-                  style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.purple,
+                Expanded(
+                  flex: 1,
+                  child: Text(
+                    "₹${report.upiCollections.toStringAsFixed(0)}",
+                    overflow: TextOverflow.ellipsis,
+                    maxLines: 1,
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.purple,
+                    ),
                   ),
-                )),
+                ),
               ],
             ),
           ),
@@ -454,11 +624,17 @@ class AgencyDailyReportView extends StatelessWidget {
               ),
               child: Column(
                 children: [
-                  const Text("Avg Price/Can", style: TextStyle(color: Colors.grey)),
+                  const Text(
+                    "Avg Price/Can",
+                    style: TextStyle(color: Colors.grey),
+                  ),
                   const SizedBox(height: 8),
                   Text(
                     "₹${report.avgPricePerCan.toStringAsFixed(0)}",
-                    style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                    style: const TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ],
               ),
@@ -474,11 +650,17 @@ class AgencyDailyReportView extends StatelessWidget {
               ),
               child: Column(
                 children: [
-                  const Text("Stock Turnover", style: TextStyle(color: Colors.grey)),
+                  const Text(
+                    "Stock Turnover",
+                    style: TextStyle(color: Colors.grey),
+                  ),
                   const SizedBox(height: 8),
                   Text(
                     "${report.stockTurnover.toStringAsFixed(0)}%",
-                    style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                    style: const TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ],
               ),

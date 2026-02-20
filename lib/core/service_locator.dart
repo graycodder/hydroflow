@@ -30,6 +30,7 @@ import 'package:hydroflow/features/reports/domain/usecases/get_daily_report_usec
 import 'package:hydroflow/features/reports/domain/usecases/get_monthly_report_usecase.dart';
 import 'package:hydroflow/features/reports/domain/usecases/get_agency_daily_report_usecase.dart';
 import 'package:hydroflow/features/reports/domain/usecases/get_agency_monthly_report_usecase.dart';
+import 'package:hydroflow/features/reports/domain/usecases/record_settlement_usecase.dart';
 import 'package:hydroflow/features/reports/presentation/bloc/reports_bloc.dart';
 import 'package:hydroflow/features/subscription/data/repositories/subscription_repository_impl.dart';
 import 'package:hydroflow/features/subscription/domain/repositories/subscription_repository.dart';
@@ -132,12 +133,14 @@ Future<void> init() async {
       getMonthlyReportUseCase: sl(),
       getAgencyDailyReportUseCase: sl(),
       getAgencyMonthlyReportUseCase: sl(),
+      recordSettlementUseCase: sl(),
     ),
   );
   sl.registerLazySingleton(() => GetDailyReportUseCase(sl()));
   sl.registerLazySingleton(() => GetMonthlyReportUseCase(sl()));
   sl.registerLazySingleton(() => GetAgencyDailyReportUseCase(sl()));
   sl.registerLazySingleton(() => GetAgencyMonthlyReportUseCase(sl()));
+  sl.registerLazySingleton(() => RecordSettlementUseCase(sl()));
   sl.registerLazySingleton<ReportRepository>(
     () => ReportRepositoryImpl(
       database: sl(),

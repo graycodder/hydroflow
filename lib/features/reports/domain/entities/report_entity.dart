@@ -62,6 +62,9 @@ class ReportEntity extends Equatable {
   final String? salesmanId;
   final String? salesmanName;
   final List<ReportEntity> subReports;
+  
+  // Settlement Info
+  final bool isSettled;
 
   const ReportEntity({
     required this.date,
@@ -105,6 +108,7 @@ class ReportEntity extends Equatable {
     this.salesmanId,
     this.salesmanName,
     this.subReports = const [],
+    this.isSettled = false,
   });
 
   @override
@@ -150,5 +154,6 @@ class ReportEntity extends Equatable {
         salesmanId,
         salesmanName,
         subReports,
+        isSettled,
       ];
 }

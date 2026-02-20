@@ -37,14 +37,18 @@ class ReportRepositoryImpl implements ReportRepository {
     final prevDateKey = prevDate.toIso8601String().substring(0, 10).replaceAll('-', '_');
     final prevLogRef = _database.ref().child('Stock_logs').child('LOG_${prevDateKey}_$salesmanId');
     final prevLogStream = prevLogRef.onValue;
+    // Fetch Settlement Status
+    final settlementRef = _database.ref().child('Settlements').child(salesmanId).child(dateKey);
+    final settlementStream = settlementRef.onValue;
 
-    return Rx.combineLatest5<List<TransactionEntity>, List<Customer>, DatabaseEvent, DatabaseEvent, DatabaseEvent, ReportEntity>(
+    return Rx.combineLatest6<List<TransactionEntity>, List<Customer>, DatabaseEvent, DatabaseEvent, DatabaseEvent, DatabaseEvent, ReportEntity>(
       transactionsStream,
       customersStream,
       logStream,
       salesmanStream,
       prevLogStream,
-      (transactions, customers, logEvent, salesmanEvent, prevLogEvent) {
+      settlementStream,
+      (transactions, customers, logEvent, salesmanEvent, prevLogEvent, settlementEvent) {
         // 1. Calculate Bottle Balance from Customers
         // Logic deferred to use snapshot if available.
         // Also filter customers who did not exist on this date to improve accuracy of fallback.
@@ -185,6 +189,13 @@ class ReportRepositoryImpl implements ReportRepository {
         final avgPrice = delivered > 0 ? salesRevenue / delivered : 0.0;
         final turnover = finalAvailable > 0 ? (delivered / finalAvailable) * 100 : 0.0;
 
+        // 6. Settlement Status
+        bool isSettled = false;
+        if (settlementEvent.snapshot.exists) {
+          final data = Map<String, dynamic>.from(settlementEvent.snapshot.value as Map);
+          isSettled = data['status'] == 'Settled';
+        }
+
         return ReportEntity(
           date: date,
           totalRevenue: salesRevenue, 
@@ -223,6 +234,7 @@ class ReportRepositoryImpl implements ReportRepository {
           inactiveCustomers: 0,
           salesmanId: salesmanId,
           salesmanName: salesmanName,
+          isSettled: isSettled,
         );
       },
     );
@@ -705,6 +717,19 @@ class ReportRepositoryImpl implements ReportRepository {
     );
   }
 
+
+  @override
+  Future<void> recordSalesmanSettlement(String salesmanId, DateTime date, double amount, String recordedBy) async {
+    final dateKey = date.toIso8601String().substring(0, 10).replaceAll('-', '_');
+    final settlementRef = _database.ref().child('Settlements').child(salesmanId).child(dateKey);
+    
+    await settlementRef.set({
+      'amount': amount,
+      'timestamp': ServerValue.timestamp,
+      'status': 'Settled',
+      'recordedBy': recordedBy,
+    });
+  }
 
   ReportEntity _emptyReport(DateTime date) {
     return ReportEntity(
