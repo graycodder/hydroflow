@@ -91,18 +91,32 @@ class AuthRepositoryImpl implements AuthRepository {
             // Let's assume mobile app primarily.
           }
 
-          if (currentDeviceId != null) {
-            if (role == 'salesman') {
-              if (storedDeviceId == null || storedDeviceId.isEmpty) {
-                // First login: Bind device
-                await ref.child(uid).update({'deviceId': currentDeviceId});
-              } else if (storedDeviceId != currentDeviceId) {
+          // Strict Device Check for Salesmen
+          if (role == 'salesman') {
+            if (currentDeviceId == null) {
+               // FAIL CLOSED: If we can't identify the device, we can't verify safety.
+               throw Exception('Security Check Failed: Unable to identify device.');
+            }
+
+            if (storedDeviceId != null && storedDeviceId.isNotEmpty) {
+              if (storedDeviceId != currentDeviceId) {
                 // Mismatch: Block login
                 throw Exception('This account is linked to another device. Contact admin to reset.');
               }
+              // Implicit else: Match -> Allow login
             } else {
-              // For other roles (like owner), just update deviceId for tracking
-              // but don't enforce locking.
+              // First login: Check if device is free
+              final deviceOwner = await _checkIfDeviceIsRegistered(currentDeviceId);
+              if (deviceOwner != null) {
+                   throw Exception('This device is already registered to user: $deviceOwner');
+              }
+              // Bind device
+              await ref.child(uid).update({'deviceId': currentDeviceId});
+            }
+          } else {
+            // For other roles (like owner), just update deviceId for tracking if available
+            // but don't enforce locking.
+            if (currentDeviceId != null) {
               await ref.child(uid).update({'deviceId': currentDeviceId});
             }
           }
@@ -132,6 +146,9 @@ class AuthRepositoryImpl implements AuthRepository {
       } else if (Platform.isIOS) {
         final IosDeviceInfo iosInfo = await deviceInfo.iosInfo;
         return iosInfo.identifierForVendor; // Unique ID on iOS
+      } else if (Platform.isMacOS) {
+        final MacOsDeviceInfo macOsInfo = await deviceInfo.macOsInfo;
+        return macOsInfo.systemGUID ?? macOsInfo.model; // Unique ID on MacOS
       }
     } catch (e) {
       print('Failed to get device ID: $e');
@@ -193,5 +210,20 @@ class AuthRepositoryImpl implements AuthRepository {
       if (currentVal > targetVal) return false;
     }
     return false;
+  }
+
+  Future<String?> _checkIfDeviceIsRegistered(String deviceId) async {
+    final snapshot = await _database.ref().child('Salesmen')
+        .orderByChild('deviceId')
+        .equalTo(deviceId)
+        .limitToFirst(1)
+        .get();
+        
+    if (snapshot.exists) {
+        // Return username of the owner
+        final data = snapshot.children.first.value as Map;
+        return data['username'] as String?;
+    }
+    return null;
   }
 }
