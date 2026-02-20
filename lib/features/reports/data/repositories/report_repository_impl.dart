@@ -591,14 +591,29 @@ class ReportRepositoryImpl implements ReportRepository {
         stockLoaded += r.stockLoaded;
         // Internal distributions (warehouse -> salesman) ARE the deliveries for the warehouse report
         deliveredStock = r.deliveredStock; 
+        
+        // AGENCY BOTTLE RECONCILIATION CHANGE: 
+        // Logic: Use Warehouse Delivery (to salesman) as 'Delivered'
+        // This matches the "Agency Stock Reconciliation Total Delivered" logic exactly.
+        bottlesDelivered += r.deliveredStock;
       } else {
         // Salesman specific: Only customer deliveries go here for the summary card
         totalDeliveries += r.totalDeliveries;
-        // Salesman's deliveredStock (customer sales) is NOT added to the warehouse's own deliveredStock total
+        
+        // For Agency Bottle Rec, we ignore Salesman 'stockLoaded' as we are using the Warehouse 'deliveredStock' directly.
       }
 
-      bottlesDelivered += r.bottlesDelivered;
-      bottlesReturned += r.bottlesReturned;
+      // bottlesDelivered += r.bottlesDelivered; // OLD LOGIC
+      
+      // AGENCY BOTTLE RECONCILIATION CHANGE 2:
+      // "Total Returned" = Sum of damaged stock reported by salesmen (Returned to Agency)
+      // Assumption: Salesmen return damaged/empty cans to agency. 
+      // User requested "Same logic" => meaning Internal Transfer logic.
+      // Salesman 'damagedStock' is the stock removed from van (presumably back to Agency).
+      bottlesReturned += r.damagedStock;
+      
+      // bottlesReturned += r.bottlesReturned; // OLD LOGIC (Customer Returns)
+      
       netBottlesOut += r.netBottlesOut;
       totalBottlesWithCustomers += r.totalBottlesWithCustomers;
 
@@ -662,7 +677,7 @@ class ReportRepositoryImpl implements ReportRepository {
       stockMismatch: stockMismatch,
       bottlesDelivered: bottlesDelivered,
       bottlesReturned: bottlesReturned,
-      netBottlesOut: netBottlesOut,
+      netBottlesOut: bottlesDelivered - bottlesReturned, // Recalculate based on new 'Delivered' definition
       totalBottlesWithCustomers: totalBottlesWithCustomers,
       salesRevenue: salesRevenue,
       totalCollected: totalCollected,
