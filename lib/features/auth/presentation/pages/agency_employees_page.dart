@@ -181,37 +181,37 @@ class AgencyEmployeesPage extends StatelessWidget {
                              ],
                            ),
                            const SizedBox(height: 8),
-                           Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                              decoration: BoxDecoration(
-                                color: (salesman.emptyBottles ?? 0) > 0 ? Colors.orange[50] : Colors.grey[100],
-                                borderRadius: BorderRadius.circular(6),
-                                border: Border.all(
-                                  color: (salesman.emptyBottles ?? 0) > 0 
-                                      ? Colors.orange.withOpacity(0.3) 
-                                      : Colors.grey.withOpacity(0.3),
-                                ),
-                              ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Icon(
-                                    Icons.local_shipping, 
-                                    size: 11, 
-                                    color: (salesman.emptyBottles ?? 0) > 0 ? Colors.orange[700] : Colors.grey[600]
-                                  ),
-                                  const SizedBox(width: 4),
-                                  Text(
-                                    'Vehicle Empties: ${salesman.emptyBottles ?? 0}',
-                                    style: TextStyle(
-                                      fontSize: 10,
-                                      fontWeight: FontWeight.bold,
-                                      color: (salesman.emptyBottles ?? 0) > 0 ? Colors.orange[800] : Colors.grey[700],
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
+                          //  Container(
+                          //     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                          //     decoration: BoxDecoration(
+                          //       color: (salesman.emptyBottles ?? 0) > 0 ? Colors.orange[50] : Colors.grey[100],
+                          //       borderRadius: BorderRadius.circular(6),
+                          //       border: Border.all(
+                          //         color: (salesman.emptyBottles ?? 0) > 0 
+                          //             ? Colors.orange.withOpacity(0.3) 
+                          //             : Colors.grey.withOpacity(0.3),
+                          //       ),
+                          //     ),
+                          //     child: Row(
+                          //       mainAxisSize: MainAxisSize.min,
+                          //       children: [
+                          //         Icon(
+                          //           Icons.local_shipping, 
+                          //           size: 11, 
+                          //           color: (salesman.emptyBottles ?? 0) > 0 ? Colors.orange[700] : Colors.grey[600]
+                          //         ),
+                          //         const SizedBox(width: 4),
+                          //         Text(
+                          //           'Vehicle Empties: ${salesman.emptyBottles ?? 0}',
+                          //           style: TextStyle(
+                          //             fontSize: 10,
+                          //             fontWeight: FontWeight.bold,
+                          //             color: (salesman.emptyBottles ?? 0) > 0 ? Colors.orange[800] : Colors.grey[700],
+                          //           ),
+                          //         ),
+                          //       ],
+                          //     ),
+                          //   ),
                          ],
                        ),
                         trailing: SizedBox(

@@ -89,6 +89,7 @@ class _BottlesPageState extends State<BottlesPage> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
+                             if(!isAgency)
                             Text(
                               isAgency ? 'Agency Bottle Ledger' : 'Bottle Debt Ledger',
                               style: GoogleFonts.inter(
@@ -97,7 +98,9 @@ class _BottlesPageState extends State<BottlesPage> {
                                 color: Colors.black, // Dark text
                               ),
                             ),
+                             if(!isAgency)
                             const SizedBox(height: 4),
+                             if(!isAgency)
                             Text(
                               isAgency ? 'Consolidated view of all salesmen' : 'Track bottles held by customers',
                               style: TextStyle(
@@ -105,9 +108,11 @@ class _BottlesPageState extends State<BottlesPage> {
                                 color: Colors.grey[600],
                               ),
                             ),
+                             if(!isAgency)
                             const SizedBox(height: 20),
 
                             // Top Stats Row
+                            if(!isAgency)
                             Row(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
@@ -126,19 +131,14 @@ class _BottlesPageState extends State<BottlesPage> {
                                     label: '>5 Bottles',
                                     color: const Color(0xFFFF6D00), // Orange
                                   ),
-                                  // const SizedBox(width: 12),
-                                  // _buildStatCard(
-                                  //   context,
-                                  //   title: 'Avg Balance',
-                                  //   value: state.avgBalance.toStringAsFixed(1),
-                                  //   label: 'Per Customer',
-                                  //   color: const Color(0xFF00C853), // Green
-                                  // ),
                                 ],
                               ),
+                            if(!isAgency)
+                            
                             const SizedBox(height: 24),
 
                             // Alert Card (High Balance)
+                            if(!isAgency)
                             if (state.highBalanceCount > 0)
                               Container(
                                 width: double.infinity,
@@ -472,7 +472,7 @@ class _BottlesPageState extends State<BottlesPage> {
                 children: [
                   const Icon(Icons.inventory_2_outlined, color: Color(0xFF2962FF), size: 20),
                   Text(
-                    '$balance',
+                    '${salesman.currentStock}',
                     style: const TextStyle(
                       color: Color(0xFF2962FF),
                       fontWeight: FontWeight.bold,
@@ -487,34 +487,34 @@ class _BottlesPageState extends State<BottlesPage> {
               ),
             ],
           ),
-          const SizedBox(height: 12),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              _buildSmallStockInfo('Full', salesman.currentStock, const Color(0xFF00C853)),
-              _buildSmallStockInfo('Empty', salesman.emptyBottles ?? 0, const Color(0xFFFF6D00)),
-            ],
-          ),
-          const SizedBox(height: 12),
-          // Progress Bar
-          ClipRRect(
-            borderRadius: BorderRadius.circular(4),
-            child: LinearProgressIndicator(
-              value: (balance / 10).clamp(0.0, 1.0),
-              backgroundColor: Colors.grey[200],
-              color: isHigh ? Colors.black : const Color(0xFF2962FF),
-              minHeight: 8,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Text('0', style: TextStyle(fontSize: 12, color: Colors.grey)),
-              const Text('Recommended: ≤5', style: TextStyle(fontSize: 12, color: Colors.grey)),
-              const Text('10', style: TextStyle(fontSize: 12, color: Colors.grey)),
-            ],
-          ),
+          // const SizedBox(height: 12),
+          // Row(
+          //   mainAxisAlignment: MainAxisAlignment.spaceAround,
+          //   children: [
+          //     _buildSmallStockInfo('Full', salesman.currentStock, const Color(0xFF00C853)),
+          //     _buildSmallStockInfo('Empty', salesman.emptyBottles ?? 0, const Color(0xFFFF6D00)),
+          //   ],
+          // ),
+          // const SizedBox(height: 12),
+          // // Progress Bar
+          // ClipRRect(
+          //   borderRadius: BorderRadius.circular(4),
+          //   child: LinearProgressIndicator(
+          //     value: (balance / 10).clamp(0.0, 1.0),
+          //     backgroundColor: Colors.grey[200],
+          //     color: isHigh ? Colors.black : const Color(0xFF2962FF),
+          //     minHeight: 8,
+          //   ),
+          // ),
+          // const SizedBox(height: 8),
+          // Row(
+          //   mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          //   children: [
+          //     const Text('0', style: TextStyle(fontSize: 12, color: Colors.grey)),
+          //     const Text('Recommended: ≤5', style: TextStyle(fontSize: 12, color: Colors.grey)),
+          //     const Text('10', style: TextStyle(fontSize: 12, color: Colors.grey)),
+          //   ],
+          // ),
         ],
       ),
     );
@@ -698,6 +698,6 @@ class _BottlesPageState extends State<BottlesPage> {
      // But wait, the buildCustomerCard takes dynamic or Customer.
      if (id.startsWith("+")) return id;
      // Fallback if needed, but we should use customer.phone
-     return "+91 98765 43210";
+     return "+91 00000 00000";
   }
 }

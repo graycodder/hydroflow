@@ -37,27 +37,16 @@ class _DashboardPageState extends State<DashboardPage> {
     final prefs = sl<SharedPreferences>();
     final savedIsAgency = prefs.getBool('dashboard_is_agency_view') ?? false;
     
-    // Only update if different from default and if widget is mounted
-    if (savedIsAgency != _isAgencyView) {
-      if (mounted) {
-        setState(() {
-          _isAgencyView = savedIsAgency;
-        });
-        
-        // We might need to reload data if auth state is ready, but typically build() handles 
-        // the initial data load. However, since `build` might run before this async complete,
-        // we need to be careful. 
-        // Actually, the `build` method triggers `_loadDashboardData` if state is Initial.
-        // If we change `_isAgencyView` here, we should probably trigger a reload if data was already loaded 
-        // or if the initial load hasn't happened yet but depends on this flag.
-        // For simplicity, let's let the `build` method handle the initial fetch, 
-        // but if data is already there (e.g. from a previous session but memory was cleared?), 
-        // we might want to refresh.
-        
-        final authState = context.read<AuthBloc>().state;
-        if (authState is AuthAuthenticated) {
-           _loadDashboardData(authState.salesman);
-        }
+    if (mounted) {
+      setState(() {
+        _isAgencyView = savedIsAgency;
+      });
+      
+      final authState = context.read<AuthBloc>().state;
+      if (authState is AuthAuthenticated) {
+         // Always force reload to ensure the view matches exactly what was persisted
+         // since build() might have already fired with the default `false`
+         _loadDashboardData(authState.salesman);
       }
     }
   }

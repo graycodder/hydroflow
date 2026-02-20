@@ -19,25 +19,24 @@ class GetBottleLedgerUseCase {
   }
 
   Stream<BottleLedgerStats> getAgencySalesmanLedger(String agencyId) {
-    return Stream.fromFuture(agencyRepository.getSalesmenByAgency(agencyId)).map((salesmen) {
+    return Stream.fromFuture(
+      agencyRepository.getSalesmenByAgency(agencyId),
+    ).map((salesmen) {
       int totalBottles = 0;
       int highBalanceCount = 0;
 
       for (var salesman in salesmen) {
-        // Here we define what "Total Bottles" means for a salesman in the ledger context.
-        // It's usually Full + Empty on vehicle? Or just Full?
-        // User said: "Agency Bottle Ledger is show Salesman's data"
-        // Let's include both or just the ones that matter (Full + Empty).
-        totalBottles += (salesman.currentStock + (salesman.emptyBottles ?? 0));
-        
-        // For a salesman, "High Balance" might mean something different. 
-        // Let's stick to the >5 rule for now or refine if needed.
+        // As requested: Only calculate Total Bottles using currentStock (Full bottles)
+        totalBottles += salesman.currentStock;
+
         if ((salesman.currentStock + (salesman.emptyBottles ?? 0)) > 5) {
           highBalanceCount++;
         }
       }
 
-      double avgBalance = salesmen.isEmpty ? 0.0 : totalBottles / salesmen.length;
+      double avgBalance = salesmen.isEmpty
+          ? 0.0
+          : totalBottles / salesmen.length;
 
       return BottleLedgerStats(
         customers: const [], // No customer data in this mode
@@ -61,7 +60,9 @@ class GetBottleLedgerUseCase {
         }
       }
 
-      double avgBalance = customers.isEmpty ? 0.0 : totalBottles / customers.length;
+      double avgBalance = customers.isEmpty
+          ? 0.0
+          : totalBottles / customers.length;
 
       return BottleLedgerStats(
         customers: customers,
