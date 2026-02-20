@@ -262,8 +262,19 @@ class AgencyEmployeesPage extends StatelessWidget {
         value: stockBloc,
         child: BlocConsumer<StockBloc, StockState>(
           listener: (context, state) {
-            if (state is StockActionSuccess) {
-              Navigator.pop(context);
+            if (state is StockActionLoading) {
+               HydroFlowLoader.show(context, message: "Assigning Stock...");
+            } else if (state is StockActionSuccess) {
+              HydroFlowLoader.hide(context); // Hide Loader
+              Navigator.pop(context); // Close Dialog
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text('Successfully assigned stock to ${salesman.name}')),
+              );
+            } else if (state is StockFailure) {
+              HydroFlowLoader.hide(context); // Hide Loader
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text(state.error), backgroundColor: Colors.red),
+              );
             }
           },
           builder: (context, state) {
@@ -291,11 +302,6 @@ class AgencyEmployeesPage extends StatelessWidget {
                       prefixIcon: Icon(Icons.inventory_2),
                     ),
                   ),
-                  if (state is StockActionLoading)
-                    const Padding(
-                      padding: EdgeInsets.only(top: 16.0),
-                      child: Center(child: CircularProgressIndicator()),
-                    ),
                 ],
               ),
               actions: [
@@ -306,9 +312,10 @@ class AgencyEmployeesPage extends StatelessWidget {
                 ElevatedButton(
                   onPressed: state is StockActionLoading
                       ? null
-                      : () {
+                      : () async {
                           final qty = int.tryParse(quantityController.text) ?? 0;
                           if (qty <= 0) return;
+                          
                           if (qty > warehouseStock) {
                             ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(content: Text('Insufficient Warehouse Stock')),
@@ -316,11 +323,32 @@ class AgencyEmployeesPage extends StatelessWidget {
                             return;
                           }
 
-                          context.read<StockBloc>().add(StockLoadRequested(
-                                salesmanId: salesman.id,
-                                quantity: qty,
-                                agencyId: salesman.agencyId,
-                              ));
+                          // Confirmation Dialog
+                          final confirmed = await showDialog<bool>(
+                            context: context,
+                            builder: (ctx) => AlertDialog(
+                              title: const Text('Confirm Assignment'),
+                              content: Text('Are you sure you want to assign $qty full cans to ${salesman.name}?'),
+                              actions: [
+                                TextButton(
+                                  onPressed: () => Navigator.pop(ctx, false),
+                                  child: const Text('Cancel'),
+                                ),
+                                ElevatedButton(
+                                  onPressed: () => Navigator.pop(ctx, true),
+                                  child: const Text('Confirm'),
+                                ),
+                              ],
+                            ),
+                          );
+
+                          if (confirmed == true && context.mounted) {
+                            context.read<StockBloc>().add(StockLoadRequested(
+                                  salesmanId: salesman.id,
+                                  quantity: qty,
+                                  agencyId: salesman.agencyId,
+                                ));
+                          }
                         },
                   style: ElevatedButton.styleFrom(backgroundColor: Colors.blue, foregroundColor: Colors.white),
                   child: const Text('Assign'),

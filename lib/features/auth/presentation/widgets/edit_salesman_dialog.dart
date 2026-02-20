@@ -27,7 +27,7 @@ class _EditSalesmanDialogState extends State<EditSalesmanDialog> {
   late TextEditingController _phoneController;
  // late TextEditingController _usernameController;
   final _passwordController = TextEditingController(); // Empty by default
-  late TextEditingController _zoneController;
+ // late TextEditingController _zoneController;
   late TextEditingController _quotaController;
   bool _isChecking = false;
   String? _phoneError;
@@ -39,7 +39,7 @@ class _EditSalesmanDialogState extends State<EditSalesmanDialog> {
     _phoneController = TextEditingController(text: widget.salesman.phoneNumber);
     _phoneController.addListener(_onPhoneChanged);
    // _usernameController = TextEditingController(text: widget.salesman.username);
-    _zoneController = TextEditingController(text: widget.salesman.zone);
+   // _zoneController = TextEditingController(text: widget.salesman.zone);
     _quotaController = TextEditingController(text: widget.salesman.maxCustomers.toString());
   }
 
@@ -57,7 +57,7 @@ class _EditSalesmanDialogState extends State<EditSalesmanDialog> {
     _phoneController.dispose();
   //  _usernameController.dispose();
     _passwordController.dispose();
-    _zoneController.dispose();
+  //.dispose();
     _quotaController.dispose();
     super.dispose();
   }
@@ -86,7 +86,7 @@ class _EditSalesmanDialogState extends State<EditSalesmanDialog> {
         final updatedSalesman = widget.salesman.copyWith(
           name: _nameController.text.trim(),
           phoneNumber: phone,
-          zone: _zoneController.text.trim(),
+          zone: "",
           maxCustomers: int.tryParse(_quotaController.text) ?? widget.salesman.maxCustomers,
           password: _passwordController.text.trim().isNotEmpty 
               ? _passwordController.text.trim() 
@@ -186,14 +186,14 @@ class _EditSalesmanDialogState extends State<EditSalesmanDialog> {
                   return null;
                 },
               ),
-              const SizedBox(height: 12),
-              TextFormField(
-                controller: _zoneController,
-                inputFormatters: [
-                  FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z0-9 ]')),
-                ],
-                decoration: const InputDecoration(labelText: 'Zone (Optional)'),
-              ),
+              // const SizedBox(height: 12),
+              // TextFormField(
+              //   controller: _zoneController,
+              //   inputFormatters: [
+              //     FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z0-9 ]')),
+              //   ],
+              //   decoration: const InputDecoration(labelText: 'Zone (Optional)'),
+              // ),
               const SizedBox(height: 12),
               TextFormField(
                 controller: _quotaController,

@@ -32,7 +32,7 @@ class _AddSalesmanDialogState extends State<AddSalesmanDialog> {
   final _phoneController = TextEditingController();
  // final _usernameController = TextEditingController();
   final _passwordController = TextEditingController();
-  final _zoneController = TextEditingController();
+ // final _zoneController = TextEditingController();
   final _quotaController = TextEditingController();
   bool _isChecking = false;
   String? _phoneError;
@@ -57,7 +57,7 @@ class _AddSalesmanDialogState extends State<AddSalesmanDialog> {
     _phoneController.dispose();
    // _usernameController.dispose();
     _passwordController.dispose();
-    _zoneController.dispose();
+   // _zoneController.dispose();
     _quotaController.dispose();
     super.dispose();
   }
@@ -93,7 +93,7 @@ class _AddSalesmanDialogState extends State<AddSalesmanDialog> {
           agencyName: widget.agencyName,
           phoneNumber: phone,
           address: '', // Optional or add field
-          zone: _zoneController.text.trim(),
+          zone: "",
           maxCustomers: int.tryParse(_quotaController.text) ?? 0,
           createdAt: DateTime.now(), 
         );
@@ -194,14 +194,14 @@ class _AddSalesmanDialogState extends State<AddSalesmanDialog> {
                   return null;
                 },
               ),
-              const SizedBox(height: 12),
-              TextFormField(
-                controller: _zoneController,
-                inputFormatters: [
-                  FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z0-9 ]')),
-                ],
-                decoration: const InputDecoration(labelText: 'Zone (Optional)'),
-              ),
+              // const SizedBox(height: 12),
+              // TextFormField(
+              //   controller: _zoneController,
+              //   inputFormatters: [
+              //     FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z0-9 ]')),
+              //   ],
+              //   decoration: const InputDecoration(labelText: 'Zone (Optional)'),
+              // ),
               const SizedBox(height: 12),
               TextFormField(
                 controller: _quotaController,
