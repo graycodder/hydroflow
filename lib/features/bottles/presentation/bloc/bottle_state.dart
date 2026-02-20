@@ -1,5 +1,6 @@
 import 'package:equatable/equatable.dart';
 import 'package:hydroflow/features/customers/domain/entities/customer.dart';
+import 'package:hydroflow/features/auth/domain/entities/salesman.dart';
 
 class BottleState extends Equatable {
   final bool isAgencyView;
@@ -19,12 +20,14 @@ class BottleLoading extends BottleState {
 
 class BottleLoaded extends BottleState {
   final List<Customer> customers;
+  final List<Salesman> salesmen;
   final int totalBottles;
   final int highBalanceCount;
   final double avgBalance;
 
   const BottleLoaded({
     required this.customers,
+    this.salesmen = const [],
     required this.totalBottles,
     required this.highBalanceCount,
     required this.avgBalance,
@@ -32,7 +35,7 @@ class BottleLoaded extends BottleState {
   });
 
   @override
-  List<Object?> get props => [customers, totalBottles, highBalanceCount, avgBalance, isAgencyView];
+  List<Object?> get props => [customers, salesmen, totalBottles, highBalanceCount, avgBalance, isAgencyView];
 }
 
 class BottleFailure extends BottleState {

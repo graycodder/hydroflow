@@ -39,9 +39,10 @@ class BottleBloc extends Bloc<BottleEvent, BottleState> {
   ) async {
     emit(const BottleLoading(isAgencyView: true));
     await emit.forEach<BottleLedgerStats>(
-      _getBottleLedger.getAgencyBottleLedger(event.agencyId),
+      _getBottleLedger.getAgencySalesmanLedger(event.agencyId),
       onData: (stats) => BottleLoaded(
         customers: stats.customers,
+        salesmen: stats.salesmen ?? [],
         totalBottles: stats.totalBottles,
         highBalanceCount: stats.highBalanceCount,
         avgBalance: stats.avgBalance,

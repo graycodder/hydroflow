@@ -59,6 +59,7 @@ class ReportRepositoryImpl implements ReportRepository {
         int openingStock = 0;
         int loaded = 0;
         int logDelivered = 0;
+        int logReturned = 0;
         int damaged = 0;
         int stockMismatch = 0;
         
@@ -79,6 +80,7 @@ class ReportRepositoryImpl implements ReportRepository {
           openingStock = (data['openingStock'] as num?)?.toInt() ?? 0;
           loaded = (data['loaded'] as num?)?.toInt() ?? 0;
           logDelivered = (data['totalDelivered'] as num?)?.toInt() ?? 0;
+          logReturned = (data['totalEmptyCollected'] as num?)?.toInt() ?? 0;
           damaged = (data['damaged'] as num?)?.toInt() ?? 0;
           stockMismatch = (data['mismatchCount'] as num?)?.toInt() ?? 0;
           
@@ -164,6 +166,8 @@ class ReportRepositoryImpl implements ReportRepository {
         }
         // Use logDelivered if transactions are 0 (e.g. Agency warehouse transfers)
         final effectiveDelivered = delivered > 0 ? delivered : logDelivered;
+        // Semi-additive: Total returns is customer returns + manual collection from staff
+        final effectiveReturned = returned + logReturned;
         
         // 5. Stock Reconciliation
         // Use our corrected openingStock
@@ -193,8 +197,8 @@ class ReportRepositoryImpl implements ReportRepository {
           closingStock: finalClosing,
           stockMismatch: stockMismatch,
           bottlesDelivered: effectiveDelivered,
-          bottlesReturned: returned,
-          netBottlesOut: effectiveDelivered - returned,
+          bottlesReturned: effectiveReturned,
+          netBottlesOut: effectiveDelivered - effectiveReturned,
           totalBottlesWithCustomers: snapshotTotalBottles ?? relevantCustomers.fold(0, (sum, c) => sum + c.bottleBalance),
           salesRevenue: salesRevenue,
           totalCollected: totalCollected,
@@ -262,6 +266,7 @@ class ReportRepositoryImpl implements ReportRepository {
         int totalLoaded = 0;
         int totalLogDelivered = 0;
         int totalDamaged = 0;
+        int totalLogReturned = 0;
         int totalMismatch = 0;
         int monthlyOpeningStock = 0;
         bool hasOpeningStock = false;
@@ -287,6 +292,7 @@ class ReportRepositoryImpl implements ReportRepository {
               totalLoaded += (log['loaded'] as num?)?.toInt() ?? 0;
               totalLogDelivered += (log['totalDelivered'] as num?)?.toInt() ?? 0;
               totalDamaged += (log['damaged'] as num?)?.toInt() ?? 0;
+              totalLogReturned += (log['totalEmptyCollected'] as num?)?.toInt() ?? 0;
               totalMismatch += (log['mismatchCount'] as num?)?.toInt() ?? 0;
             }
           });
@@ -360,7 +366,9 @@ class ReportRepositoryImpl implements ReportRepository {
         }
 
         final effectiveDelivered = delivered > 0 ? delivered : totalLogDelivered;
-
+        // Semi-additive: Total returns is customer returns + manual collection from staff
+        final effectiveReturned = returned + totalLogReturned;
+        
         // 5. Financials & Stock Reconciliation
         final netDeposits = securityDepositsCollected - securityDepositsRefunded;
         final cashInHand = cashSales + cashFromDeposits - securityDepositsRefunded;
@@ -414,8 +422,8 @@ class ReportRepositoryImpl implements ReportRepository {
           closingStock: calculatedClosing,
           stockMismatch: totalMismatch,
           bottlesDelivered: effectiveDelivered,
-          bottlesReturned: returned,
-          netBottlesOut: effectiveDelivered - returned,
+          bottlesReturned: effectiveReturned,
+          netBottlesOut: effectiveDelivered - effectiveReturned,
           totalBottlesWithCustomers: totalBottlesWithCustomers,
           salesRevenue: salesRevenue,
           totalCollected: totalCollected,
@@ -581,38 +589,25 @@ class ReportRepositoryImpl implements ReportRepository {
       // Consolidated counts: 
       if (isWarehouse) {
         openingStock = r.openingStock;
+        stockLoaded = r.stockLoaded;
+        deliveredStock = r.deliveredStock;
         closingStock = r.closingStock;
         damagedStock = r.damagedStock;
         stockMismatch = r.stockMismatch;
       }
-      
       if (isWarehouse) {
-        // Warehouse specific: Only external refills go here
-        stockLoaded += r.stockLoaded;
-        // Internal distributions (warehouse -> salesman) ARE the deliveries for the warehouse report
-        deliveredStock = r.deliveredStock; 
-        
-        // AGENCY BOTTLE RECONCILIATION CHANGE: 
+        // AGENCY BOTTLE RECONCILIATION: 
         // Logic: Use Warehouse Delivery (to salesman) as 'Delivered'
-        // This matches the "Agency Stock Reconciliation Total Delivered" logic exactly.
+        // Logic: Use Warehouse log's 'bottlesReturned' (Manual collections from staff)
         bottlesDelivered += r.deliveredStock;
+        bottlesReturned += r.bottlesReturned; 
       } else {
-        // Salesman specific: Only customer deliveries go here for the summary card
+        // Salesman specific
         totalDeliveries += r.totalDeliveries;
-        
-        // For Agency Bottle Rec, we ignore Salesman 'stockLoaded' as we are using the Warehouse 'deliveredStock' directly.
+        // ALSO add customer returns to the total agency "Returned" pool if we want 
+        // a total view of all empty bottles returning to the system today.
+        bottlesReturned += r.bottlesReturned;
       }
-
-      // bottlesDelivered += r.bottlesDelivered; // OLD LOGIC
-      
-      // AGENCY BOTTLE RECONCILIATION CHANGE 2:
-      // "Total Returned" = Sum of damaged stock reported by salesmen (Returned to Agency)
-      // Assumption: Salesmen return damaged/empty cans to agency. 
-      // User requested "Same logic" => meaning Internal Transfer logic.
-      // Salesman 'damagedStock' is the stock removed from van (presumably back to Agency).
-      bottlesReturned += r.damagedStock;
-      
-      // bottlesReturned += r.bottlesReturned; // OLD LOGIC (Customer Returns)
       
       netBottlesOut += r.netBottlesOut;
       totalBottlesWithCustomers += r.totalBottlesWithCustomers;

@@ -10,6 +10,7 @@ import 'package:hydroflow/features/bottles/presentation/bloc/bottle_bloc.dart';
 import 'package:hydroflow/features/bottles/presentation/bloc/bottle_event.dart';
 import 'package:hydroflow/features/bottles/presentation/bloc/bottle_state.dart';
 import 'package:hydroflow/features/customers/domain/entities/customer.dart';
+import 'package:hydroflow/features/auth/domain/entities/salesman.dart';
 import 'package:hydroflow/core/widgets/hydro_flow_app_bar.dart';
 import 'package:hydroflow/core/widgets/hydro_flow_loader.dart';
 
@@ -237,39 +238,51 @@ class _BottlesPageState extends State<BottlesPage> {
                             // ),
                             //const SizedBox(height: 10),
 
-                            // Customer List Header
-                            if(state.customers.isNotEmpty)
-                            const Text(
-                              'Customer Bottle Ledger',
-                              style: TextStyle(
+                            // Customer/Salesman List Header
+                            if(isAgency ? state.salesmen.isNotEmpty : state.customers.isNotEmpty)
+                            Text(
+                              isAgency ? 'Salesman Bottle Ledger' : 'Customer Bottle Ledger',
+                              style: const TextStyle(
                                 fontSize: 18,
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
-                             if(state.customers.isNotEmpty)
+                             if(isAgency ? state.salesmen.isNotEmpty : state.customers.isNotEmpty)
                             const SizedBox(height: 4),
-                             if(state.customers.isNotEmpty)
+                             if(isAgency ? state.salesmen.isNotEmpty : state.customers.isNotEmpty)
                             Text(
-                              'Net bottles held by each customer',
+                              isAgency ? 'Net bottles held by each salesman' : 'Net bottles held by each customer',
                               style: TextStyle(
                                 fontSize: 14,
                                 color: Colors.grey[600],
                               ),
                             ),
-                             if(state.customers.isNotEmpty)
+                             if(isAgency ? state.salesmen.isNotEmpty : state.customers.isNotEmpty)
                             const SizedBox(height: 16),
 
-                            // Customer List
-                            ListView.separated(
-                              shrinkWrap: true,
-                              physics: const NeverScrollableScrollPhysics(),
-                              itemCount: state.customers.length,
-                              separatorBuilder: (context, index) => const SizedBox(height: 16),
-                              itemBuilder: (context, index) {
-                                final customer = state.customers[index];
-                                return _buildCustomerCard(customer);
-                              },
-                            ),
+                            // List
+                            if (isAgency)
+                              ListView.separated(
+                                shrinkWrap: true,
+                                physics: const NeverScrollableScrollPhysics(),
+                                itemCount: state.salesmen.length,
+                                separatorBuilder: (context, index) => const SizedBox(height: 16),
+                                itemBuilder: (context, index) {
+                                  final salesman = state.salesmen[index];
+                                  return _buildSalesmanCard(salesman);
+                                },
+                              )
+                            else
+                              ListView.separated(
+                                shrinkWrap: true,
+                                physics: const NeverScrollableScrollPhysics(),
+                                itemCount: state.customers.length,
+                                separatorBuilder: (context, index) => const SizedBox(height: 16),
+                                itemBuilder: (context, index) {
+                                  final customer = state.customers[index];
+                                  return _buildCustomerCard(customer);
+                                },
+                              ),
                             
                             const SizedBox(height: 24),
                             
@@ -298,7 +311,7 @@ class _BottlesPageState extends State<BottlesPage> {
                                     ),
                                   ),
                                   const SizedBox(height: 20),
-                                  _buildSummaryRow('Total Customers', '${state.customers.length}'),
+                                  _buildSummaryRow(isAgency ? 'Total Salesmen' : 'Total Customers', '${isAgency ? state.salesmen.length : state.customers.length}'),
                                   const SizedBox(height: 12),
                                   _buildSummaryRow(
                                     'Total Bottles Out', 
@@ -307,8 +320,8 @@ class _BottlesPageState extends State<BottlesPage> {
                                   ),
                                   const SizedBox(height: 12),
                                   _buildSummaryRow(
-                                    'Customers with 0 Bottles', 
-                                    '${state.customers.where((c) => c.bottleBalance == 0).length}',
+                                    isAgency ? 'Salesmen with 0 Bottles' : 'Customers with 0 Bottles', 
+                                    '${isAgency ? state.salesmen.where((s) => (s.currentStock + (s.emptyBottles ?? 0)) == 0).length : state.customers.where((c) => c.bottleBalance == 0).length}',
                                     textColor: Colors.green
                                   ),
                                   const SizedBox(height: 12),
@@ -388,7 +401,145 @@ class _BottlesPageState extends State<BottlesPage> {
     );
   }
 
-  Widget _buildCustomerCard(dynamic customer) { 
+  Widget _buildSalesmanCard(Salesman salesman) {
+    final int balance = salesman.currentStock + (salesman.emptyBottles ?? 0);
+    final bool isHigh = balance > 5;
+    
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: isHigh ? const Color(0xFFFFF8E1) : Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.grey.withOpacity(0.2)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withOpacity(0.05),
+            offset: const Offset(0, 2),
+            blurRadius: 5,
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Icon(Icons.delivery_dining, color: Colors.grey),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Text(
+                          salesman.name.isNotEmpty
+                              ? salesman.name[0].toUpperCase() + salesman.name.substring(1)
+                              : 'Staff',
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                          ),
+                        ),
+                        if (isHigh) ...[
+                          const SizedBox(width: 8),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFC62828),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: const Text(
+                              'High',
+                              style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      '${salesman.phoneNumber} | ${salesman.zone}',
+                      style: TextStyle(
+                        color: Colors.grey[600],
+                        fontSize: 14,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Column(
+                children: [
+                  const Icon(Icons.inventory_2_outlined, color: Color(0xFF2962FF), size: 20),
+                  Text(
+                    '$balance',
+                    style: const TextStyle(
+                      color: Color(0xFF2962FF),
+                      fontWeight: FontWeight.bold,
+                      fontSize: 20,
+                    ),
+                  ),
+                   const Text(
+                    'total',
+                    style: TextStyle(fontSize: 10, color: Colors.grey),
+                  ),
+                ],
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: [
+              _buildSmallStockInfo('Full', salesman.currentStock, const Color(0xFF00C853)),
+              _buildSmallStockInfo('Empty', salesman.emptyBottles ?? 0, const Color(0xFFFF6D00)),
+            ],
+          ),
+          const SizedBox(height: 12),
+          // Progress Bar
+          ClipRRect(
+            borderRadius: BorderRadius.circular(4),
+            child: LinearProgressIndicator(
+              value: (balance / 10).clamp(0.0, 1.0),
+              backgroundColor: Colors.grey[200],
+              color: isHigh ? Colors.black : const Color(0xFF2962FF),
+              minHeight: 8,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text('0', style: TextStyle(fontSize: 12, color: Colors.grey)),
+              const Text('Recommended: ≤5', style: TextStyle(fontSize: 12, color: Colors.grey)),
+              const Text('10', style: TextStyle(fontSize: 12, color: Colors.grey)),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSmallStockInfo(String label, int value, Color color) {
+    return Column(
+      children: [
+        Text(
+          label,
+          style: TextStyle(fontSize: 11, color: Colors.grey[600]),
+        ),
+        Text(
+          '$value',
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.bold,
+            color: color,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildCustomerCard(Customer customer) { 
     // using dynamic to avoid import if not needed, but better to import Customer.
     // I imported customer.dart in top.
     final bool isHigh = customer.bottleBalance > 5;

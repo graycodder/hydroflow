@@ -16,6 +16,7 @@ import 'package:hydroflow/features/stock/presentation/bloc/stock_bloc.dart';
 import 'package:hydroflow/features/stock/presentation/bloc/stock_event.dart';
 import 'package:hydroflow/features/stock/presentation/bloc/stock_state.dart';
 import 'package:flutter/services.dart';
+
 class AgencyEmployeesPage extends StatelessWidget {
   const AgencyEmployeesPage({super.key});
 
@@ -56,10 +57,6 @@ class AgencyEmployeesPage extends StatelessWidget {
                 List<Salesman> currentSalesmen = [];
                 
                 if (agencyState is AgencySalesmenLoaded) {
-                  // CRITICAL: Use the actual agency limit from Firebase. 
-                  // If agency data isn't loaded yet, we should probably wait or warn, 
-                  // but falling back to 500 can be dangerous if their limit is lower.
-                  // However, for safety against null, we default to 0 to prevent over-assignment if data is missing.
                   maxCustomers = agencyState.agency?.maxCustomers ?? 0;
                   currentSalesmen = agencyState.salesmen;
                 } else {
@@ -146,39 +143,6 @@ class AgencyEmployeesPage extends StatelessWidget {
                          if (updatedSalesman != null && context.mounted) {
                            context.read<AgencyBloc>().add(UpdateSalesman(updatedSalesman));
                          }
-
-                            //       IconButton(
-                            //   icon: const Icon(Icons.edit, color: Colors.blueGrey),
-                            //   tooltip: 'Edit Details',
-                            //   onPressed: () async {
-                            //     final agencyState = context.read<AgencyBloc>().state;
-                            //     int maxCustomers = 500;
-                            //     List<Salesman> currentSalesmen = [];
-                                
-                            //     if (agencyState is AgencySalesmenLoaded) {
-                            //       maxCustomers = agencyState.agency?.maxCustomers ?? 0;
-                            //       currentSalesmen = agencyState.salesmen;
-                            //     } else {
-                            //        ScaffoldMessenger.of(context).showSnackBar(
-                            //           const SnackBar(content: Text('Please wait for agency details to load...')),
-                            //         );
-                            //         return;
-                            //     }
-
-                            //     final updatedSalesman = await showDialog<Salesman>(
-                            //       context: context,
-                            //       builder: (context) => EditSalesmanDialog(
-                            //         salesman: salesman,
-                            //         maxAgencyCustomers: maxCustomers,
-                            //         existingSalesmen: currentSalesmen,
-                            //       ),
-                            //     );
-
-                            //     if (updatedSalesman != null && context.mounted) {
-                            //       context.read<AgencyBloc>().add(UpdateSalesman(updatedSalesman));
-                            //     }
-                            //   },
-                            // ),
                        },
                        contentPadding: const EdgeInsets.all(16),
                        leading: CircleAvatar(
@@ -216,28 +180,62 @@ class AgencyEmployeesPage extends StatelessWidget {
                                ),
                              ],
                            ),
+                           const SizedBox(height: 8),
+                           Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: (salesman.emptyBottles ?? 0) > 0 ? Colors.orange[50] : Colors.grey[100],
+                                borderRadius: BorderRadius.circular(6),
+                                border: Border.all(
+                                  color: (salesman.emptyBottles ?? 0) > 0 
+                                      ? Colors.orange.withOpacity(0.3) 
+                                      : Colors.grey.withOpacity(0.3),
+                                ),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    Icons.local_shipping, 
+                                    size: 11, 
+                                    color: (salesman.emptyBottles ?? 0) > 0 ? Colors.orange[700] : Colors.grey[600]
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    'Vehicle Empties: ${salesman.emptyBottles ?? 0}',
+                                    style: TextStyle(
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.bold,
+                                      color: (salesman.emptyBottles ?? 0) > 0 ? Colors.orange[800] : Colors.grey[700],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
                          ],
                        ),
-                        trailing: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                   
-                            IconButton(
-                              icon: const Icon(Icons.inventory_2, color: Colors.blue),
-                              tooltip: 'Assign Stock',
-                              onPressed: () {
-                                _showAssignStockDialog(context, salesman);
-                              },
-                            ),
-                            if (isDeviceLinked)
+                        trailing: SizedBox(
+                          width: isDeviceLinked ? 96 : 48,
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.end,
+                            children: [
                               IconButton(
-                                icon: const Icon(Icons.lock_reset, color: Colors.orange),
-                                tooltip: 'Reset Device Binding',
+                                icon: const Icon(Icons.inventory_2, color: Colors.blue),
+                                tooltip: 'Stock Management',
                                 onPressed: () {
-                                  _showResetConfirmation(context, salesman);
+                                  _showStockManagementDialog(context, salesman);
                                 },
                               ),
-                          ],
+                              if (isDeviceLinked)
+                                IconButton(
+                                  icon: const Icon(Icons.lock_reset, color: Colors.orange),
+                                  tooltip: 'Reset Device Binding',
+                                  onPressed: () {
+                                    _showResetConfirmation(context, salesman);
+                                  },
+                                ),
+                            ],
+                          ),
                         ),
                      ),
                    );
@@ -252,145 +250,277 @@ class AgencyEmployeesPage extends StatelessWidget {
     );
   }
 
-  void _showAssignStockDialog(BuildContext context, Salesman salesman) {
-    final TextEditingController quantityController = TextEditingController();
+  void _showStockManagementDialog(BuildContext context, Salesman salesman) {
+    final TextEditingController refillController = TextEditingController();
+    final TextEditingController collectController = TextEditingController();
+    final agencyBloc = context.read<AgencyBloc>();
     final stockBloc = context.read<StockBloc>();
 
     showDialog(
       context: context,
-      builder: (dialogContext) => BlocProvider.value(
-        value: stockBloc,
-        child: BlocConsumer<StockBloc, StockState>(
-          listener: (context, state) {
-            if (state is StockActionLoading) {
-               HydroFlowLoader.show(context, message: "Assigning Stock...");
-            } else if (state is StockActionSuccess) {
-              HydroFlowLoader.hide(context); // Hide Loader
-              Navigator.pop(context); // Close Dialog
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text('Successfully assigned stock to ${salesman.name}')),
-              );
-            } else if (state is StockFailure) {
-              HydroFlowLoader.hide(context); // Hide Loader
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text(state.error), backgroundColor: Colors.red),
-              );
-            }
-          },
-          builder: (context, state) {
-            final warehouseStock = state.agencyStock?['fullCans'] ?? 0;
+      builder: (dialogContext) => MultiBlocProvider(
+        providers: [
+          BlocProvider.value(value: agencyBloc),
+          BlocProvider.value(value: stockBloc),
+        ],
+        child: DefaultTabController(
+          length: 2,
+          child: BlocConsumer<StockBloc, StockState>(
+            listener: (context, state) {
+              if (state is StockActionLoading) {
+                 HydroFlowLoader.show(context, message: "Processing...");
+              } else if (state is StockActionSuccess) {
+                HydroFlowLoader.hide(context);
+                context.read<AgencyBloc>().add(LoadAgencySalesmen(salesman.agencyId));
+                
+                if (Navigator.canPop(dialogContext)) {
+                  Navigator.pop(dialogContext);
+                }
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text(state.message)),
+                );
+              } else if (state is StockFailure) {
+                HydroFlowLoader.hide(context);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text(state.error), backgroundColor: Colors.red),
+                );
+              }
+            },
+            builder: (context, state) {
+              final warehouseStock = state.agencyStock?['fullBottles'] ?? 0;
 
-            return AlertDialog(
-              title: Text('Assign Stock to ${salesman.name}'),
-              content: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('Warehouse Stock: $warehouseStock full cans',
-                      style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.blue)),
-                  const SizedBox(height: 16),
-                  const Text('Enter quantity to transfer from Warehouse to Vehicle:'),
-                  const SizedBox(height: 12),
-                  TextField(
-                    controller: quantityController,
-                    keyboardType: TextInputType.number,
-                    inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                    autofocus: true,
-                    decoration: const InputDecoration(
-                      labelText: 'Quantity',
-                      border: OutlineInputBorder(),
-                      prefixIcon: Icon(Icons.inventory_2),
+              return AlertDialog(
+                titlePadding: EdgeInsets.zero,
+                title: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.inventory_2, color: Colors.blue),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Text(
+                              'Stock for ${salesman.name}',
+                              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
-                ],
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.pop(dialogContext),
-                  child: const Text('Cancel'),
+                    const TabBar(
+                      labelColor: Colors.blue,
+                      unselectedLabelColor: Colors.grey,
+                      indicatorColor: Colors.blue,
+                      tabs: [
+                        Tab(text: 'Refill Full'),
+                        Tab(text: 'Collect Empty'),
+                      ],
+                    ),
+                  ],
                 ),
-                ElevatedButton(
-                  onPressed: state is StockActionLoading
-                      ? null
-                      : () async {
-                          final qty = int.tryParse(quantityController.text) ?? 0;
-                          if (qty <= 0) return;
-                          
-                          if (qty > warehouseStock) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('Insufficient Warehouse Stock')),
-                            );
-                            return;
-                          }
-
-                          // Confirmation Dialog
-                          final confirmed = await showDialog<bool>(
-                            context: context,
-                            builder: (ctx) => AlertDialog(
-                              title: const Text('Confirm Assignment'),
-                              content: Text('Are you sure you want to assign $qty full cans to ${salesman.name}?'),
-                              actions: [
-                                TextButton(
-                                  onPressed: () => Navigator.pop(ctx, false),
-                                  child: const Text('Cancel'),
-                                ),
-                                ElevatedButton(
-                                  onPressed: () => Navigator.pop(ctx, true),
-                                  child: const Text('Confirm'),
+                content: SizedBox(
+                  width: double.maxFinite,
+                  height: 220,
+                  child: TabBarView(
+                    children: [
+                      Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const SizedBox(height: 16),
+                          Container(
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: Colors.blue.withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Row(
+                              children: [
+                                const Icon(Icons.warehouse, color: Colors.blue, size: 20),
+                                const SizedBox(width: 8),
+                                Text(
+                                  'Warehouse: $warehouseStock full bottles',
+                                  style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.blue),
                                 ),
                               ],
                             ),
-                          );
-
-                          if (confirmed == true && context.mounted) {
-                            context.read<StockBloc>().add(StockLoadRequested(
-                                  salesmanId: salesman.id,
-                                  quantity: qty,
-                                  agencyId: salesman.agencyId,
-                                ));
-                          }
-                        },
-                  style: ElevatedButton.styleFrom(backgroundColor: Colors.blue, foregroundColor: Colors.white),
-                  child: const Text('Assign'),
+                          ),
+                          const SizedBox(height: 20),
+                          const Text('Quantity to transfer to Vehicle:'),
+                          const SizedBox(height: 12),
+                          TextField(
+                            controller: refillController,
+                            keyboardType: TextInputType.number,
+                            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                            decoration: const InputDecoration(
+                              labelText: 'Full Bottles',
+                              border: OutlineInputBorder(),
+                              prefixIcon: Icon(Icons.add_shopping_cart, color: Colors.blue),
+                            ),
+                          ),
+                        ],
+                      ),
+                      Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const SizedBox(height: 16),
+                          Container(
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: Colors.orange.withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Row(
+                              children: [
+                                const Icon(Icons.local_shipping, color: Colors.orange, size: 20),
+                                const SizedBox(width: 8),
+                                Text(
+                                  'On Vehicle: ${salesman.emptyBottles} empties',
+                                  style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.orange),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: 20),
+                          const Text('Quantity to return to Warehouse:'),
+                          const SizedBox(height: 12),
+                          TextField(
+                            controller: collectController,
+                            keyboardType: TextInputType.number,
+                            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                            decoration: const InputDecoration(
+                              labelText: 'Empty Bottles',
+                              border: OutlineInputBorder(),
+                              prefixIcon: Icon(Icons.assignment_return, color: Colors.orange),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
-              ],
-            );
-          },
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.pop(dialogContext),
+                    child: const Text('Cancel'),
+                  ),
+                  Builder(
+                    builder: (btnContext) {
+                      return ElevatedButton(
+                        onPressed: state is StockActionLoading
+                            ? null
+                            : () async {
+                                final tabIndex = DefaultTabController.of(btnContext).index;
+                                if (tabIndex == 0) {
+                                  final qty = int.tryParse(refillController.text) ?? 0;
+                                  if (qty <= 0) return;
+                                  if (qty > warehouseStock) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(content: Text('Insufficient Warehouse Stock')),
+                                    );
+                                    return;
+                                  }
+                                  
+                                  final confirmed = await _showConfirmDialog(
+                                    context, 
+                                    'Confirm Refill', 
+                                    'Are you sure you want to transfer $qty full bottles to ${salesman.name}?'
+                                  );
+
+                                  if (confirmed == true && context.mounted) {
+                                    context.read<StockBloc>().add(StockLoadRequested(
+                                      salesmanId: salesman.id,
+                                      quantity: qty,
+                                      agencyId: salesman.agencyId,
+                                    ));
+                                  }
+                                } else {
+                                  final qty = int.tryParse(collectController.text) ?? 0;
+                                  if (qty <= 0) return;
+
+                                  final confirmed = await _showConfirmDialog(
+                                    context, 
+                                    'Confirm Collection', 
+                                    'Are you sure you want to collect $qty empty bottles from ${salesman.name}?'
+                                  );
+
+                                  if (confirmed == true && context.mounted) {
+                                    context.read<StockBloc>().add(EmptyBottlesCollected(
+                                      salesmanId: salesman.id,
+                                      agencyId: salesman.agencyId,
+                                      quantity: qty,
+                                    ));
+                                  }
+                                }
+                              },
+                        style: ElevatedButton.styleFrom(backgroundColor: Colors.blue, foregroundColor: Colors.white),
+                        child: const Text('Confirm'),
+                      );
+                    }
+                  ),
+                ],
+              );
+            },
+          ),
         ),
       ),
     );
   }
 
-  void _showResetConfirmation(BuildContext context, dynamic salesman) {
-    showDialog(
+  Future<bool?> _showConfirmDialog(BuildContext context, String title, String content) {
+    return showDialog<bool>(
       context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: const Text('Reset Device Binding?'),
-        content: Text(
-          'This will allow ${salesman.name} to log in from a new device. Are you sure?',
-        ),
+      builder: (ctx) => AlertDialog(
+        title: Text(title),
+        content: Text(content),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(dialogContext),
+            onPressed: () => Navigator.pop(ctx, false),
             child: const Text('Cancel'),
           ),
           ElevatedButton(
-            onPressed: () {
-              Navigator.pop(dialogContext); // Close dialog
-              // Use the context from where BlocProvider was created/accessible
-              // Since we are in a method, we need the context that has the Bloc.
-              // We passed 'context' from builder, which is correct.
-              context.read<AgencyBloc>().add(
-                ResetDevice(salesmanId: salesman.id, agencyId: salesman.agencyId)
-              );
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.orange,
-              foregroundColor: Colors.white,
-            ),
-            child: const Text('Reset'),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Yes, Proceed'),
           ),
         ],
+      ),
+    );
+  }
+
+  void _showResetConfirmation(BuildContext context, Salesman salesman) {
+    final agencyBloc = context.read<AgencyBloc>();
+    showDialog(
+      context: context,
+      builder: (dialogContext) => BlocProvider.value(
+        value: agencyBloc,
+        child: AlertDialog(
+          title: const Text('Reset Device Binding?'),
+          content: Text(
+            'This will allow ${salesman.name} to log in from a new device. Are you sure?',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.pop(dialogContext);
+                agencyBloc.add(
+                  ResetDevice(salesmanId: salesman.id, agencyId: salesman.agencyId)
+                );
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.orange,
+                foregroundColor: Colors.white,
+              ),
+              child: const Text('Reset'),
+            ),
+          ],
+        ),
       ),
     );
   }

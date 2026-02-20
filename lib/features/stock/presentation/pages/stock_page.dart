@@ -133,7 +133,7 @@ class _StockPageState extends State<StockPage> {
 
                     // Determine current stock to display
                     final currentStock = isAgency 
-                        ? (state.agencyStock?['fullCans'] ?? 0)
+                        ? (state.agencyStock?['fullBottles'] ?? 0)
                         : salesman.currentStock;
 
                     return SingleChildScrollView(
@@ -190,7 +190,7 @@ class _StockPageState extends State<StockPage> {
                                             ),
                                           ),
                                           Text(
-                                            isAgency ? 'Agency Warehouse Stock' : 'Cans Available',
+                                            isAgency ? 'Agency Warehouse Stock (Full)' : 'Bottles Available',
                                             style: const TextStyle(
                                               color: Colors.white,
                                               fontSize: 14,
@@ -201,6 +201,31 @@ class _StockPageState extends State<StockPage> {
                                     ),
                                   ],
                                 ),
+                                if (isAgency && state.agencyStock != null) ...[
+                                  const SizedBox(height: 20),
+                                  const Divider(color: Colors.white24, height: 1),
+                                  const SizedBox(height: 16),
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.spaceAround,
+                                    children: [
+                                      _buildQuickStat(
+                                        'Full',
+                                        '${state.agencyStock?['fullBottles'] ?? 0}',
+                                        Icons.check_circle_outline,
+                                      ),
+                                      _buildQuickStat(
+                                        'Empty',
+                                        '${state.agencyStock?['emptyBottles'] ?? 0}',
+                                        Icons.hourglass_empty,
+                                      ),
+                                      _buildQuickStat(
+                                        'Damaged',
+                                        '${state.agencyStock?['damagedBottles'] ?? 0}',
+                                        Icons.report_problem_outlined,
+                                      ),
+                                    ],
+                                  ),
+                                ],
                               ],
                             ),
                           ),
@@ -209,7 +234,7 @@ class _StockPageState extends State<StockPage> {
                           // Opening Stock Section (Unset)
                           // For Agency: If they have logs OR have current stock > 0, we consider setup done.
                           // For Salesman: Only if they have logs (or carry forward logic handled by repo/bloc)
-                          if (!state.hasAnyLogs && (!isAgency || currentStock == 0))
+                          if (isAgency && !state.hasAnyLogs && currentStock == 0)
                             Container(
                               padding: const EdgeInsets.all(20),
                               decoration: BoxDecoration(
@@ -278,7 +303,7 @@ class _StockPageState extends State<StockPage> {
                                           context: context,
                                           builder: (dialogContext) => AlertDialog(
                                             title: const Text('Confirm Opening Stock'),
-                                            content: Text('Are you sure you want to set opening stock to $qty cans?'),
+                                            content: Text('Are you sure you want to set opening stock to $qty bottles?'),
                                             actions: [
                                               TextButton(
                                                 onPressed: () => Navigator.pop(dialogContext),
@@ -327,7 +352,7 @@ class _StockPageState extends State<StockPage> {
                               ),
                             ),
 
-                          if (state.hasAnyLogs) ...[
+                          if (isAgency && state.hasAnyLogs) ...[
 
                             // Refill Stock Section
                             AnimatedCrossFade(
@@ -340,7 +365,7 @@ class _StockPageState extends State<StockPage> {
                                     });
                                   },
                                   icon: const Icon(Icons.add),
-                                  label: Text(isAgency ? 'Agency Purchase/Refill' : 'Refill Stock'),
+                                  label: const Text('Agency Purchase/Refill'),
                                   style: ElevatedButton.styleFrom(
                                     backgroundColor: const Color(0xFF0D1117),
                                     foregroundColor: Colors.white,
@@ -371,18 +396,16 @@ class _StockPageState extends State<StockPage> {
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Text(
-                                     isAgency ? 'Agency Refill Stock' : 'Refill Stock',
-                                      style: const TextStyle(
+                                    const Text(
+                                     'Agency Refill Stock',
+                                      style: TextStyle(
                                         fontSize: 18,
                                         fontWeight: FontWeight.bold,
                                       ),
                                     ),
                                     const SizedBox(height: 4),
                                     Text(
-                                      isAgency 
-                                          ? 'Add stock purchases to Agency Warehouse.' 
-                                          : 'Transfer full cans from Agency Warehouse to your Vehicle.',
+                                      'Add stock purchases to Agency Warehouse.',
                                       style: TextStyle(
                                         fontSize: 12,
                                         color: Colors.blue[700],
@@ -391,7 +414,7 @@ class _StockPageState extends State<StockPage> {
                                     ),
                                     const SizedBox(height: 16),
                                     const Text(
-                                      'Number of Cans',
+                                      'Number of Bottles',
                                       style: TextStyle(fontWeight: FontWeight.w600),
                                     ),
                                     const SizedBox(height: 8),
@@ -428,7 +451,7 @@ class _StockPageState extends State<StockPage> {
                                                     context: context,
                                                     builder: (dialogContext) => AlertDialog(
                                                       title: const Text('Confirm Refill'),
-                                                      content: Text('Are you sure you want to add $qty cans to your stock?'),
+                                                      content: Text('Are you sure you want to add $qty bottles to Agency Warehouse?'),
                                                       actions: [
                                                         TextButton(
                                                           onPressed: () => Navigator.pop(dialogContext),
@@ -438,18 +461,10 @@ class _StockPageState extends State<StockPage> {
                                                             onPressed: () {
                                                               FocusManager.instance.primaryFocus?.unfocus();
                                                               Navigator.pop(dialogContext);
-                                                              if (isAgency) {
-                                                                context.read<StockBloc>().add(AgencyStockRefillRequested(
-                                                                  agencyId: salesman.agencyId,
-                                                                  quantity: qty,
-                                                                ));
-                                                              } else {
-                                                                context.read<StockBloc>().add(StockLoadRequested(
-                                                                  salesmanId: salesman.id, 
-                                                                  quantity: qty,
-                                                                  agencyId: salesman.agencyId,
-                                                                ));
-                                                              }
+                                                              context.read<StockBloc>().add(AgencyStockRefillRequested(
+                                                                agencyId: salesman.agencyId,
+                                                                quantity: qty,
+                                                              ));
                                                             },
                                                           style: ElevatedButton.styleFrom(backgroundColor: Colors.black),
                                                           child: const Text('Confirm', style: TextStyle(color: Colors.white)),
@@ -466,7 +481,7 @@ class _StockPageState extends State<StockPage> {
                                                     borderRadius: BorderRadius.circular(8),
                                                   ),
                                                 ),
-                                                child: const Text('Refill Cans'),
+                                                child: const Text('Refill Bottles'),
                                               );
                                             }
                                           ),
@@ -498,7 +513,7 @@ class _StockPageState extends State<StockPage> {
                                   : CrossFadeState.showFirst,
                               duration: const Duration(milliseconds: 300),
                             ),
-                            
+
                             const SizedBox(height: 24),
                             
                             // Damaged / Return Section
@@ -516,9 +531,9 @@ class _StockPageState extends State<StockPage> {
                                     children: [
                                       const Icon(Icons.error_outline, color: Colors.orange),
                                       const SizedBox(width: 8),
-                                      Text(
-                                        isAgency ? 'Agency Damaged / Return' : 'Damaged / Return',
-                                        style: const TextStyle(
+                                      const Text(
+                                        'Agency Damaged / Return',
+                                        style: TextStyle(
                                           fontSize: 18,
                                           fontWeight: FontWeight.bold,
                                         ),
@@ -527,7 +542,7 @@ class _StockPageState extends State<StockPage> {
                                   ),
                                   const SizedBox(height: 4),
                                   Text(
-                                    'Log damaged cans or returns',
+                                    'Log damaged bottles or returns to Agency Warehouse.',
                                     style: TextStyle(
                                       fontSize: 14,
                                       color: Colors.grey[600],
@@ -535,7 +550,7 @@ class _StockPageState extends State<StockPage> {
                                   ),
                                   const SizedBox(height: 16),
                                   const Text(
-                                    'Number of Cans',
+                                    'Number of Bottles',
                                     style: TextStyle(fontWeight: FontWeight.w600),
                                   ),
                                   const SizedBox(height: 8),
@@ -583,7 +598,7 @@ class _StockPageState extends State<StockPage> {
                                                     mainAxisSize: MainAxisSize.min,
                                                     crossAxisAlignment: CrossAxisAlignment.start,
                                                     children: [
-                                                        Text('You are trying to remove $qty cans, but you only have $currentStock cans in stock.'),
+                                                        Text('You are trying to remove $qty bottles, but Agency Warehouse only has $currentStock bottles.'),
                                                         const SizedBox(height: 12),
                                                         const Text(
                                                           'This action is blocked to prevent negative stock.',
@@ -606,7 +621,7 @@ class _StockPageState extends State<StockPage> {
                                               context: context,
                                               builder: (dialogContext) => AlertDialog(
                                                 title: const Text('Confirm Removal'),
-                                                content: Text('Are you sure you want to remove $qty cans from your stock (Damaged/Return)?'),
+                                                content: Text('Are you sure you want to remove $qty bottles from Agency Stock (Damaged/Return)?'),
                                                 actions: [
                                                   TextButton(
                                                     onPressed: () => Navigator.pop(dialogContext),
@@ -616,17 +631,10 @@ class _StockPageState extends State<StockPage> {
                                                     onPressed: () {
                                                       FocusManager.instance.primaryFocus?.unfocus();
                                                       Navigator.pop(dialogContext);
-                                                      if (isAgency) {
-                                                         context.read<StockBloc>().add(AgencyStockDamagedReported(
-                                                          agencyId: salesman.agencyId,
-                                                          quantity: qty
-                                                         ));
-                                                      } else {
-                                                         context.read<StockBloc>().add(StockDamagedReported(
-                                                          salesmanId: salesman.id, 
-                                                          quantity: qty
-                                                         ));
-                                                      }
+                                                      context.read<StockBloc>().add(AgencyStockDamagedReported(
+                                                        agencyId: salesman.agencyId,
+                                                        quantity: qty
+                                                      ));
                                                     },
                                                     style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
                                                     child: const Text('Confirm', style: TextStyle(color: Colors.white)),
@@ -636,7 +644,7 @@ class _StockPageState extends State<StockPage> {
                                             );
                                           },
                                           icon: const Icon(Icons.remove),
-                                          label: const Text('Remove from Stock'),
+                                          label: const Text('Remove from Agency Stock'),
                                           style: ElevatedButton.styleFrom(
                                             backgroundColor: const Color(0xFFEF5350).withOpacity(0.8),
                                             foregroundColor: Colors.white,
@@ -654,7 +662,8 @@ class _StockPageState extends State<StockPage> {
                               ),
                             ),
                           ],
-                        ],
+
+                          ],
                       ),
                     );
                   },
@@ -671,6 +680,30 @@ class _StockPageState extends State<StockPage> {
     );
   }
 
+
+  Widget _buildQuickStat(String label, String value, IconData icon) {
+    return Column(
+      children: [
+        Icon(icon, color: Colors.white, size: 20),
+        const SizedBox(height: 4),
+        Text(
+          value,
+          style: const TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+            fontSize: 18,
+          ),
+        ),
+        Text(
+          label,
+          style: const TextStyle(
+            color: Colors.white70,
+            fontSize: 12,
+          ),
+        ),
+      ],
+    );
+  }
 
   Widget _buildSummaryItem(
     String label, 

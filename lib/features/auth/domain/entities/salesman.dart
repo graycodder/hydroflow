@@ -25,6 +25,7 @@ class Salesman extends Equatable {
   final DateTime? joinDate;
   final DateTime? lastNotification;
   final String? deviceId;
+  final int emptyBottles;
   final DateTime? createdAt;
 
   const Salesman({
@@ -52,6 +53,7 @@ class Salesman extends Equatable {
     this.joinDate,
     this.lastNotification,
     this.deviceId,
+    this.emptyBottles = 0,
     this.createdAt,
   });
 
@@ -84,6 +86,7 @@ class Salesman extends Equatable {
         joinDate,
         lastNotification,
         deviceId,
+        emptyBottles,
         createdAt,
       ];
 
@@ -112,6 +115,7 @@ class Salesman extends Equatable {
     DateTime? joinDate,
     DateTime? lastNotification,
     String? deviceId,
+    int? emptyBottles,
     DateTime? createdAt,
   }) {
     return Salesman(
@@ -139,6 +143,7 @@ class Salesman extends Equatable {
       joinDate: joinDate ?? this.joinDate,
       lastNotification: lastNotification ?? this.lastNotification,
       deviceId: deviceId ?? this.deviceId,
+      emptyBottles: emptyBottles ?? this.emptyBottles,
       createdAt: createdAt ?? this.createdAt,
     );
   }

@@ -27,6 +27,7 @@ class SalesmanModel extends Salesman {
     super.joinDate,
     super.lastNotification,
     super.deviceId,
+    super.emptyBottles = 0,
     super.createdAt,
   });
 
@@ -74,6 +75,7 @@ class SalesmanModel extends Salesman {
           ? DateTime.tryParse(data['lastNotification'].toString())
           : null,
       deviceId: data['deviceId'] as String?,
+      emptyBottles: (data['emptyBottles'] as num?)?.toInt() ?? 0,
       createdAt: data['createdAt'] != null
           ? DateTime.tryParse(data['createdAt'].toString())
           : null,
@@ -105,6 +107,7 @@ class SalesmanModel extends Salesman {
       'joinDate': joinDate?.toIso8601String(),
       'lastNotification': lastNotification?.toIso8601String(),
       'deviceId': deviceId,
+      'emptyBottles': emptyBottles,
       'createdAt': createdAt?.toIso8601String(),
     };
   }

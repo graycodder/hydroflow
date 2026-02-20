@@ -113,3 +113,17 @@ class AgencyStockDamagedReported extends StockEvent {
   @override
   List<Object?> get props => [agencyId, quantity];
 }
+class EmptyBottlesCollected extends StockEvent {
+  final String salesmanId;
+  final String agencyId;
+  final int quantity;
+
+  const EmptyBottlesCollected({
+    required this.salesmanId,
+    required this.agencyId,
+    required this.quantity,
+  });
+
+  @override
+  List<Object?> get props => [salesmanId, agencyId, quantity];
+}

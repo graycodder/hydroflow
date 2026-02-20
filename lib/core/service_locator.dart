@@ -91,7 +91,7 @@ Future<void> init() async {
   );
 
   // Use Cases
-  sl.registerLazySingleton(() => GetBottleLedgerUseCase(sl()));
+  sl.registerLazySingleton(() => GetBottleLedgerUseCase(sl(), sl()));
   sl.registerLazySingleton(() => GetCustomersUseCase(sl()));
 
   sl.registerLazySingleton(() => AddCustomerUseCase(sl()));

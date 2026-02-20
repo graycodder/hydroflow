@@ -41,12 +41,12 @@ class InventoryRepositoryImpl implements InventoryRepository {
       if (event.snapshot.exists && event.snapshot.value != null) {
         final data = Map<String, dynamic>.from(event.snapshot.value as Map);
         return {
-          'fullCans': (data['fullCans'] as num?)?.toInt() ?? 0,
-          'emptyCans': (data['emptyCans'] as num?)?.toInt() ?? 0,
-          'damagedCans': (data['damagedCans'] as num?)?.toInt() ?? 0,
+          'fullBottles': (data['fullCans'] as num?)?.toInt() ?? 0,
+          'emptyBottles': (data['emptyCans'] as num?)?.toInt() ?? 0,
+          'damagedBottles': (data['damagedCans'] as num?)?.toInt() ?? 0,
         };
       }
-      return {'fullCans': 0, 'emptyCans': 0, 'damagedCans': 0};
+      return {'fullBottles': 0, 'emptyBottles': 0, 'damagedBottles': 0};
     }).handleError((error) {
        print('Error in getAgencyWarehouseStock: $error');
        throw error;
@@ -132,7 +132,7 @@ class InventoryRepositoryImpl implements InventoryRepository {
         if (!logMap.containsKey('date')) {
           logMap['date'] = now.toIso8601String().substring(0, 10);
           logMap['agencyId'] = agencyId;
-          logMap['salesmanId'] = '';
+          logMap['salesmanId'] = agencyId; // Changed from '' to agencyId
         }
         
         logMap['openingStock'] ??= 0;
@@ -532,7 +532,7 @@ class InventoryRepositoryImpl implements InventoryRepository {
       if (!logMap.containsKey('date')) {
         logMap['date'] = DateTime.now().toIso8601String().substring(0, 10);
         logMap['agencyId'] = agencyId; 
-        logMap['salesmanId'] = ''; // Empty for Agency Logs
+        logMap['salesmanId'] = agencyId; // Changed from '' to agencyId
       }
       
       logMap['openingStock'] ??= 0;
@@ -673,6 +673,72 @@ class InventoryRepositoryImpl implements InventoryRepository {
           return Transaction.success(current + quantity);
        });
     }
+  }
+
+  @override
+  Future<void> collectEmptyBottles({required String salesmanId, required int quantity, required String agencyId}) async {
+    final now = DateTime.now();
+    final salesmanRef = _database.ref().child('Salesmen').child(salesmanId);
+    final agencyStockRef = _database.ref().child('Agencies').child(agencyId).child('stock');
+    
+    // 1. Transaction to update Salesman and Agency Stock
+    await salesmanRef.runTransaction((Object? post) {
+      if (post == null) return Transaction.abort();
+      final salesmanMap = Map<String, dynamic>.from(post as Map);
+      int currentEmpties = (salesmanMap['emptyBottles'] as num?)?.toInt() ?? 0;
+      
+      if (currentEmpties < quantity) {
+        // Option 1: Abort if not enough empties? Or Option 2: Allow negative (means manual correction)?
+        // User said "Provision for empty bottle collection". Assume they might collect more than tracked if manual errors exist.
+        // Let's allow but maybe cap at 0 if we want strictness.
+        // For collection, better to allow what the user sees physically.
+      }
+      
+      salesmanMap['emptyBottles'] = currentEmpties - quantity;
+      return Transaction.success(salesmanMap);
+    });
+
+    await agencyStockRef.runTransaction((Object? post) {
+      final stockMap = post == null 
+          ? <String, dynamic>{} 
+          : Map<String, dynamic>.from(post as Map);
+          
+      int currentAgencyEmpties = (stockMap['emptyCans'] as num?)?.toInt() ?? 0;
+      stockMap['emptyCans'] = currentAgencyEmpties + quantity;
+      
+      return Transaction.success(stockMap);
+    });
+
+    // 2. Log in Agency Stock_logs for daily reports
+    final dateKey = now.toIso8601String().substring(0, 10).replaceAll('-', '_');
+    final warehouseLogRef = _database.ref().child('Stock_logs').child('LOG_${dateKey}_$agencyId');
+    
+    await warehouseLogRef.runTransaction((Object? post) {
+      final logMap = post == null 
+          ? <String, dynamic>{} 
+          : Map<String, dynamic>.from(post as Map);
+
+      if (!logMap.containsKey('date')) {
+        logMap['date'] = now.toIso8601String().substring(0, 10);
+        logMap['agencyId'] = agencyId;
+        logMap['salesmanId'] = agencyId; // Changed from '' to agencyId
+      }
+      
+      logMap['totalEmptyCollected'] = ((logMap['totalEmptyCollected'] as num?)?.toInt() ?? 0) + quantity;
+
+      return Transaction.success(logMap);
+    });
+
+    // 3. Log in history for audit
+    final historyRef = _database.ref().child('Agency_Stock_History').push();
+    await historyRef.set({
+      'agencyId': agencyId,
+      'date': now.toIso8601String(),
+      'type': 'EmptyCollection',
+      'quantity': quantity,
+      'targetUserId': salesmanId,
+      'timestamp': ServerValue.timestamp,
+    });
   }
 
   @override

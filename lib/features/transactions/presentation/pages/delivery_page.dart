@@ -672,7 +672,7 @@ class _DeliveryViewState extends State<DeliveryView> {
                     keyboardType: TextInputType.number,
                     inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                     decoration: const InputDecoration(
-                      labelText: 'Full Cans',
+                      labelText: 'Full Bottles',
                       prefixIcon: Icon(
                         Icons.arrow_downward,
                         color: Colors.orange,
@@ -702,7 +702,7 @@ class _DeliveryViewState extends State<DeliveryView> {
                     keyboardType: TextInputType.number,
                     inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                     decoration: const InputDecoration(
-                      labelText: 'Empty Cans',
+                      labelText: 'Empty Bottles',
                       prefixIcon: Icon(Icons.arrow_upward, color: Colors.teal),
                       border: OutlineInputBorder(),
                     ),
@@ -740,7 +740,7 @@ class _DeliveryViewState extends State<DeliveryView> {
                 labelText: 'Total Amount (₹)',
                 prefixText: '₹ ',
                 border: OutlineInputBorder(),
-                helperText: "Auto-calculated: Full Cans × Rate",
+                helperText: "Auto-calculated: Full Bottles × Rate",
               ),
             ),
 
@@ -1173,11 +1173,11 @@ class _DeliveryViewState extends State<DeliveryView> {
           context: context,
           builder: (context) => AlertDialog(
             title: const Text(
-              'Excess Empty Cans Warning',
+              'Excess Empty Bottles Warning',
               style: TextStyle(color: Colors.orange),
             ),
             content: Text(
-              'The customer is returning $emptyCans empty cans, but their current balance is only ${selectedCustomer.bottleBalance}.\n\n'
+              'The customer is returning $emptyCans empty bottles, but their current balance is only ${selectedCustomer.bottleBalance}.\n\n'
               'This will result in a negative bottle balance data discrepancy.\n\n'
               'Are you sure you want to proceed?',
             ),
@@ -1243,7 +1243,7 @@ class _DeliveryViewState extends State<DeliveryView> {
             Text('Customer: ${selectedCustomer.name}'),
             const SizedBox(height: 8),
             Text('Bottles Delivered: $cans'),
-            Text('Empty Cans Returned: $emptyCans'),
+            Text('Empty Bottles Returned: $emptyCans'),
             Text('Total Amount: ₹${total.toStringAsFixed(0)}'),
             Text('Amount Received: ₹${received.toStringAsFixed(0)}'),
             Text('Payment Mode: $_paymentMode'),

@@ -195,7 +195,11 @@ class TransactionRepositoryImpl implements TransactionRepository {
         if (post == null) return Transaction.abort();
         final salesmanMap = Map<String, dynamic>.from(post as Map);
         int currentStock = (salesmanMap['currentStock'] as num?)?.toInt() ?? 0;
+        int currentEmpties = (salesmanMap['emptyBottles'] as num?)?.toInt() ?? 0;
+        
         salesmanMap['currentStock'] = currentStock - transaction.cansDelivered;
+        salesmanMap['emptyBottles'] = currentEmpties + transaction.emptyCollected;
+        
         return Transaction.success(salesmanMap);
       });
 
@@ -315,6 +319,7 @@ class TransactionRepositoryImpl implements TransactionRepository {
             if (post == null) return Transaction.abort();
             final salesmanMap = Map<String, dynamic>.from(post as Map);
             salesmanMap.update('currentStock', (value) => (value as num).toInt() - transaction.cansDelivered, ifAbsent: () => 0);
+            salesmanMap.update('emptyBottles', (value) => (value as num).toInt() + transaction.emptyCollected, ifAbsent: () => 0);
             return Transaction.success(salesmanMap);
           });
         }

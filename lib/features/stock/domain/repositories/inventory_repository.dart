@@ -17,5 +17,6 @@ abstract class InventoryRepository {
   Future<void> setAgencyOpeningStock({required String agencyId, required int quantity});
   Future<void> addAgencyRefillStock({required String agencyId, required int quantity});
   Future<void> recordAgencyDamagedStock({required String agencyId, required int quantity});
+  Future<void> collectEmptyBottles({required String salesmanId, required int quantity, required String agencyId});
   Future<bool> checkAgencyStockLogsExist(String agencyId);
 }

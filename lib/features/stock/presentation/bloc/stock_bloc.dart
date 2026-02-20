@@ -30,6 +30,7 @@ class StockBloc extends Bloc<StockEvent, StockState> {
     on<AgencyStockOpeningStockSet>(_onAgencyStockOpeningStockSet);
     on<AgencyStockRefillRequested>(_onAgencyStockRefillRequested);
     on<AgencyStockDamagedReported>(_onAgencyStockDamagedReported);
+    on<EmptyBottlesCollected>(_onEmptyBottlesCollected);
   }
 
   Future<void> _onLoadStockPage(
@@ -300,6 +301,27 @@ class StockBloc extends Bloc<StockEvent, StockState> {
       emit(StockActionSuccess('Damaged Stock Recorded', todayLog: state.todayLog, hasAnyLogs: state.hasAnyLogs, agencyStock: state.agencyStock, isAgencyView: state.isAgencyView));
     } catch (e) {
       emit(StockFailure('Failed to record damaged stock: $e', todayLog: state.todayLog, hasAnyLogs: state.hasAnyLogs, agencyStock: state.agencyStock, isAgencyView: state.isAgencyView));
+    }
+  }
+
+  Future<void> _onEmptyBottlesCollected(
+    EmptyBottlesCollected event,
+    Emitter<StockState> emit,
+  ) async {
+    if (event.quantity <= 0) {
+      emit(StockFailure('Quantity must be greater than 0', todayLog: state.todayLog, hasAnyLogs: state.hasAnyLogs, agencyStock: state.agencyStock, isAgencyView: state.isAgencyView));
+      return;
+    }
+    emit(StockActionLoading(todayLog: state.todayLog, hasAnyLogs: state.hasAnyLogs, agencyStock: state.agencyStock, isAgencyView: state.isAgencyView));
+    try {
+      await _inventoryRepository.collectEmptyBottles(
+        salesmanId: event.salesmanId,
+        agencyId: event.agencyId,
+        quantity: event.quantity,
+      );
+      emit(StockActionSuccess('Empty Bottles Collected Successfully', todayLog: state.todayLog, hasAnyLogs: state.hasAnyLogs, agencyStock: state.agencyStock, isAgencyView: state.isAgencyView));
+    } catch (e) {
+      emit(StockFailure('Collection Failed: $e', todayLog: state.todayLog, hasAnyLogs: state.hasAnyLogs, agencyStock: state.agencyStock, isAgencyView: state.isAgencyView));
     }
   }
 }

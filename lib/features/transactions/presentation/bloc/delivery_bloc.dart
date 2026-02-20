@@ -129,7 +129,7 @@ class DeliveryBloc extends Bloc<DeliveryEvent, DeliveryState> {
         
         final customerStream = _customerRepository.getCustomersByAgency(event.agencyId);
         final transactionStream = _getTodayTransactionsUseCase.byAgency(ids);
-        final stockStream = _inventoryRepository.getAgencyWarehouseStock(event.agencyId).map((s) => s['fullCans'] ?? 0);
+        final stockStream = _inventoryRepository.getAgencyWarehouseStock(event.agencyId).map((s) => s['fullBottles'] ?? 0);
 
         return CombineLatestStream.combine3<List<Customer>, List<TransactionEntity>, int, Map<String, dynamic>>(
           customerStream,
