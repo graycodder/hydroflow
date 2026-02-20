@@ -178,13 +178,13 @@ class StockBloc extends Bloc<StockEvent, StockState> {
 
     emit(StockActionLoading(todayLog: state.todayLog, hasAnyLogs: state.hasAnyLogs, agencyStock: state.agencyStock, isAgencyView: state.isAgencyView));
     try {
-      await _inventoryRepository.addWarehouseStock(
+      await _inventoryRepository.addAgencyPurchaseStock(
         agencyId: event.agencyId,
         quantity: event.quantity,
       );
       emit(StockActionSuccess('Warehouse Purchase Added', todayLog: state.todayLog, hasAnyLogs: state.hasAnyLogs, agencyStock: state.agencyStock, isAgencyView: state.isAgencyView));
     } catch (e) {
-      emit(StockFailure('Failed to add warehouse stock: $e', todayLog: state.todayLog, hasAnyLogs: state.hasAnyLogs, agencyStock: state.agencyStock, isAgencyView: state.isAgencyView));
+      emit(StockFailure('Failed to purchase stock: $e', todayLog: state.todayLog, hasAnyLogs: state.hasAnyLogs, agencyStock: state.agencyStock, isAgencyView: state.isAgencyView));
     }
   }
 

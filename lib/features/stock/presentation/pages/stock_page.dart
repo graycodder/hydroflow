@@ -22,14 +22,17 @@ class StockPage extends StatefulWidget {
 }
 
 class _StockPageState extends State<StockPage> {
-  bool _isLoadStockExpanded = false;
-  final _loadStockController = TextEditingController();
+  bool _isPurchaseExpanded = false;
+  bool _isRefillExpanded = false;
+  final _purchaseStockController = TextEditingController();
+  final _refillStockController = TextEditingController();
   final _damagedStockController = TextEditingController();
   final _openingStockController = TextEditingController();
 
   @override
   void dispose() {
-    _loadStockController.dispose();
+    _purchaseStockController.dispose();
+    _refillStockController.dispose();
     _damagedStockController.dispose();
     _openingStockController.dispose();
     super.dispose();
@@ -67,10 +70,12 @@ class _StockPageState extends State<StockPage> {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(content: Text(state.message), backgroundColor: Colors.green),
             );
-            _loadStockController.clear();
+            _purchaseStockController.clear();
+            _refillStockController.clear();
             _damagedStockController.clear();
             setState(() {
-              _isLoadStockExpanded = false;
+              _isPurchaseExpanded = false;
+              _isRefillExpanded = false;
             });
           } else if (state is StockFailure) {
             HydroFlowLoader.hide(context);
@@ -354,18 +359,19 @@ class _StockPageState extends State<StockPage> {
 
                           if (isAgency && state.hasAnyLogs) ...[
 
-                            // Refill Stock Section
+                            // Purchase Section
                             AnimatedCrossFade(
                               firstChild: SizedBox(
                                 width: double.infinity,
                                 child: ElevatedButton.icon(
                                   onPressed: () {
                                     setState(() {
-                                      _isLoadStockExpanded = true;
+                                      _isPurchaseExpanded = true;
+                                      _isRefillExpanded = false;
                                     });
                                   },
-                                  icon: const Icon(Icons.add),
-                                  label: const Text('Agency Purchase/Refill'),
+                                  icon: const Icon(Icons.shopping_cart_outlined),
+                                  label: const Text('Agency Purchase'),
                                   style: ElevatedButton.styleFrom(
                                     backgroundColor: const Color(0xFF0D1117),
                                     foregroundColor: Colors.white,
@@ -397,7 +403,7 @@ class _StockPageState extends State<StockPage> {
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     const Text(
-                                     'Agency Refill Stock',
+                                     'Agency Stock Purchase',
                                       style: TextStyle(
                                         fontSize: 18,
                                         fontWeight: FontWeight.bold,
@@ -405,7 +411,7 @@ class _StockPageState extends State<StockPage> {
                                     ),
                                     const SizedBox(height: 4),
                                     Text(
-                                      'Add stock purchases to Agency Warehouse.',
+                                      'Add new stock bottles purchased for Agency.',
                                       style: TextStyle(
                                         fontSize: 12,
                                         color: Colors.blue[700],
@@ -419,7 +425,7 @@ class _StockPageState extends State<StockPage> {
                                     ),
                                     const SizedBox(height: 8),
                                     TextFormField(
-                                      controller: _loadStockController,
+                                      controller: _purchaseStockController,
                                       autofocus: false,
                                       keyboardType: TextInputType.number,
                                       inputFormatters: [FilteringTextInputFormatter.digitsOnly],
@@ -442,7 +448,7 @@ class _StockPageState extends State<StockPage> {
                                             builder: (context) {
                                               return ElevatedButton(
                                                 onPressed: () {
-                                                  final qtyText = _loadStockController.text;
+                                                  final qtyText = _purchaseStockController.text;
                                                   final qty = int.tryParse(qtyText) ?? 0;
                                                   if (qty <= 0) return;
 
@@ -450,8 +456,8 @@ class _StockPageState extends State<StockPage> {
                                                   showDialog(
                                                     context: context,
                                                     builder: (dialogContext) => AlertDialog(
-                                                      title: const Text('Confirm Refill'),
-                                                      content: Text('Are you sure you want to add $qty bottles to Agency Warehouse?'),
+                                                      title: const Text('Confirm Purchase'),
+                                                      content: Text('Are you sure you want to add $qty new bottles to Agency Warehouse?'),
                                                       actions: [
                                                         TextButton(
                                                           onPressed: () => Navigator.pop(dialogContext),
@@ -461,7 +467,7 @@ class _StockPageState extends State<StockPage> {
                                                             onPressed: () {
                                                               FocusManager.instance.primaryFocus?.unfocus();
                                                               Navigator.pop(dialogContext);
-                                                              context.read<StockBloc>().add(AgencyStockRefillRequested(
+                                                              context.read<StockBloc>().add(StockAgencyPurchase(
                                                                 agencyId: salesman.agencyId,
                                                                 quantity: qty,
                                                               ));
@@ -481,7 +487,7 @@ class _StockPageState extends State<StockPage> {
                                                     borderRadius: BorderRadius.circular(8),
                                                   ),
                                                 ),
-                                                child: const Text('Refill Bottles'),
+                                                child: const Text('Confirm Purchase'),
                                               );
                                             }
                                           ),
@@ -491,7 +497,7 @@ class _StockPageState extends State<StockPage> {
                                           child: OutlinedButton(
                                             onPressed: () {
                                               setState(() {
-                                                _isLoadStockExpanded = false;
+                                                _isPurchaseExpanded = false;
                                               });
                                             },
                                             style: OutlinedButton.styleFrom(
@@ -508,12 +514,185 @@ class _StockPageState extends State<StockPage> {
                                   ],
                                 ),
                               ),
-                              crossFadeState: _isLoadStockExpanded
+                              crossFadeState: _isPurchaseExpanded
                                   ? CrossFadeState.showSecond
                                   : CrossFadeState.showFirst,
                               duration: const Duration(milliseconds: 300),
                             ),
 
+                            const SizedBox(height: 16),
+
+                            // Refill Section
+                            AnimatedCrossFade(
+                              firstChild: SizedBox(
+                                width: double.infinity,
+                                child: ElevatedButton.icon(
+                                  onPressed: () {
+                                    setState(() {
+                                      _isRefillExpanded = true;
+                                      _isPurchaseExpanded = false;
+                                    });
+                                  },
+                                  icon: const Icon(Icons.sync),
+                                  label: const Text('Agency Refill (Exchange)'),
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: const Color(0xFF2E7D32),
+                                    foregroundColor: Colors.white,
+                                    padding: const EdgeInsets.symmetric(vertical: 16),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    textStyle: const TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              secondChild: Container(
+                                padding: const EdgeInsets.all(20),
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(16),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.grey.withOpacity(0.1),
+                                      blurRadius: 10,
+                                      offset: const Offset(0, 4),
+                                    ),
+                                  ],
+                                ),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    const Text(
+                                     'Agency Stock Refill',
+                                      style: TextStyle(
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      'Exchange empty bottles for full ones at the plant.',
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        color: Colors.green[700],
+                                        fontStyle: FontStyle.italic,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 16),
+                                    const Text(
+                                      'Number of Bottles to Refill',
+                                      style: TextStyle(fontWeight: FontWeight.w600),
+                                    ),
+                                    const SizedBox(height: 8),
+                                    TextFormField(
+                                      controller: _refillStockController,
+                                      autofocus: false,
+                                      keyboardType: TextInputType.number,
+                                      inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                                      decoration: InputDecoration(
+                                        hintText: 'Enter quantity',
+                                        filled: true,
+                                        fillColor: Colors.grey[100],
+                                        border: OutlineInputBorder(
+                                          borderRadius: BorderRadius.circular(8),
+                                          borderSide: BorderSide.none,
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(height: 16),
+                                    Row(
+                                      children: [
+                                        Expanded(
+                                          flex: 2,
+                                          child: Builder(
+                                            builder: (context) {
+                                              return ElevatedButton(
+                                                onPressed: () {
+                                                  final qtyText = _refillStockController.text;
+                                                  final qty = int.tryParse(qtyText) ?? 0;
+                                                  if (qty <= 0) return;
+
+                                                  final availableEmpties = state.agencyStock?['emptyBottles'] ?? 0;
+                                                  if (qty > availableEmpties) {
+                                                     ScaffoldMessenger.of(context).showSnackBar(
+                                                      SnackBar(
+                                                        content: Text('Not enough empties! Available: $availableEmpties'), 
+                                                        backgroundColor: Colors.orange,
+                                                      ),
+                                                    );
+                                                    return;
+                                                  }
+
+                                                  FocusManager.instance.primaryFocus?.unfocus();
+                                                  showDialog(
+                                                    context: context,
+                                                    builder: (dialogContext) => AlertDialog(
+                                                      title: const Text('Confirm Refill'),
+                                                      content: Text('Exchange $qty empties for $qty full bottles?'),
+                                                      actions: [
+                                                        TextButton(
+                                                          onPressed: () => Navigator.pop(dialogContext),
+                                                          child: const Text('Cancel'),
+                                                        ),
+                                                          ElevatedButton(
+                                                            onPressed: () {
+                                                              FocusManager.instance.primaryFocus?.unfocus();
+                                                              Navigator.pop(dialogContext);
+                                                              context.read<StockBloc>().add(AgencyStockRefillRequested(
+                                                                agencyId: salesman.agencyId,
+                                                                quantity: qty,
+                                                              ));
+                                                            },
+                                                          style: ElevatedButton.styleFrom(backgroundColor: Colors.green[700]),
+                                                          child: const Text('Confirm', style: TextStyle(color: Colors.white)),
+                                                        ),
+                                                      ],
+                                                    ),
+                                                  );
+                                                },
+                                                style: ElevatedButton.styleFrom(
+                                                  backgroundColor: const Color(0xFF2E7D32),
+                                                  foregroundColor: Colors.white,
+                                                  padding: const EdgeInsets.symmetric(vertical: 16),
+                                                  shape: RoundedRectangleBorder(
+                                                    borderRadius: BorderRadius.circular(8),
+                                                  ),
+                                                ),
+                                                child: const Text('Confirm Refill'),
+                                              );
+                                            }
+                                          ),
+                                        ),
+                                        const SizedBox(width: 12),
+                                        Expanded(
+                                          child: OutlinedButton(
+                                            onPressed: () {
+                                              setState(() {
+                                                _isRefillExpanded = false;
+                                              });
+                                            },
+                                            style: OutlinedButton.styleFrom(
+                                              padding: const EdgeInsets.symmetric(vertical: 16),
+                                              shape: RoundedRectangleBorder(
+                                                borderRadius: BorderRadius.circular(8),
+                                              ),
+                                            ),
+                                            child: const Text('Cancel'),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              crossFadeState: _isRefillExpanded
+                                  ? CrossFadeState.showSecond
+                                  : CrossFadeState.showFirst,
+                              duration: const Duration(milliseconds: 300),
+                            ),
                             const SizedBox(height: 24),
                             
                             // Damaged / Return Section
@@ -532,7 +711,7 @@ class _StockPageState extends State<StockPage> {
                                       const Icon(Icons.error_outline, color: Colors.orange),
                                       const SizedBox(width: 8),
                                       const Text(
-                                        'Agency Damaged / Return',
+                                        'Agency Damaged',
                                         style: TextStyle(
                                           fontSize: 18,
                                           fontWeight: FontWeight.bold,
@@ -542,7 +721,7 @@ class _StockPageState extends State<StockPage> {
                                   ),
                                   const SizedBox(height: 4),
                                   Text(
-                                    'Log damaged bottles or returns to Agency Warehouse.',
+                                    'Log damaged bottles and remove from Agency Warehouse.',
                                     style: TextStyle(
                                       fontSize: 14,
                                       color: Colors.grey[600],
@@ -620,8 +799,8 @@ class _StockPageState extends State<StockPage> {
                                             showDialog(
                                               context: context,
                                               builder: (dialogContext) => AlertDialog(
-                                                title: const Text('Confirm Removal'),
-                                                content: Text('Are you sure you want to remove $qty bottles from Agency Stock (Damaged/Return)?'),
+                                                title: const Text('Confirm Damage'),
+                                                content: Text('Are you sure you want to remove $qty bottles from Agency Stock as Damaged?'),
                                                 actions: [
                                                   TextButton(
                                                     onPressed: () => Navigator.pop(dialogContext),
