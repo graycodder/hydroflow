@@ -142,30 +142,30 @@ class AgencyDailyReportView extends StatelessWidget {
                       "${subReport.closingStock} cans",
                       Colors.orange,
                     ),
-                    const SizedBox(height: 16),
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton(
-                        onPressed: subReport.isSettled
-                            ? null
-                            : () => _showSettlementDialog(context, subReport),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: subReport.isSettled
-                              ? Colors.grey[300]
-                              : const Color(0xFF2962FF),
-                          foregroundColor: subReport.isSettled
-                              ? Colors.grey[600]
-                              : Colors.white,
-                          elevation: 0,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                        ),
-                        child: Text(
-                          subReport.isSettled ? "Settled" : "Receive Payment",
-                        ),
-                      ),
-                    ),
+                    // const SizedBox(height: 16),
+                    // SizedBox(
+                    //   width: double.infinity,
+                    //   child: ElevatedButton(
+                    //     onPressed: subReport.isSettled
+                    //         ? null
+                    //         : () => _showSettlementDialog(context, subReport),
+                    //     style: ElevatedButton.styleFrom(
+                    //       backgroundColor: subReport.isSettled
+                    //           ? Colors.grey[300]
+                    //           : const Color(0xFF2962FF),
+                    //       foregroundColor: subReport.isSettled
+                    //           ? Colors.grey[600]
+                    //           : Colors.white,
+                    //       elevation: 0,
+                    //       shape: RoundedRectangleBorder(
+                    //         borderRadius: BorderRadius.circular(8),
+                    //       ),
+                    //     ),
+                    //     child: Text(
+                    //       subReport.isSettled ? "Settled" : "Receive Payment",
+                    //     ),
+                    //   ),
+                    // ),
                   ],
                 ),
               );
@@ -176,150 +176,150 @@ class AgencyDailyReportView extends StatelessWidget {
     );
   }
 
-  void _showSettlementDialog(BuildContext context, ReportEntity subReport) {
-    if (subReport.salesmanId == null) return;
+  // void _showSettlementDialog(BuildContext context, ReportEntity subReport) {
+  //   if (subReport.salesmanId == null) return;
 
-    final double totalOutstanding = subReport.cashInHand + subReport.salesmanPreviousBalance - subReport.settlementAmountToday;
+  //   final double totalOutstanding = subReport.cashInHand + subReport.salesmanPreviousBalance - subReport.settlementAmountToday;
     
-    final TextEditingController amountController = TextEditingController(
-      text: totalOutstanding > 0
-          ? totalOutstanding.toStringAsFixed(0)
-          : "",
-    );
+  //   final TextEditingController amountController = TextEditingController(
+  //     text: totalOutstanding > 0
+  //         ? totalOutstanding.toStringAsFixed(0)
+  //         : "",
+  //   );
 
-    bool isFinalSettlement = true;
+  //   bool isFinalSettlement = true;
 
-    final reportsBloc = context.read<ReportsBloc>();
+  //   final reportsBloc = context.read<ReportsBloc>();
 
-    showDialog(
-      context: context,
-      builder: (BuildContext dialogContext) {
-        return BlocProvider.value(
-          value: reportsBloc,
-          child: StatefulBuilder(
-            builder: (context, setState) {
-              return AlertDialog(
-                title: Text('Settle with ${subReport.salesmanName}'),
-                content: SingleChildScrollView(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          const Text('Expected Today:'),
-                          Text('₹${subReport.cashInHand.toStringAsFixed(0)}'),
-                        ],
-                      ),
-                      if (subReport.settlementAmountToday > 0) ...[
-                        const SizedBox(height: 8),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            const Text('Already Paid:'),
-                            Text(
-                              '- ₹${subReport.settlementAmountToday.toStringAsFixed(0)}',
-                              style: const TextStyle(color: Colors.green, fontWeight: FontWeight.bold),
-                            ),
-                          ],
-                        ),
-                      ],
-                      const SizedBox(height: 8),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          const Text('Old Balance:'),
-                          Text(
-                            '₹${subReport.salesmanPreviousBalance.toStringAsFixed(0)}',
-                            style: TextStyle(
-                              color: subReport.salesmanPreviousBalance > 0 ? Colors.red : Colors.green,
-                              fontWeight: subReport.salesmanPreviousBalance > 0 ? FontWeight.bold : FontWeight.normal,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const Divider(height: 24),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          const Text(
-                            'Total Outstanding:',
-                            style: TextStyle(fontWeight: FontWeight.bold),
-                          ),
-                          Text(
-                            '₹${totalOutstanding.toStringAsFixed(0)}',
-                            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 16),
-                      TextField(
-                        controller: amountController,
-                        keyboardType: TextInputType.number,
-                        decoration: InputDecoration(
-                          labelText: 'Amount Received Now (₹)',
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      const Text(
-                        'Note: Any unpaid amount will be added to the salesman\'s future balance.',
-                        style: TextStyle(fontSize: 11, color: Colors.grey, fontStyle: FontStyle.italic),
-                      ),
-                      const SizedBox(height: 16),
-                      CheckboxListTile(
-                        title: const Text("Mark as Final Settlement", style: TextStyle(fontSize: 14)),
-                        subtitle: const Text("Only check this if the salesman has finished paying for today.", style: TextStyle(fontSize: 11)),
-                        value: isFinalSettlement,
-                        onChanged: (val) {
-                          setState(() {
-                            isFinalSettlement = val ?? false;
-                          });
-                        },
-                        contentPadding: EdgeInsets.zero,
-                        controlAffinity: ListTileControlAffinity.leading,
-                      ),
-                    ],
-                  ),
-                ),
-                actions: [
-                  TextButton(
-                    onPressed: () => Navigator.of(dialogContext).pop(),
-                    child: const Text('Cancel', style: TextStyle(color: Colors.grey)),
-                  ),
-                  ElevatedButton(
-                    onPressed: () {
-                      final double? amount = double.tryParse(amountController.text);
-                      if (amount != null && amount >= 0) {
-                        context.read<ReportsBloc>().add(
-                          SettleSalesmanDailyCash(
-                            salesmanId: subReport.salesmanId!,
-                            date: selectedDate,
-                            amount: amount,
-                            recordedBy: agencyId,
-                            isFinal: isFinalSettlement,
-                          ),
-                        );
-                        Navigator.of(dialogContext).pop();
-                      }
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: isFinalSettlement ? const Color(0xFF2962FF) : Colors.green,
-                      foregroundColor: Colors.white,
-                    ),
-                    child: Text(isFinalSettlement ? 'Confirm Final Settlement' : 'Record Partial Payment'),
-                  ),
-                ],
-              );
-            },
-          ),
-        );
-      },
-    );
-  }
+  //   showDialog(
+  //     context: context,
+  //     builder: (BuildContext dialogContext) {
+  //       return BlocProvider.value(
+  //         value: reportsBloc,
+  //         child: StatefulBuilder(
+  //           builder: (context, setState) {
+  //             return AlertDialog(
+  //               title: Text('Settle with ${subReport.salesmanName}'),
+  //               content: SingleChildScrollView(
+  //                 child: Column(
+  //                   mainAxisSize: MainAxisSize.min,
+  //                   crossAxisAlignment: CrossAxisAlignment.start,
+  //                   children: [
+  //                     Row(
+  //                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
+  //                       children: [
+  //                         const Text('Expected Today:'),
+  //                         Text('₹${subReport.cashInHand.toStringAsFixed(0)}'),
+  //                       ],
+  //                     ),
+  //                     if (subReport.settlementAmountToday > 0) ...[
+  //                       const SizedBox(height: 8),
+  //                       Row(
+  //                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
+  //                         children: [
+  //                           const Text('Already Paid:'),
+  //                           Text(
+  //                             '- ₹${subReport.settlementAmountToday.toStringAsFixed(0)}',
+  //                             style: const TextStyle(color: Colors.green, fontWeight: FontWeight.bold),
+  //                           ),
+  //                         ],
+  //                       ),
+  //                     ],
+  //                     const SizedBox(height: 8),
+  //                     Row(
+  //                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
+  //                       children: [
+  //                         const Text('Old Balance:'),
+  //                         Text(
+  //                           '₹${subReport.salesmanPreviousBalance.toStringAsFixed(0)}',
+  //                           style: TextStyle(
+  //                             color: subReport.salesmanPreviousBalance > 0 ? Colors.red : Colors.green,
+  //                             fontWeight: subReport.salesmanPreviousBalance > 0 ? FontWeight.bold : FontWeight.normal,
+  //                           ),
+  //                         ),
+  //                       ],
+  //                     ),
+  //                     const Divider(height: 24),
+  //                     Row(
+  //                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
+  //                       children: [
+  //                         const Text(
+  //                           'Total Outstanding:',
+  //                           style: TextStyle(fontWeight: FontWeight.bold),
+  //                         ),
+  //                         Text(
+  //                           '₹${totalOutstanding.toStringAsFixed(0)}',
+  //                           style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+  //                         ),
+  //                       ],
+  //                     ),
+  //                     const SizedBox(height: 16),
+  //                     TextField(
+  //                       controller: amountController,
+  //                       keyboardType: TextInputType.number,
+  //                       decoration: InputDecoration(
+  //                         labelText: 'Amount Received Now (₹)',
+  //                         border: OutlineInputBorder(
+  //                           borderRadius: BorderRadius.circular(8),
+  //                         ),
+  //                       ),
+  //                     ),
+  //                     const SizedBox(height: 8),
+  //                     const Text(
+  //                       'Note: Any unpaid amount will be added to the salesman\'s future balance.',
+  //                       style: TextStyle(fontSize: 11, color: Colors.grey, fontStyle: FontStyle.italic),
+  //                     ),
+  //                     const SizedBox(height: 16),
+  //                     CheckboxListTile(
+  //                       title: const Text("Mark as Final Settlement", style: TextStyle(fontSize: 14)),
+  //                       subtitle: const Text("Only check this if the salesman has finished paying for today.", style: TextStyle(fontSize: 11)),
+  //                       value: isFinalSettlement,
+  //                       onChanged: (val) {
+  //                         setState(() {
+  //                           isFinalSettlement = val ?? false;
+  //                         });
+  //                       },
+  //                       contentPadding: EdgeInsets.zero,
+  //                       controlAffinity: ListTileControlAffinity.leading,
+  //                     ),
+  //                   ],
+  //                 ),
+  //               ),
+  //               actions: [
+  //                 TextButton(
+  //                   onPressed: () => Navigator.of(dialogContext).pop(),
+  //                   child: const Text('Cancel', style: TextStyle(color: Colors.grey)),
+  //                 ),
+  //                 ElevatedButton(
+  //                   onPressed: () {
+  //                     final double? amount = double.tryParse(amountController.text);
+  //                     if (amount != null && amount >= 0) {
+  //                       context.read<ReportsBloc>().add(
+  //                         SettleSalesmanDailyCash(
+  //                           salesmanId: subReport.salesmanId!,
+  //                           date: selectedDate,
+  //                           amount: amount,
+  //                           recordedBy: agencyId,
+  //                           isFinal: isFinalSettlement,
+  //                         ),
+  //                       );
+  //                       Navigator.of(dialogContext).pop();
+  //                     }
+  //                   },
+  //                   style: ElevatedButton.styleFrom(
+  //                     backgroundColor: isFinalSettlement ? const Color(0xFF2962FF) : Colors.green,
+  //                     foregroundColor: Colors.white,
+  //                   ),
+  //                   child: Text(isFinalSettlement ? 'Confirm Final Settlement' : 'Record Partial Payment'),
+  //                 ),
+  //               ],
+  //             );
+  //           },
+  //         ),
+  //       );
+  //     },
+  //   );
+  // }
 
   Widget _buildBreakdownRow(
     String label,

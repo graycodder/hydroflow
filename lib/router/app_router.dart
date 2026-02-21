@@ -24,6 +24,8 @@ import 'package:hydroflow/core/utils/router_refresh_listenable.dart';
 
 import 'package:hydroflow/features/auth/presentation/pages/agency_employees_page.dart';
 
+final RouteObserver<ModalRoute<void>> routeObserver = RouteObserver<ModalRoute<void>>();
+
 final router = GoRouter(
   initialLocation: '/splash',
   refreshListenable: routerRefreshListenable,
@@ -65,6 +67,7 @@ final router = GoRouter(
 
     return null;
   },
+  observers: [routeObserver],
   routes: [
     GoRoute(
       path: '/splash',
