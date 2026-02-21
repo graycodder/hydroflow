@@ -10,4 +10,5 @@ abstract class AgencyRepository {
   Future<void> addSalesman(Salesman salesman);
   Future<void> updateSalesman(Salesman salesman);
   Future<bool> isPhoneNumberUnique(String phoneNumber, {String? excludeSalesmanId});
+  Future<void> updateAgencySettings(String agencyId, Map<String, dynamic> settings);
 }

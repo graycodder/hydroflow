@@ -13,6 +13,8 @@ class Agency extends Equatable {
   final int warehouseDamagedStock;
   final bool allowCredit;
   final double maxCreditLimit;
+  final double defaultBottlePrice;
+  final bool enforceFixedPrice;
   final int maxSalesmen;
   final int maxCustomers;
   final int totalCustomersCount;
@@ -31,6 +33,8 @@ class Agency extends Equatable {
     this.warehouseDamagedStock = 0,
     this.allowCredit = true,
     this.maxCreditLimit = 5000.0,
+    this.defaultBottlePrice = 50.0,
+    this.enforceFixedPrice = false,
     this.maxSalesmen = 5,
     this.maxCustomers = 500,
     this.totalCustomersCount = 0,
@@ -51,6 +55,8 @@ class Agency extends Equatable {
     warehouseDamagedStock,
     allowCredit,
     maxCreditLimit,
+    defaultBottlePrice,
+    enforceFixedPrice,
     maxSalesmen,
     maxCustomers,
     totalCustomersCount,

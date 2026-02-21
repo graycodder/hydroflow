@@ -223,17 +223,26 @@ class AgencyRepositoryImpl implements AgencyRepository {
           
           final foundPhone = (data['phoneNumber'] ?? '').toString().trim();
           
-          // Secondary check for robustness against unindexed queries returning full nodes
           if (foundPhone == normalizedPhone) {
             if (excludeSalesmanId == null || child.key != excludeSalesmanId) {
-              return false; // Found another salesman with this phone number
+              return false;
             }
           }
         }
       }
-      return true; // Unique
+      return true;
     } catch (e) {
       throw Exception('Failed to check phone number uniqueness: $e');
+    }
+  }
+
+  @override
+  Future<void> updateAgencySettings(String agencyId, Map<String, dynamic> settings) async {
+    try {
+      final ref = _database.ref().child('Agencies').child(agencyId).child('settings');
+      await ref.update(settings);
+    } catch (e) {
+      throw Exception('Failed to update agency settings: $e');
     }
   }
 }

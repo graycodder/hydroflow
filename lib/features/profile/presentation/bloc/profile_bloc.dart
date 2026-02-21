@@ -36,6 +36,7 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
     on<LoadAgencyProfile>(_onLoadAgencyProfile);
     on<_InternalUpdate>(_onInternalUpdate);
     on<_InternalError>(_onInternalError);
+    on<UpdateAgencySettings>(_onUpdateAgencySettings);
   }
 
   Future<void> _onLoadProfile(LoadProfile event, Emitter<ProfileState> emit) async {
@@ -190,6 +191,15 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
 
   void _onInternalError(_InternalError event, Emitter<ProfileState> emit) {
     emit(ProfileError(event.message, isAgencyView: state.isAgencyView));
+  }
+
+  Future<void> _onUpdateAgencySettings(UpdateAgencySettings event, Emitter<ProfileState> emit) async {
+    try {
+      await _agencyRepository.updateAgencySettings(event.agencyId, event.settings);
+      // The stream listener on agency will automatically update the UI when the data changes in Firebase
+    } catch (e) {
+      emit(ProfileError(e.toString(), isAgencyView: state.isAgencyView));
+    }
   }
 
   @override

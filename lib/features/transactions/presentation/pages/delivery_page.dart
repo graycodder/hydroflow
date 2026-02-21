@@ -27,6 +27,14 @@ class DeliveryPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final authState = context.watch<AuthBloc>().state;
+    if (authState is AuthAuthenticated) {
+      return BlocProvider(
+        create: (context) => sl<AgencyBloc>()
+          ..add(LoadAgencySalesmen(authState.salesman.agencyId)),
+        child: const DeliveryView(),
+      );
+    }
     return const DeliveryView();
   }
 }
@@ -76,6 +84,9 @@ class _DeliveryViewState extends State<DeliveryView> {
       } else {
         context.read<DeliveryBloc>().add(LoadDeliveryPage(salesman.id));
       }
+
+      // Always load agency details to get pricing settings
+      context.read<AgencyBloc>().add(LoadAgencySalesmen(salesman.agencyId));
     }
   }
 
@@ -104,7 +115,17 @@ class _DeliveryViewState extends State<DeliveryView> {
 
   @override
   Widget build(BuildContext context) {
-    return BlocConsumer<DeliveryBloc, DeliveryState>(
+    return BlocListener<AgencyBloc, AgencyState>(
+      listener: (context, agencyState) {
+        if (agencyState is AgencySalesmenLoaded && agencyState.agency != null) {
+          final agency = agencyState.agency!;
+          if (agency.enforceFixedPrice) {
+            _pricePerBottleController.text = agency.defaultBottlePrice.toStringAsFixed(0);
+            _calculateTotal();
+          }
+        }
+      },
+      child: BlocConsumer<DeliveryBloc, DeliveryState>(
       listenWhen: (previous, current) =>
           previous.status != current.status ||
           previous.selectedZone != current.selectedZone,
@@ -407,16 +428,10 @@ class _DeliveryViewState extends State<DeliveryView> {
           ),
         );
 
-        if (salesman != null && isAgency) {
-          return BlocProvider(
-            create: (context) => sl<AgencyBloc>()
-              ..add(LoadAgencySalesmen(salesman.agencyId)),
-            child: scaffold,
-          );
-        }
         return scaffold;
       },
-    );
+    ),
+   );
   }
 
   Widget _buildStatsHeader(DeliveryState state) {
@@ -512,6 +527,12 @@ class _DeliveryViewState extends State<DeliveryView> {
     DeliveryState state,
     String salesmanId,
   ) {
+    final agencyState = context.watch<AgencyBloc>().state;
+    bool isPriceFixed = false;
+    if (agencyState is AgencySalesmenLoaded && agencyState.agency != null) {
+      isPriceFixed = agencyState.agency!.enforceFixedPrice;
+    }
+
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -716,14 +737,17 @@ class _DeliveryViewState extends State<DeliveryView> {
             // Price Per Bottle
             TextFormField(
               controller: _pricePerBottleController,
+              enabled: !isPriceFixed,
               autofocus: false,
+            //  readOnly: isPriceFixed,
               keyboardType: TextInputType.number,
               inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-              decoration: const InputDecoration(
-                labelText: 'Price Per Bottle (₹)',
+              decoration: InputDecoration(
+                labelText: isPriceFixed ? 'Price Per Bottle (Fixed by Agency)' : 'Price Per Bottle (₹)',
                 prefixText: '₹ ',
-                border: OutlineInputBorder(),
+                border: const OutlineInputBorder(),
                 hintText: 'Enter rate per bottle',
+                suffixIcon: isPriceFixed ? const Icon(Icons.lock_outline, size: 16) : null,
               ),
               onChanged: (_) => _calculateTotal(),
             ),

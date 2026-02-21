@@ -11,6 +11,7 @@ import 'package:intl/intl.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:hydroflow/core/widgets/hydro_flow_loader.dart';
+import 'package:hydroflow/features/auth/domain/entities/agency.dart';
 
 class ProfilePage extends StatelessWidget {
   const ProfilePage({super.key});
@@ -77,7 +78,6 @@ class ProfilePage extends StatelessWidget {
               final isAgency = state.isAgencyView;
               final agency = state.agency;
 
-              // Display Logic
               // Display Logic: Fallback to profile info if agency info is missing or empty
               final displayName = isAgency ? (agency?.name ?? 'Agency Name') : profile.name;
               final displayRole = isAgency ? 'Agency Profile' : '${profile.role} • ${profile.zone}';
@@ -96,7 +96,7 @@ class ProfilePage extends StatelessWidget {
                       padding: const EdgeInsets.only(top: 60, bottom: 30, left: 24, right: 24),
                       width: double.infinity,
                       decoration: BoxDecoration(
-                        color: isAgency ? Colors.orange : const Color(0xFF2962FF), // Orange for Agency, Blue for Personal
+                        color: isAgency ? Colors.orange : const Color(0xFF2962FF),
                       ),
                       child: Stack(
                         children: [
@@ -176,6 +176,8 @@ class ProfilePage extends StatelessWidget {
 
                             if (profile.role == 'owner') ...[
                                const SizedBox(height: 24),
+                               _buildBusinessSettingsCard(context, agency),
+                               const SizedBox(height: 24),
                                SizedBox(
                                  width: double.infinity,
                                  child: OutlinedButton.icon(
@@ -196,13 +198,6 @@ class ProfilePage extends StatelessWidget {
                     ),
                     
                     const SizedBox(height: 20),
-                    
-                    // Footer Info - Show only for Agency View? Or both?
-                    // User said: "if view is personal only need to show contact information and Terms and conditions and Privacy polict"
-                    // User said: "view is agency need to show all others"
-                    // So Personal View gets Contact + Terms + Privacy.
-                    // Agency View gets Contact + Agency Details + Subscriptions + Stats + Terms + Privacy?
-                    // Or simply "all others" means including Terms/Privacy.
                     
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16),
@@ -247,7 +242,6 @@ class ProfilePage extends StatelessWidget {
                              const SizedBox(height: 16),
                           ],
                            
-                           // Terms and Privacy - Show for BOTH (explicitly requested for Personal)
                            Row(
                              mainAxisAlignment: MainAxisAlignment.center,
                              children: [
@@ -279,14 +273,99 @@ class ProfilePage extends StatelessWidget {
     );
   }
 
-  Widget _buildAgencyStatRow(String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+  Widget _buildBusinessSettingsCard(BuildContext context, Agency? agency) {
+    if (agency == null) return const SizedBox.shrink();
+
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withOpacity(0.1),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(label, style: TextStyle(color: Colors.orange.shade800)),
-          Text(value, style: const TextStyle(fontWeight: FontWeight.bold)),
+          const Row(
+            children: [
+              Icon(Icons.settings_outlined, color: Colors.orange),
+              SizedBox(width: 8),
+              Text(
+                'Business Settings',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          ListTile(
+            contentPadding: EdgeInsets.zero,
+            title: const Text('Default Bottle Price'),
+            subtitle: const Text('Price per bottle for all deliveries'),
+            trailing: Text(
+              '₹${agency.defaultBottlePrice.toStringAsFixed(0)}',
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.blue),
+            ),
+            onTap: () => _showPriceEditDialog(context, agency),
+          ),
+          const Divider(),
+          SwitchListTile(
+            contentPadding: EdgeInsets.zero,
+            title: const Text('Enforce Fixed Price'),
+            subtitle: const Text('Salesmen cannot change price during delivery'),
+            value: agency.enforceFixedPrice,
+            onChanged: (value) {
+              context.read<ProfileBloc>().add(UpdateAgencySettings(
+                agency.id, 
+                {'enforceFixedPrice': value},
+              ));
+            },
+            activeColor: Colors.orange,
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showPriceEditDialog(BuildContext context, Agency agency) {
+    final controller = TextEditingController(text: agency.defaultBottlePrice.toStringAsFixed(0));
+    showDialog(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Set Default Price'),
+        content: TextField(
+          controller: controller,
+          keyboardType: TextInputType.number,
+          decoration: const InputDecoration(
+            labelText: 'Price Per Bottle (₹)',
+            prefixText: '₹ ',
+            border: OutlineInputBorder(),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              final price = double.tryParse(controller.text);
+              if (price != null) {
+                context.read<ProfileBloc>().add(UpdateAgencySettings(
+                  agency.id,
+                  {'defaultBottlePrice': price},
+                ));
+                Navigator.pop(dialogContext);
+              }
+            },
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.orange),
+            child: const Text('Save', style: TextStyle(color: Colors.white)),
+          ),
         ],
       ),
     );

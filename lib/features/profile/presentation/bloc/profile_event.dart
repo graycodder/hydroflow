@@ -26,6 +26,16 @@ class LoadAgencyProfile extends ProfileEvent {
   List<Object?> get props => [uid, agencyId];
 }
 
+class UpdateAgencySettings extends ProfileEvent {
+  final String agencyId;
+  final Map<String, dynamic> settings;
+
+  const UpdateAgencySettings(this.agencyId, this.settings);
+
+  @override
+  List<Object?> get props => [agencyId, settings];
+}
+
 // Internal Events for Stream Updates
 class _InternalUpdate extends ProfileEvent {
   final ProfileEntity? profile;
