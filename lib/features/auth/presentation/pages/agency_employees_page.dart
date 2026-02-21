@@ -330,7 +330,7 @@ class AgencyEmployeesPage extends StatelessWidget {
           BlocProvider.value(value: stockBloc),
         ],
         child: DefaultTabController(
-          length: 3,
+          length: 2,
           child: BlocConsumer<StockBloc, StockState>(
             listener: (context, state) {
               if (state is StockActionLoading) {
@@ -382,7 +382,6 @@ class AgencyEmployeesPage extends StatelessWidget {
                         tabs: [
                         Tab(text: 'Refill Full'),
                         Tab(text: 'Collect Empty'),
-                        Tab(text: 'Settlement'),
                       ],
                     ),
                   ],
@@ -462,64 +461,6 @@ class AgencyEmployeesPage extends StatelessWidget {
                               labelText: 'Empty Bottles',
                               border: OutlineInputBorder(),
                               prefixIcon: Icon(Icons.assignment_return, color: Colors.orange),
-                            ),
-                          ),
-                        ],
-                      ),
-                      Column(
-                        mainAxisSize: MainAxisSize.min,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const SizedBox(height: 16),
-                          Container(
-                            padding: const EdgeInsets.all(12),
-                            decoration: BoxDecoration(
-                              color: Colors.green.withOpacity(0.1),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: Row(
-                              children: [
-                                const Icon(Icons.account_balance_wallet, color: Colors.green, size: 20),
-                                const SizedBox(width: 8),
-                                Expanded(
-                                  child: Text(
-                                    'Cash: ₹${salesman.pendingCashBalance.toStringAsFixed(0)}',
-                                    style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.green),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          const SizedBox(height: 20),
-                          const Text('Receive payment and settle for today:'),
-                          const SizedBox(height: 20),
-                          SizedBox(
-                            width: double.infinity,
-                            child: BlocBuilder<ReportsBloc, ReportsState>(
-                              builder: (context, reportsState) {
-                                final report = reportsState is ReportsLoaded ? reportsState.report : null;
-                                final salesmanReport = (report?.subReports ?? []).isEmpty
-                                    ? null
-                                    : (report?.subReports ?? []).cast<ReportEntity?>().firstWhere(
-                                          (sr) => sr?.salesmanId == salesman.id,
-                                          orElse: () => null,
-                                        );
-                                
-                                final hasData = salesmanReport != null;
-
-                                return ElevatedButton.icon(
-                                  onPressed: !hasData 
-                                      ? null 
-                                      : () => _showSettlementDialog(context, salesmanReport, salesman.agencyId),
-                                  icon: const Icon(Icons.payments),
-                                  label: Text(hasData ? 'Open Settlement Dialog' : 'No report data today'),
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: Colors.green,
-                                    foregroundColor: Colors.white,
-                                    padding: const EdgeInsets.symmetric(vertical: 16),
-                                  ),
-                                );
-                              },
                             ),
                           ),
                         ],
