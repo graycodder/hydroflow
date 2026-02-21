@@ -28,6 +28,7 @@ class SalesmanModel extends Salesman {
     super.lastNotification,
     super.deviceId,
     super.emptyBottles = 0,
+    super.pendingCashBalance = 0.0,
     super.createdAt,
   });
 
@@ -76,6 +77,7 @@ class SalesmanModel extends Salesman {
           : null,
       deviceId: data['deviceId'] as String?,
       emptyBottles: (data['emptyBottles'] as num?)?.toInt() ?? 0,
+      pendingCashBalance: (data['pendingCashBalance'] as num?)?.toDouble() ?? 0.0,
       createdAt: data['createdAt'] != null
           ? DateTime.tryParse(data['createdAt'].toString())
           : null,
@@ -108,6 +110,7 @@ class SalesmanModel extends Salesman {
       'lastNotification': lastNotification?.toIso8601String(),
       'deviceId': deviceId,
       'emptyBottles': emptyBottles,
+      'pendingCashBalance': pendingCashBalance,
       'createdAt': createdAt?.toIso8601String(),
     };
   }

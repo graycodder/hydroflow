@@ -26,6 +26,7 @@ class Salesman extends Equatable {
   final DateTime? lastNotification;
   final String? deviceId;
   final int emptyBottles;
+  final double pendingCashBalance;
   final DateTime? createdAt;
 
   const Salesman({
@@ -54,6 +55,7 @@ class Salesman extends Equatable {
     this.lastNotification,
     this.deviceId,
     this.emptyBottles = 0,
+    this.pendingCashBalance = 0.0,
     this.createdAt,
   });
 
@@ -87,6 +89,7 @@ class Salesman extends Equatable {
         lastNotification,
         deviceId,
         emptyBottles,
+        pendingCashBalance,
         createdAt,
       ];
 
@@ -116,6 +119,7 @@ class Salesman extends Equatable {
     DateTime? lastNotification,
     String? deviceId,
     int? emptyBottles,
+    double? pendingCashBalance,
     DateTime? createdAt,
   }) {
     return Salesman(
@@ -144,6 +148,7 @@ class Salesman extends Equatable {
       lastNotification: lastNotification ?? this.lastNotification,
       deviceId: deviceId ?? this.deviceId,
       emptyBottles: emptyBottles ?? this.emptyBottles,
+      pendingCashBalance: pendingCashBalance ?? this.pendingCashBalance,
       createdAt: createdAt ?? this.createdAt,
     );
   }

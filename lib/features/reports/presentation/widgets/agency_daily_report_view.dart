@@ -119,10 +119,16 @@ class AgencyDailyReportView extends StatelessWidget {
                     ),
                     const SizedBox(height: 8),
                     _buildBreakdownRow(
-                      "Cash in Hand",
+                      "Cash in Hand (Today)",
                       "₹${subReport.cashInHand.toStringAsFixed(0)}",
                       Colors.green,
                       isBold: true,
+                    ),
+                    const SizedBox(height: 8),
+                    _buildBreakdownRow(
+                      "Old Balance",
+                      "₹${subReport.salesmanPreviousBalance.toStringAsFixed(0)}",
+                      subReport.salesmanPreviousBalance > 0 ? Colors.red : Colors.grey,
                     ),
                     const SizedBox(height: 8),
                     _buildBreakdownRow(
@@ -173,9 +179,11 @@ class AgencyDailyReportView extends StatelessWidget {
   void _showSettlementDialog(BuildContext context, ReportEntity subReport) {
     if (subReport.salesmanId == null) return;
 
+    final double totalOutstanding = subReport.cashInHand + subReport.salesmanPreviousBalance;
+    
     final TextEditingController amountController = TextEditingController(
-      text: subReport.cashInHand > 0
-          ? subReport.cashInHand.toStringAsFixed(0)
+      text: totalOutstanding > 0
+          ? totalOutstanding.toStringAsFixed(0)
           : "",
     );
 
@@ -188,19 +196,56 @@ class AgencyDailyReportView extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                'Expected Cash in Hand: ₹${subReport.cashInHand.toStringAsFixed(0)}',
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text('Expected Today:'),
+                  Text('₹${subReport.cashInHand.toStringAsFixed(0)}'),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text('Old Balance:'),
+                  Text(
+                    '₹${subReport.salesmanPreviousBalance.toStringAsFixed(0)}',
+                    style: TextStyle(
+                      color: subReport.salesmanPreviousBalance > 0 ? Colors.red : Colors.green,
+                      fontWeight: subReport.salesmanPreviousBalance > 0 ? FontWeight.bold : FontWeight.normal,
+                    ),
+                  ),
+                ],
+              ),
+              const Divider(height: 24),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text(
+                    'Total Outstanding:',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  Text(
+                    '₹${totalOutstanding.toStringAsFixed(0)}',
+                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                  ),
+                ],
               ),
               const SizedBox(height: 16),
               TextField(
                 controller: amountController,
                 keyboardType: TextInputType.number,
                 decoration: InputDecoration(
-                  labelText: 'Amount Received (₹)',
+                  labelText: 'Amount Received Now (₹)',
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
                   ),
                 ),
+              ),
+              const SizedBox(height: 8),
+              const Text(
+                'Note: Any unpaid amount will be added to the salesman\'s future balance.',
+                style: TextStyle(fontSize: 11, color: Colors.grey, fontStyle: FontStyle.italic),
               ),
             ],
           ),
@@ -376,7 +421,7 @@ class AgencyDailyReportView extends StatelessWidget {
             valueColor: Colors.red,
           ),
           buildRow(
-            " - Total Damaged/Return",
+            " - Total Damaged",
             "-${report.damagedStock} cans",
             valueColor: Colors.red,
           ),
@@ -412,13 +457,13 @@ class AgencyDailyReportView extends StatelessWidget {
               Expanded(
                 child: buildStatBox(
                   "Total Returned",
-                  "${report.bottlesReturned}",
+                  "${report.manualBottlesCollected}",
                   Colors.teal,
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 16),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -439,6 +484,20 @@ class AgencyDailyReportView extends StatelessWidget {
                   fontWeight: FontWeight.bold,
                   color: report.netBottlesOut > 0 ? Colors.orange : Colors.teal,
                 ),
+              ),
+            ],
+          ),
+          const Divider(height: 24),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text(
+                "Return Rate (Warehouse)",
+                style: TextStyle(fontSize: 14, color: Colors.grey),
+              ),
+              Text(
+                "${report.bottlesDelivered > 0 ? (report.manualBottlesCollected / report.bottlesDelivered * 100).toStringAsFixed(0) : 0}%",
+                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
               ),
             ],
           ),

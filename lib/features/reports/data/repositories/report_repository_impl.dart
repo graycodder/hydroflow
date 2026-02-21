@@ -106,12 +106,14 @@ class ReportRepositoryImpl implements ReportRepository {
         int currentStock = 0;
         double totalDepositsHeld = 0.0;
         String salesmanName = "Unknown Salesman";
+        double pendingCashBalance = 0.0;
 
         if (salesmanEvent.snapshot.exists) {
           final data = Map<String, dynamic>.from(salesmanEvent.snapshot.value as Map);
           currentStock = (data['currentStock'] as num?)?.toInt() ?? 0;
           totalDepositsHeld = (data['totalDepositsHeld'] as num?)?.toDouble() ?? 0.0;
           salesmanName = data['name'] as String? ?? "Unknown Salesman";
+          pendingCashBalance = (data['pendingCashBalance'] as num?)?.toDouble() ?? 0.0;
         }
 
         // 4. Calculate Aggregate Metrics from Transactions
@@ -209,6 +211,7 @@ class ReportRepositoryImpl implements ReportRepository {
           stockMismatch: stockMismatch,
           bottlesDelivered: effectiveDelivered,
           bottlesReturned: effectiveReturned,
+          manualBottlesCollected: logReturned,
           netBottlesOut: effectiveDelivered - effectiveReturned,
           totalBottlesWithCustomers: snapshotTotalBottles ?? relevantCustomers.fold(0, (sum, c) => sum + c.bottleBalance),
           salesRevenue: salesRevenue,
@@ -235,6 +238,7 @@ class ReportRepositoryImpl implements ReportRepository {
           salesmanId: salesmanId,
           salesmanName: salesmanName,
           isSettled: isSettled,
+          salesmanPreviousBalance: pendingCashBalance,
         );
       },
     );
@@ -437,6 +441,7 @@ class ReportRepositoryImpl implements ReportRepository {
           bottlesReturned: effectiveReturned,
           netBottlesOut: effectiveDelivered - effectiveReturned,
           totalBottlesWithCustomers: totalBottlesWithCustomers,
+          manualBottlesCollected: totalLogReturned, // Use the aggregated month-to-date manual collection
           salesRevenue: salesRevenue,
           totalCollected: totalCollected,
           totalCreditPending: totalCreditPending,
@@ -581,6 +586,7 @@ class ReportRepositoryImpl implements ReportRepository {
     double totalDepositsHeld = 0;
     double cashInHand = 0;
     double upiCollections = 0;
+    int manualBottlesCollected = 0;
     
     // Weighted Averages
     double totalAvgPriceWeighted = 0;
@@ -622,6 +628,9 @@ class ReportRepositoryImpl implements ReportRepository {
       }
       
       netBottlesOut += r.netBottlesOut;
+      if (isWarehouse) {
+        manualBottlesCollected += r.manualBottlesCollected;
+      }
       totalBottlesWithCustomers += r.totalBottlesWithCustomers;
 
       salesRevenue += r.salesRevenue;
@@ -684,8 +693,9 @@ class ReportRepositoryImpl implements ReportRepository {
       stockMismatch: stockMismatch,
       bottlesDelivered: bottlesDelivered,
       bottlesReturned: bottlesReturned,
-      netBottlesOut: bottlesDelivered - bottlesReturned, // Recalculate based on new 'Delivered' definition
+      netBottlesOut: bottlesDelivered - manualBottlesCollected, // Distributed - Manual Collected
       totalBottlesWithCustomers: totalBottlesWithCustomers,
+      manualBottlesCollected: manualBottlesCollected,
       salesRevenue: salesRevenue,
       totalCollected: totalCollected,
       totalCreditPending: totalCreditPending,
@@ -728,6 +738,16 @@ class ReportRepositoryImpl implements ReportRepository {
       'timestamp': ServerValue.timestamp,
       'status': 'Settled',
       'recordedBy': recordedBy,
+    });
+
+    // NEW: Deduct from Salesman's pending balance
+    final salesmanRef = _database.ref().child('Salesmen').child(salesmanId);
+    await salesmanRef.runTransaction((Object? post) {
+      if (post == null) return Transaction.abort();
+      final salesmanMap = Map<String, dynamic>.from(post as Map);
+      double currentBalance = (salesmanMap['pendingCashBalance'] as num?)?.toDouble() ?? 0.0;
+      salesmanMap['pendingCashBalance'] = currentBalance - amount;
+      return Transaction.success(salesmanMap);
     });
   }
 

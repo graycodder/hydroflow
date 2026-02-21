@@ -199,6 +199,16 @@ class TransactionRepositoryImpl implements TransactionRepository {
         
         salesmanMap['currentStock'] = currentStock - transaction.cansDelivered;
         salesmanMap['emptyBottles'] = currentEmpties + transaction.emptyCollected;
+
+        // NEW: Update Pending Cash Balance
+        if (transaction.paymentMode == 'Cash') {
+          double currentBalance = (salesmanMap['pendingCashBalance'] as num?)?.toDouble() ?? 0.0;
+          if (transaction.type == 'Refund') {
+            salesmanMap['pendingCashBalance'] = currentBalance - transaction.amountReceived;
+          } else {
+            salesmanMap['pendingCashBalance'] = currentBalance + transaction.amountReceived;
+          }
+        }
         
         return Transaction.success(salesmanMap);
       });

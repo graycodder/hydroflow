@@ -307,7 +307,7 @@ class AgencyMonthlyReportView extends StatelessWidget {
               ),
               const SizedBox(width: 12),
               Expanded(
-                child: _buildSmallBottleStat("Returned", "${report.bottlesReturned}", Colors.teal),
+                child: _buildSmallBottleStat("Returned", "${report.manualBottlesCollected}", Colors.teal),
               ),
             ],
           ),
@@ -328,28 +328,28 @@ class AgencyMonthlyReportView extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text("Net Bottles Out This Month",  style: TextStyle(fontWeight: FontWeight.w500)),
-                      Text("Added to customer inventory", style: TextStyle(fontSize: 12, color: Colors.grey)),
+                      Text("Currently with staff/customers", style: TextStyle(fontSize: 12, color: Colors.grey)),
                     ],
                   ),
                 ),
-                     Expanded(
+                Expanded(
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.end,
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
-                       Text("+${report.netBottlesOut}",
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.orange,
-                  ),
-                ),
+                       Text(
+                        (report.netBottlesOut > 0 ? "+${report.netBottlesOut}" : "${report.netBottlesOut}"),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                          color: report.netBottlesOut > 0 ? Colors.orange : Colors.teal,
+                        ),
+                      ),
                     ],
                   ),
                 ),
-              
               ],
             ),
           ),
@@ -367,7 +367,7 @@ class AgencyMonthlyReportView extends StatelessWidget {
                   style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF1A237E)),
                 ),
                 Text(
-                  "${report.bottlesDelivered > 0 ? (report.bottlesReturned / report.bottlesDelivered * 100).toStringAsFixed(0) : 0}% bottles returned",
+                  "${report.bottlesDelivered > 0 ? (report.manualBottlesCollected / report.bottlesDelivered * 100).toStringAsFixed(0) : 0}% bottles returned",
                   style: const TextStyle(color: Color(0xFF1A237E)),
                 ),
               ],
@@ -492,7 +492,7 @@ class AgencyMonthlyReportView extends StatelessWidget {
             "${report.deliveredStock} cans",
             valueColor: const Color(0xFF1976D2),
           ),
-          buildRow("Total Damaged/Returned", "${report.damagedStock} cans", valueColor: Colors.red),
+          buildRow("Total Damaged", "${report.damagedStock} cans", valueColor: Colors.red),
           const SizedBox(height: 16),
           Container(
             padding: const EdgeInsets.all(16),

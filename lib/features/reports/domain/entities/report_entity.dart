@@ -21,6 +21,7 @@ class ReportEntity extends Equatable {
   final int bottlesReturned;
   final int netBottlesOut;
   final int totalBottlesWithCustomers; // All-time outstanding
+  final int manualBottlesCollected; 
   
   // Financial Summary
   final double salesRevenue; // Total Bill Value
@@ -65,6 +66,7 @@ class ReportEntity extends Equatable {
   
   // Settlement Info
   final bool isSettled;
+  final double salesmanPreviousBalance;
 
   const ReportEntity({
     required this.date,
@@ -81,6 +83,7 @@ class ReportEntity extends Equatable {
     required this.bottlesReturned,
     required this.netBottlesOut,
     required this.totalBottlesWithCustomers,
+    this.manualBottlesCollected = 0,
     required this.salesRevenue,
     required this.totalCollected,
     required this.totalCreditPending,
@@ -109,6 +112,7 @@ class ReportEntity extends Equatable {
     this.salesmanName,
     this.subReports = const [],
     this.isSettled = false,
+    this.salesmanPreviousBalance = 0.0,
   });
 
   @override
@@ -127,6 +131,7 @@ class ReportEntity extends Equatable {
         bottlesReturned,
         netBottlesOut,
         totalBottlesWithCustomers,
+        manualBottlesCollected,
         salesRevenue,
         totalCollected,
         totalCreditPending,
@@ -155,5 +160,6 @@ class ReportEntity extends Equatable {
         salesmanName,
         subReports,
         isSettled,
+        salesmanPreviousBalance,
       ];
 }
