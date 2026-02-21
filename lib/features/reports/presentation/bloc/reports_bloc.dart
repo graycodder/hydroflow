@@ -51,14 +51,18 @@ class SettleSalesmanDailyCash extends ReportsEvent {
   final DateTime date;
   final double amount;
   final String recordedBy;
+  final bool isFinal;
+
   const SettleSalesmanDailyCash({
     required this.salesmanId,
     required this.date,
     required this.amount,
     required this.recordedBy,
+    required this.isFinal,
   });
+
   @override
-  List<Object> get props => [salesmanId, date, amount, recordedBy];
+  List<Object> get props => [salesmanId, date, amount, recordedBy, isFinal];
 }
 
 // State
@@ -167,6 +171,7 @@ class ReportsBloc extends Bloc<ReportsEvent, ReportsState> {
         date: event.date,
         amount: event.amount,
         recordedBy: event.recordedBy,
+        isFinal: event.isFinal,
       );
       // We don't need to manually emit a new loaded state or call load.
       // Since the UI uses `emit.forEach` on the stream and the stream is based on

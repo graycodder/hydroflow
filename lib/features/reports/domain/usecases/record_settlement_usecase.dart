@@ -10,12 +10,14 @@ class RecordSettlementUseCase {
     required DateTime date,
     required double amount,
     required String recordedBy,
+    required bool isFinal,
   }) async {
     return await repository.recordSalesmanSettlement(
       salesmanId,
       date,
       amount,
       recordedBy,
+      isFinal,
     );
   }
 }

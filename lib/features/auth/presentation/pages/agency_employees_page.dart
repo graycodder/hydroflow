@@ -16,6 +16,9 @@ import 'package:hydroflow/features/stock/presentation/bloc/stock_bloc.dart';
 import 'package:hydroflow/features/stock/presentation/bloc/stock_event.dart';
 import 'package:hydroflow/features/stock/presentation/bloc/stock_state.dart';
 import 'package:flutter/services.dart';
+import 'package:intl/intl.dart';
+import 'package:hydroflow/features/reports/domain/entities/report_entity.dart';
+import 'package:hydroflow/features/reports/presentation/bloc/reports_bloc.dart';
 
 class AgencyEmployeesPage extends StatelessWidget {
   const AgencyEmployeesPage({super.key});
@@ -40,6 +43,7 @@ class AgencyEmployeesPage extends StatelessWidget {
       providers: [
         BlocProvider(create: (context) => sl<AgencyBloc>()..add(LoadAgencySalesmen(agencyId))),
         BlocProvider(create: (context) => sl<StockBloc>()..add(LoadAgencyStock(agencyId))),
+        BlocProvider(create: (context) => sl<ReportsBloc>()..add(LoadAgencyDailyReport(agencyId, DateTime.now()))),
       ],
       child: Scaffold(
         appBar: const HydroFlowAppBar(),
@@ -109,138 +113,200 @@ class AgencyEmployeesPage extends StatelessWidget {
                  return const Center(child: Text("No staff members found."));
                }
 
-               return ListView.separated(
-                 padding: const EdgeInsets.all(16),
-                 itemCount: salesmen.length,
-                 separatorBuilder: (_, __) => const SizedBox(height: 12),
-                 itemBuilder: (context, index) {
-                   final salesman = salesmen[index];
-                   final isDeviceLinked = salesman.deviceId != null && salesman.deviceId!.isNotEmpty;
+                return BlocBuilder<ReportsBloc, ReportsState>(
+                  builder: (context, reportsState) {
+                    final report = reportsState is ReportsLoaded ? reportsState.report : null;
+                    
+                    return ListView.separated(
+                      padding: const EdgeInsets.all(16),
+                      itemCount: salesmen.length,
+                      separatorBuilder: (_, __) => const SizedBox(height: 12),
+                      itemBuilder: (context, index) {
+                        final salesman = salesmen[index];
+                        final isDeviceLinked = salesman.deviceId != null && salesman.deviceId!.isNotEmpty;
+                        
+                        // Find this salesman's report data safely
+                        final effectiveReport = (report?.subReports ?? []).isEmpty 
+                            ? null 
+                            : (report?.subReports ?? []).cast<ReportEntity?>().firstWhere(
+                                (sr) => sr?.salesmanId == salesman.id,
+                                orElse: () => null,
+                              );
+                        
+                        // Check if it's really the salesman's report
+                        final isSettled = effectiveReport != null && effectiveReport.isSettled;
 
-                   return Container(
-                     decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(12),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.grey.withOpacity(0.1),
-                            blurRadius: 8,
-                            offset: const Offset(0, 2),
-                          ),
-                        ],
-                     ),
-                     child: ListTile(
-                       onTap: () async {
-                         final updatedSalesman = await showDialog<Salesman>(
-                           context: context,
-                           builder: (context) => EditSalesmanDialog(
-                             salesman: salesman,
-                             maxAgencyCustomers: state.agency?.maxCustomers ?? 0,
-                             existingSalesmen: salesmen,
-                           ),
-                         );
-
-                         if (updatedSalesman != null && context.mounted) {
-                           context.read<AgencyBloc>().add(UpdateSalesman(updatedSalesman));
-                         }
-                       },
-                       contentPadding: const EdgeInsets.all(16),
-                       leading: CircleAvatar(
-                         backgroundColor: Colors.blue[100],
-                         child: Text(
-                           salesman.name.isNotEmpty ? salesman.name[0].toUpperCase() : '?',
-                           style: TextStyle(color: Colors.blue[800], fontWeight: FontWeight.bold),
-                         ),
-                       ),
-                       title: Text(
-                         salesman.name,
-                         style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                       ),
-                       subtitle: Column(
-                         crossAxisAlignment: CrossAxisAlignment.start,
-                         children: [
-                           const SizedBox(height: 4),
-                           Text(salesman.phoneNumber.isNotEmpty ? salesman.phoneNumber : 'No phone'),
-                           const SizedBox(height: 4),
-                           Row(
-                             children: [
-                               Icon(
-                                 isDeviceLinked ? Icons.phonelink_lock : Icons.phonelink_off,
-                                 size: 16,
-                                 color: isDeviceLinked ? Colors.green : Colors.grey,
-                               ),
-                               const SizedBox(width: 6),
-                               Text(
-                                 isDeviceLinked ? 'Device Linked' : 'No Device Linked',
-                                 style: TextStyle(
-                                   color: isDeviceLinked ? Colors.green[700] : Colors.grey[600],
-                                   fontSize: 12,
-                                   fontWeight: FontWeight.w500,
-                                 ),
+                        return Container(
+                          decoration: BoxDecoration(
+                             color: Colors.white,
+                             borderRadius: BorderRadius.circular(12),
+                             boxShadow: [
+                               BoxShadow(
+                                 color: Colors.grey.withOpacity(0.1),
+                                 blurRadius: 8,
+                                 offset: const Offset(0, 2),
                                ),
                              ],
-                           ),
-                           const SizedBox(height: 8),
-                          //  Container(
-                          //     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                          //     decoration: BoxDecoration(
-                          //       color: (salesman.emptyBottles ?? 0) > 0 ? Colors.orange[50] : Colors.grey[100],
-                          //       borderRadius: BorderRadius.circular(6),
-                          //       border: Border.all(
-                          //         color: (salesman.emptyBottles ?? 0) > 0 
-                          //             ? Colors.orange.withOpacity(0.3) 
-                          //             : Colors.grey.withOpacity(0.3),
-                          //       ),
-                          //     ),
-                          //     child: Row(
-                          //       mainAxisSize: MainAxisSize.min,
-                          //       children: [
-                          //         Icon(
-                          //           Icons.local_shipping, 
-                          //           size: 11, 
-                          //           color: (salesman.emptyBottles ?? 0) > 0 ? Colors.orange[700] : Colors.grey[600]
-                          //         ),
-                          //         const SizedBox(width: 4),
-                          //         Text(
-                          //           'Vehicle Empties: ${salesman.emptyBottles ?? 0}',
-                          //           style: TextStyle(
-                          //             fontSize: 10,
-                          //             fontWeight: FontWeight.bold,
-                          //             color: (salesman.emptyBottles ?? 0) > 0 ? Colors.orange[800] : Colors.grey[700],
-                          //           ),
-                          //         ),
-                          //       ],
-                          //     ),
-                          //   ),
-                         ],
-                       ),
-                        trailing: SizedBox(
-                          width: isDeviceLinked ? 96 : 48,
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.end,
-                            children: [
-                              IconButton(
-                                icon: const Icon(Icons.inventory_2, color: Colors.blue),
-                                tooltip: 'Stock Management',
-                                onPressed: () {
-                                  _showStockManagementDialog(context, salesman);
-                                },
-                              ),
-                              if (isDeviceLinked)
-                                IconButton(
-                                  icon: const Icon(Icons.lock_reset, color: Colors.orange),
-                                  tooltip: 'Reset Device Binding',
-                                  onPressed: () {
-                                    _showResetConfirmation(context, salesman);
-                                  },
-                                ),
-                            ],
                           ),
-                        ),
-                     ),
-                   );
-                 },
-               );
+                          child: ListTile(
+                            onTap: () async {
+                              final updatedSalesman = await showDialog<Salesman>(
+                                context: context,
+                                builder: (context) => EditSalesmanDialog(
+                                  salesman: salesman,
+                                  maxAgencyCustomers: state.agency?.maxCustomers ?? 0,
+                                  existingSalesmen: salesmen,
+                                ),
+                              );
+
+                              if (updatedSalesman != null && context.mounted) {
+                                context.read<AgencyBloc>().add(UpdateSalesman(updatedSalesman));
+                              }
+                            },
+                            contentPadding: const EdgeInsets.all(16),
+                            leading: CircleAvatar(
+                              backgroundColor: Colors.blue[100],
+                              child: Text(
+                                salesman.name.isNotEmpty ? salesman.name[0].toUpperCase() : '?',
+                                style: TextStyle(color: Colors.blue[800], fontWeight: FontWeight.bold),
+                              ),
+                            ),
+                            title: Row(
+                              children: [
+                                Expanded(
+                                  child: Text(
+                                    salesman.name,
+                                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                                  ),
+                                ),
+                                if (isSettled)
+                                  const Icon(Icons.check_circle, color: Colors.green, size: 18),
+                              ],
+                            ),
+                            subtitle: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const SizedBox(height: 4),
+                                Text(salesman.phoneNumber.isNotEmpty ? salesman.phoneNumber : 'No phone'),
+                                const SizedBox(height: 6),
+                                Row(
+                                  children: [
+                                    Icon(
+                                      isDeviceLinked ? Icons.phonelink_lock : Icons.phonelink_off,
+                                      size: 14,
+                                      color: isDeviceLinked ? Colors.green : Colors.grey,
+                                    ),
+                                    const SizedBox(width: 4),
+                                    Text(
+                                      isDeviceLinked ? 'Linked' : 'Not Linked',
+                                      style: TextStyle(
+                                        color: isDeviceLinked ? Colors.green[700] : Colors.grey[600],
+                                        fontSize: 11,
+                                      ),
+                                    ),
+                                    // const Spacer(),
+                                    // Container(
+                                    //   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                    //   decoration: BoxDecoration(
+                                    //     color: salesman.emptyBottles > 0 ? Colors.orange[50] : Colors.grey[100],
+                                    //     borderRadius: BorderRadius.circular(6),
+                                    //     border: Border.all(
+                                    //       color: salesman.emptyBottles > 0 
+                                    //           ? Colors.orange.withOpacity(0.3) 
+                                    //           : Colors.grey.withOpacity(0.3),
+                                    //     ),
+                                    //   ),
+                                    //   child: Row(
+                                    //     mainAxisSize: MainAxisSize.min,
+                                    //     children: [
+                                    //       Icon(
+                                    //         Icons.local_shipping, 
+                                    //         size: 11, 
+                                    //         color: salesman.emptyBottles > 0 ? Colors.orange[700] : Colors.grey[600]
+                                    //       ),
+                                    //       const SizedBox(width: 4),
+                                    //       Text(
+                                    //         'Vehicle Empties: ${salesman.emptyBottles}',
+                                    //         style: TextStyle(
+                                    //           fontSize: 10,
+                                    //           fontWeight: FontWeight.bold,
+                                    //           color: salesman.emptyBottles > 0 ? Colors.orange[800] : Colors.grey[700],
+                                    //         ),
+                                    //       ),
+                                    //     ],
+                                    //   ),
+                                    // ),
+                                  ],
+                                ),
+                                if (effectiveReport != null) ...[
+                                  const Divider(height: 16),
+                                    Row(
+                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                      children: [
+                                        _buildCompactStat("Cash", "₹${effectiveReport.cashInHand.toStringAsFixed(0)}", Colors.green),
+                                        _buildCompactStat("UPI", "₹${effectiveReport.upiCollections.toStringAsFixed(0)}", Colors.purple),
+                                        _buildCompactStat("Old Bal", "₹${effectiveReport.salesmanPreviousBalance.toStringAsFixed(0)}", 
+                                            effectiveReport.salesmanPreviousBalance > 0 ? Colors.red : Colors.grey),
+                                      ],
+                                    ),
+                                  const SizedBox(height: 12),
+                                  SizedBox(
+                                    width: double.infinity,
+                                    height: 36,
+                                    child: ElevatedButton(
+                                      onPressed: isSettled
+                                          ? null
+                                          : () => _showSettlementDialog(context, effectiveReport, agencyId),
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: isSettled ? Colors.grey[200] : const Color(0xFF2962FF),
+                                        foregroundColor: isSettled ? Colors.grey[500] : Colors.white,
+                                        elevation: 0,
+                                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+                                        padding: EdgeInsets.zero,
+                                      ),
+                                      child: Text(isSettled ? "Settled" : "Receive Payment", style: const TextStyle(fontSize: 13)),
+                                    ),
+                                  ),
+                                ] else if (reportsState is ReportsLoading)
+                                  const Padding(
+                                    padding: EdgeInsets.only(top: 8.0),
+                                    child: LinearProgressIndicator(minHeight: 2),
+                                  ),
+                              ],
+                            ),
+                             trailing: SizedBox(
+                               width: isDeviceLinked ? 96 : 48,
+                               child: Row(
+                                 mainAxisAlignment: MainAxisAlignment.end,
+                                 children: [
+                                   IconButton(
+                                     icon: const Icon(Icons.inventory_2, color: Colors.blue, size: 22),
+                                     tooltip: 'Stock Management',
+                                     onPressed: () {
+                                       _showStockManagementDialog(context, salesman);
+                                     },
+                                     padding: EdgeInsets.zero,
+                                     constraints: const BoxConstraints(),
+                                   ),
+                                   if (isDeviceLinked)
+                                     IconButton(
+                                       icon: const Icon(Icons.lock_reset, color: Colors.orange, size: 22),
+                                       tooltip: 'Reset Device Binding',
+                                       onPressed: () {
+                                         _showResetConfirmation(context, salesman);
+                                       },
+                                       padding: EdgeInsets.zero,
+                                       constraints: const BoxConstraints(),
+                                     ),
+                                 ],
+                               ),
+                             ),
+                          ),
+                        );
+                      },
+                    );
+                  },
+                );
              }
 
              return const Center(child: Text("Something went wrong."));
@@ -264,7 +330,7 @@ class AgencyEmployeesPage extends StatelessWidget {
           BlocProvider.value(value: stockBloc),
         ],
         child: DefaultTabController(
-          length: 2,
+          length: 3,
           child: BlocConsumer<StockBloc, StockState>(
             listener: (context, state) {
               if (state is StockActionLoading) {
@@ -313,9 +379,10 @@ class AgencyEmployeesPage extends StatelessWidget {
                       labelColor: Colors.blue,
                       unselectedLabelColor: Colors.grey,
                       indicatorColor: Colors.blue,
-                      tabs: [
+                        tabs: [
                         Tab(text: 'Refill Full'),
                         Tab(text: 'Collect Empty'),
+                        Tab(text: 'Settlement'),
                       ],
                     ),
                   ],
@@ -399,6 +466,64 @@ class AgencyEmployeesPage extends StatelessWidget {
                           ),
                         ],
                       ),
+                      Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const SizedBox(height: 16),
+                          Container(
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: Colors.green.withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Row(
+                              children: [
+                                const Icon(Icons.account_balance_wallet, color: Colors.green, size: 20),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(
+                                    'Cash: ₹${salesman.pendingCashBalance.toStringAsFixed(0)}',
+                                    style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.green),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: 20),
+                          const Text('Receive payment and settle for today:'),
+                          const SizedBox(height: 20),
+                          SizedBox(
+                            width: double.infinity,
+                            child: BlocBuilder<ReportsBloc, ReportsState>(
+                              builder: (context, reportsState) {
+                                final report = reportsState is ReportsLoaded ? reportsState.report : null;
+                                final salesmanReport = (report?.subReports ?? []).isEmpty
+                                    ? null
+                                    : (report?.subReports ?? []).cast<ReportEntity?>().firstWhere(
+                                          (sr) => sr?.salesmanId == salesman.id,
+                                          orElse: () => null,
+                                        );
+                                
+                                final hasData = salesmanReport != null;
+
+                                return ElevatedButton.icon(
+                                  onPressed: !hasData 
+                                      ? null 
+                                      : () => _showSettlementDialog(context, salesmanReport, salesman.agencyId),
+                                  icon: const Icon(Icons.payments),
+                                  label: Text(hasData ? 'Open Settlement Dialog' : 'No report data today'),
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: Colors.green,
+                                    foregroundColor: Colors.white,
+                                    padding: const EdgeInsets.symmetric(vertical: 16),
+                                  ),
+                                );
+                              },
+                            ),
+                          ),
+                        ],
+                      ),
                     ],
                   ),
                 ),
@@ -467,6 +592,146 @@ class AgencyEmployeesPage extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildCompactStat(String label, String value, Color color) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(label, style: const TextStyle(fontSize: 10, color: Colors.grey)),
+        Text(
+          value,
+          style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: color),
+        ),
+      ],
+    );
+  }
+
+  void _showSettlementDialog(BuildContext context, ReportEntity subReport, String agencyId) {
+    if (subReport.salesmanId == null) return;
+
+    final double totalOutstanding = subReport.cashInHand + subReport.salesmanPreviousBalance;
+    
+    final TextEditingController amountController = TextEditingController(
+      text: totalOutstanding > 0
+          ? totalOutstanding.toStringAsFixed(0)
+          : "",
+    );
+
+    bool isFinalSettlement = true;
+
+    final reportsBloc = context.read<ReportsBloc>();
+
+    showDialog(
+      context: context,
+      builder: (BuildContext dialogContext) {
+        return BlocProvider.value(
+          value: reportsBloc,
+          child: StatefulBuilder(
+            builder: (context, setState) {
+              return AlertDialog(
+                title: Text('Collect Payment: ${subReport.salesmanName}'),
+                content: SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          const Text('Expected Today:'),
+                          Text('₹${subReport.cashInHand.toStringAsFixed(0)}'),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          const Text('Old Balance:'),
+                          Text(
+                            '₹${subReport.salesmanPreviousBalance.toStringAsFixed(0)}',
+                            style: TextStyle(
+                              color: subReport.salesmanPreviousBalance > 0 ? Colors.red : Colors.green,
+                              fontWeight: subReport.salesmanPreviousBalance > 0 ? FontWeight.bold : FontWeight.normal,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const Divider(height: 24),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          const Text(
+                            'Total Outstanding:',
+                            style: TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                          Text(
+                            '₹${totalOutstanding.toStringAsFixed(0)}',
+                            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                      TextField(
+                        controller: amountController,
+                        keyboardType: TextInputType.number,
+                        decoration: InputDecoration(
+                          labelText: 'Amount Received Now (₹)',
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      CheckboxListTile(
+                        title: const Text("Mark as Final Settlement", style: TextStyle(fontSize: 14)),
+                        subtitle: const Text("Only check this if the salesman has finished paying for today.", style: TextStyle(fontSize: 11)),
+                        value: isFinalSettlement,
+                        onChanged: (val) {
+                          setState(() {
+                            isFinalSettlement = val ?? false;
+                          });
+                        },
+                        contentPadding: EdgeInsets.zero,
+                        controlAffinity: ListTileControlAffinity.leading,
+                      ),
+                    ],
+                  ),
+                ),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.of(dialogContext).pop(),
+                    child: const Text('Cancel', style: TextStyle(color: Colors.grey)),
+                  ),
+                  ElevatedButton(
+                    onPressed: () {
+                      final double? amount = double.tryParse(amountController.text);
+                      if (amount != null && amount >= 0) {
+                        context.read<ReportsBloc>().add(
+                          SettleSalesmanDailyCash(
+                            salesmanId: subReport.salesmanId!,
+                            date: DateTime.now(),
+                            amount: amount,
+                            recordedBy: agencyId,
+                            isFinal: isFinalSettlement,
+                          ),
+                        );
+                        Navigator.of(dialogContext).pop();
+                      }
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: isFinalSettlement ? const Color(0xFF2962FF) : Colors.green,
+                      foregroundColor: Colors.white,
+                    ),
+                    child: Text(isFinalSettlement ? 'Confirm Final Settlement' : 'Record Partial Payment'),
+                  ),
+                ],
+              );
+            },
+          ),
+        );
+      },
     );
   }
 

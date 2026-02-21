@@ -210,8 +210,16 @@ class TransactionRepositoryImpl implements TransactionRepository {
           }
         }
         
+        // Track snapshot for stock log processing
+        salesmanMap['_lastUpdateBalance'] = (salesmanMap['pendingCashBalance'] as num?)?.toDouble() ?? 0.0;
+        
         return Transaction.success(salesmanMap);
       });
+
+      // Fetch snapshot for stock log update
+      final updatedSalesmanSnapshot = await salesmanRef.get();
+      final updatedSalesmanData = updatedSalesmanSnapshot.value as Map<dynamic, dynamic>;
+      final double latestPendingBalance = (updatedSalesmanData['pendingCashBalance'] as num?)?.toDouble() ?? 0.0;
 
       // D. Update Today's Stock Log
       final dateFormatted = transaction.timestamp.toIso8601String().substring(0, 10);

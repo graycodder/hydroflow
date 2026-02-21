@@ -175,28 +175,35 @@ class ReportRepositoryImpl implements ReportRepository {
         // Salesman reports strictly only count customer returns
         final effectiveReturned = returned;
         
-        // 5. Stock Reconciliation
+        // 6. Settlement Status & Amount
+        bool isSettled = false;
+        double settlementAmountToday = 0.0;
+        if (settlementEvent.snapshot.exists) {
+          final data = Map<String, dynamic>.from(settlementEvent.snapshot.value as Map);
+          isSettled = data['status'] == 'Settled';
+          settlementAmountToday = (data['amount'] as num?)?.toDouble() ?? 0.0;
+        }
+
+        // 7. Stock Reconciliation
         // Use our corrected openingStock
         final finalOpening = openingStock;
         final finalAvailable = finalOpening + loaded;
         final calculatedClosing = finalAvailable - effectiveDelivered - damaged;
         
-        // If log exists, closingStock is usually what's in there, but if we corrected opening,
-        // we should probably trust our calculated closing for consistency in the report view.
         // We calculate closing to ensure Opening + Loaded - Delivered = Closing consistency.
         final finalClosing = calculatedClosing;
         final netDeposits = securityDepositsCollected - securityDepositsRefunded;
-        final cashInHand = cashSales + cashFromDeposits - securityDepositsRefunded;
+        
+        // FIX: cashInHand should only subtract physical cash refunds
+        final cashInHand = cashSales + cashFromDeposits - securityDepositsRefundedCash;
+        
         final upiCollections = onlineSales + onlineFromDeposits;
         final avgPrice = delivered > 0 ? salesRevenue / delivered : 0.0;
         final turnover = finalAvailable > 0 ? (delivered / finalAvailable) * 100 : 0.0;
 
-        // 6. Settlement Status
-        bool isSettled = false;
-        if (settlementEvent.snapshot.exists) {
-          final data = Map<String, dynamic>.from(settlementEvent.snapshot.value as Map);
-          isSettled = data['status'] == 'Settled';
-        }
+        // FIX: Calculate Old Balance (Previous Balance)
+        // live balance - today's cash collection + today's settlement (if any)
+        final salesmanPreviousBalanceAtStart = pendingCashBalance - cashInHand + settlementAmountToday;
 
         return ReportEntity(
           date: date,
@@ -238,7 +245,7 @@ class ReportRepositoryImpl implements ReportRepository {
           salesmanId: salesmanId,
           salesmanName: salesmanName,
           isSettled: isSettled,
-          salesmanPreviousBalance: pendingCashBalance,
+          salesmanPreviousBalance: salesmanPreviousBalanceAtStart,
         );
       },
     );
@@ -729,16 +736,26 @@ class ReportRepositoryImpl implements ReportRepository {
 
 
   @override
-  Future<void> recordSalesmanSettlement(String salesmanId, DateTime date, double amount, String recordedBy) async {
+  Future<void> recordSalesmanSettlement(String salesmanId, DateTime date, double amount, String recordedBy, bool isFinal) async {
     final dateKey = date.toIso8601String().substring(0, 10).replaceAll('-', '_');
     final settlementRef = _database.ref().child('Settlements').child(salesmanId).child(dateKey);
     
-    await settlementRef.set({
-      'amount': amount,
+    // Support partial payments by using increment
+    final Map<String, dynamic> updates = {
+      'amount': ServerValue.increment(amount),
       'timestamp': ServerValue.timestamp,
-      'status': 'Settled',
       'recordedBy': recordedBy,
-    });
+    };
+
+    if (isFinal) {
+      updates['status'] = 'Settled';
+    } else {
+      // If not final, ensure we don't accidentally mark as settled if it wasn't before
+      // Actually, if it's not final, we just don't touch the status, or set it to 'Partial'
+      updates['status'] = 'Partial';
+    }
+
+    await settlementRef.update(updates);
 
     // NEW: Deduct from Salesman's pending balance
     final salesmanRef = _database.ref().child('Salesmen').child(salesmanId);
