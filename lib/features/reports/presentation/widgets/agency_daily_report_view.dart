@@ -120,7 +120,7 @@ class AgencyDailyReportView extends StatelessWidget {
                     const SizedBox(height: 8),
                     _buildBreakdownRow(
                       "Cash in Hand (Today)",
-                      "₹${subReport.cashInHand.toStringAsFixed(0)}",
+                      "₹${(subReport.cashInHand - subReport.settlementAmountToday).toStringAsFixed(0)}",
                       Colors.green,
                       isBold: true,
                     ),
@@ -179,7 +179,7 @@ class AgencyDailyReportView extends StatelessWidget {
   void _showSettlementDialog(BuildContext context, ReportEntity subReport) {
     if (subReport.salesmanId == null) return;
 
-    final double totalOutstanding = subReport.cashInHand + subReport.salesmanPreviousBalance;
+    final double totalOutstanding = subReport.cashInHand + subReport.salesmanPreviousBalance - subReport.settlementAmountToday;
     
     final TextEditingController amountController = TextEditingController(
       text: totalOutstanding > 0
@@ -212,6 +212,19 @@ class AgencyDailyReportView extends StatelessWidget {
                           Text('₹${subReport.cashInHand.toStringAsFixed(0)}'),
                         ],
                       ),
+                      if (subReport.settlementAmountToday > 0) ...[
+                        const SizedBox(height: 8),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            const Text('Already Paid:'),
+                            Text(
+                              '- ₹${subReport.settlementAmountToday.toStringAsFixed(0)}',
+                              style: const TextStyle(color: Colors.green, fontWeight: FontWeight.bold),
+                            ),
+                          ],
+                        ),
+                      ],
                       const SizedBox(height: 8),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,

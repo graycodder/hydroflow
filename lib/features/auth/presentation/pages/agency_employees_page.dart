@@ -243,7 +243,7 @@ class AgencyEmployeesPage extends StatelessWidget {
                                     Row(
                                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                       children: [
-                                        _buildCompactStat("Cash", "₹${effectiveReport.cashInHand.toStringAsFixed(0)}", Colors.green),
+                                        _buildCompactStat("Cash", "₹${(effectiveReport.cashInHand - effectiveReport.settlementAmountToday).toStringAsFixed(0)}", Colors.green),
                                         _buildCompactStat("UPI", "₹${effectiveReport.upiCollections.toStringAsFixed(0)}", Colors.purple),
                                         _buildCompactStat("Old Bal", "₹${effectiveReport.salesmanPreviousBalance.toStringAsFixed(0)}", 
                                             effectiveReport.salesmanPreviousBalance > 0 ? Colors.red : Colors.grey),
@@ -611,7 +611,7 @@ class AgencyEmployeesPage extends StatelessWidget {
   void _showSettlementDialog(BuildContext context, ReportEntity subReport, String agencyId) {
     if (subReport.salesmanId == null) return;
 
-    final double totalOutstanding = subReport.cashInHand + subReport.salesmanPreviousBalance;
+    final double totalOutstanding = subReport.cashInHand + subReport.salesmanPreviousBalance - subReport.settlementAmountToday;
     
     final TextEditingController amountController = TextEditingController(
       text: totalOutstanding > 0
@@ -644,6 +644,19 @@ class AgencyEmployeesPage extends StatelessWidget {
                           Text('₹${subReport.cashInHand.toStringAsFixed(0)}'),
                         ],
                       ),
+                      if (subReport.settlementAmountToday > 0) ...[
+                        const SizedBox(height: 8),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            const Text('Already Paid:'),
+                            Text(
+                              '- ₹${subReport.settlementAmountToday.toStringAsFixed(0)}',
+                              style: const TextStyle(color: Colors.green, fontWeight: FontWeight.bold),
+                            ),
+                          ],
+                        ),
+                      ],
                       const SizedBox(height: 8),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,

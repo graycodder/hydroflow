@@ -66,6 +66,7 @@ class ReportEntity extends Equatable {
   
   // Settlement Info
   final bool isSettled;
+  final double settlementAmountToday;
   final double salesmanPreviousBalance;
 
   const ReportEntity({
@@ -112,6 +113,7 @@ class ReportEntity extends Equatable {
     this.salesmanName,
     this.subReports = const [],
     this.isSettled = false,
+    this.settlementAmountToday = 0.0,
     this.salesmanPreviousBalance = 0.0,
   });
 
@@ -160,6 +162,7 @@ class ReportEntity extends Equatable {
         salesmanName,
         subReports,
         isSettled,
+        settlementAmountToday,
         salesmanPreviousBalance,
       ];
 }
