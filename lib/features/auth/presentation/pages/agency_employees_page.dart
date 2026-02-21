@@ -249,7 +249,8 @@ class AgencyEmployeesPage extends StatelessWidget {
                                             effectiveReport.salesmanPreviousBalance > 0 ? Colors.red : Colors.grey),
                                       ],
                                     ),
-                                  const SizedBox(height: 12),
+                                    if ((effectiveReport.cashInHand - effectiveReport.settlementAmountToday) > 0 || effectiveReport.salesmanPreviousBalance > 0 || effectiveReport.upiCollections > 0) ...[
+                                      const SizedBox(height: 12),
                                   SizedBox(
                                     width: double.infinity,
                                     height: 36,
@@ -267,6 +268,7 @@ class AgencyEmployeesPage extends StatelessWidget {
                                       child: Text(isSettled ? "Settled" : "Receive Payment", style: const TextStyle(fontSize: 13)),
                                     ),
                                   ),
+                                ],
                                 ] else if (reportsState is ReportsLoading)
                                   const Padding(
                                     padding: EdgeInsets.only(top: 8.0),
@@ -632,12 +634,15 @@ class AgencyEmployeesPage extends StatelessWidget {
                         keyboardType: TextInputType.number,
                         decoration: InputDecoration(
                           labelText: 'Amount Received Now (₹)',
+                          errorText: ((double.tryParse(amountController.text) ?? 0.0) > totalOutstanding) ? 'Cannot exceed outstanding balance' : null,
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(8),
                           ),
                         ),
+                        onChanged: (val) => setState(() {}),
                       ),
                       const SizedBox(height: 16),
+                      if ((double.tryParse(amountController.text) ?? 0.0) >= totalOutstanding)
                       CheckboxListTile(
                         title: const Text("Mark as Final Settlement", style: TextStyle(fontSize: 14)),
                         subtitle: const Text("Only check this if the salesman has finished paying for today.", style: TextStyle(fontSize: 11)),
@@ -659,26 +664,27 @@ class AgencyEmployeesPage extends StatelessWidget {
                     child: const Text('Cancel', style: TextStyle(color: Colors.grey)),
                   ),
                   ElevatedButton(
-                    onPressed: () {
+                    onPressed: ((double.tryParse(amountController.text) ?? 0.0) > totalOutstanding) ? null : () {
                       final double? amount = double.tryParse(amountController.text);
                       if (amount != null && amount >= 0) {
+                        final bool finalSettlement = (amount >= totalOutstanding) ? isFinalSettlement : false;
                         context.read<ReportsBloc>().add(
                           SettleSalesmanDailyCash(
                             salesmanId: subReport.salesmanId!,
                             date: DateTime.now(),
                             amount: amount,
                             recordedBy: agencyId,
-                            isFinal: isFinalSettlement,
+                            isFinal: finalSettlement,
                           ),
                         );
                         Navigator.of(dialogContext).pop();
                       }
                     },
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: isFinalSettlement ? const Color(0xFF2962FF) : Colors.green,
+                      backgroundColor: ((double.tryParse(amountController.text) ?? 0.0) >= totalOutstanding) && isFinalSettlement ? const Color(0xFF2962FF) : Colors.green,
                       foregroundColor: Colors.white,
                     ),
-                    child: Text(isFinalSettlement ? 'Confirm Final Settlement' : 'Record Partial Payment'),
+                    child: Text(((double.tryParse(amountController.text) ?? 0.0) >= totalOutstanding) && isFinalSettlement ? 'Confirm Final Settlement' : 'Record Partial Payment'),
                   ),
                 ],
               );
