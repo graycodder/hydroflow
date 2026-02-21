@@ -314,6 +314,7 @@ class _BottlesPageState extends State<BottlesPage> {
                                   _buildSummaryRow(isAgency ? 'Total Salesmen' : 'Total Customers', '${isAgency ? state.salesmen.length : state.customers.length}'),
                                   const SizedBox(height: 12),
                                   _buildSummaryRow(
+                                    isAgency ? 'Total Full Bottles in Hand':
                                     'Total Bottles Out', 
                                     '${state.totalBottles} bottles', 
                                     isHighlight: true
@@ -324,7 +325,9 @@ class _BottlesPageState extends State<BottlesPage> {
                                     '${isAgency ? state.salesmen.where((s) => (s.currentStock + (s.emptyBottles ?? 0)) == 0).length : state.customers.where((c) => c.bottleBalance == 0).length}',
                                     textColor: Colors.green
                                   ),
+                                    if(!isAgency)
                                   const SizedBox(height: 12),
+                                    if(!isAgency)
                                   _buildSummaryRow(
                                     'Need Immediate Collection', 
                                     '${state.highBalanceCount}',
@@ -408,7 +411,7 @@ class _BottlesPageState extends State<BottlesPage> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: isHigh ? const Color(0xFFFFF8E1) : Colors.white,
+        color: Colors.white,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: Colors.grey.withOpacity(0.2)),
         boxShadow: [
@@ -441,20 +444,20 @@ class _BottlesPageState extends State<BottlesPage> {
                             fontSize: 16,
                           ),
                         ),
-                        if (isHigh) ...[
-                          const SizedBox(width: 8),
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFC62828),
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: const Text(
-                              'High',
-                              style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
-                            ),
-                          ),
-                        ],
+                        // if (isHigh) ...[
+                        //   const SizedBox(width: 8),
+                        //   Container(
+                        //     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                        //     decoration: BoxDecoration(
+                        //       color: const Color(0xFFC62828),
+                        //       borderRadius: BorderRadius.circular(12),
+                        //     ),
+                        //     child: const Text(
+                        //       'High',
+                        //       style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
+                        //     ),
+                        //   ),
+                        // ],
                       ],
                     ),
                     const SizedBox(height: 4),
