@@ -41,17 +41,13 @@ class ReportRepositoryImpl implements ReportRepository {
     final salesmanRef = _database.ref().child('Salesmen').child(salesmanId);
     final salesmanStream = salesmanRef.onValue;
 
-    // Fetch previous day's log for carry forward
-    final prevDate = date.subtract(Duration(days: 1));
-    final prevDateKey = prevDate
-        .toIso8601String()
-        .substring(0, 10)
-        .replaceAll('-', '_');
-    final prevLogRef = _database
+    // Fetch previous logs for carry forward (searching for the most recent one before selected date)
+    final prevLogQuery = _database
         .ref()
         .child('Stock_logs')
-        .child('LOG_${prevDateKey}_$salesmanId');
-    final prevLogStream = prevLogRef.onValue;
+        .orderByChild('salesmanId')
+        .equalTo(salesmanId);
+    final prevLogStream = prevLogQuery.onValue;
     // Fetch Settlement Status
     final settlementRef = _database
         .ref()
@@ -105,15 +101,34 @@ class ReportRepositoryImpl implements ReportRepository {
 
         // Determine Opening Stock from Previous Day Closing if available
         int carriedForwardOpening = 0;
+        Map<String, dynamic>? mostRecentPrevLog;
+
         if (prevLogEvent.snapshot.exists) {
-          final prevData = Map<String, dynamic>.from(
+          final allLogs = Map<dynamic, dynamic>.from(
             prevLogEvent.snapshot.value as Map,
           );
-          // PROPER FIX: Prioritize 'actualClosingStock' (physical count) over calculated 'closingStock'
-          carriedForwardOpening =
-              (prevData['actualClosingStock'] as num?)?.toInt() ??
-              (prevData['closingStock'] as num?)?.toInt() ??
-              0;
+          final targetDateStr = date.toIso8601String().substring(0, 10);
+
+          List<Map<String, dynamic>> sortedLogs = [];
+          allLogs.forEach((key, value) {
+            final log = Map<String, dynamic>.from(value as Map);
+            if (log['date'] != null &&
+                (log['date'] as String).compareTo(targetDateStr) < 0) {
+              sortedLogs.add(log);
+            }
+          });
+
+          if (sortedLogs.isNotEmpty) {
+            sortedLogs.sort(
+              (a, b) => (b['date'] as String).compareTo(a['date'] as String),
+            );
+            mostRecentPrevLog = sortedLogs.first;
+            // PROPER FIX: Prioritize 'actualClosingStock' (physical count) over calculated 'closingStock'
+            carriedForwardOpening =
+                (mostRecentPrevLog['actualClosingStock'] as num?)?.toInt() ??
+                (mostRecentPrevLog['closingStock'] as num?)?.toInt() ??
+                0;
+          }
         }
 
         if (logEvent.snapshot.exists) {
@@ -256,14 +271,12 @@ class ReportRepositoryImpl implements ReportRepository {
         double salesmanPreviousBalanceAtStart = 0.0;
         bool usedSnapshot = false;
 
-        // 1. Try to get yesterday's exact closing balance snapshot (Most Accurate)
-        if (prevLogEvent.snapshot.exists) {
-          final prevData = Map<String, dynamic>.from(
-            prevLogEvent.snapshot.value as Map,
-          );
-          if (prevData.containsKey('pendingCashClosingBalance')) {
+        // 1. Try to get most recent previous closing balance snapshot (Most Accurate)
+        if (mostRecentPrevLog != null) {
+          if (mostRecentPrevLog.containsKey('pendingCashClosingBalance')) {
             salesmanPreviousBalanceAtStart =
-                (prevData['pendingCashClosingBalance'] as num).toDouble();
+                (mostRecentPrevLog['pendingCashClosingBalance'] as num)
+                    .toDouble();
             usedSnapshot = true;
           }
         }
