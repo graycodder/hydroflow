@@ -297,6 +297,12 @@ class ReportRepositoryImpl implements ReportRepository {
             salesmanPreviousBalanceAtStart = 0.0;
           }
         }
+        final int calculatedActiveCustomers = relevantCustomers.where((c) => c.status == 'Active').length;
+        final int calculatedInactiveCustomers = relevantCustomers.length - calculatedActiveCustomers;
+        final int calculatedNewCustomers = relevantCustomers.where((c) {
+          if (c.createdAt == null) return false;
+          return c.createdAt!.year == date.year && c.createdAt!.month == date.month && c.createdAt!.day == date.day;
+        }).length;
 
         return ReportEntity(
           date: date,
@@ -334,9 +340,9 @@ class ReportRepositoryImpl implements ReportRepository {
           avgPricePerCan: avgPrice,
           stockTurnover: turnover,
           totalCustomers: relevantCustomers.length,
-          activeCustomers: 0,
-          newCustomers: 0,
-          inactiveCustomers: 0,
+          activeCustomers: calculatedActiveCustomers,
+          newCustomers: calculatedNewCustomers,
+          inactiveCustomers: calculatedInactiveCustomers,
           salesmanId: salesmanId,
           salesmanName: salesmanName,
           isSettled: isSettled,

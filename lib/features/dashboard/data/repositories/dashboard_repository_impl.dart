@@ -2,70 +2,38 @@ import 'package:firebase_database/firebase_database.dart';
 import 'package:hydroflow/features/dashboard/domain/entities/dashboard_summary.dart';
 import 'package:hydroflow/features/dashboard/domain/repositories/dashboard_repository.dart';
 import 'package:hydroflow/features/dashboard/data/models/dashboard_summary_model.dart';
+import 'package:hydroflow/features/reports/domain/repositories/report_repository.dart';
 import 'package:rxdart/rxdart.dart';
 
 class DashboardRepositoryImpl implements DashboardRepository {
   final FirebaseDatabase _database;
+  final ReportRepository? _reportRepository;
 
-  DashboardRepositoryImpl({required FirebaseDatabase database}) : _database = database;
+  DashboardRepositoryImpl({
+    required FirebaseDatabase database,
+    ReportRepository? reportRepository,
+  }) : _database = database,
+       _reportRepository = reportRepository;
 
   @override
   Stream<DashboardSummary> getDashboardSummary({required String salesmanId, String? agencyId}) {
-    if (agencyId != null && agencyId.isNotEmpty) {
+    if (agencyId != null && agencyId.isNotEmpty && _reportRepository != null) {
       // --- AGENCY VIEW (OWNER) ---
-      // 1. Listen to Agency Stats (aggregated)
-      final agencyRef = _database.ref().child('Agencies').child(agencyId).child('stats');
-      // 2. Listen to Total Stock in Warehouse
-      final stockRef = _database.ref().child('Agencies').child(agencyId).child('stock');
-      
-      agencyRef.keepSynced(true);
-      stockRef.keepSynced(true);
+      // We leverage the existing, highly accurate getAgencyDailyReport to aggregate stats cleanly.
+      return _reportRepository!.getAgencyDailyReport(agencyId, DateTime.now()).map((report) {
+         double pending = report.salesRevenue - report.totalCollected;
+         if (pending < 0) pending = 0;
 
-      return Rx.combineLatest2(
-        agencyRef.onValue,
-        stockRef.onValue,
-        (DatabaseEvent statsEvent, DatabaseEvent stockEvent) {
-          int currentStock = 0;
-          int activeCustomers = 0;
-          int inactiveCustomers = 0;
-          double todaySales = 0.0;
-          double todayCollection = 0.0;
-          int todayDeliveries = 0;
-          double pendingAmounts = 0.0;
-
-          if (stockEvent.snapshot.exists) {
-             final stockData = Map<String, dynamic>.from(stockEvent.snapshot.value as Map);
-             currentStock = (stockData['fullCans'] as num?)?.toInt() ?? 0;
-          }
-
-          if (statsEvent.snapshot.exists) {
-            final stats = Map<String, dynamic>.from(statsEvent.snapshot.value as Map);
-            activeCustomers = (stats['totalActiveCustomers'] as num?)?.toInt() ?? 0;
-            inactiveCustomers = (stats['totalInactiveCustomers'] as num?)?.toInt() ?? 0;
-            
-            // For now, let's assume stats node has today's aggregates. 
-            // In a real app, you might need a separate "Daily_Agency_Stats" node.
-            // For simplicity, we will query the SUM of all salesmen logs if not pre-aggregated.
-            // But to keep it fast as per request, we should read from a pre-aggregated node.
-            // Let's assume we implement a Cloud Function or local logic to update 'Agencies/ID/stats/today...'
-            todaySales = (stats['todaySales'] as num?)?.toDouble() ?? 0.0;
-            todayCollection = (stats['todayCollection'] as num?)?.toDouble() ?? 0.0;
-            todayDeliveries = (stats['todayDeliveries'] as num?)?.toInt() ?? 0;
-            pendingAmounts = (stats['pendingAmounts'] as num?)?.toDouble() ?? (todaySales - todayCollection);
-             if(pendingAmounts < 0) pendingAmounts = 0;
-          }
-
-          return DashboardSummaryModel.fromValues(
-            currentStock: currentStock,
-            activeCustomers: activeCustomers,
-            inactiveCustomers: inactiveCustomers,
-            todaySales: todaySales,
-            todayCollection: todayCollection,
-            todayDeliveries: todayDeliveries,
-            pendingAmounts: pendingAmounts,
+         return DashboardSummaryModel.fromValues(
+            currentStock: report.closingStock, // Warehouse closing stock
+            activeCustomers: report.activeCustomers,
+            inactiveCustomers: report.inactiveCustomers,
+            todaySales: report.salesRevenue,
+            todayCollection: report.totalCollected,
+            todayDeliveries: report.totalDeliveries,
+            pendingAmounts: pending,
           );
-        }
-      );
+      });
     } else {
       // --- INDIVIDUAL VIEW (SALESMAN) ---
       final dateKey = DateTime.now().toIso8601String().substring(0, 10).replaceAll('-', '_');
