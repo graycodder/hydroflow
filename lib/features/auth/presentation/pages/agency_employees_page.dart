@@ -240,16 +240,16 @@ class AgencyEmployeesPage extends StatelessWidget {
                                 ),
                                 if (effectiveReport != null) ...[
                                   const Divider(height: 16),
-                                    Row(
-                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                      children: [
-                                        _buildCompactStat("Cash", "₹${(effectiveReport.cashInHand - effectiveReport.settlementAmountToday).toStringAsFixed(0)}", Colors.green),
-                                        _buildCompactStat("UPI", "₹${effectiveReport.upiCollections.toStringAsFixed(0)}", Colors.purple),
-                                        _buildCompactStat("Old Bal", "₹${effectiveReport.salesmanPreviousBalance.toStringAsFixed(0)}", 
-                                            effectiveReport.salesmanPreviousBalance > 0 ? Colors.red : Colors.grey),
-                                      ],
-                                    ),
-                                    if ((effectiveReport.cashInHand - effectiveReport.settlementAmountToday) > 0 || effectiveReport.salesmanPreviousBalance > 0 || effectiveReport.upiCollections > 0) ...[
+                                      Row(
+                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          _buildCompactStat("Cash Today", "₹${effectiveReport.cashInHand.toStringAsFixed(0)}", Colors.green),
+                                          _buildCompactStat("Collected", "-₹${effectiveReport.settlementAmountToday.toStringAsFixed(0)}", Colors.blueGrey),
+                                          _buildCompactStat("Outstanding", "₹${(effectiveReport.cashInHand + effectiveReport.salesmanPreviousBalance - effectiveReport.settlementAmountToday).clamp(0.0, double.infinity).toStringAsFixed(0)}", 
+                                              (effectiveReport.cashInHand + effectiveReport.salesmanPreviousBalance - effectiveReport.settlementAmountToday) > 0 ? Colors.red : Colors.grey),
+                                        ],
+                                      ),
+                                      if ((effectiveReport.cashInHand + effectiveReport.salesmanPreviousBalance - effectiveReport.settlementAmountToday) > 0 || effectiveReport.salesmanPreviousBalance > 0 || effectiveReport.upiCollections > 0) ...[
                                       const SizedBox(height: 12),
                                   SizedBox(
                                     width: double.infinity,

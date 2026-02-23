@@ -120,15 +120,27 @@ class AgencyDailyReportView extends StatelessWidget {
                     const SizedBox(height: 8),
                     _buildBreakdownRow(
                       "Cash in Hand (Today)",
-                      "₹${(subReport.cashInHand - subReport.settlementAmountToday).toStringAsFixed(0)}",
+                      "₹${subReport.cashInHand.toStringAsFixed(0)}",
                       Colors.green,
-                      isBold: true,
                     ),
                     const SizedBox(height: 8),
                     _buildBreakdownRow(
                       "Old Balance",
                       "₹${subReport.salesmanPreviousBalance.toStringAsFixed(0)}",
                       subReport.salesmanPreviousBalance > 0 ? Colors.red : Colors.grey,
+                    ),
+                    const SizedBox(height: 8),
+                    _buildBreakdownRow(
+                      "Amount Settled",
+                      "-₹${subReport.settlementAmountToday.toStringAsFixed(0)}",
+                      subReport.settlementAmountToday > 0 ? Colors.green : Colors.grey,
+                    ),
+                    const Divider(height: 16),
+                    _buildBreakdownRow(
+                      "Total Outstanding",
+                      "₹${(subReport.cashInHand + subReport.salesmanPreviousBalance - subReport.settlementAmountToday).clamp(0.0, double.infinity).toStringAsFixed(0)}",
+                      (subReport.cashInHand + subReport.salesmanPreviousBalance - subReport.settlementAmountToday) > 0 ? Colors.red : Colors.green,
+                      isBold: true,
                     ),
                     const SizedBox(height: 8),
                     _buildBreakdownRow(

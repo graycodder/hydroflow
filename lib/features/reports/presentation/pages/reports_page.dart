@@ -74,22 +74,6 @@ class _ReportsPageState extends State<ReportsPage> {
             appBar: const HydroFlowAppBar(),
             body: Column(
               children: [
-                if (isAgency)
-                  Container(
-                    width: double.infinity,
-                    color: Colors.orange.withOpacity(0.1),
-                    padding: const EdgeInsets.symmetric(vertical: 8),
-                    child: const Center(
-                      child: Text(
-                        "Agency View - Consolidated Reports",
-                        style: TextStyle(
-                          color: Colors.orange,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 12,
-                        ),
-                      ),
-                    ),
-                  ),
                 _buildTopTabs(context, id, isAgency),
                 Expanded(
                   child: BlocBuilder<ReportsBloc, ReportsState>(
