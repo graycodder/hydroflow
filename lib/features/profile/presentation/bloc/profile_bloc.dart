@@ -203,10 +203,21 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
   }
 
   @override
-  Future<void> close() {
-    _profileSubscription?.cancel();
-    _historySubscription?.cancel();
-    _agencySubscription?.cancel();
+  Future<void> close() async {
+    // Await each cancellation individually and swallow platform errors
+    // (e.g. MissingPluginException on Flutter Web when Firebase RTDB
+    //  platform-channel streams are cancelled during widget disposal).
+    for (final sub in [
+      _profileSubscription,
+      _historySubscription,
+      _agencySubscription,
+    ]) {
+      try {
+        await sub?.cancel();
+      } catch (_) {
+        // Intentionally swallow — platform may not support stream cancel on web
+      }
+    }
     return super.close();
   }
 }
