@@ -175,6 +175,10 @@ class _DeliveryViewState extends State<DeliveryView> {
                     (context.read<AuthBloc>().state as AuthAuthenticated)
                         .salesman
                         .displayName,
+                agencyName:
+                    (context.read<AuthBloc>().state as AuthAuthenticated)
+                        .salesman
+                        .agencyName ?? 'HydroFlow Agency',
               ),
             );
           }

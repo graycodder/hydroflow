@@ -150,6 +150,10 @@ class TransactionHistoryPage extends StatelessWidget {
                                         (authState is AuthAuthenticated)
                                         ? authState.salesman.displayName
                                         : 'HydroFlow';
+                                    final agencyName =
+                                        (authState is AuthAuthenticated)
+                                        ? authState.salesman.agencyName ?? 'HydroFlow Agency'
+                                        : 'HydroFlow Agency';
 
                                     WhatsappHelper.sendReceipt(
                                       phone: customer.phone,
@@ -166,6 +170,7 @@ class TransactionHistoryPage extends StatelessWidget {
                                       paymentMode: tx.paymentMode,
                                       date: tx.timestamp,
                                       salesmanName: salesmanName,
+                                      agencyName: agencyName,
                                     );
                                   },
                                   tooltip: 'Share via WhatsApp',
