@@ -196,11 +196,31 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
   Future<void> _onUpdateAgencySettings(UpdateAgencySettings event, Emitter<ProfileState> emit) async {
     try {
       await _agencyRepository.updateAgencySettings(event.agencyId, event.settings);
-      // The stream listener on agency will automatically update the UI when the data changes in Firebase
+
+      // Since getAgencyProfile uses Stream.fromFuture (one-shot), the stream
+      // won't re-fire after the write. Emit an optimistic update instead.
+      if (state is ProfileLoaded) {
+        final current = state as ProfileLoaded;
+        if (current.agency != null) {
+          final updatedAgency = current.agency!.copyWith(
+            enforceFixedPrice: event.settings['enforceFixedPrice'] as bool?,
+            allowCredit: event.settings['allowCredit'] as bool?,
+            maxCreditLimit: (event.settings['maxCreditLimit'] as num?)?.toDouble(),
+            defaultBottlePrice: (event.settings['defaultBottlePrice'] as num?)?.toDouble(),
+          );
+          emit(ProfileLoaded(
+            current.profile,
+            current.subscriptionHistory,
+            agency: updatedAgency,
+            isAgencyView: current.isAgencyView,
+          ));
+        }
+      }
     } catch (e) {
       emit(ProfileError(e.toString(), isAgencyView: state.isAgencyView));
     }
   }
+
 
   @override
   Future<void> close() async {

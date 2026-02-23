@@ -33,7 +33,7 @@ class Agency extends Equatable {
     this.warehouseDamagedStock = 0,
     this.allowCredit = true,
     this.maxCreditLimit = 5000.0,
-    this.defaultBottlePrice = 50.0,
+    this.defaultBottlePrice = 60.0,
     this.enforceFixedPrice = false,
     this.maxSalesmen = 5,
     this.maxCustomers = 500,
@@ -62,4 +62,32 @@ class Agency extends Equatable {
     totalCustomersCount,
     createdAt,
   ];
+
+  Agency copyWith({
+    bool? enforceFixedPrice,
+    bool? allowCredit,
+    double? maxCreditLimit,
+    double? defaultBottlePrice,
+  }) {
+    return Agency(
+      id: id,
+      name: name,
+      ownerId: ownerId,
+      contactPhone: contactPhone,
+      address: address,
+      status: status,
+      subscriptionExpiry: subscriptionExpiry,
+      warehouseFullStock: warehouseFullStock,
+      warehouseEmptyStock: warehouseEmptyStock,
+      warehouseDamagedStock: warehouseDamagedStock,
+      allowCredit: allowCredit ?? this.allowCredit,
+      maxCreditLimit: maxCreditLimit ?? this.maxCreditLimit,
+      defaultBottlePrice: defaultBottlePrice ?? this.defaultBottlePrice,
+      enforceFixedPrice: enforceFixedPrice ?? this.enforceFixedPrice,
+      maxSalesmen: maxSalesmen,
+      maxCustomers: maxCustomers,
+      totalCustomersCount: totalCustomersCount,
+      createdAt: createdAt,
+    );
+  }
 }
