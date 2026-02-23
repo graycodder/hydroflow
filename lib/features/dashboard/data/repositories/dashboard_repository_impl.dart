@@ -31,6 +31,7 @@ class DashboardRepositoryImpl implements DashboardRepository {
           double todaySales = 0.0;
           double todayCollection = 0.0;
           int todayDeliveries = 0;
+          double pendingAmounts = 0.0;
 
           if (stockEvent.snapshot.exists) {
              final stockData = Map<String, dynamic>.from(stockEvent.snapshot.value as Map);
@@ -50,6 +51,8 @@ class DashboardRepositoryImpl implements DashboardRepository {
             todaySales = (stats['todaySales'] as num?)?.toDouble() ?? 0.0;
             todayCollection = (stats['todayCollection'] as num?)?.toDouble() ?? 0.0;
             todayDeliveries = (stats['todayDeliveries'] as num?)?.toInt() ?? 0;
+            pendingAmounts = (stats['pendingAmounts'] as num?)?.toDouble() ?? (todaySales - todayCollection);
+             if(pendingAmounts < 0) pendingAmounts = 0;
           }
 
           return DashboardSummaryModel.fromValues(
@@ -59,6 +62,7 @@ class DashboardRepositoryImpl implements DashboardRepository {
             todaySales: todaySales,
             todayCollection: todayCollection,
             todayDeliveries: todayDeliveries,
+            pendingAmounts: pendingAmounts,
           );
         }
       );
@@ -90,12 +94,15 @@ class DashboardRepositoryImpl implements DashboardRepository {
           double todaySales = 0.0;
           double todayCollection = 0.0;
           int todayDeliveries = 0;
+          double pendingAmounts = 0.0;
 
           if (logEvent.snapshot.exists) {
             final data = Map<String, dynamic>.from(logEvent.snapshot.value as Map);
             todaySales = (data['totalSalesValue'] as num?)?.toDouble() ?? 0.0;
             todayCollection = (data['todayCollection'] as num?)?.toDouble() ?? 0.0;
             todayDeliveries = (data['totalDelivered'] as num?)?.toInt() ?? 0;
+            pendingAmounts = todaySales - todayCollection;
+            if(pendingAmounts < 0) pendingAmounts = 0;
           }
 
           return DashboardSummaryModel.fromValues(
@@ -105,6 +112,7 @@ class DashboardRepositoryImpl implements DashboardRepository {
             todaySales: todaySales,
             todayCollection: todayCollection,
             todayDeliveries: todayDeliveries,
+            pendingAmounts: pendingAmounts,
           );
         },
       );

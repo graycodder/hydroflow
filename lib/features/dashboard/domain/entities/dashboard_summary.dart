@@ -7,6 +7,7 @@ class DashboardSummary extends Equatable {
   final double todaySales;
   final double todayCollection;
   final int todayDeliveries;
+  final double pendingAmounts;
 
   const DashboardSummary({
     required this.currentStock,
@@ -15,6 +16,7 @@ class DashboardSummary extends Equatable {
     required this.todaySales,
     required this.todayCollection,
     required this.todayDeliveries,
+    required this.pendingAmounts,
   });
 
   @override
@@ -25,5 +27,6 @@ class DashboardSummary extends Equatable {
         todaySales,
         todayCollection,
         todayDeliveries,
+        pendingAmounts,
       ];
 }

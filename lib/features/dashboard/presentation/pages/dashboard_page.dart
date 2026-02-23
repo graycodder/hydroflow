@@ -15,6 +15,8 @@ import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:hydroflow/core/service_locator.dart'; // Import sl for SharedPreferences
 import 'package:hydroflow/router/app_router.dart'; // Import routeObserver
+import 'package:hydroflow/features/dashboard/presentation/widgets/agency_status_cards.dart';
+import 'package:hydroflow/features/dashboard/presentation/widgets/salesman_status_cards.dart';
 
 class DashboardPage extends StatefulWidget {
   const DashboardPage({super.key});
@@ -331,64 +333,11 @@ class _DashboardPageState extends State<DashboardPage> with RouteAware {
                       }
                       if (dashboardState is DashboardLoaded) {
                         final summary = dashboardState.summary;
-                        return GridView.count(
-                          shrinkWrap: true,
-                          physics: const NeverScrollableScrollPhysics(),
-                          crossAxisCount: 2,
-                          crossAxisSpacing: 16,
-                          mainAxisSpacing: 16,
-                          childAspectRatio: 1.0, // Increased height to prevent overflow
-                          children: [
-                            _buildStatCard(
-                              title: 'Current Stock',
-                              value: '${summary.currentStock}',
-                              subtitle: 'Cans in Van',
-                              valueColor: const Color(0xFF2962FF),
-                              onTap: (){},
-                             // onTap: () => context.push('/stock'),
-                            ),
-                            _buildStatCard(
-                              title: 'Deliveries',
-                              value: '${summary.todayDeliveries}',
-                              subtitle: 'Cans Delivered',
-                              valueColor: const Color(0xFFFF6D00),
-                               onTap: (){},
-                              //onTap: () => context.push('/delivery'),
-                            ),
-                            _buildStatCard(
-                              title: "Today's Sales",
-                              value: '₹${summary.todaySales.toStringAsFixed(0).replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]},')}',
-                              subtitle: 'Total Bill Amount',
-                              valueColor: const Color(0xFF6200EA),
-                               onTap: (){},
-                             // onTap: () => context.push('/delivery'),
-                            ),
-                            _buildStatCard(
-                              title: "Today's Collection",
-                              value: '₹${summary.todayCollection.toStringAsFixed(0).replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]},')}',
-                              subtitle: 'Cash + Online',
-                              valueColor: const Color(0xFF00C853),
-                               onTap: (){},
-                             // onTap: () => context.push('/delivery'),
-                            ),
-                            _buildStatCard(
-                              title: 'Active Customers',
-                              value: '${summary.activeCustomers}',
-                              subtitle: 'Total Active',
-                              valueColor: const Color(0xFF00B8D4),
-                               onTap: (){},
-                              //onTap: () => context.push('/customers'),
-                            ),
-                            _buildStatCard(
-                              title: 'Inactive Customers',
-                              value: '${summary.inactiveCustomers}',
-                              subtitle: 'Total Inactive',
-                              valueColor: Colors.blueGrey,
-                               onTap: (){},
-                             // onTap: () => context.push('/customers'),
-                            ),
-                          ],
-                        );
+                        if (_isAgencyView) {
+                          return AgencyStatusCards(summary: summary);
+                        } else {
+                          return SalesmanStatusCards(summary: summary);
+                        }
                       }
                       if (dashboardState is DashboardError) {
                         return Center(child: Text('Error: ${dashboardState.message}'));
@@ -412,66 +361,5 @@ class _DashboardPageState extends State<DashboardPage> with RouteAware {
       salesmanId: salesman.id,
       agencyId: _isAgencyView ? salesman.agencyId : null,
     ));
-  }
-
-  Widget _buildStatCard({
-    required String title,
-    required String value,
-    required String subtitle,
-    required Color valueColor,
-    required VoidCallback onTap,
-  }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.all(7),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.grey.withOpacity(0.1),
-              blurRadius: 10,
-              offset: const Offset(0, 4),
-            ),
-          ],
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          mainAxisAlignment: MainAxisAlignment.center, // Center content vertically
-          children: [
-            Text(
-              title,
-              style: TextStyle(
-                color: Colors.grey[600],
-                fontSize: 14,
-              ),
-            ),
-            const SizedBox(height: 12),
-            FittedBox(
-              fit: BoxFit.scaleDown,
-              child: Text(
-                 value,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  color: valueColor,
-                  fontSize: 28,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              subtitle,
-              style: TextStyle(
-                color: Colors.grey[500],
-                fontSize: 12,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
   }
 }

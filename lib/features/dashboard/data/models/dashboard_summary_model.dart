@@ -8,6 +8,7 @@ class DashboardSummaryModel extends DashboardSummary {
     required super.todaySales,
     required super.todayCollection,
     required super.todayDeliveries,
+    required super.pendingAmounts,
   });
 
   factory DashboardSummaryModel.fromValues({
@@ -17,6 +18,7 @@ class DashboardSummaryModel extends DashboardSummary {
     required double todaySales,
     required double todayCollection,
     required int todayDeliveries,
+    required double pendingAmounts,
   }) {
     return DashboardSummaryModel(
       currentStock: currentStock,
@@ -25,6 +27,7 @@ class DashboardSummaryModel extends DashboardSummary {
       todaySales: todaySales,
       todayCollection: todayCollection,
       todayDeliveries: todayDeliveries,
+      pendingAmounts: pendingAmounts,
     );
   }
 
@@ -36,6 +39,7 @@ class DashboardSummaryModel extends DashboardSummary {
       'todaySales': todaySales,
       'todayCollection': todayCollection,
       'todayDeliveries': todayDeliveries,
+      'pendingAmounts': pendingAmounts,
     };
   }
 }
