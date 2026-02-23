@@ -63,6 +63,7 @@ class AgencyEmployeesPage extends StatelessWidget {
                 if (agencyState is AgencySalesmenLoaded) {
                   maxCustomers = agencyState.agency?.maxCustomers ?? 0;
                   currentSalesmen = agencyState.salesmen;
+                  agencyName = agencyState.agency?.name ?? agencyName;
                 } else {
                    ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(content: Text('Please wait for agency details to load...')),

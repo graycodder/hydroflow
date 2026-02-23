@@ -30,9 +30,7 @@ class WhatsappHelper {
     // Format date: 26 Feb 2026, 12:30 PM
     final String dateStr = DateFormat('dd MMM yyyy, hh:mm a').format(date);
 
-    final String message =
-        '''
-*${agencyName.toUpperCase()}*
+    final String message = '''*${agencyName.trim().toUpperCase()}*
 Water Delivery Service
 -------------------------------------------
 *Date:* $dateStr

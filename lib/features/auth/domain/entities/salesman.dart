@@ -59,8 +59,7 @@ class Salesman extends Equatable {
     this.createdAt,
   });
 
-  String get displayName =>
-      (agencyName != null && agencyName!.isNotEmpty) ? agencyName! : name;
+  String get displayName => name;
 
   @override
   List<Object?> get props => [
