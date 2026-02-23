@@ -24,3 +24,13 @@ class LoadAgencyBottleLedger extends BottleEvent {
   @override
   List<Object?> get props => [agencyId];
 }
+
+class LoadSalesmanBottleLedger extends BottleEvent {
+  final String salesmanId;
+  final DateTime date;
+
+  const LoadSalesmanBottleLedger(this.salesmanId, this.date);
+
+  @override
+  List<Object?> get props => [salesmanId, date];
+}

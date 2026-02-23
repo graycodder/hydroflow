@@ -5,14 +5,21 @@ import 'package:hydroflow/features/bottles/presentation/bloc/bottle_state.dart';
 import 'package:hydroflow/features/bottles/domain/entities/bottle_ledger_stats.dart';
 import 'package:hydroflow/features/customers/domain/entities/customer.dart';
 
+import 'package:hydroflow/features/bottles/domain/usecases/get_salesman_bottle_ledger_usecase.dart';
+
 class BottleBloc extends Bloc<BottleEvent, BottleState> {
   final GetBottleLedgerUseCase _getBottleLedger;
+  final GetSalesmanBottleLedgerUseCase? _getSalesmanBottleLedger;
 
-  BottleBloc({required GetBottleLedgerUseCase getBottleLedger})
-      : _getBottleLedger = getBottleLedger,
+  BottleBloc({
+    required GetBottleLedgerUseCase getBottleLedger,
+    GetSalesmanBottleLedgerUseCase? getSalesmanBottleLedger,
+  })  : _getBottleLedger = getBottleLedger,
+        _getSalesmanBottleLedger = getSalesmanBottleLedger,
         super(BottleInitial()) {
     on<LoadBottleLedger>(_onLoadBottleLedger);
     on<LoadAgencyBottleLedger>(_onLoadAgencyBottleLedger);
+    on<LoadSalesmanBottleLedger>(_onLoadSalesmanBottleLedger);
   }
 
   Future<void> _onLoadBottleLedger(
@@ -49,6 +56,26 @@ class BottleBloc extends Bloc<BottleEvent, BottleState> {
         isAgencyView: true,
       ),
       onError: (e, stackTrace) => BottleFailure('Failed to load agency bottle ledger: $e', isAgencyView: true),
+    );
+  }
+
+  Future<void> _onLoadSalesmanBottleLedger(
+    LoadSalesmanBottleLedger event,
+    Emitter<BottleState> emit,
+  ) async {
+    if (_getSalesmanBottleLedger == null) {
+      emit(const BottleFailure("Salesman ledger not supported in this configuration."));
+      return;
+    }
+
+    emit(const BottleLoading());
+    await emit.forEach(
+      _getSalesmanBottleLedger!(event.salesmanId, event.date),
+      onData: (stats) => SalesmanBottleLoaded(
+        salesmanLedgerStats: stats,
+        date: event.date,
+      ),
+      onError: (e, stackTrace) => BottleFailure('Failed to load detailed salesman ledger: $e'),
     );
   }
 }

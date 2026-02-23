@@ -11,6 +11,7 @@ import 'package:hydroflow/features/customers/data/repositories/customer_reposito
 import 'package:hydroflow/features/customers/domain/repositories/customer_repository.dart';
 import 'package:hydroflow/features/bottles/presentation/bloc/bottle_bloc.dart';
 import 'package:hydroflow/features/bottles/domain/usecases/get_bottle_ledger_usecase.dart';
+import 'package:hydroflow/features/bottles/domain/usecases/get_salesman_bottle_ledger_usecase.dart';
 import 'package:hydroflow/features/customers/domain/usecases/get_customers_usecase.dart';
 import 'package:hydroflow/features/customers/domain/usecases/add_customer_usecase.dart';
 import 'package:hydroflow/features/customers/domain/usecases/update_customer_status_usecase.dart';
@@ -93,6 +94,7 @@ Future<void> init() async {
 
   // Use Cases
   sl.registerLazySingleton(() => GetBottleLedgerUseCase(sl(), sl()));
+  sl.registerLazySingleton(() => GetSalesmanBottleLedgerUseCase(sl(), sl(), sl()));
   sl.registerLazySingleton(() => GetCustomersUseCase(sl()));
 
   sl.registerLazySingleton(() => AddCustomerUseCase(sl()));
@@ -203,7 +205,7 @@ Future<void> init() async {
 
   // Dashboard Feature
   sl.registerLazySingleton<DashboardRepository>(
-    () => DashboardRepositoryImpl(database: sl()),
+    () => DashboardRepositoryImpl(database: sl(), reportRepository: sl()),
   );
   sl.registerLazySingleton(() => GetDashboardSummaryUseCase(sl()));
   sl.registerLazySingleton(() => ConnectivityBloc());

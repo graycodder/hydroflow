@@ -13,6 +13,7 @@ import 'package:hydroflow/features/customers/domain/entities/customer.dart';
 import 'package:hydroflow/features/auth/domain/entities/salesman.dart';
 import 'package:hydroflow/core/widgets/hydro_flow_app_bar.dart';
 import 'package:hydroflow/core/widgets/hydro_flow_loader.dart';
+import 'package:hydroflow/features/bottles/presentation/pages/salesman_bottle_ledger_page.dart' as hydroflow_salesman_page;
 
 class BottlesPage extends StatefulWidget {
   const BottlesPage({super.key});
@@ -79,6 +80,8 @@ class _BottlesPageState extends State<BottlesPage> {
                     return const HydroFlowLoader(isOverlay: false);
                   } else if (state is BottleFailure) {
                     return Center(child: Text('Error: ${state.error}'));
+                  } else if (state is SalesmanBottleLoaded) {
+                     return const hydroflow_salesman_page.SalesmanBottleLedgerPage();
                   } else if (state is BottleLoaded) {
                       final prefs = sl<SharedPreferences>();
                       final isAgencyView = prefs.getBool('dashboard_is_agency_view') ?? false;

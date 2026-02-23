@@ -46,3 +46,17 @@ class BottleFailure extends BottleState {
   @override
   List<Object?> get props => [error, isAgencyView];
 }
+
+class SalesmanBottleLoaded extends BottleState {
+  final dynamic salesmanLedgerStats; // Using dynamic here to avoid importing entity everywhere, but specific is better
+  final DateTime date;
+
+  const SalesmanBottleLoaded({
+    required this.salesmanLedgerStats,
+    required this.date,
+    super.isAgencyView = false,
+  });
+
+  @override
+  List<Object?> get props => [salesmanLedgerStats, date, isAgencyView];
+}
