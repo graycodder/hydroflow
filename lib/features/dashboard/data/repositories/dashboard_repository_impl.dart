@@ -21,7 +21,8 @@ class DashboardRepositoryImpl implements DashboardRepository {
       // --- AGENCY VIEW (OWNER) ---
       // We leverage the existing, highly accurate getAgencyDailyReport to aggregate stats cleanly.
       return _reportRepository!.getAgencyDailyReport(agencyId, DateTime.now()).map((report) {
-         double pending = report.salesRevenue - report.totalCollected;
+         // Formula: Cash currently in salesmen's hands (including older balances) - What they settled today 
+         double pending = report.cashInHand + report.salesmanPreviousBalance - report.settlementAmountToday;
          if (pending < 0) pending = 0;
 
          return DashboardSummaryModel.fromValues(

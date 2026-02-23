@@ -752,6 +752,7 @@ class ReportRepositoryImpl implements ReportRepository {
     double upiCollections = 0;
     int manualBottlesCollected = 0;
     double settlementAmountToday = 0;
+    double salesmanPreviousBalance = 0;
 
     // Weighted Averages
     double totalAvgPriceWeighted = 0;
@@ -814,6 +815,7 @@ class ReportRepositoryImpl implements ReportRepository {
       cashInHand += r.cashInHand;
       upiCollections += r.upiCollections;
       settlementAmountToday += r.settlementAmountToday;
+      salesmanPreviousBalance += r.salesmanPreviousBalance;
 
       totalDeliveredForPrice += r.totalDeliveries;
       totalAvgPriceWeighted += (r.avgPricePerCan * r.totalDeliveries);
@@ -899,6 +901,7 @@ class ReportRepositoryImpl implements ReportRepository {
       newCustomers: newCustomers,
       inactiveCustomers: inactiveCustomers,
       settlementAmountToday: settlementAmountToday,
+      salesmanPreviousBalance: salesmanPreviousBalance,
       subReports: reports.where((r) {
         final isWh =
             r.salesmanId == agencyId ||

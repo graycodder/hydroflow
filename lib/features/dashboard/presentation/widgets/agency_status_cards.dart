@@ -44,7 +44,7 @@ class AgencyStatusCards extends StatelessWidget {
         DashboardStatCard(
           title: "Pending Amounts",
           value: '₹${summary.pendingAmounts.toStringAsFixed(0).replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]},')}',
-          subtitle: 'Total Pending',
+          subtitle: 'Pending from Salesmen',
           valueColor: const Color(0xFFD50000), // Red color for pending
           onTap: () {},
         ),
