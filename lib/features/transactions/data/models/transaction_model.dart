@@ -5,6 +5,7 @@ class TransactionModel extends TransactionEntity {
     required super.id,
     required super.salesmanId,
     required super.customerId,
+    super.customerName = '',
     required super.timestamp,
     required super.type,
     required super.amount,
@@ -33,6 +34,7 @@ class TransactionModel extends TransactionEntity {
       id: id,
       salesmanId: map['salesmanId'] as String? ?? '',
       customerId: map['customerId'] as String? ?? '',
+      customerName: map['customerName'] as String? ?? '',
       timestamp: parsedTimestamp,
       type: map['type'] as String? ?? '',
       amount: (map['amount'] as num?)?.toDouble() ?? 0.0,
@@ -51,6 +53,7 @@ class TransactionModel extends TransactionEntity {
     return {
       'salesmanId': salesmanId,
       'customerId': customerId,
+      'customerName': customerName,
       'timestamp': timestamp.toIso8601String(),
       'type': type,
       'amount': amount,

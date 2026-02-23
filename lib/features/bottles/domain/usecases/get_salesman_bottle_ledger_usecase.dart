@@ -24,8 +24,15 @@ class GetSalesmanBottleLedgerUseCase {
     final logRef = _database.ref().child('Stock_logs').child('LOG_${dateKey}_$salesmanId');
     final logStream = logRef.onValue;
 
-    // Fetch previous logs for carry-forward empty bottles
-    final prevLogStream = _database.ref().child('Stock_logs').orderByChild('salesmanId').equalTo(salesmanId).onValue;
+    // Fetch only yesterday's log for the carry-forward (not all historical logs).
+    // Key format is LOG_yyyy_MM_dd_salesmanId — use the previous day as a targeted read.
+    final prevDate = date.subtract(const Duration(days: 1));
+    final prevDateKey = prevDate.toIso8601String().substring(0, 10).replaceAll('-', '_');
+    final prevLogStream = _database
+        .ref()
+        .child('Stock_logs')
+        .child('LOG_${prevDateKey}_$salesmanId')
+        .onValue;
     
     // Fetch live salesman stock for absolute physical count
     final salesmanRef = _database.ref().child('Salesmen').child(salesmanId);
@@ -80,33 +87,17 @@ class GetSalesmanBottleLedgerUseCase {
         final effectiveDelivered = deliveredToday > 0 ? deliveredToday : logDelivered;
         final effectiveCollected = collectedToday;
 
-        // 4. Trace Previous Day Empties (Carry Forward)
+        // 4. Carry Forward from Yesterday's Log
         int openingEmpties = 0;
         int openingFulls = 0;
         
         if (prevLogEvent.snapshot.exists) {
-          final allLogs = Map<dynamic, dynamic>.from(prevLogEvent.snapshot.value as Map);
-          final targetDateStr = date.toIso8601String().substring(0, 10);
-          
-          List<Map<String, dynamic>> sortedLogs = [];
-          allLogs.forEach((key, value) {
-            final log = Map<String, dynamic>.from(value as Map);
-            if (log['date'] != null && (log['date'] as String).compareTo(targetDateStr) < 0) {
-              sortedLogs.add(log);
-            }
-          });
-
-          if (sortedLogs.isNotEmpty) {
-             sortedLogs.sort((a, b) => (b['date'] as String).compareTo(a['date'] as String));
-             final mostRecentLog = sortedLogs.first;
-             
-             // The empties remaining from yesterday: (What they had) - (What they returned to warehouse)
-             // This highly depends on your previous logging schema. If not explicit, we estimate based on mismatch vs collected.
-             openingEmpties = (mostRecentLog['closingEmptyBottles'] as num?)?.toInt() ?? 0;
-             openingFulls = (mostRecentLog['actualClosingStock'] as num?)?.toInt() ?? 
-                            (mostRecentLog['closingStock'] as num?)?.toInt() ?? 0;
-          }
+          final log = Map<String, dynamic>.from(prevLogEvent.snapshot.value as Map);
+          openingEmpties = (log['closingEmptyBottles'] as num?)?.toInt() ?? 0;
+          openingFulls = (log['actualClosingStock'] as num?)?.toInt() ??
+                         (log['closingStock'] as num?)?.toInt() ?? 0;
         }
+
 
         // 5. Live Physical Flow
         int currentFull = 0;

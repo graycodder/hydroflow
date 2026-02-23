@@ -4,6 +4,7 @@ class TransactionEntity extends Equatable {
   final String id;
   final String salesmanId;
   final String customerId;
+  final String customerName;
   final DateTime timestamp;
   final String type;
   final double amount;
@@ -20,6 +21,7 @@ class TransactionEntity extends Equatable {
     required this.id,
     required this.salesmanId,
     required this.customerId,
+    this.customerName = '',
     required this.timestamp,
     required this.type,
     required this.amount,
@@ -38,6 +40,7 @@ class TransactionEntity extends Equatable {
     id,
     salesmanId,
     customerId,
+    customerName,
     timestamp,
     type,
     amount,

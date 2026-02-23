@@ -408,30 +408,36 @@ class _BottlesPageState extends State<BottlesPage> {
   }
 
   Widget _buildSalesmanCard(Salesman salesman) {
-    final int balance = salesman.currentStock + (salesman.emptyBottles ?? 0);
-    final bool isHigh = balance > 5;
-    
+    final int fullBottles = salesman.currentStock;
+    final int emptyBottles = salesman.emptyBottles ?? 0;
+    final int totalBalance = fullBottles + emptyBottles;
+    final bool isHigh = fullBottles > 20; // flag if carrying excessive full stock
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey.withOpacity(0.2)),
+        border: Border.all(
+            color: isHigh
+                ? Colors.orange.withOpacity(0.4)
+                : Colors.grey.withOpacity(0.15)),
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.withOpacity(0.05),
+            color: Colors.grey.withOpacity(0.06),
             offset: const Offset(0, 2),
-            blurRadius: 5,
+            blurRadius: 8,
           ),
         ],
       ),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // ── Header row ────────────────────────────────
           Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Icon(Icons.delivery_dining, color: Colors.grey),
-              const SizedBox(width: 12),
+              const Icon(Icons.delivery_dining, color: Colors.grey, size: 20),
+              const SizedBox(width: 10),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -440,87 +446,66 @@ class _BottlesPageState extends State<BottlesPage> {
                       children: [
                         Text(
                           salesman.name.isNotEmpty
-                              ? salesman.name[0].toUpperCase() + salesman.name.substring(1)
+                              ? salesman.name[0].toUpperCase() +
+                                  salesman.name.substring(1)
                               : 'Staff',
                           style: const TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 16,
-                          ),
+                              fontWeight: FontWeight.bold, fontSize: 15),
                         ),
-                        // if (isHigh) ...[
-                        //   const SizedBox(width: 8),
-                        //   Container(
-                        //     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                        //     decoration: BoxDecoration(
-                        //       color: const Color(0xFFC62828),
-                        //       borderRadius: BorderRadius.circular(12),
-                        //     ),
-                        //     child: const Text(
-                        //       'High',
-                        //       style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
-                        //     ),
-                        //   ),
-                        // ],
+                        if (isHigh) ...[
+                          const SizedBox(width: 8),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 7, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: Colors.orange,
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: const Text('High Stock',
+                                style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.bold)),
+                          ),
+                        ],
                       ],
                     ),
-                    const SizedBox(height: 4),
+                    const SizedBox(height: 2),
                     Text(
-                      '${salesman.phoneNumber} | ${salesman.zone}',
-                      style: TextStyle(
-                        color: Colors.grey[600],
-                        fontSize: 14,
-                      ),
+                      salesman.phoneNumber.isNotEmpty
+                          ? '${salesman.phoneNumber}  •  ${salesman.zone}'
+                          : salesman.zone,
+                      style:
+                          TextStyle(color: Colors.grey[600], fontSize: 12),
                     ),
                   ],
                 ),
               ),
-              Column(
-                children: [
-                  const Icon(Icons.inventory_2_outlined, color: Color(0xFF2962FF), size: 20),
-                  Text(
-                    '${salesman.currentStock}',
-                    style: const TextStyle(
-                      color: Color(0xFF2962FF),
-                      fontWeight: FontWeight.bold,
-                      fontSize: 20,
-                    ),
-                  ),
-                   const Text(
-                    'total',
-                    style: TextStyle(fontSize: 10, color: Colors.grey),
-                  ),
-                ],
+            ],
+          ),
+          const SizedBox(height: 12),
+
+          // ── Full / Empties split row ──────────────────
+          Row(
+            children: [
+              Expanded(
+                child: _buildSmallStockInfo(
+                    'Full Bottles', fullBottles, const Color(0xFF1565C0)),
+              ),
+              Container(
+                  width: 1, height: 36, color: Colors.grey.shade200),
+              Expanded(
+                child: _buildSmallStockInfo(
+                    'Empty Bottles', emptyBottles, const Color(0xFFE65100)),
+              ),
+              Container(
+                  width: 1, height: 36, color: Colors.grey.shade200),
+              Expanded(
+                child: _buildSmallStockInfo(
+                    'Total', totalBalance, Colors.grey.shade600),
               ),
             ],
           ),
-          // const SizedBox(height: 12),
-          // Row(
-          //   mainAxisAlignment: MainAxisAlignment.spaceAround,
-          //   children: [
-          //     _buildSmallStockInfo('Full', salesman.currentStock, const Color(0xFF00C853)),
-          //     _buildSmallStockInfo('Empty', salesman.emptyBottles ?? 0, const Color(0xFFFF6D00)),
-          //   ],
-          // ),
-          // const SizedBox(height: 12),
-          // // Progress Bar
-          // ClipRRect(
-          //   borderRadius: BorderRadius.circular(4),
-          //   child: LinearProgressIndicator(
-          //     value: (balance / 10).clamp(0.0, 1.0),
-          //     backgroundColor: Colors.grey[200],
-          //     color: isHigh ? Colors.black : const Color(0xFF2962FF),
-          //     minHeight: 8,
-          //   ),
-          // ),
-          // const SizedBox(height: 8),
-          // Row(
-          //   mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          //   children: [
-          //     const Text('0', style: TextStyle(fontSize: 12, color: Colors.grey)),
-          //     const Text('Recommended: ≤5', style: TextStyle(fontSize: 12, color: Colors.grey)),
-          //     const Text('10', style: TextStyle(fontSize: 12, color: Colors.grey)),
-          //   ],
-          // ),
         ],
       ),
     );

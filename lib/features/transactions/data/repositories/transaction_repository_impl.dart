@@ -45,6 +45,7 @@ class TransactionRepositoryImpl implements TransactionRepository {
         id: customId,
         salesmanId: transaction.salesmanId,
         customerId: transaction.customerId,
+        customerName: customerData?['name'] as String? ?? '',
         timestamp: transaction.timestamp,
         type: transaction.type,
         amount: transaction.amount,
@@ -56,6 +57,7 @@ class TransactionRepositoryImpl implements TransactionRepository {
         previousBalance: prevBalance,
         currentBalance: currBalance,
       );
+
 
       final Map<String, dynamic> updates = {};
 
@@ -356,6 +358,7 @@ class TransactionRepositoryImpl implements TransactionRepository {
         id: customId,
         salesmanId: transaction.salesmanId,
         customerId: transaction.customerId,
+        customerName: customerData?['name'] as String? ?? '',
         timestamp: transaction.timestamp,
         type: transaction.type,
         amount: transaction.amount,
@@ -367,6 +370,7 @@ class TransactionRepositoryImpl implements TransactionRepository {
         previousBalance: prevBalance,
         currentBalance: currBalance,
       );
+
 
       // Save Transaction Log
       await txRef.set(txModel.toMap());
