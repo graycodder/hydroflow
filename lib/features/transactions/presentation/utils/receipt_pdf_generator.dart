@@ -21,9 +21,18 @@ class ReceiptPdfGenerator {
   }) async {
     final doc = pw.Document();
     
-    // Load fonts for Unicode support (Rupee symbol etc)
-    final font = await PdfGoogleFonts.openSansRegular();
-    final fontBold = await PdfGoogleFonts.openSansBold();
+    pw.Font font;
+    pw.Font fontBold;
+    
+    try {
+      // Load fonts for Unicode support (Rupee symbol etc)
+      font = await PdfGoogleFonts.openSansRegular();
+      fontBold = await PdfGoogleFonts.openSansBold();
+    } catch (e) {
+      // Fallback to built-in fonts if offline or Google Fonts fail
+      font = pw.Font.helvetica();
+      fontBold = pw.Font.helveticaBold();
+    }
 
     final dateFormat = DateFormat('dd MMM yyyy, hh:mm a');
 
