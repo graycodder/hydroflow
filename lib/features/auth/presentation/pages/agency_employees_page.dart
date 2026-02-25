@@ -1077,10 +1077,11 @@ class _SalesmanCard extends StatelessWidget {
                       prefixText: '₹ ',
                       border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(10)),
-                      errorText: ((double.tryParse(amtCtrl.text) ?? 0) >
-                              totalOutstanding)
+                      errorText: ((double.tryParse(amtCtrl.text) ?? 0) > totalOutstanding)
                           ? 'Cannot exceed outstanding'
-                          : null,
+                          : (amtCtrl.text.isNotEmpty && (double.tryParse(amtCtrl.text) ?? 0) <= 0)
+                              ? 'Must be greater than 0'
+                              : null,
                     ),
                     onChanged: (_) => setState(() {}),
                   ),
@@ -1116,7 +1117,8 @@ class _SalesmanCard extends StatelessWidget {
                       borderRadius: BorderRadius.circular(10)),
                 ),
                 onPressed:
-                    ((double.tryParse(amtCtrl.text) ?? 0) > totalOutstanding)
+                    ((double.tryParse(amtCtrl.text) ?? 0) > totalOutstanding ||
+                            (double.tryParse(amtCtrl.text) ?? 0) <= 0)
                         ? null
                         : () {
                             final amt =
