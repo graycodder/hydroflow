@@ -40,9 +40,19 @@ class _CustomerDetailsDialogState extends State<CustomerDetailsDialog> {
     isActive = widget.customer.status == 'Active';
   }
 
+  /// Returns the most up-to-date version of this customer from the bloc state.
+  /// Falls back to the original widget.customer if not found.
+  Customer _getLatestCustomer(CustomerState state) {
+    try {
+      return state.customers.firstWhere((c) => c.id == widget.customer.id);
+    } catch (_) {
+      return widget.customer;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    return BlocListener<CustomerBloc, CustomerState>(
+    return BlocConsumer<CustomerBloc, CustomerState>(
       bloc: widget.customerBloc,
       listener: (context, state) {
         if (_isSubmitting) {
@@ -54,17 +64,28 @@ class _CustomerDetailsDialogState extends State<CustomerDetailsDialog> {
             _isSubmitting = false;
           }
         }
+        // Sync the toggle when state updates from the stream
+        final latest = _getLatestCustomer(state);
+        final updatedIsActive = latest.status == 'Active';
+        if (updatedIsActive != isActive && !_isSubmitting) {
+          setState(() {
+            isActive = updatedIsActive;
+          });
+        }
       },
-      child: Dialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        child: Container(
-        padding: const EdgeInsets.all(24),
-        constraints: const BoxConstraints(maxWidth: 400),
-        child: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
+      builder: (context, customerState) {
+        // Always use the freshest customer data from the bloc
+        final customer = _getLatestCustomer(customerState);
+        return Dialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          child: Container(
+          padding: const EdgeInsets.all(24),
+          constraints: const BoxConstraints(maxWidth: 400),
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
               // Header
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -116,7 +137,7 @@ class _CustomerDetailsDialogState extends State<CustomerDetailsDialog> {
               ),
               const SizedBox(height: 4),
               Text(
-                widget.customer.name,
+                customer.name,
                 style: const TextStyle(
                   fontWeight: FontWeight.bold,
                   fontSize: 16,
@@ -131,7 +152,7 @@ class _CustomerDetailsDialogState extends State<CustomerDetailsDialog> {
               ),
               const SizedBox(height: 4),
               Text(
-                widget.customer.phone,
+                customer.phone,
                 style: const TextStyle(
                   fontWeight: FontWeight.bold,
                   fontSize: 16,
@@ -152,7 +173,7 @@ class _CustomerDetailsDialogState extends State<CustomerDetailsDialog> {
                   fontSize: 16,
                 ),
               ),
-              if (widget.customer.zone.isNotEmpty) ...[
+              if (customer.zone.isNotEmpty) ...[
                 const SizedBox(height: 16),
                 const Text(
                   'Zone',
@@ -160,7 +181,7 @@ class _CustomerDetailsDialogState extends State<CustomerDetailsDialog> {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  widget.customer.zone,
+                  customer.zone,
                   style: const TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 16,
@@ -179,7 +200,7 @@ class _CustomerDetailsDialogState extends State<CustomerDetailsDialog> {
                         const Text('Security Deposit', style: TextStyle(color: Colors.grey, fontSize: 13)),
                         const SizedBox(height: 4),
                         Text(
-                          '₹${widget.customer.securityDeposit.toStringAsFixed(0)}',
+                          '₹${customer.securityDeposit.toStringAsFixed(0)}',
                           style: const TextStyle(color: Color(0xFF2E7D32), fontWeight: FontWeight.bold, fontSize: 18),
                         ),
                         const Text('(Cash)', style: TextStyle(color: Colors.grey, fontSize: 12)),
@@ -192,7 +213,7 @@ class _CustomerDetailsDialogState extends State<CustomerDetailsDialog> {
                         showDialog(
                           context: context,
                           builder: (_) => PendingBalanceAdjustmentDialog(
-                            customer: widget.customer,
+                            customer: customer,
                             customerBloc: widget.customerBloc,
                           ),
                         );
@@ -203,7 +224,7 @@ class _CustomerDetailsDialogState extends State<CustomerDetailsDialog> {
                           const Text('Pending Balance', style: TextStyle(color: Colors.grey, fontSize: 13)),
                           const SizedBox(height: 4),
                           Text(
-                            '₹${widget.customer.pendingBalance.toStringAsFixed(0)}',
+                            '₹${customer.pendingBalance.toStringAsFixed(0)}',
                             style: const TextStyle(color: Color(0xFFE65100), fontWeight: FontWeight.bold, fontSize: 18),
                           ),
                         ],
@@ -220,7 +241,7 @@ class _CustomerDetailsDialogState extends State<CustomerDetailsDialog> {
                   showDialog(
                     context: context,
                     builder: (_) => BottleBalanceAdjustmentDialog(
-                      customer: widget.customer,
+                      customer: customer,
                       customerBloc: widget.customerBloc,
                     ),
                   );
@@ -251,7 +272,7 @@ class _CustomerDetailsDialogState extends State<CustomerDetailsDialog> {
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        '${widget.customer.bottleBalance}',
+                        '${customer.bottleBalance}',
                         style: const TextStyle(
                           color: Color(0xFF2962FF),
                           fontSize: 28,
@@ -260,7 +281,7 @@ class _CustomerDetailsDialogState extends State<CustomerDetailsDialog> {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        'Customer is holding ${widget.customer.bottleBalance} empty bottles',
+                        'Customer is holding ${customer.bottleBalance} empty bottles',
                         style: const TextStyle(
                           color: Color(0xFF1976D2),
                           fontSize: 13,
@@ -276,7 +297,7 @@ class _CustomerDetailsDialogState extends State<CustomerDetailsDialog> {
               InkWell(
                 onTap: () {
                   Navigator.pop(context);
-                  context.push('/customer_history', extra: widget.customer);
+                  context.push('/customer_history', extra: customer);
                 },
                 child: Row(
                   children: [
@@ -331,8 +352,8 @@ class _CustomerDetailsDialogState extends State<CustomerDetailsDialog> {
                          if (!val) {
                            // User is turning it OFF (Inactive) -> Trigger Settle Flow
                             // Calculate potential refund/adjustment
-                             final double deposit = widget.customer.securityDeposit;
-                             final double pending = widget.customer.pendingBalance;
+                             final double deposit = customer.securityDeposit;
+                             final double pending = customer.pendingBalance;
                              
                              double refundAmount = 0;
                              double adjustedPending = 0;
@@ -413,7 +434,7 @@ class _CustomerDetailsDialogState extends State<CustomerDetailsDialog> {
                                         isActive = false;
                                         _isSubmitting = true;
                                       });
-                                      widget.customerBloc.add(SettleCustomer(widget.customer));
+                                      widget.customerBloc.add(SettleCustomer(customer));
                                       Navigator.pop(context); // Close Alert
                                       // Navigator.pop(context); // Close Details? Maybe keep it open to show updated status?
                                       // Usually better to close details or show updated 'Inactive' state.
@@ -448,9 +469,9 @@ class _CustomerDetailsDialogState extends State<CustomerDetailsDialog> {
                                        isActive = true;
                                      });
                                      widget.customerBloc.add(UpdateCustomerStatus(
-                                       widget.customer.id, 
+                                       customer.id, 
                                        'Active',
-                                       widget.customer.salesmanId
+                                       customer.salesmanId
                                      ));
                                      Navigator.pop(context);
                                    },
@@ -479,7 +500,7 @@ class _CustomerDetailsDialogState extends State<CustomerDetailsDialog> {
                       showDialog(
                         context: context,
                         builder: (context) => EditCustomerDialog(
-                          customer: widget.customer.copyWith(status: isActive ? 'Active' : 'Inactive'),
+                          customer: customer.copyWith(status: isActive ? 'Active' : 'Inactive'),
                           currentUser: widget.currentUser,
                           customerBloc: widget.customerBloc,
                           isAgencyView: widget.isAgencyView,
@@ -502,7 +523,8 @@ class _CustomerDetailsDialogState extends State<CustomerDetailsDialog> {
           ),
         ),
       ),
-    ),
-  );
+    );
+      }, // close builder
+    ); // close BlocConsumer
   }
 }
