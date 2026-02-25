@@ -121,8 +121,8 @@ class ProfilePage extends StatelessWidget {
                                   iconBg: const Color(0xFFF3E5F5),
                                   title: 'Current Plan',
                                   subtitle: _currentPlanLabel(state.subscriptionHistory),
-                                  onTap: () => _showSubscriptionSheet(
-                                      context, state.subscriptionHistory, profile),
+                                  onTap: () => _showCurrentPlanSheet(
+                                      context, state.subscriptionHistory),
                                 ),
                                 _DrawerDivider(),
                                 _DrawerTile(
@@ -280,13 +280,36 @@ class ProfilePage extends StatelessWidget {
   String _currentPlanLabel(List<SubscriptionRecord> history) {
     if (history.isEmpty) return 'No active plan';
     try {
-      final active = history.firstWhere((s) => s.isActive,
-          orElse: () => history.first);
+      final activePlans = history.where((s) => s.isActive);
+      final active = activePlans.isNotEmpty ? activePlans.first : history.first;
       final label = active.isActive ? 'Active' : 'Expired';
       return '${active.planName} • $label • Expires ${DateFormat('dd MMM yyyy').format(active.expiryDate)}';
     } catch (_) {
       return 'View plan details';
     }
+  }
+
+  void _showCurrentPlanSheet(
+      BuildContext context, List<SubscriptionRecord> history) {
+    SubscriptionRecord? currentPlan;
+    if (history.isNotEmpty) {
+      final activePlans = history.where((s) => s.isActive);
+      currentPlan = activePlans.isNotEmpty ? activePlans.first : history.first;
+    }
+    final displayList = currentPlan != null ? [currentPlan] : <SubscriptionRecord>[];
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => DraggableScrollableSheet(
+        initialChildSize: 0.45,
+        maxChildSize: 0.92,
+        minChildSize: 0.4,
+        builder: (_, controller) => _buildSheetContainer(
+            displayList, 'Current Plan', Icons.workspace_premium, controller),
+      ),
+    );
   }
 
   void _showSubscriptionSheet(
@@ -299,60 +322,70 @@ class ProfilePage extends StatelessWidget {
         initialChildSize: 0.65,
         maxChildSize: 0.92,
         minChildSize: 0.4,
-        builder: (_, controller) => Container(
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        builder: (_, controller) => _buildSheetContainer(
+            history, 'Subscription Details', Icons.history, controller,
+            showCount: true),
+      ),
+    );
+  }
+
+  Widget _buildSheetContainer(List<SubscriptionRecord> items, String title,
+      IconData icon, ScrollController controller,
+      {bool showCount = false}) {
+    return Container(
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      child: Column(
+        children: [
+          const SizedBox(height: 12),
+          Container(
+            width: 40,
+            height: 4,
+            decoration: BoxDecoration(
+              color: Colors.grey.shade300,
+              borderRadius: BorderRadius.circular(2),
+            ),
           ),
-          child: Column(
-            children: [
-              const SizedBox(height: 12),
-              Container(
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: Colors.grey.shade300,
-                  borderRadius: BorderRadius.circular(2),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
+            child: Row(
+              children: [
+                Icon(icon, color: const Color(0xFF7B1FA2)),
+                const SizedBox(width: 8),
+                Text(
+                  title,
+                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                 ),
-              ),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
-                child: Row(
-                  children: [
-                    const Icon(Icons.workspace_premium, color: Color(0xFF7B1FA2)),
-                    const SizedBox(width: 8),
-                    const Text(
-                      'Subscription Details',
-                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                    ),
-                    const Spacer(),
-                    Text(
-                      '${history.length} plan${history.length == 1 ? '' : 's'}',
-                      style: const TextStyle(color: Colors.grey),
-                    ),
-                  ],
-                ),
-              ),
-              const Divider(height: 1),
-              if (history.isEmpty)
-                const Expanded(
-                  child: Center(
-                    child: Text('No subscription history found.',
-                        style: TextStyle(color: Colors.grey)),
+                if (showCount) ...[
+                  const Spacer(),
+                  Text(
+                    '${items.length} plan${items.length == 1 ? '' : 's'}',
+                    style: const TextStyle(color: Colors.grey),
                   ),
-                )
-              else
-                Expanded(
-                  child: ListView.builder(
-                    controller: controller,
-                    padding: const EdgeInsets.all(16),
-                    itemCount: history.length,
-                    itemBuilder: (_, i) => _SubscriptionCard(record: history[i]),
-                  ),
-                ),
-            ],
+                ],
+              ],
+            ),
           ),
-        ),
+          const Divider(height: 1),
+          if (items.isEmpty)
+            const Expanded(
+              child: Center(
+                child: Text('No plans found.',
+                    style: TextStyle(color: Colors.grey)),
+              ),
+            )
+          else
+            Expanded(
+              child: ListView.builder(
+                controller: controller,
+                padding: const EdgeInsets.all(16),
+                itemCount: items.length,
+                itemBuilder: (_, i) => _SubscriptionCard(record: items[i]),
+              ),
+            ),
+        ],
       ),
     );
   }
