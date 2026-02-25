@@ -306,7 +306,7 @@ class ProfilePage extends StatelessWidget {
         maxChildSize: 0.92,
         minChildSize: 0.4,
         builder: (_, controller) => _buildSheetContainer(
-            displayList, 'Current Plan', Icons.workspace_premium, controller),
+            context, displayList, 'Current Plan', Icons.workspace_premium, controller),
       ),
     );
   }
@@ -322,13 +322,14 @@ class ProfilePage extends StatelessWidget {
         maxChildSize: 0.92,
         minChildSize: 0.4,
         builder: (_, controller) => _buildSheetContainer(
-            history, 'Subscription Details', Icons.history, controller,
+            context, history, 'Subscription Details', Icons.history, controller,
             showCount: true),
       ),
     );
   }
 
-  Widget _buildSheetContainer(List<SubscriptionRecord> items, String title,
+  Widget _buildSheetContainer(
+      BuildContext context, List<SubscriptionRecord> items, String title,
       IconData icon, ScrollController controller,
       {bool showCount = false}) {
     return Container(
@@ -363,7 +364,16 @@ class ProfilePage extends StatelessWidget {
                     '${items.length} plan${items.length == 1 ? '' : 's'}',
                     style: const TextStyle(color: Colors.grey),
                   ),
-                ],
+                  const SizedBox(width: 8),
+                ] else
+                  const Spacer(),
+                IconButton(
+                  icon: const Icon(Icons.close, color: Colors.grey),
+                  onPressed: () => Navigator.pop(context),
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(),
+                  splashRadius: 20,
+                ),
               ],
             ),
           ),
