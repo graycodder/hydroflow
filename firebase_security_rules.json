@@ -19,7 +19,8 @@
             ".indexOn": [
                 "agencyId",
                 "phone",
-                "username"
+                "username",
+                "deviceId"
             ],
             ".read": true,
             ".write": true

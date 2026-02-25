@@ -1,8 +1,6 @@
 import 'dart:async';
 import 'package:firebase_database/firebase_database.dart';
 import 'dart:io' show Platform;
-import 'package:flutter/foundation.dart' show kIsWeb;
-import 'package:uuid/uuid.dart';
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -94,33 +92,27 @@ class AuthRepositoryImpl implements AuthRepository {
           }
 
           if (currentDeviceId != null) {
-            if (role == 'salesman' || role == 'Salesman') {
-              // 1. Check if ANY OTHER salesman is using this device
-              final deviceQuery = await ref
-                  .orderByChild('deviceId')
-                  .equalTo(currentDeviceId)
-                  .get();
+            // 1. Check if ANY OTHER user (salesman OR owner) is using this device
+            final deviceQuery = await ref
+                .orderByChild('deviceId')
+                .equalTo(currentDeviceId)
+                .get();
 
-              if (deviceQuery.exists) {
-                final matchNode = deviceQuery.children.first;
-                if (matchNode.key != uid) {
-                  // The device is bound to someone else
-                  throw Exception('This device is already in use by another salesman.');
-                }
+            if (deviceQuery.exists) {
+              final matchNode = deviceQuery.children.first;
+              // If the device matches someone ELSE — block regardless of role
+              if (matchNode.key != uid) {
+                throw Exception('This device is already in use by another account.');
               }
+            }
 
-              // 2. Enforce this salesman's device binding
-              if (storedDeviceId == null || storedDeviceId.isEmpty) {
-                // First login: Bind device
-                await ref.child(uid).update({'deviceId': currentDeviceId});
-              } else if (storedDeviceId != currentDeviceId) {
-                // Mismatch: Block login
-                throw Exception('Unauthorized Device: You are already registered on another mobile. Please contact Admin.');
-              }
-            } else {
-              // For other roles (like owner), just update deviceId for tracking
-              // but don't enforce locking.
+            // 2. Enforce personal device binding for ALL roles
+            if (storedDeviceId == null || storedDeviceId.isEmpty) {
+              // First login: Bind this device to the user
               await ref.child(uid).update({'deviceId': currentDeviceId});
+            } else if (storedDeviceId != currentDeviceId) {
+              // Device mismatch: Block login
+              throw Exception('Unauthorized Device: You are already registered on another mobile. Please contact Admin.');
             }
           }
 
@@ -142,17 +134,16 @@ class AuthRepositoryImpl implements AuthRepository {
 
   Future<String?> _getDeviceId() async {
     try {
-      // Use SharedPreferences to generate and store a persistent UUID for the device.
-      // This is unique per app install and avoids unreliable hardware IDs.
-      final prefs = await SharedPreferences.getInstance();
-      String? appDeviceId = prefs.getString('app_device_id');
-      if (appDeviceId == null) {
-        appDeviceId = const Uuid().v4();
-        await prefs.setString('app_device_id', appDeviceId);
+      final DeviceInfoPlugin deviceInfo = DeviceInfoPlugin();
+      if (Platform.isAndroid) {
+        final AndroidDeviceInfo androidInfo = await deviceInfo.androidInfo;
+        return androidInfo.fingerprint; // Unique per-device build fingerprint
+      } else if (Platform.isIOS) {
+        final IosDeviceInfo iosInfo = await deviceInfo.iosInfo;
+        return iosInfo.identifierForVendor; // Unique ID on iOS
       }
-      return appDeviceId;
     } catch (e) {
-      print('Failed to get or generate device ID: $e');
+      print('Failed to get device ID: $e');
     }
     return null;
   }
