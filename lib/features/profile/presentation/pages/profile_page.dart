@@ -282,8 +282,7 @@ class ProfilePage extends StatelessWidget {
     try {
       final activePlans = history.where((s) => s.isActive);
       final active = activePlans.isNotEmpty ? activePlans.first : history.first;
-      final label = active.isActive ? 'Active' : 'Expired';
-      return '${active.planName} • $label • Expires ${DateFormat('dd MMM yyyy').format(active.expiryDate)}';
+      return '${active.planName} • ${active.status} • Expires ${DateFormat('dd MMM yyyy').format(active.expiryDate)}';
     } catch (_) {
       return 'View plan details';
     }
@@ -729,9 +728,16 @@ class _SubscriptionCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isActive = record.isActive;
+    final isPending = record.status.toLowerCase() == 'pending';
     final activeColor = const Color(0xFF7B1FA2);
+    final pendingColor = const Color(0xFFF57C00);
+    
+    final mainStatusColor = isActive ? activeColor : (isPending ? pendingColor : Colors.grey.shade500);
+    final badgeBgColor = isActive ? activeColor : (isPending ? pendingColor : Colors.grey.shade300);
+    final badgeTextColor = isActive || isPending ? Colors.white : Colors.black54;
+
     final bgColor = isActive ? const Color(0xFFF3E5F5) : const Color(0xFFFAFAFA);
-    final borderColor = isActive ? activeColor : Colors.grey.shade200;
+    final borderColor = isActive ? activeColor : (isPending ? pendingColor.withOpacity(0.5) : Colors.grey.shade200);
     final daysRemaining =
         record.expiryDate.difference(DateTime.now()).inDays;
 
@@ -753,11 +759,11 @@ class _SubscriptionCard extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: isActive ? activeColor : Colors.grey.shade400,
+                  color: mainStatusColor,
                   shape: BoxShape.circle,
                 ),
                 child: Icon(
-                  isActive ? Icons.verified_rounded : Icons.history_rounded,
+                  isActive ? Icons.verified_rounded : (isPending ? Icons.hourglass_empty_rounded : Icons.history_rounded),
                   color: Colors.white,
                   size: 18,
                 ),
@@ -775,7 +781,7 @@ class _SubscriptionCard extends StatelessWidget {
                             style: TextStyle(
                               fontWeight: FontWeight.bold,
                               fontSize: 15,
-                              color: isActive ? activeColor : Colors.black87,
+                              color: isActive ? activeColor : (isPending ? pendingColor : Colors.black87),
                             ),
                           ),
                         ),
@@ -783,13 +789,13 @@ class _SubscriptionCard extends StatelessWidget {
                           padding: const EdgeInsets.symmetric(
                               horizontal: 8, vertical: 2),
                           decoration: BoxDecoration(
-                            color: isActive ? activeColor : Colors.grey.shade300,
+                            color: badgeBgColor,
                             borderRadius: BorderRadius.circular(20),
                           ),
                           child: Text(
-                            isActive ? 'Active' : 'Expired',
+                            record.status,
                             style: TextStyle(
-                              color: isActive ? Colors.white : Colors.black54,
+                              color: badgeTextColor,
                               fontSize: 10,
                               fontWeight: FontWeight.bold,
                             ),
@@ -856,8 +862,7 @@ class _SubscriptionCard extends StatelessWidget {
             child: LinearProgressIndicator(
               value: _progress(),
               backgroundColor: Colors.grey.shade200,
-              valueColor: AlwaysStoppedAnimation<Color>(
-                  isActive ? activeColor : Colors.grey.shade400),
+              valueColor: AlwaysStoppedAnimation<Color>(mainStatusColor),
               minHeight: 5,
             ),
           ),
