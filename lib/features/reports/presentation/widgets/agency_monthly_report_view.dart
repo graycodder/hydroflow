@@ -260,9 +260,9 @@ class AgencyMonthlyReportView extends StatelessWidget {
                 const Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Text("Total Monthly Revenue", style: TextStyle(fontWeight: FontWeight.w500)),
-                      Text("Sales + Net Deposits", style: TextStyle(fontSize: 12, color: Colors.grey)),
                     ],
                   ),
                 ),

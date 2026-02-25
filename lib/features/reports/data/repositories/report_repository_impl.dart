@@ -586,7 +586,7 @@ class ReportRepositoryImpl implements ReportRepository {
           .toSet();
       final workingDaysCount = workingDaysList.length;
       final avgDailyRev = workingDaysCount > 0
-          ? (salesRevenue + netDeposits) / workingDaysCount
+          ? salesRevenue / workingDaysCount
           : 0.0;
       final avgDailyDel = workingDaysCount > 0
           ? delivered.toDouble() / workingDaysCount
@@ -601,7 +601,7 @@ class ReportRepositoryImpl implements ReportRepository {
 
       return ReportEntity(
         date: month,
-        totalRevenue: salesRevenue + netDeposits,
+        totalRevenue: salesRevenue,
         totalDeliveries: delivered,
         openingStock: calculatedOpening,
         stockLoaded: totalLoaded,
