@@ -415,21 +415,21 @@ class AgencyMonthlyReportView extends StatelessWidget {
       subtitle: "",
       child: Row(
         children: [
+           Expanded(
+            child: _buildCustomerStatBox(
+              "New",
+              "${report.newCustomers}",
+              const Color(0xFFE8F5E9),
+              const Color(0xFF4CAF50),
+            ),
+          ),
+          const SizedBox(width: 12),
           Expanded(
             child: _buildCustomerStatBox(
               "Active",
               "${report.activeCustomers}",
               const Color(0xFFE8EAF6),
               const Color(0xFF3F51B5),
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: _buildCustomerStatBox(
-              "New",
-              "${report.newCustomers}",
-              const Color(0xFFE8F5E9),
-              const Color(0xFF4CAF50),
             ),
           ),
           const SizedBox(width: 12),
@@ -448,14 +448,17 @@ class AgencyMonthlyReportView extends StatelessWidget {
 
   Widget _buildCustomerStatBox(String label, String value, Color bgColor, Color textColor) {
     return Container(
-      padding: const EdgeInsets.symmetric(vertical: 20),
+      padding: const EdgeInsets.symmetric(vertical: 10),
       decoration: BoxDecoration(
         color: bgColor,
         borderRadius: BorderRadius.circular(12),
       ),
       child: Column(
         children: [
-          Text(value, style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: textColor)),
+          Text(value, 
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: textColor)),
           const SizedBox(height: 4),
           Text(label, style: const TextStyle(color: Colors.grey, fontSize: 14)),
         ],

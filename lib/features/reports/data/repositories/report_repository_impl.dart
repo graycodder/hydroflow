@@ -592,6 +592,13 @@ class ReportRepositoryImpl implements ReportRepository {
           ? delivered.toDouble() / workingDaysCount
           : 0.0;
 
+      final int calculatedActiveCustomers = relevantCustomers.where((c) => c.status == 'Active').length;
+      final int calculatedInactiveCustomers = relevantCustomers.length - calculatedActiveCustomers;
+      final int calculatedNewCustomers = relevantCustomers.where((c) {
+        if (c.createdAt == null) return false;
+        return c.createdAt!.year == month.year && c.createdAt!.month == month.month;
+      }).length;
+
       return ReportEntity(
         date: month,
         totalRevenue: salesRevenue + netDeposits,
@@ -630,9 +637,9 @@ class ReportRepositoryImpl implements ReportRepository {
         avgDailyRevenue: avgDailyRev,
         avgDailyDeliveries: avgDailyDel,
         totalCustomers: relevantCustomers.length,
-        activeCustomers: activeCustomerIds.length,
-        inactiveCustomers: relevantCustomers.length - activeCustomerIds.length,
-        newCustomers: 0,
+        activeCustomers: calculatedActiveCustomers,
+        inactiveCustomers: calculatedInactiveCustomers,
+        newCustomers: calculatedNewCustomers,
         salesmanId: salesmanId,
         salesmanName: salesmanName,
         settlementAmountToday: 0.0, // Monthly aggregation doesn't use daily settlement amount
