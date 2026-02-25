@@ -206,6 +206,8 @@ class AgencyEmployeesPage extends StatelessWidget {
     final collectCtrl = TextEditingController();
     final agencyBloc = context.read<AgencyBloc>();
     final stockBloc = context.read<StockBloc>();
+    String? refillError;
+    String? collectError;
 
     showDialog(
       context: context,
@@ -238,8 +240,10 @@ class AgencyEmployeesPage extends StatelessWidget {
             builder: (ctx, state) {
               final warehouseStock =
                   state.agencyStock?['fullBottles'] ?? 0;
-              return AlertDialog(
-                titlePadding: EdgeInsets.zero,
+              return StatefulBuilder(
+                builder: (context, setState) {
+                  return AlertDialog(
+                    titlePadding: EdgeInsets.zero,
                 shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(20)),
                 title: Column(
@@ -296,6 +300,12 @@ class AgencyEmployeesPage extends StatelessWidget {
                         fieldIcon: Icons.add_shopping_cart,
                         fieldColor: _kBlue,
                         controller: refillCtrl,
+                        errorText: refillError,
+                        onChanged: (_) {
+                          if (refillError != null) {
+                            setState(() => refillError = null);
+                          }
+                        },
                       ),
                       _StockTabContent(
                         icon: Icons.local_shipping,
@@ -308,6 +318,12 @@ class AgencyEmployeesPage extends StatelessWidget {
                         fieldIcon: Icons.assignment_return,
                         fieldColor: _kOrange,
                         controller: collectCtrl,
+                        errorText: collectError,
+                        onChanged: (_) {
+                          if (collectError != null) {
+                            setState(() => collectError = null);
+                          }
+                        },
                       ),
                     ],
                   ),
@@ -335,13 +351,14 @@ class AgencyEmployeesPage extends StatelessWidget {
                                     int.tryParse(refillCtrl.text) ?? 0;
                                 if (qty <= 0) return;
                                 if (qty > warehouseStock) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(
-                                        content: Text(
-                                            'Insufficient Warehouse Stock')),
-                                  );
+                                  setState(() {
+                                    refillError = 'Insufficient Warehouse Stock';
+                                  });
                                   return;
                                 }
+                                setState(() {
+                                  refillError = null;
+                                });
                                 final ok = await _confirm(
                                     context,
                                     'Confirm Refill',
@@ -358,6 +375,15 @@ class AgencyEmployeesPage extends StatelessWidget {
                                 final qty =
                                     int.tryParse(collectCtrl.text) ?? 0;
                                 if (qty <= 0) return;
+                                if (qty > salesman.emptyBottles) {
+                                  setState(() {
+                                    collectError = 'Cannot collect more than vehicle holds';
+                                  });
+                                  return;
+                                }
+                                setState(() {
+                                  collectError = null;
+                                });
                                 final ok = await _confirm(
                                     context,
                                     'Confirm Collection',
@@ -376,6 +402,8 @@ class AgencyEmployeesPage extends StatelessWidget {
                     ),
                   ),
                 ],
+              );
+                },
               );
             },
           ),
@@ -834,14 +862,6 @@ class _SalesmanCard extends StatelessWidget {
                               label: isLinked ? 'Linked' : 'Unlinked',
                               color: isLinked ? _kGreen : Colors.grey,
                             ),
-                            const SizedBox(width: 6),
-                            // Customers
-                            if (salesman.customerCount > 0)
-                              _SmallChip(
-                                icon: Icons.people_outline,
-                                label: '${salesman.customerCount} cust.',
-                                color: _kBlue,
-                              ),
                           ],
                         ),
                       ],
@@ -1338,6 +1358,8 @@ class _StockTabContent extends StatelessWidget {
   final IconData fieldIcon;
   final Color fieldColor;
   final TextEditingController controller;
+  final String? errorText;
+  final ValueChanged<String>? onChanged;
 
   const _StockTabContent({
     required this.icon,
@@ -1349,6 +1371,8 @@ class _StockTabContent extends StatelessWidget {
     required this.fieldIcon,
     required this.fieldColor,
     required this.controller,
+    this.errorText,
+    this.onChanged,
   });
 
   @override
@@ -1380,8 +1404,10 @@ class _StockTabContent extends StatelessWidget {
           controller: controller,
           keyboardType: TextInputType.number,
           inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+          onChanged: onChanged,
           decoration: InputDecoration(
             labelText: fieldLabel,
+            errorText: errorText,
             border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(10)),
             prefixIcon: Icon(fieldIcon, color: fieldColor),
