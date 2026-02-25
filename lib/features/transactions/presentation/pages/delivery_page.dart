@@ -1195,43 +1195,41 @@ class _DeliveryViewState extends State<DeliveryView> {
         return;
       }
 
-      // Check for excess empty cans and warn
+      // Check for excess empty cans and block
       if (emptyCans > selectedCustomer.bottleBalance) {
         showDialog(
           context: context,
           builder: (context) => AlertDialog(
-            title: const Text(
-              'Excess Empty Bottles Warning',
-              style: TextStyle(color: Colors.orange),
+            title: const Row(
+              children: [
+                Icon(Icons.error_outline, color: Colors.deepOrange),
+                SizedBox(width: 8),
+                Text('Excess Empty Bottles'),
+              ],
             ),
-            content: Text(
-              'The customer is returning $emptyCans empty bottles, but their current balance is only ${selectedCustomer.bottleBalance}.\n\n'
-              'This will result in a negative bottle balance data discrepancy.\n\n'
-              'Are you sure you want to proceed?',
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'You are trying to collect $emptyCans empty bottles, but the customer only has ${selectedCustomer.bottleBalance} bottles on their balance.',
+                ),
+                const SizedBox(height: 8),
+                const Text(
+                  'Strict Blocking Enabled.',
+                  style: TextStyle(fontWeight: FontWeight.bold, color: Colors.red),
+                ),
+                const SizedBox(height: 8),
+                const Text(
+                  'You cannot collect more empty bottles than the customer currently holds.',
+                  style: TextStyle(fontSize: 12, color: Colors.grey),
+                ),
+              ],
             ),
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(context),
-                child: const Text('Cancel'),
-              ),
-              ElevatedButton(
-                onPressed: () {
-                  Navigator.pop(context); // Close warning
-                  _showConfirmationDialog(
-                    context,
-                    salesmanId,
-                    selectedCustomer,
-                    total,
-                    received,
-                    cans,
-                    emptyCans,
-                  ); // Proceed
-                },
-                style: ElevatedButton.styleFrom(backgroundColor: Colors.orange),
-                child: const Text(
-                  'Connect Anyway',
-                  style: TextStyle(color: Colors.white),
-                ),
+                child: const Text('OK'),
               ),
             ],
           ),
