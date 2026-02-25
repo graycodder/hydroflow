@@ -131,8 +131,20 @@ class MonthlyReportView extends StatelessWidget {
             isBold: true,
             valueColor: Colors.blue[700],
           ),
+          buildRow(
+            "Total Collected",
+            "₹${NumberFormat('#,##,###').format(report.totalCollected)}",
+            isBold: true,
+            valueColor: Colors.green,
+          ),
           buildSubRow("Cash", "₹${NumberFormat('#,##,###').format(report.cashSales)}"),
           buildSubRow("UPI/Online", "₹${NumberFormat('#,##,###').format(report.onlineSales)}"),
+          buildRow(
+            "Credit Given",
+            "₹${NumberFormat('#,##,###').format(report.totalCreditPending)}",
+            isBold: true,
+            valueColor: Colors.orange,
+          ),
           const Divider(height: 24),
           buildRow("Security Deposits", "", isBold: true),
           buildSubRow(
