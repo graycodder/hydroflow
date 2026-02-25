@@ -1,14 +1,19 @@
-import 'package:flutter/material.dart';
-import 'package:hydroflow/features/auth/domain/entities/salesman.dart';
+import 'package:hydroflow/features/auth/domain/entities/agency.dart';
 import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import 'package:flutter/material.dart';
+import 'package:hydroflow/features/auth/domain/entities/salesman.dart';
+import 'package:hydroflow/features/auth/domain/entities/agency.dart';
+
 class SubscriptionLockPage extends StatelessWidget {
   final Salesman salesman;
+  final Agency? agency;
 
   const SubscriptionLockPage({
     super.key,
     required this.salesman,
+    this.agency,
   });
 
   Future<void> _makePhoneCall(String phoneNumber) async {
@@ -37,11 +42,21 @@ class SubscriptionLockPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bool isDeactivated = !salesman.isActive;
+    final bool isUserDeactivated = !salesman.isActive;
     
-    final expiryDate = salesman.subscriptionExpiry;
-    final bool isExpired = expiryDate != null && 
-        DateTime.now().isAfter(expiryDate);
+    final userExpiryDate = salesman.subscriptionExpiry;
+    final bool isUserExpired = userExpiryDate != null && 
+        DateTime.now().isAfter(userExpiryDate);
+
+    final bool isAgencyDeactivated = agency?.status != 'active';
+    final agencyExpiryDate = agency?.subscriptionExpiry;
+    final bool isAgencyExpired = agencyExpiryDate != null &&
+        DateTime.now().isAfter(agencyExpiryDate);
+
+    final bool isDeactivated = isAgencyDeactivated || isUserDeactivated;
+    final bool isExpired = isAgencyExpired || isUserExpired;
+
+    final expiryDate = isAgencyExpired ? agencyExpiryDate : userExpiryDate;
 
     final formattedDate = expiryDate != null 
         ? DateFormat('d MMMM yyyy').format(expiryDate) 
@@ -50,6 +65,29 @@ class SubscriptionLockPage extends StatelessWidget {
     final daysAgo = expiryDate != null 
         ? DateTime.now().difference(expiryDate).inDays 
         : 0;
+
+    final String titleText = isAgencyDeactivated 
+        ? 'Agency Deactivated' 
+        : (isUserDeactivated ? 'Account Deactivated' : (isAgencyExpired ? 'Agency Subscription Expired' : 'Subscription Expired'));
+
+    final String subtitleText = isAgencyDeactivated
+        ? 'Your agency\'s access has been disabled by the administrator'
+        : (isUserDeactivated 
+            ? 'Your access has been disabled by the administrator'
+            : (isAgencyExpired 
+                ? 'Your agency\'s HydroFlow access has been suspended'
+                : 'Your HydroFlow access has been suspended'));
+
+    final String holderName = (isAgencyDeactivated || isAgencyExpired) && agency != null
+        ? agency!.name
+        : salesman.name;
+
+    final String holderLabel = (isAgencyDeactivated || isAgencyExpired)
+        ? 'Agency Name'
+        : 'Account Holder';
+
+    final String accountType = (isAgencyDeactivated || isAgencyExpired) ? 'agency' : 'salesman';
+    final String accountOrSubscription = isDeactivated ? 'account' : 'subscription';
 
     return Scaffold(
       backgroundColor: const Color(0xFFFDECEC), // Very light red background
@@ -111,7 +149,7 @@ class SubscriptionLockPage extends StatelessWidget {
                         child: Column(
                           children: [
                             Text(
-                              isDeactivated ? 'Account Deactivated' : 'Subscription Expired',
+                              titleText,
                               style: const TextStyle(
                                 fontSize: 24,
                                 fontWeight: FontWeight.bold,
@@ -120,9 +158,7 @@ class SubscriptionLockPage extends StatelessWidget {
                             ),
                             const SizedBox(height: 12),
                             Text(
-                              isDeactivated 
-                                  ? 'Your access has been disabled by the administrator'
-                                  : 'Your HydroFlow access has been suspended',
+                              subtitleText,
                               textAlign: TextAlign.center,
                               style: const TextStyle(
                                 fontSize: 14,
@@ -144,7 +180,7 @@ class SubscriptionLockPage extends StatelessWidget {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
-                                    'Account Holder',
+                                    holderLabel,
                                     style: TextStyle(
                                       fontSize: 12,
                                       color: Colors.grey[600],
@@ -152,7 +188,7 @@ class SubscriptionLockPage extends StatelessWidget {
                                   ),
                                   const SizedBox(height: 4),
                                   Text(
-                                    salesman.name,
+                                    holderName,
                                     style: const TextStyle(
                                       fontSize: 18,
                                       fontWeight: FontWeight.bold,
@@ -245,8 +281,8 @@ class SubscriptionLockPage extends StatelessWidget {
                                         const SizedBox(height: 4),
                                         Text(
                                           isDeactivated 
-                                              ? 'Please contact your administrator to reactivate your account and regain access.'
-                                              : 'Please contact your administrator to renew your subscription and regain access to the application.',
+                                              ? 'Please contact your administrator to reactivate the $accountType account and regain access.'
+                                              : 'Please contact your administrator to renew the $accountType $accountOrSubscription and regain access to the application.',
                                           style: TextStyle(
                                             color: Colors.orange[800],
                                             fontSize: 12,

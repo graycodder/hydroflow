@@ -23,8 +23,7 @@ import 'package:hydroflow/features/customers/domain/entities/customer.dart';
 import 'package:hydroflow/core/utils/router_refresh_listenable.dart';
 
 import 'package:hydroflow/features/auth/presentation/pages/agency_employees_page.dart';
-
-final RouteObserver<ModalRoute<void>> routeObserver = RouteObserver<ModalRoute<void>>();
+import 'package:hydroflow/router/route_observer.dart'; // Add this line
 
 final router = GoRouter(
   initialLocation: '/splash',
@@ -89,7 +88,10 @@ final router = GoRouter(
       builder: (context, state) {
         final authState = context.read<AuthBloc>().state;
         if (authState is AuthSubscriptionExpired) {
-          return SubscriptionLockPage(salesman: authState.salesman);
+          return SubscriptionLockPage(
+            salesman: authState.salesman,
+            agency: authState.agency,
+          );
         }
         // Fallback or loading if state hasn't stabilized, 
         // though redirect should handle this.

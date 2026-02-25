@@ -14,7 +14,7 @@ import 'package:intl/intl.dart';
 
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:hydroflow/core/service_locator.dart'; // Import sl for SharedPreferences
-import 'package:hydroflow/router/app_router.dart'; // Import routeObserver
+import 'package:hydroflow/router/route_observer.dart'; // Import routeObserver
 import 'package:hydroflow/features/dashboard/presentation/widgets/agency_status_cards.dart';
 import 'package:hydroflow/features/dashboard/presentation/widgets/salesman_status_cards.dart';
 

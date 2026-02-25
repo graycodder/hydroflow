@@ -1,5 +1,5 @@
-import 'package:hydroflow/features/auth/domain/entities/agency.dart';
-import 'package:hydroflow/features/auth/domain/entities/salesman.dart';
+import '../entities/agency.dart';
+import '../entities/salesman.dart';
 
 abstract class AgencyRepository {
   Future<void> createAgency(Agency agency);
@@ -11,4 +11,5 @@ abstract class AgencyRepository {
   Future<void> updateSalesman(Salesman salesman);
   Future<bool> isPhoneNumberUnique(String phoneNumber, {String? excludeSalesmanId});
   Future<void> updateAgencySettings(String agencyId, Map<String, dynamic> settings);
+  Stream<Agency> getAgencyStream(String agencyId);
 }

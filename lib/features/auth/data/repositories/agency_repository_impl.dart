@@ -245,4 +245,20 @@ class AgencyRepositoryImpl implements AgencyRepository {
       throw Exception('Failed to update agency settings: $e');
     }
   }
+
+  @override
+  Stream<Agency> getAgencyStream(String agencyId) {
+    return _database
+        .ref()
+        .child('Agencies')
+        .child(agencyId)
+        .onValue
+        .map((event) {
+          if (event.snapshot.value != null) {
+            return AgencyModel.fromSnapshot(event.snapshot);
+          } else {
+            throw Exception('Agency data not found');
+          }
+        });
+  }
 }

@@ -1,5 +1,6 @@
 import 'package:equatable/equatable.dart';
-import 'package:hydroflow/features/auth/domain/entities/salesman.dart';
+import '../../domain/entities/salesman.dart';
+import '../../domain/entities/agency.dart';
 
 abstract class AuthEvent extends Equatable {
   const AuthEvent();
@@ -24,8 +25,9 @@ class AuthLogoutRequested extends AuthEvent {}
 
 class AuthStatusChanged extends AuthEvent {
   final Salesman? salesman;
-  const AuthStatusChanged(this.salesman);
+  final Agency? agency;
+  const AuthStatusChanged(this.salesman, [this.agency]);
 
   @override
-  List<Object?> get props => [salesman];
+  List<Object?> get props => [salesman, agency];
 }

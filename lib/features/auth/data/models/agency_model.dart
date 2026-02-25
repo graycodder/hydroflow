@@ -55,10 +55,14 @@ class AgencyModel extends Agency {
     final settings = data['settings'] as Map?;
 
     // Extract fields from subscription if available, otherwise fallback to root (for legacy/backward compat)
-    final subStatus = activeSub?['status'] as String? ?? 'active';
+    // Status is at root-level agency node (set by admin)
+    final rootStatus = data['status'] as String? ?? 'active';
+    // subscriptionExpiry: check subscription sub-object first, then root-level fallback
     final subExpiry = activeSub?['expiryDate'] != null
           ? DateTime.tryParse(activeSub!['expiryDate'].toString())
-          : null;
+          : (data['subscriptionExpiry'] != null
+              ? DateTime.tryParse(data['subscriptionExpiry'].toString())
+              : null);
     final subMaxCustomers = (activeSub?['maxCustomers'] as num?)?.toInt();
     
     // Root level fallback
@@ -70,7 +74,7 @@ class AgencyModel extends Agency {
       ownerId: data['ownerId'] as String? ?? '',
       contactPhone: data['contactPhone'] as String? ?? '',
       address: data['address'] as String? ?? '',
-      status: subStatus, // Status from subscription
+      status: rootStatus, // Status from root agency node (admin-controlled)
       subscriptionExpiry: subExpiry,
       warehouseFullStock: (stock?['fullCans'] as num?)?.toInt() ?? 0,
       warehouseEmptyStock: (stock?['emptyCans'] as num?)?.toInt() ?? 0,
@@ -94,6 +98,8 @@ class AgencyModel extends Agency {
       'ownerId': ownerId,
       'contactPhone': contactPhone,
       'address': address,
+      'status': status, // Also write at root level so admin UI updates are reflected
+      'subscriptionExpiry': subscriptionExpiry?.toIso8601String(),
       'maxSalesmen': maxSalesmen,
       'maxCustomers': maxCustomers,
       'totalCustomersCount': totalCustomersCount,

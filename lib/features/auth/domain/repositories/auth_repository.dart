@@ -1,5 +1,5 @@
 import 'dart:async';
-import 'package:hydroflow/features/auth/domain/entities/salesman.dart';
+import '../entities/salesman.dart';
 
 abstract class AuthRepository {
   /// Stream of the current authenticated user ID (null if not logged in)

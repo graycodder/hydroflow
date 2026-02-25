@@ -1,17 +1,29 @@
 import 'dart:async';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:hydroflow/features/auth/domain/repositories/auth_repository.dart';
-import 'package:hydroflow/features/auth/domain/entities/salesman.dart';
-import 'package:hydroflow/features/auth/presentation/bloc/auth_event.dart';
-import 'package:hydroflow/features/auth/presentation/bloc/auth_state.dart';
+import '../../domain/repositories/auth_repository.dart';
+import '../../domain/repositories/agency_repository.dart';
+import '../../domain/entities/salesman.dart';
+import '../../domain/entities/agency.dart';
+import 'auth_event.dart';
+import 'auth_state.dart';
 
 class AuthBloc extends Bloc<AuthEvent, AuthState> {
   final AuthRepository _authRepository;
+  final AgencyRepository _agencyRepository;
+  
   StreamSubscription<String?>? _authSubscription;
   StreamSubscription<Salesman>? _salesmanSubscription;
+  StreamSubscription<Agency>? _agencySubscription;
 
-  AuthBloc({required AuthRepository authRepository})
+  Salesman? _currentSalesman;
+  Agency? _currentAgency;
+
+  AuthBloc({
+    required AuthRepository authRepository,
+    required AgencyRepository agencyRepository,
+  })
     : _authRepository = authRepository,
+      _agencyRepository = agencyRepository,
       super(AuthInitial()) {
     on<AppStarted>(_onAppStarted);
     on<AuthLoginRequested>(_onLoginRequested);
@@ -48,12 +60,37 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         .listen(
           (salesman) {
             if (!isClosed) {
-              add(AuthStatusChanged(salesman));
+              _currentSalesman = salesman;
+              _subscribeToAgency(salesman.agencyId);
+              add(AuthStatusChanged(salesman, _currentAgency));
             }
           },
           onError: (error) {
             if (!isClosed) {
-              add(const AuthStatusChanged(null));
+              _currentSalesman = null;
+              add(const AuthStatusChanged(null, null));
+            }
+          },
+        );
+  }
+
+  void _subscribeToAgency(String agencyId) {
+    if (_agencySubscription != null && _currentAgency?.id == agencyId) return; // Already subscribed to this agency
+
+    _agencySubscription?.cancel();
+
+    _agencySubscription = _agencyRepository
+        .getAgencyStream(agencyId)
+        .listen(
+          (agency) {
+            if (!isClosed) {
+              _currentAgency = agency;
+              add(AuthStatusChanged(_currentSalesman, agency));
+            }
+          },
+          onError: (error) {
+            if (!isClosed) {
+              // Ignore agency errors or handle gracefully
             }
           },
         );
@@ -88,17 +125,36 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     AuthStatusChanged event,
     Emitter<AuthState> emit,
   ) async {
-    if (event.salesman != null && event.salesman is Salesman) {
-      final salesman = event.salesman as Salesman;
-      final bool isExpired = salesman.subscriptionExpiry != null && 
+    final salesman = event.salesman;
+    final agency = event.agency;
+
+    if (salesman != null) {
+      // Wait for agency data to load to prevent flashing the lock screen
+      if (salesman.agencyId.isNotEmpty && agency == null) {
+        return;
+      }
+
+      final bool isUserExpired = salesman.subscriptionExpiry != null && 
           salesman.subscriptionExpiry!.isBefore(DateTime.now());
       
-      if (!salesman.isActive || isExpired) {
-        emit(AuthSubscriptionExpired(salesman));
+      final bool isAgencyExpired = agency?.subscriptionExpiry != null &&
+          agency!.subscriptionExpiry!.isBefore(DateTime.now());
+
+      final bool isAgencyInactive = agency != null && agency.status != 'active';
+
+      if (!salesman.isActive || isUserExpired || isAgencyInactive || isAgencyExpired) {
+        emit(AuthSubscriptionExpired(salesman, agency));
       } else {
         emit(AuthAuthenticated(salesman));
       }
     } else {
+      _currentSalesman = null;
+      _currentAgency = null;
+      _salesmanSubscription?.cancel();
+      _salesmanSubscription = null;
+      _agencySubscription?.cancel();
+      _agencySubscription = null;
+      
       emit(AuthUnauthenticated());
     }
   }
@@ -107,6 +163,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   Future<void> close() {
     _authSubscription?.cancel();
     _salesmanSubscription?.cancel();
+    _agencySubscription?.cancel();
     return super.close();
   }
 }
