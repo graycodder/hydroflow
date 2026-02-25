@@ -103,7 +103,7 @@ class AgencyRepositoryImpl implements AgencyRepository {
   Future<void> resetDeviceBinding(String salesmanId) async {
     try {
       final ref = _database.ref().child('Salesmen').child(salesmanId);
-      await ref.update({'deviceId': null});
+      await ref.update({'deviceId': ''});
     } catch (e) {
       throw Exception('Failed to reset device binding: $e');
     }
