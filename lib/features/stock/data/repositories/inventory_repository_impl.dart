@@ -181,7 +181,10 @@ class InventoryRepositoryImpl implements InventoryRepository {
            final key = sortedKeys[i];
            final log = Map<String, dynamic>.from(data[key]);
            if (log['date'] != DateTime.now().toIso8601String().substring(0, 10)) {
-             carryForwardStock = (log['closingStock'] as num?)?.toInt() ?? 0;
+             final isReconciled = log['isReconciled'] == true;
+             carryForwardStock = isReconciled
+                 ? ((log['actualClosingStock'] as num?)?.toInt() ?? 0)
+                 : ((log['closingStock'] as num?)?.toInt() ?? 0);
              break;
            }
         }
@@ -285,7 +288,10 @@ class InventoryRepositoryImpl implements InventoryRepository {
            final key = sortedKeys[i];
            final log = Map<String, dynamic>.from(data[key]);
            if (log['date'] != DateTime.now().toIso8601String().substring(0, 10)) {
-             carryForwardStock = (log['closingStock'] as num?)?.toInt() ?? 0;
+             final isReconciled = log['isReconciled'] == true;
+             carryForwardStock = isReconciled
+                 ? ((log['actualClosingStock'] as num?)?.toInt() ?? 0)
+                 : ((log['closingStock'] as num?)?.toInt() ?? 0);
              break;
            }
         }

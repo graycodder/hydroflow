@@ -123,11 +123,11 @@ class ReportRepositoryImpl implements ReportRepository {
               (a, b) => (b['date'] as String).compareTo(a['date'] as String),
             );
             mostRecentPrevLog = sortedLogs.first;
-            // PROPER FIX: Prioritize 'actualClosingStock' (physical count) over calculated 'closingStock'
-            carriedForwardOpening =
-                (mostRecentPrevLog['actualClosingStock'] as num?)?.toInt() ??
-                (mostRecentPrevLog['closingStock'] as num?)?.toInt() ??
-                0;
+            final isReconciled = mostRecentPrevLog['isReconciled'] == true;
+            // PROPER FIX: Prioritize 'actualClosingStock' (physical count) over calculated 'closingStock' ONLY if reconciled
+            carriedForwardOpening = isReconciled
+                ? ((mostRecentPrevLog['actualClosingStock'] as num?)?.toInt() ?? 0)
+                : ((mostRecentPrevLog['closingStock'] as num?)?.toInt() ?? 0);
           }
         }
 
@@ -147,15 +147,15 @@ class ReportRepositoryImpl implements ReportRepository {
                 ?.toInt();
           }
 
-          // Bug Fix: If opening stock is 0 but we have a valid carry forward, use it.
-          // This fixes the specific issue user reported.
-          if (openingStock == 0 && carriedForwardOpening > 0) {
+          if (openingStock <= 0 && carriedForwardOpening > 0) {
             openingStock = carriedForwardOpening;
           }
         } else {
           // If no log for today yet, assume opening is carry forward
           openingStock = carriedForwardOpening;
         }
+
+        // Bug Fix: If openingStock is invalid (<= 0), we defer fixing it until we process transactions and can compute inferredOpening.
 
         // 3. Parse Salesman Data
         int currentStock = 0;
@@ -247,8 +247,21 @@ class ReportRepositoryImpl implements ReportRepository {
         }
 
         // 7. Stock Reconciliation
-        // Use our corrected openingStock
-        final finalOpening = openingStock;
+        int finalOpening = openingStock;
+
+        // Mathematical fallback: True Opening Stock = Current Stock - Loaded + Delivered + Damaged
+        final int inferredOpening = currentStock - loaded + effectiveDelivered + damaged;
+
+        if (finalOpening <= 0) {
+           if (inferredOpening > 0) {
+             finalOpening = inferredOpening;
+           } else if (carriedForwardOpening > 0) {
+             finalOpening = carriedForwardOpening;
+           } else {
+             finalOpening = 0; // Prevent negative opening stock display
+           }
+        }
+
         final finalAvailable = finalOpening + loaded;
         final calculatedClosing = finalAvailable - effectiveDelivered - damaged;
 
@@ -549,8 +562,13 @@ class ReportRepositoryImpl implements ReportRepository {
             calculatedOpening + totalLoaded - effectiveDelivered - totalDamaged;
       }
 
-      // Safety clamp
-      if (calculatedOpening < 0) calculatedOpening = 0;
+      if (calculatedOpening < 0) {
+         if (isCurrentMonth) {
+            calculatedOpening = currentStock + effectiveDelivered + totalDamaged - totalLoaded;
+         }
+         if (calculatedOpening < 0) calculatedOpening = 0;
+      }
+      
       if (calculatedClosing < 0) calculatedClosing = 0;
 
       final totalAvailable = calculatedOpening + totalLoaded;
