@@ -1,6 +1,8 @@
 import 'dart:async';
 import 'package:firebase_database/firebase_database.dart';
-import 'dart:io';
+import 'dart:io' show Platform;
+import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:uuid/uuid.dart';
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -92,13 +94,28 @@ class AuthRepositoryImpl implements AuthRepository {
           }
 
           if (currentDeviceId != null) {
-            if (role == 'salesman') {
+            if (role == 'salesman' || role == 'Salesman') {
+              // 1. Check if ANY OTHER salesman is using this device
+              final deviceQuery = await ref
+                  .orderByChild('deviceId')
+                  .equalTo(currentDeviceId)
+                  .get();
+
+              if (deviceQuery.exists) {
+                final matchNode = deviceQuery.children.first;
+                if (matchNode.key != uid) {
+                  // The device is bound to someone else
+                  throw Exception('This device is already in use by another salesman.');
+                }
+              }
+
+              // 2. Enforce this salesman's device binding
               if (storedDeviceId == null || storedDeviceId.isEmpty) {
                 // First login: Bind device
                 await ref.child(uid).update({'deviceId': currentDeviceId});
               } else if (storedDeviceId != currentDeviceId) {
                 // Mismatch: Block login
-                throw Exception('This account is linked to another device. Contact admin to reset.');
+                throw Exception('Unauthorized Device: You are already registered on another mobile. Please contact Admin.');
               }
             } else {
               // For other roles (like owner), just update deviceId for tracking
@@ -124,17 +141,18 @@ class AuthRepositoryImpl implements AuthRepository {
   }
 
   Future<String?> _getDeviceId() async {
-    final DeviceInfoPlugin deviceInfo = DeviceInfoPlugin();
     try {
-      if (Platform.isAndroid) {
-        final AndroidDeviceInfo androidInfo = await deviceInfo.androidInfo;
-        return androidInfo.id; // Unique ID on Android
-      } else if (Platform.isIOS) {
-        final IosDeviceInfo iosInfo = await deviceInfo.iosInfo;
-        return iosInfo.identifierForVendor; // Unique ID on iOS
+      // Use SharedPreferences to generate and store a persistent UUID for the device.
+      // This is unique per app install and avoids unreliable hardware IDs.
+      final prefs = await SharedPreferences.getInstance();
+      String? appDeviceId = prefs.getString('app_device_id');
+      if (appDeviceId == null) {
+        appDeviceId = const Uuid().v4();
+        await prefs.setString('app_device_id', appDeviceId);
       }
+      return appDeviceId;
     } catch (e) {
-      print('Failed to get device ID: $e');
+      print('Failed to get or generate device ID: $e');
     }
     return null;
   }
