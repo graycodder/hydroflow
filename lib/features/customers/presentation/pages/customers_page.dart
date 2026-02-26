@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:hydroflow/core/service_locator.dart';
 import 'package:hydroflow/core/widgets/app_bottom_bar.dart';
@@ -96,7 +95,7 @@ class _CustomersPageState extends State<CustomersPage> {
                           padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
                           child: Text(
                             isAgency ? 'Agency Customers' : 'My Customers',
-                            style: GoogleFonts.inter(
+                            style: const TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.bold,
                               color: Colors.black87,

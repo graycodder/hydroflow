@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:hydroflow/core/widgets/app_bottom_bar.dart';
 import 'package:hydroflow/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:hydroflow/features/auth/presentation/bloc/auth_state.dart';
@@ -100,7 +99,7 @@ class _SalesmanBottleLedgerPageState extends State<SalesmanBottleLedgerPage> wit
                     children: [
                       Text(
                         'Physical Bottle Ledger',
-                        style: GoogleFonts.inter(
+                        style: const TextStyle(
                           fontSize: 22,
                           fontWeight: FontWeight.bold,
                           color: Colors.black,

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:google_fonts/google_fonts.dart'; // Assuming google_fonts is available
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:hydroflow/core/service_locator.dart';
 import 'package:hydroflow/core/widgets/app_bottom_bar.dart';
@@ -95,7 +94,7 @@ class _BottlesPageState extends State<BottlesPage> {
                              if(!isAgency)
                             Text(
                               isAgency ? 'Agency Bottle Ledger' : 'Bottle Debt Ledger',
-                              style: GoogleFonts.inter(
+                              style: const TextStyle(
                                 fontSize: 24,
                                 fontWeight: FontWeight.bold,
                                 color: Colors.black, // Dark text

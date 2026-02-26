@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
-import 'package:google_fonts/google_fonts.dart';
+
 import 'package:hydroflow/features/customers/domain/entities/customer.dart';
 import 'package:hydroflow/features/auth/domain/entities/salesman.dart';
 import 'package:hydroflow/features/customers/presentation/bloc/customer_bloc.dart';

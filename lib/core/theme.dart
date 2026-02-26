@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
+
 
 class CodeTheme {
   static ThemeData get lightTheme {
@@ -14,7 +14,8 @@ class CodeTheme {
         background: const Color(0xFFF1F5F9), // Light Gray Background
       ),
       scaffoldBackgroundColor: const Color(0xFFF1F5F9),
-      textTheme: GoogleFonts.outfitTextTheme().apply(
+      fontFamily: 'OpenSans',
+      textTheme: const TextTheme().apply(
         bodyColor: const Color(0xFF111827), // Gray 900
         displayColor: const Color(0xFF111827),
       ),
@@ -67,7 +68,7 @@ class CodeTheme {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
           ),
-          textStyle: GoogleFonts.outfit(
+          textStyle: const TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.w600,
           ),
