@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hydroflow/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:hydroflow/features/auth/presentation/bloc/auth_state.dart';
+import 'package:hydroflow/features/notifications/domain/entities/notification_entity.dart';
 import 'package:hydroflow/features/notifications/presentation/bloc/notification_bloc.dart';
 import 'package:hydroflow/features/notifications/presentation/widgets/notification_item.dart';
 import 'package:hydroflow/core/service_locator.dart';
@@ -20,59 +21,67 @@ class NotificationsPage extends StatelessWidget {
 
     return BlocProvider(
       create: (context) => sl<NotificationBloc>()..add(LoadNotifications(uid)),
-      child: Scaffold(
-        backgroundColor: Colors.white,
-        appBar: AppBar(
-          backgroundColor: Colors.white,
-          elevation: 0,
-          automaticallyImplyLeading: false,
-          title: const Text(
-            'Notifications',
-            style: TextStyle(
-              color: Colors.black,
-              fontWeight: FontWeight.bold,
-              fontSize: 24,
-            ),
-          ),
-          actions: [
-            IconButton(
-              icon: const Icon(Icons.close, color: Colors.grey),
-              onPressed: () => context.pop(),
-            ),
-          ],
-        ),
-        body: BlocBuilder<NotificationBloc, NotificationState>(
-          builder: (context, state) {
-            return Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                if (state is NotificationLoaded && state.notifications.any((n) => !n.isRead))
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                    child: Align(
-                      alignment: Alignment.center,
-                      child: TextButton(
-                        onPressed: () {
-                          context.read<NotificationBloc>().add(MarkAllAsRead(uid));
-                        },
-                        child: const Text(
-                          'Mark all as read',
-                          style: TextStyle(
-                            color: Colors.black,
-                            fontWeight: FontWeight.w600,
-                          ),
+      child: BlocBuilder<NotificationBloc, NotificationState>(
+        builder: (context, state) {
+          final int unreadCount = state is NotificationLoaded
+              ? state.notifications.where((n) => !n.isRead).length
+              : 0;
+          final bool hasUnread = unreadCount > 0;
+
+          return Scaffold(
+            backgroundColor: Colors.white,
+            appBar: AppBar(
+              backgroundColor: Colors.white,
+              elevation: 0,
+              automaticallyImplyLeading: false,
+              title: Row(
+                children: [
+                  const Text(
+                    'Notifications',
+                    style: TextStyle(
+                      color: Colors.black,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 24,
+                    ),
+                  ),
+                  if (hasUnread) ...[
+                    const SizedBox(width: 8),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                      decoration: BoxDecoration(
+                        color: Colors.red,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Text(
+                        '$unreadCount',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
                         ),
                       ),
                     ),
+                  ],
+                ],
+              ),
+              actions: [
+                if (hasUnread)
+                  IconButton(
+                    tooltip: 'Mark all as read',
+                    icon: const Icon(Icons.done_all_rounded, color: Colors.blue),
+                    onPressed: () {
+                      context.read<NotificationBloc>().add(MarkAllAsRead(uid));
+                    },
                   ),
-                const SizedBox(height: 16),
-                Expanded(
-                  child: _buildBody(context, state, uid),
+                IconButton(
+                  icon: const Icon(Icons.close, color: Colors.grey),
+                  onPressed: () => context.pop(),
                 ),
               ],
-            );
-          },
-        ),
+            ),
+            body: _buildBody(context, state, uid),
+          );
+        },
       ),
     );
   }
@@ -88,31 +97,104 @@ class NotificationsPage extends StatelessWidget {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(Icons.notifications_none, size: 64, color: Colors.grey[300]),
+              Icon(Icons.notifications_none, size: 72, color: Colors.grey[300]),
               const SizedBox(height: 16),
               Text(
+                "You're all caught up!",
+                style: TextStyle(
+                  color: Colors.grey[600],
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
                 'No notifications yet',
-                style: TextStyle(color: Colors.grey[500], fontSize: 16),
+                style: TextStyle(color: Colors.grey[400], fontSize: 14),
               ),
             ],
           ),
         );
       }
-      return ListView.separated(
-        padding: const EdgeInsets.all(16),
-        itemCount: state.notifications.length,
-        separatorBuilder: (context, index) => const SizedBox(height: 16),
+
+      // Group notifications by date
+      final grouped = _groupByDate(state.notifications);
+
+      return ListView.builder(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        itemCount: grouped.length,
         itemBuilder: (context, index) {
-          final notification = state.notifications[index];
-          return NotificationItem(
-            notification: notification,
-            onRead: notification.isRead 
-                ? null 
-                : () => context.read<NotificationBloc>().add(MarkAsRead(uid, notification.id)),
+          final item = grouped[index];
+
+          // Date header
+          if (item is String) {
+            return Padding(
+              padding: const EdgeInsets.only(top: 16, bottom: 8),
+              child: Text(
+                item,
+                style: const TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
+                  color: Colors.grey,
+                  letterSpacing: 0.5,
+                ),
+              ),
+            );
+          }
+
+          // Notification item
+          final notification = item as NotificationEntity;
+          return Padding(
+            padding: const EdgeInsets.only(bottom: 12),
+            child: NotificationItem(
+              notification: notification,
+              onRead: notification.isRead
+                  ? null
+                  : () => context
+                      .read<NotificationBloc>()
+                      .add(MarkAsRead(uid, notification.id)),
+            ),
           );
         },
       );
     }
     return const SizedBox();
+  }
+
+  /// Groups notifications inserting String date-header entries before each group.
+  List<dynamic> _groupByDate(List<NotificationEntity> notifications) {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final yesterday = today.subtract(const Duration(days: 1));
+    final thisWeekStart = today.subtract(Duration(days: today.weekday - 1));
+
+    final result = <dynamic>[];
+    String? currentGroup;
+
+    for (final notification in notifications) {
+      final d = DateTime(
+        notification.timestamp.year,
+        notification.timestamp.month,
+        notification.timestamp.day,
+      );
+
+      final String group;
+      if (d == today) {
+        group = 'Today';
+      } else if (d == yesterday) {
+        group = 'Yesterday';
+      } else if (d.isAfter(thisWeekStart)) {
+        group = 'This Week';
+      } else {
+        group = 'Older';
+      }
+
+      if (group != currentGroup) {
+        result.add(group);
+        currentGroup = group;
+      }
+      result.add(notification);
+    }
+    return result;
   }
 }
