@@ -9,7 +9,10 @@ class AgencyModel extends Agency {
     super.contactPhone,
     super.address,
     super.status,
+    super.subscriptionId,
+    super.subscriptionStartDate,
     super.subscriptionExpiry,
+    super.lastNotificationDate,
     super.warehouseFullStock,
     super.warehouseEmptyStock,
     super.warehouseDamagedStock,
@@ -35,7 +38,7 @@ class AgencyModel extends Agency {
     final subData = data['subscription'];
     
     if (subData is Map) {
-      if (subData.containsKey('maxCustomers')) {
+      if (subData.containsKey('maxCustomers') || subData.containsKey('subEndDate') || subData.containsKey('expiryDate') || subData.containsKey('status')) {
          // Direct structure (User's latest format)
          activeSub = Map<String, dynamic>.from(subData);
       } else if (subData.containsKey('0') && subData['0'] is Map) {
@@ -45,6 +48,9 @@ class AgencyModel extends Agency {
          final firstValue = subData.values.first;
          if (firstValue is Map) {
              activeSub = Map<String, dynamic>.from(firstValue);
+         } else {
+             // Fallback: It's a map but doesn't have nested objects
+             activeSub = Map<String, dynamic>.from(subData);
          }
       }
     } else if (subData is List && subData.isNotEmpty && subData.first is Map) {
@@ -57,13 +63,21 @@ class AgencyModel extends Agency {
     // Extract fields from subscription if available, otherwise fallback to root (for legacy/backward compat)
     // Status is at root-level agency node (set by admin)
     final rootStatus = data['status'] as String? ?? 'active';
-    // subscriptionExpiry: check subscription sub-object first, then root-level fallback
-    final subExpiry = activeSub?['expiryDate'] != null
-          ? DateTime.tryParse(activeSub!['expiryDate'].toString())
+    // subscriptionExpiry: check subscription sub-object first (subEndDate or expiryDate), then root-level fallback
+    final subExpiryStr = activeSub?['subEndDate']?.toString() ?? activeSub?['expiryDate']?.toString();
+    
+    final subExpiry = subExpiryStr != null
+          ? DateTime.tryParse(subExpiryStr)
           : (data['subscriptionExpiry'] != null
               ? DateTime.tryParse(data['subscriptionExpiry'].toString())
               : null);
     final subMaxCustomers = (activeSub?['maxCustomers'] as num?)?.toInt();
+    
+    final subId = activeSub?['subId']?.toString();
+    final subStartDateStr = activeSub?['subStartDate']?.toString();
+    final subStartDate = subStartDateStr != null ? DateTime.tryParse(subStartDateStr) : null;
+    final subLastNotifStr = activeSub?['lastNotification']?.toString();
+    final subLastNotifDate = subLastNotifStr != null ? DateTime.tryParse(subLastNotifStr) : null;
     
     // Root level fallback
     final rootMaxCustomers = (data['maxCustomers'] as num?)?.toInt() ?? 0;
@@ -75,7 +89,10 @@ class AgencyModel extends Agency {
       contactPhone: data['contactPhone'] as String? ?? '',
       address: data['address'] as String? ?? '',
       status: rootStatus, // Status from root agency node (admin-controlled)
+      subscriptionId: subId,
+      subscriptionStartDate: subStartDate,
       subscriptionExpiry: subExpiry,
+      lastNotificationDate: subLastNotifDate,
       warehouseFullStock: (stock?['fullCans'] as num?)?.toInt() ?? 0,
       warehouseEmptyStock: (stock?['emptyCans'] as num?)?.toInt() ?? 0,
       warehouseDamagedStock: (stock?['damagedCans'] as num?)?.toInt() ?? 0,
@@ -92,6 +109,7 @@ class AgencyModel extends Agency {
     );
   }
 
+
   Map<String, dynamic> toMap() {
     return {
       'name': name,
@@ -99,13 +117,14 @@ class AgencyModel extends Agency {
       'contactPhone': contactPhone,
       'address': address,
       'status': status, // Also write at root level so admin UI updates are reflected
-      'subscriptionExpiry': subscriptionExpiry?.toIso8601String(),
       'maxSalesmen': maxSalesmen,
       'maxCustomers': maxCustomers,
       'totalCustomersCount': totalCustomersCount,
       'subscription': {
-        'status': status,
-        'expiryDate': subscriptionExpiry?.toIso8601String(),
+        if (subscriptionId != null) 'subId': subscriptionId,
+        if (subscriptionStartDate != null) 'subStartDate': subscriptionStartDate?.toIso8601String(),
+        if (subscriptionExpiry != null) 'subEndDate': subscriptionExpiry?.toIso8601String(),
+        if (lastNotificationDate != null) 'lastNotification': lastNotificationDate?.toIso8601String(),
       },
       'stock': {
         'fullCans': warehouseFullStock,

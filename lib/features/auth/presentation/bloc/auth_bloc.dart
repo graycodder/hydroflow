@@ -137,8 +137,9 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       final bool isUserExpired = salesman.subscriptionExpiry != null && 
           salesman.subscriptionExpiry!.isBefore(DateTime.now());
       
-      final bool isAgencyExpired = agency?.subscriptionExpiry != null &&
-          agency!.subscriptionExpiry!.isBefore(DateTime.now());
+      // If agency is present but has NO expiry date, treat it as expired.
+      final bool isAgencyExpired = agency != null && 
+          (agency.subscriptionExpiry == null || agency.subscriptionExpiry!.isBefore(DateTime.now()));
 
       final bool isAgencyInactive = agency != null && agency.status != 'active';
 

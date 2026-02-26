@@ -7,7 +7,10 @@ class Agency extends Equatable {
   final String contactPhone;
   final String address;
   final String status;
+  final String? subscriptionId;
+  final DateTime? subscriptionStartDate;
   final DateTime? subscriptionExpiry;
+  final DateTime? lastNotificationDate;
   final int warehouseFullStock;
   final int warehouseEmptyStock;
   final int warehouseDamagedStock;
@@ -27,7 +30,10 @@ class Agency extends Equatable {
     this.contactPhone = '',
     this.address = '',
     this.status = 'active',
+    this.subscriptionId,
+    this.subscriptionStartDate,
     this.subscriptionExpiry,
+    this.lastNotificationDate,
     this.warehouseFullStock = 0,
     this.warehouseEmptyStock = 0,
     this.warehouseDamagedStock = 0,
@@ -49,7 +55,10 @@ class Agency extends Equatable {
     contactPhone,
     address,
     status,
+    subscriptionId,
+    subscriptionStartDate,
     subscriptionExpiry,
+    lastNotificationDate,
     warehouseFullStock,
     warehouseEmptyStock,
     warehouseDamagedStock,
@@ -76,7 +85,10 @@ class Agency extends Equatable {
       contactPhone: contactPhone,
       address: address,
       status: status,
+      subscriptionId: subscriptionId,
+      subscriptionStartDate: subscriptionStartDate,
       subscriptionExpiry: subscriptionExpiry,
+      lastNotificationDate: lastNotificationDate,
       warehouseFullStock: warehouseFullStock,
       warehouseEmptyStock: warehouseEmptyStock,
       warehouseDamagedStock: warehouseDamagedStock,
