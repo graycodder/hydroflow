@@ -83,6 +83,7 @@ class _DashboardPageState extends State<DashboardPage> with RouteAware {
       builder: (context, authState) {
         if (authState is AuthAuthenticated) {
           final salesman = authState.salesman;
+          final agency = authState.agency;
           // Trigger initial load if not already loaded or if view changed - simplified for now to just load on build for this example, 
           // but ideally we should check if bloc has data or use a separate init method.
           // For this specific flow, let's trigger it once via a post-frame callback if needed, or rely on the user interacting.
@@ -90,9 +91,9 @@ class _DashboardPageState extends State<DashboardPage> with RouteAware {
           if (context.read<DashboardBloc>().state is DashboardInitial) {
              _loadDashboardData(salesman);
           }
-          
+  
           // Subscription Logic
-          final expiry = salesman.subscriptionExpiry;
+          final expiry = agency?.subscriptionExpiry;
           final now = DateTime.now();
           final daysRemaining = expiry != null ? expiry.difference(now).inDays : 0;
           final expiryDateStr = expiry != null ? DateFormat('d MMM y').format(expiry) : 'Unknown';
@@ -121,14 +122,14 @@ class _DashboardPageState extends State<DashboardPage> with RouteAware {
                           child: DropdownButton<String>(
                             value: _isAgencyView ? 'agency' : 'personal',
                             isExpanded: true,
-                            items: const [
+                            items:  [
                               DropdownMenuItem(
                                 value: 'personal',
                                 child: Row(
                                   children: [
                                     Icon(Icons.person, size: 20, color: Colors.blue),
                                     SizedBox(width: 8),
-                                    Text("My Personal Stats"),
+                                    Text(salesman.name?? ""),
                                   ],
                                 ),
                               ),
@@ -138,7 +139,7 @@ class _DashboardPageState extends State<DashboardPage> with RouteAware {
                                   children: [
                                     Icon(Icons.business, size: 20, color: Colors.purple),
                                     SizedBox(width: 8),
-                                    Text("Agency Stats (Warehouse)"),
+                                    Text("Agency (Warehouse)"),
                                   ],
                                 ),
                               ),

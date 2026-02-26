@@ -15,11 +15,12 @@ class AuthLoading extends AuthState {}
 
 class AuthAuthenticated extends AuthState {
   final Salesman salesman;
+  final Agency? agency;
 
-  const AuthAuthenticated(this.salesman);
+  const AuthAuthenticated(this.salesman, [this.agency]);
 
   @override
-  List<Object?> get props => [salesman];
+  List<Object?> get props => [salesman, agency];
 }
 
 class AuthUnauthenticated extends AuthState {}

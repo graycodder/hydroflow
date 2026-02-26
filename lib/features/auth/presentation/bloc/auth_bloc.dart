@@ -146,7 +146,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       if (!salesman.isActive || isUserExpired || isAgencyInactive || isAgencyExpired) {
         emit(AuthSubscriptionExpired(salesman, agency));
       } else {
-        emit(AuthAuthenticated(salesman));
+        emit(AuthAuthenticated(salesman, agency));
       }
     } else {
       _currentSalesman = null;
