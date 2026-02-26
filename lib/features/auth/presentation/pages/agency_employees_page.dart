@@ -584,7 +584,10 @@ class _SummaryHeader extends StatelessWidget {
               const Icon(Icons.people_rounded, color: Colors.white, size: 20),
               const SizedBox(width: 8),
               Text(
-                agency?.name ?? 'Staff Overview',
+                (agency?.name?.isNotEmpty == true)
+                    ? agency!.name![0].toUpperCase() +
+                        agency!.name!.substring(1)
+                    : 'Staff Overview',
                 style: const TextStyle(
                   color: Colors.white,
                   fontSize: 16,
@@ -828,7 +831,8 @@ class _SalesmanCard extends StatelessWidget {
                           children: [
                             Expanded(
                               child: Text(
-                                salesman.name,
+                                 salesman.name[0].toUpperCase() +
+                                 salesman.name.substring(1) ?? "",
                                 style: const TextStyle(
                                   fontWeight: FontWeight.bold,
                                   fontSize: 16,
