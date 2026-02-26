@@ -2,6 +2,7 @@ import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
 import 'package:intl/intl.dart';
+import 'package:flutter/services.dart';
 
 class ReceiptPdfGenerator {
   static Future<void> generateAndShare({
@@ -25,9 +26,12 @@ class ReceiptPdfGenerator {
     pw.Font fontBold;
     
     try {
-      // Load fonts for Unicode support (Rupee symbol etc)
-      font = await PdfGoogleFonts.interRegular();
-      fontBold = await PdfGoogleFonts.interBold();
+      // Load local Helvetica font from assets
+      final fontData = await rootBundle.load('assets/fonts/Helvetica/Helvetica.ttf');
+      font = pw.Font.ttf(fontData);
+
+      final fontBoldData = await rootBundle.load('assets/fonts/Helvetica/Helvetica-Bold.ttf');
+      fontBold = pw.Font.ttf(fontBoldData);
     } catch (e) {
       // Fallback to built-in fonts if offline or Google Fonts fail
       font = pw.Font.helvetica();

@@ -140,4 +140,10 @@ flutter:
           weight: 800
         - asset: assets/fonts/Inter/static/Inter_18pt-Black.ttf
           weight: 900
+    - family: Helvetica
+      fonts:
+        - asset: assets/fonts/Helvetica/Helvetica.ttf
+          weight: 400
+        - asset: assets/fonts/Helvetica/Helvetica-Bold.ttf
+          weight: 700
       
