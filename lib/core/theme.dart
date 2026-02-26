@@ -14,7 +14,7 @@ class CodeTheme {
         background: const Color(0xFFF1F5F9), // Light Gray Background
       ),
       scaffoldBackgroundColor: const Color(0xFFF1F5F9),
-      fontFamily: 'OpenSans',
+      fontFamily: 'Inter',
       textTheme: const TextTheme().apply(
         bodyColor: const Color(0xFF111827), // Gray 900
         displayColor: const Color(0xFF111827),
