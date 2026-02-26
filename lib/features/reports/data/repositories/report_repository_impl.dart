@@ -296,12 +296,11 @@ class ReportRepositoryImpl implements ReportRepository {
 
         // 2. Fallback logic if no snapshot exists
         if (!usedSnapshot) {
-          // Fallback: live balance - today's cash collection
-          // We remove "+ settlementAmountToday" because settling a balance means
-          // the money has been collected and cleared. By removing the addition of settlementAmountToday, 
-          // we allow the Old Balance to accurately reflect the balance cleared by settlement.
+          // Fallback: Reconstruct Start of Day Balance
+          // Live Balance = Start of Day Balance + Today's Cash Collected (cashInHand) - Today's Settlement
+          // Therefore: Start of Day Balance = Live Balance - cashInHand + settlementAmountToday
           salesmanPreviousBalanceAtStart =
-              pendingCashBalance - cashInHand;
+              pendingCashBalance - cashInHand + settlementAmountToday;
 
           // Safety Guard: The live balance calculation can sometimes go negative
           // due to out-of-sync legacy data. Never show a negative "Old Balance"

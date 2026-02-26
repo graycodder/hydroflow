@@ -63,11 +63,23 @@ class _BootstrapAppState extends State<BootstrapApp> {
 
       // Pass all uncaught "fatal" errors from the framework to Crashlytics
       FlutterError.onError = (errorDetails) {
+        final errorStr = errorDetails.exceptionAsString();
+        if (errorStr.contains('MissingPluginException') && 
+            errorStr.contains('No implementation found for method cancel on channel')) {
+          // Ignore known teardown exception on stream cancellations
+          return;
+        }
         FirebaseCrashlytics.instance.recordFlutterFatalError(errorDetails);
       };
 
       // Pass all uncaught asynchronous errors that aren't handled by the Flutter framework to Crashlytics
       PlatformDispatcher.instance.onError = (error, stack) {
+        final errorStr = error.toString();
+        if (errorStr.contains('MissingPluginException') && 
+            errorStr.contains('No implementation found for method cancel on channel')) {
+          // Ignore known teardown exception on stream cancellations
+          return true;
+        }
         FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
         return true;
       };
