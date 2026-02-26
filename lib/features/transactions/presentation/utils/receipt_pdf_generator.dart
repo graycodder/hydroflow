@@ -26,8 +26,8 @@ class ReceiptPdfGenerator {
     
     try {
       // Load fonts for Unicode support (Rupee symbol etc)
-      font = await PdfGoogleFonts.openSansRegular();
-      fontBold = await PdfGoogleFonts.openSansBold();
+      font = await PdfGoogleFonts.interRegular();
+      fontBold = await PdfGoogleFonts.interBold();
     } catch (e) {
       // Fallback to built-in fonts if offline or Google Fonts fail
       font = pw.Font.helvetica();
