@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:hydroflow/features/auth/presentation/bloc/auth_bloc.dart';
+import 'package:hydroflow/features/auth/presentation/bloc/auth_state.dart';
 import 'package:hydroflow/features/notifications/presentation/bloc/notification_bloc.dart';
 
 class HydroFlowAppBar extends StatelessWidget implements PreferredSizeWidget {
@@ -15,6 +17,10 @@ class HydroFlowAppBar extends StatelessWidget implements PreferredSizeWidget {
 
   @override
   Widget build(BuildContext context) {
+    final authState = context.read<AuthBloc>().state;
+    final role = authState is AuthAuthenticated ? authState.salesman.role : '';
+    final bool canShowNotifications = showNotifications && role != 'salesman';
+
     return AppBar(
       backgroundColor: Colors.white,
       elevation: 0,
@@ -33,7 +39,7 @@ class HydroFlowAppBar extends StatelessWidget implements PreferredSizeWidget {
         ],
       ),
       actions: [
-        if (showNotifications)
+        if (canShowNotifications)
           BlocBuilder<NotificationBloc, NotificationState>(
             builder: (context, state) {
               int unreadCount = 0;
