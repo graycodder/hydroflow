@@ -17,9 +17,7 @@ import 'package:hydroflow/features/notifications/presentation/bloc/notification_
 import 'package:hydroflow/features/dashboard/presentation/bloc/dashboard_bloc.dart';
 import 'package:hydroflow/features/dashboard/presentation/bloc/dashboard_event.dart';
 import 'package:hydroflow/features/auth/presentation/bloc/auth_state.dart';
-
 import 'package:flutter_native_splash/flutter_native_splash.dart';
-
 import 'package:hydroflow/features/splash/presentation/widgets/splash_view.dart';
 import 'package:hydroflow/core/utils/router_refresh_listenable.dart';
 import 'package:hydroflow/core/bloc/connectivity/connectivity_bloc.dart';
