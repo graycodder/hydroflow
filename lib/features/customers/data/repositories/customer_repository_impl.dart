@@ -91,6 +91,12 @@ class CustomerRepositoryImpl implements CustomerRepository {
         map['customerCount'] = count + 1;
         map['activeCustomers'] = ((map['activeCustomers'] as num?)?.toInt() ?? 0) + 1;
         map['totalDepositsHeld'] = ((map['totalDepositsHeld'] as num?)?.toDouble() ?? 0.0) + customer.securityDeposit;
+        
+        if (customer.securityDeposit > 0 && customer.paymentMode == 'Cash') {
+          map['pendingCashBalance'] = ((map['pendingCashBalance'] as num?)?.toDouble() ?? 0.0) + customer.securityDeposit;
+          map['_lastUpdateBalance'] = map['pendingCashBalance'];
+        }
+        
         return Transaction.success(map);
       });
 
@@ -116,11 +122,15 @@ class CustomerRepositoryImpl implements CustomerRepository {
 
         if (!agencyTx.committed) {
           // Rollback Salesman increment if Agency limit fails
-          await salesmanRef.update({
+          final updates = <String, Object?>{
             'customerCount': ServerValue.increment(-1),
             'activeCustomers': ServerValue.increment(-1),
             'totalDepositsHeld': ServerValue.increment(-customer.securityDeposit),
-          });
+          };
+          if (customer.securityDeposit > 0 && customer.paymentMode == 'Cash') {
+            updates['pendingCashBalance'] = ServerValue.increment(-customer.securityDeposit);
+          }
+          await salesmanRef.update(updates);
           throw Exception('Agency-wide customer limit (Subscription) has been reached.');
         }
       }
@@ -309,9 +319,13 @@ class CustomerRepositoryImpl implements CustomerRepository {
       if (depositDiff != 0) {
         // Update Salesman
         final salesmanRef = _database.ref().child('Salesmen/${customer.salesmanId}');
-        await salesmanRef.update({
+        final updates = <String, Object?>{
           'totalDepositsHeld': ServerValue.increment(depositDiff),
-        });
+        };
+        if (customer.paymentMode == 'Cash') {
+          updates['pendingCashBalance'] = ServerValue.increment(depositDiff);
+        }
+        await salesmanRef.update(updates);
 
         // Record Transaction
         final txRef = _database.ref().child('Transactions').push();

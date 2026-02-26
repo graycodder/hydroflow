@@ -68,6 +68,8 @@ class ReportEntity extends Equatable {
   final bool isSettled;
   final double settlementAmountToday;
   final double salesmanPreviousBalance;
+  /// Live accumulated cash balance from the Salesman node.
+  final double pendingCashBalance;
 
   const ReportEntity({
     required this.date,
@@ -115,6 +117,7 @@ class ReportEntity extends Equatable {
     this.isSettled = false,
     this.settlementAmountToday = 0.0,
     this.salesmanPreviousBalance = 0.0,
+    this.pendingCashBalance = 0.0,
   });
 
   @override
@@ -164,5 +167,6 @@ class ReportEntity extends Equatable {
         isSettled,
         settlementAmountToday,
         salesmanPreviousBalance,
+        pendingCashBalance,
       ];
 }

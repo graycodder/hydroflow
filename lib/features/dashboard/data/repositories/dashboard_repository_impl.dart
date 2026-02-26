@@ -21,8 +21,8 @@ class DashboardRepositoryImpl implements DashboardRepository {
       // --- AGENCY VIEW (OWNER) ---
       // We leverage the existing, highly accurate getAgencyDailyReport to aggregate stats cleanly.
       return _reportRepository!.getAgencyDailyReport(agencyId, DateTime.now()).map((report) {
-         // Formula: Cash currently in salesmen's hands (including older balances) - What they settled today 
-         double pending = report.cashInHand + report.salesmanPreviousBalance - report.settlementAmountToday;
+         // Use the live pendingCashBalance which naturally carries forward across days
+         double pending = report.pendingCashBalance;
          if (pending < 0) pending = 0;
 
          return DashboardSummaryModel.fromValues(
@@ -52,26 +52,25 @@ class DashboardRepositoryImpl implements DashboardRepository {
           int currentStock = 0;
           int activeCount = 0;
           int customerCount = 0;
+          double pendingAmounts = 0.0;
           
           if (salesmanEvent.snapshot.exists) {
             final data = Map<String, dynamic>.from(salesmanEvent.snapshot.value as Map);
             currentStock = (data['currentStock'] as num?)?.toInt() ?? 0;
             activeCount = (data['activeCustomers'] as num?)?.toInt() ?? 0;
             customerCount = (data['customerCount'] as num?)?.toInt() ?? 0;
+            pendingAmounts = (data['pendingCashBalance'] as num?)?.toDouble() ?? 0.0;
+            if (pendingAmounts < 0) pendingAmounts = 0;
           }
-
           double todaySales = 0.0;
           double todayCollection = 0.0;
           int todayDeliveries = 0;
-          double pendingAmounts = 0.0;
 
           if (logEvent.snapshot.exists) {
             final data = Map<String, dynamic>.from(logEvent.snapshot.value as Map);
             todaySales = (data['totalSalesValue'] as num?)?.toDouble() ?? 0.0;
             todayCollection = (data['todayCollection'] as num?)?.toDouble() ?? 0.0;
             todayDeliveries = (data['totalDelivered'] as num?)?.toInt() ?? 0;
-            pendingAmounts = todaySales - todayCollection;
-            if(pendingAmounts < 0) pendingAmounts = 0;
           }
 
           return DashboardSummaryModel.fromValues(

@@ -138,8 +138,8 @@ class AgencyDailyReportView extends StatelessWidget {
                     const Divider(height: 16),
                     _buildBreakdownRow(
                       "Total Outstanding",
-                      "₹${(subReport.cashInHand + subReport.salesmanPreviousBalance - subReport.settlementAmountToday).clamp(0.0, double.infinity).toStringAsFixed(0)}",
-                      (subReport.cashInHand + subReport.salesmanPreviousBalance - subReport.settlementAmountToday) > 0 ? Colors.red : Colors.green,
+                      "₹${subReport.pendingCashBalance.clamp(0.0, double.infinity).toStringAsFixed(0)}",
+                      subReport.pendingCashBalance > 0 ? Colors.red : Colors.green,
                       isBold: true,
                     ),
                     const SizedBox(height: 8),
