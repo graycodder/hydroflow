@@ -231,12 +231,107 @@ class _StockPageState extends State<StockPage> {
                                     ],
                                   ),
                                 ],
+                                if (!isAgency) ...[
+                                  const SizedBox(height: 20),
+                                  const Divider(color: Colors.white24, height: 1),
+                                  const SizedBox(height: 16),
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.spaceAround,
+                                    children: [
+                                      _buildQuickStat(
+                                        'Full (In Hand)',
+                                        '${salesman.currentStock}',
+                                        Icons.check_circle_outline,
+                                      ),
+                                      _buildQuickStat(
+                                        'Empty (In Hand)',
+                                        '${salesman.emptyBottles}',
+                                        Icons.hourglass_empty,
+                                      ),
+                                    ],
+                                  ),
+                                ],
                               ],
                             ),
                           ),
                           const SizedBox(height: 24),
 
-                          // Opening Stock Section (Unset)
+                          // Today's Log Summary (Salesman only)
+                          if (!isAgency && state.todayLog != null) ...[
+                            Container(
+                              padding: const EdgeInsets.all(20),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(16),
+                                border: Border.all(color: Colors.grey.shade200),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.grey.withOpacity(0.08),
+                                    blurRadius: 10,
+                                    offset: const Offset(0, 4),
+                                  ),
+                                ],
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Row(
+                                    children: [
+                                      Icon(Icons.today_outlined, color: Color(0xFF2962FF), size: 20),
+                                      SizedBox(width: 8),
+                                      Text(
+                                        "Today's Stock Journey",
+                                        style: TextStyle(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.bold,
+                                          color: Colors.black87,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 16),
+                                  // Stock flow rows
+                                  _buildLogRow('Opening Stock', '${state.todayLog!.openingStock} cans', Colors.black87),
+                                  _buildLogRow(' + Loaded', '+${state.todayLog!.loaded} cans', Colors.green[700]!),
+                                  const Divider(height: 20),
+                                  _buildLogRow(' - Delivered', '-${state.todayLog!.totalDelivered} cans', Colors.red),
+                                  if (state.todayLog!.damaged > 0)
+                                    _buildLogRow(' - Damaged', '-${state.todayLog!.damaged} cans', Colors.orange),
+                                  const Divider(height: 20),
+                                  _buildLogRow(
+                                    'Closing Stock',
+                                    '${state.todayLog!.closingStock} cans',
+                                    const Color(0xFF2962FF),
+                                    isBold: true,
+                                  ),
+                                  const SizedBox(height: 12),
+                                  _buildLogRow(
+                                    'Empties Collected',
+                                    '${state.todayLog!.totalEmptyCollected} bottles',
+                                    Colors.teal,
+                                  ),
+                                  // const Divider(height: 20),
+                                  // // Collections
+                                  // _buildLogRow(
+                                  //   'Cash Collected',
+                                  //   '₹${state.todayLog!.cashCollected.toStringAsFixed(0)}',
+                                  //   Colors.green,
+                                  //   isBold: true,
+                                  // ),
+                                  // const SizedBox(height: 4),
+                                  // _buildLogRow(
+                                  //   'UPI Collected',
+                                  //   '₹${state.todayLog!.onlineCollected.toStringAsFixed(0)}',
+                                  //   Colors.purple,
+                                  //   isBold: true,
+                                  // ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(height: 16),
+                          ],
+
+
                           // For Agency: If they have logs OR have current stock > 0, we consider setup done.
                           // For Salesman: Only if they have logs (or carry forward logic handled by repo/bloc)
                           if (isAgency && !state.hasAnyLogs && currentStock == 0)
@@ -859,6 +954,32 @@ class _StockPageState extends State<StockPage> {
     );
   }
 
+
+  Widget _buildLogRow(String label, String value, Color valueColor, {bool isBold = false}) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 14,
+              color: label.startsWith(' ') ? Colors.grey[600] : Colors.black87,
+            ),
+          ),
+          Text(
+            value,
+            style: TextStyle(
+              fontSize: 14,
+              color: valueColor,
+              fontWeight: isBold ? FontWeight.bold : FontWeight.w600,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
   Widget _buildQuickStat(String label, String value, IconData icon) {
     return Column(
