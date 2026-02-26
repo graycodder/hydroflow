@@ -549,13 +549,12 @@ class _SummaryHeader extends StatelessWidget {
     final totalEmpty =
         salesmen.fold<int>(0, (sum, s) => sum + s.emptyBottles);
 
-    // compute total outstanding from sub-reports
+    // compute total outstanding from sub-reports using live pendingCashBalance
     double totalOutstanding = 0;
     if (report != null) {
       for (final sr in (report.subReports ?? [])) {
-        totalOutstanding += (sr.cashInHand as num? ?? 0) +
-            (sr.salesmanPreviousBalance as num? ?? 0) -
-            (sr.settlementAmountToday as num? ?? 0);
+        final b = (sr.pendingCashBalance as num? ?? 0).toDouble();
+        if (b > 0) totalOutstanding += b;
       }
     }
 
@@ -742,8 +741,10 @@ class _SalesmanCard extends StatelessWidget {
     final double cashInHand = report?.cashInHand ?? 0;
     final double prevBalance = report?.salesmanPreviousBalance ?? 0;
     final double settledToday = report?.settlementAmountToday ?? 0;
-    final double outstanding =
-        (cashInHand + prevBalance - settledToday).clamp(0.0, double.infinity);
+    // Use live pendingCashBalance as the single source of truth for Outstanding.
+    // This carries forward automatically across days since it is a running total
+    // on the Salesman node that is updated on every transaction and settlement.
+    final double outstanding = (report?.pendingCashBalance ?? 0).clamp(0.0, double.infinity);
 
     final initials = salesman.name.isNotEmpty
         ? salesman.name
@@ -1013,9 +1014,7 @@ class _SalesmanCard extends StatelessWidget {
       BuildContext context, ReportEntity subReport, String agencyId) {
     if (subReport.salesmanId == null) return;
 
-    final double totalOutstanding = subReport.cashInHand +
-        subReport.salesmanPreviousBalance -
-        subReport.settlementAmountToday;
+    final double totalOutstanding = (subReport.pendingCashBalance).clamp(0.0, double.infinity);
 
     final amtCtrl = TextEditingController(
         text: totalOutstanding > 0

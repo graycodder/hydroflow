@@ -205,7 +205,7 @@ Future<void> init() async {
 
   // Dashboard Feature
   sl.registerLazySingleton<DashboardRepository>(
-    () => DashboardRepositoryImpl(database: sl(), reportRepository: sl()),
+    () => DashboardRepositoryImpl(database: sl(), reportRepository: sl(), customerRepository: sl()),
   );
   sl.registerLazySingleton(() => GetDashboardSummaryUseCase(sl()));
   sl.registerLazySingleton(() => ConnectivityBloc());

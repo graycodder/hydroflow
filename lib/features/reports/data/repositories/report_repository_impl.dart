@@ -361,6 +361,7 @@ class ReportRepositoryImpl implements ReportRepository {
           isSettled: isSettled,
           settlementAmountToday: settlementAmountToday,
           salesmanPreviousBalance: salesmanPreviousBalanceAtStart,
+          pendingCashBalance: pendingCashBalance,
         );
       },
     );
@@ -778,6 +779,7 @@ class ReportRepositoryImpl implements ReportRepository {
     int manualBottlesCollected = 0;
     double settlementAmountToday = 0;
     double salesmanPreviousBalance = 0;
+    double pendingCashBalance = 0;
 
     // Weighted Averages
     double totalAvgPriceWeighted = 0;
@@ -841,6 +843,7 @@ class ReportRepositoryImpl implements ReportRepository {
       upiCollections += r.upiCollections;
       settlementAmountToday += r.settlementAmountToday;
       salesmanPreviousBalance += r.salesmanPreviousBalance;
+      pendingCashBalance += r.pendingCashBalance;
 
       totalDeliveredForPrice += r.totalDeliveries;
       totalAvgPriceWeighted += (r.avgPricePerCan * r.totalDeliveries);
@@ -927,6 +930,7 @@ class ReportRepositoryImpl implements ReportRepository {
       inactiveCustomers: inactiveCustomers,
       settlementAmountToday: settlementAmountToday,
       salesmanPreviousBalance: salesmanPreviousBalance,
+      pendingCashBalance: pendingCashBalance,
       subReports: reports.where((r) {
         final isWh =
             r.salesmanId == agencyId ||
