@@ -162,6 +162,10 @@ class ReportRepositoryImpl implements ReportRepository {
         double totalDepositsHeld = 0.0;
         String salesmanName = "Unknown Salesman";
         double pendingCashBalance = 0.0;
+        
+        // FIX: Calculate Old Balance (Previous Balance) variables declared early
+        double salesmanPreviousBalanceAtStart = 0.0;
+        bool usedSnapshot = false;
 
         if (salesmanEvent.snapshot.exists) {
           final data = Map<String, dynamic>.from(
@@ -173,6 +177,19 @@ class ReportRepositoryImpl implements ReportRepository {
           salesmanName = data['name'] as String? ?? "Unknown Salesman";
           pendingCashBalance =
               (data['pendingCashBalance'] as num?)?.toDouble() ?? 0.0;
+          
+          final createdAtStr = data['createdAt'] as String?;
+          if (createdAtStr != null) {
+            final salesmanCreatedAt = DateTime.parse(createdAtStr);
+            // If salesman was created specifically on this report's date,
+            // they mathematically cannot have a previous day's balance.
+            if (salesmanCreatedAt.year == date.year && 
+                salesmanCreatedAt.month == date.month && 
+                salesmanCreatedAt.day == date.day) {
+               usedSnapshot = true; // Prevents fallback calculation from running
+               salesmanPreviousBalanceAtStart = 0.0;
+            }
+          }
         }
 
         // 4. Calculate Aggregate Metrics from Transactions
@@ -281,9 +298,6 @@ class ReportRepositoryImpl implements ReportRepository {
             : 0.0;
 
         // FIX: Calculate Old Balance (Previous Balance)
-        double salesmanPreviousBalanceAtStart = 0.0;
-        bool usedSnapshot = false;
-
         // 1. Try to get most recent previous closing balance snapshot (Most Accurate)
         if (mostRecentPrevLog != null) {
           if (mostRecentPrevLog.containsKey('pendingCashClosingBalance')) {
