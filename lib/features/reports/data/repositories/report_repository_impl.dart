@@ -330,27 +330,8 @@ class ReportRepositoryImpl implements ReportRepository {
           return c.createdAt!.year == date.year && c.createdAt!.month == date.month && c.createdAt!.day == date.day;
         }).length;
 
-        // --- SELF HEALING LOGIC FOR HISTORICAL DEPOSITS ---
-        // We know there was a bug where Deposits didn't increment pendingCashBalance.
-        // If today's physically collected cash is higher than the running balance + what they settled,
-        // it means they mathematically MUST owe us at least the cash in their hand today.
-        // We auto-correct their Firebase pendingCashBalance to fix historical data.
-        if (cashInHand > pendingCashBalance + settlementAmountToday) {
-           final double missingAmount = cashInHand - (pendingCashBalance + settlementAmountToday);
-           pendingCashBalance += missingAmount;
-           
-           // Fire and forget update to Firebase to heal the node permanently
-           if (salesmanId.isNotEmpty) {
-             _database.ref().child('Salesmen').child(salesmanId).runTransaction((Object? post) {
-               if (post == null) return Transaction.abort();
-               final map = Map<String, dynamic>.from(post as Map);
-               final current = (map['pendingCashBalance'] as num?)?.toDouble() ?? 0.0;
-               map['pendingCashBalance'] = current + missingAmount;
-               return Transaction.success(map);
-             });
-           }
-        }
-        // --------------------------------------------------
+        // REMOVED: Self-Healing Logic for Historical Deposits
+        // It was falsely triggering on credit collections, artificially inflating the Salesman's pending balance.
 
         return ReportEntity(
           date: date,
