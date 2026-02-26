@@ -379,8 +379,8 @@ class TransactionRepositoryImpl implements TransactionRepository {
       // from contexts (like Edit Customer) where the Customer Balance is manually updated
       // via 'UpdateCustomer'. We avoid double-counting.
 
-      // 3. Update Stock based on Role (Only if cans delivered > 0)
-      if (transaction.cansDelivered > 0) {
+      // 3. Update Stock based on Role (If cans delivered or empty collected > 0)
+      if (transaction.cansDelivered > 0 || transaction.emptyCollected > 0) {
         final salesmanRef = _database.ref().child(
           'Salesmen/${transaction.salesmanId}',
         );
