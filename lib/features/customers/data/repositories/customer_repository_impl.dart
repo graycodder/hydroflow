@@ -446,12 +446,25 @@ class CustomerRepositoryImpl implements CustomerRepository {
         'lastSettledDate': DateTime.now().toIso8601String(),
       });
 
-      // 2. Update Salesman (Reduce Total Deposits Held and Count)
+      // 2. Update Salesman (Reduce Total Deposits Held, Count, and Pending Cash)
       final salesmanRef = _database.ref().child('Salesmen/${customer.salesmanId}');
-      await salesmanRef.update({
-        'totalDepositsHeld': ServerValue.increment(-deposit), // Reduce by full original deposit
-        'activeCustomers': ServerValue.increment(-1),
-        'customerCount': ServerValue.increment(-1), // Free up Quota
+      
+      await salesmanRef.runTransaction((Object? data) {
+        if (data == null) return Transaction.abort();
+        final map = Map<String, dynamic>.from(data as Map);
+        
+        map['totalDepositsHeld'] = ((map['totalDepositsHeld'] as num?)?.toDouble() ?? 0.0) - deposit;
+        map['activeCustomers'] = ((map['activeCustomers'] as num?)?.toInt() ?? 0) - 1;
+        map['customerCount'] = ((map['customerCount'] as num?)?.toInt() ?? 0) - 1;
+        
+        // Decrease salesman's physical cash debt by the amount they just gave back
+        if (refundAmount > 0) {
+          final double currentPending = (map['pendingCashBalance'] as num?)?.toDouble() ?? 0.0;
+          map['pendingCashBalance'] = currentPending - refundAmount;
+          map['_lastUpdateBalance'] = map['pendingCashBalance'];
+        }
+        
+        return Transaction.success(map);
       });
 
       // 3. Update Agency Total Count (Free up Subscription space)

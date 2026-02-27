@@ -308,7 +308,11 @@ class TransactionRepositoryImpl implements TransactionRepository {
 
         // Update Money Flow
         if (transaction.paymentMode == 'Cash') {
-          logMap['cashCollected'] = currentCash + transaction.amountReceived;
+          if (transaction.type == 'Refund') {
+            logMap['cashCollected'] = currentCash - transaction.amountReceived;
+          } else {
+            logMap['cashCollected'] = currentCash + transaction.amountReceived;
+          }
         } else if (transaction.paymentMode == 'Online' ||
             transaction.paymentMode == 'UPI') {
           logMap['onlineCollected'] =
@@ -316,8 +320,13 @@ class TransactionRepositoryImpl implements TransactionRepository {
         }
 
         if (transaction.paymentMode != 'Deposit Adjustment') {
-          logMap['todayCollection'] =
-              currentNetCollection + transaction.amountReceived;
+          if (transaction.type == 'Refund') {
+            logMap['todayCollection'] =
+                currentNetCollection - transaction.amountReceived;
+          } else {
+            logMap['todayCollection'] =
+                currentNetCollection + transaction.amountReceived;
+          }
         }
 
         logMap['closingStock'] = opening + loaded - newDelivered - damaged;
