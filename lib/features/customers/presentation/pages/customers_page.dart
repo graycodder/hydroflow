@@ -90,18 +90,18 @@ class _CustomersPageState extends State<CustomersPage> {
                       mainAxisAlignment: MainAxisAlignment.start,
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // Stats Header with Title
-                        Padding(
-                          padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-                          child: Text(
-                            isAgency ? 'Agency Customers' : 'My Customers',
-                            style: const TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.black87,
-                            ),
-                          ),
-                        ),
+                        // // Stats Header with Title
+                        // Padding(
+                        //   padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+                        //   child: Text(
+                        //     isAgency ? 'Agency Customers' : 'My Customers',
+                        //     style: const TextStyle(
+                        //       fontSize: 18,
+                        //       fontWeight: FontWeight.bold,
+                        //       color: Colors.black87,
+                        //     ),
+                        //   ),
+                        // ),
                         Container(
                           padding: const EdgeInsets.symmetric(vertical: 16),
                           color: Colors.grey[50],

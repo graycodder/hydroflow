@@ -264,19 +264,48 @@ class ReportRepositoryImpl implements ReportRepository {
         }
 
         // 7. Stock Reconciliation
+        final bool hasTransactions = transactions.isNotEmpty;
+        final bool hasSettlement = settlementEvent.snapshot.exists;
+        final bool isCurrentDate = date.year == DateTime.now().year &&
+            date.month == DateTime.now().month &&
+            date.day == DateTime.now().day;
+
+        bool logHasActivity = false;
+        if (logEvent.snapshot.exists) {
+          final data =
+              Map<String, dynamic>.from(logEvent.snapshot.value as Map);
+          final int l = (data['loaded'] as num?)?.toInt() ?? 0;
+          final int d = (data['totalDelivered'] as num?)?.toInt() ?? 0;
+          final int r = (data['totalEmptyCollected'] as num?)?.toInt() ?? 0;
+          final int dm = (data['damaged'] as num?)?.toInt() ?? 0;
+          logHasActivity = l > 0 || d > 0 || r > 0 || dm > 0;
+        }
+
+        // A day is active if something happened OR it's the live view for today
+        final bool isActivityToday = hasTransactions ||
+            logHasActivity ||
+            hasSettlement ||
+            isCurrentDate;
+
         int finalOpening = openingStock;
 
         // Mathematical fallback: True Opening Stock = Current Stock - Loaded + Delivered + Damaged
-        final int inferredOpening = currentStock - loaded + effectiveDelivered + damaged;
+        final int inferredOpening =
+            currentStock - loaded + effectiveDelivered + damaged;
 
         if (finalOpening <= 0) {
-           if (inferredOpening > 0) {
-             finalOpening = inferredOpening;
-           } else if (carriedForwardOpening > 0) {
-             finalOpening = carriedForwardOpening;
-           } else {
-             finalOpening = 0; // Prevent negative opening stock display
-           }
+          if (inferredOpening > 0) {
+            finalOpening = inferredOpening;
+          } else if (carriedForwardOpening > 0) {
+            finalOpening = carriedForwardOpening;
+          } else {
+            finalOpening = 0; // Prevent negative opening stock display
+          }
+        }
+
+        // Fix: Suppress ghost data for inactive historical days
+        if (!isActivityToday) {
+          finalOpening = 0;
         }
 
         final finalAvailable = finalOpening + loaded;
@@ -948,11 +977,22 @@ class ReportRepositoryImpl implements ReportRepository {
       salesmanPreviousBalance: salesmanPreviousBalance,
       pendingCashBalance: pendingCashBalance,
       subReports: reports.where((r) {
-        final isWh =
-            r.salesmanId == agencyId ||
+        final isWh = r.salesmanId == agencyId ||
             r.salesmanId == '' ||
             r.salesmanId == null;
-        return !isWh;
+        if (isWh) return false;
+
+        // Filter: Only show salesmen in breakdown if they had ANY activity today
+        // This avoids confusing "ghost" cards in the Agency Breakdown.
+        final bool hasActivity = r.totalDeliveries > 0 ||
+            r.totalCollected > 0 ||
+            r.securityDepositsCollected > 0 ||
+            r.securityDepositsRefunded > 0 ||
+            r.stockLoaded > 0 ||
+            r.damagedStock > 0 ||
+            r.isSettled;
+
+        return hasActivity;
       }).toList(),
     );
   }
