@@ -451,22 +451,6 @@ class _BottlesPageState extends State<BottlesPage> {
                           style: const TextStyle(
                               fontWeight: FontWeight.bold, fontSize: 15),
                         ),
-                        // if (isHigh) ...[
-                        //   const SizedBox(width: 8),
-                        //   Container(
-                        //     padding: const EdgeInsets.symmetric(
-                        //         horizontal: 7, vertical: 2),
-                        //     decoration: BoxDecoration(
-                        //       color: Colors.orange,
-                        //       borderRadius: BorderRadius.circular(8),
-                        //     ),
-                        //     child: const Text('High Stock',
-                        //         style: TextStyle(
-                        //             color: Colors.white,
-                        //             fontSize: 10,
-                        //             fontWeight: FontWeight.bold)),
-                        //   ),
-                        // ],
                       ],
                     ),
                     const SizedBox(height: 2),
