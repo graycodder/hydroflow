@@ -98,6 +98,7 @@ class ReportRepositoryImpl implements ReportRepository {
 
         // Snapshot Support
         int? snapshotTotalBottles;
+        double? historicalClosingBalance;
 
         // Determine Opening Stock from Previous Day Closing if available
         int carriedForwardOpening = 0;
@@ -145,6 +146,11 @@ class ReportRepositoryImpl implements ReportRepository {
           if (data.containsKey('totalBottlesWithCustomers')) {
             snapshotTotalBottles = (data['totalBottlesWithCustomers'] as num?)
                 ?.toInt();
+          }
+
+          if (data.containsKey('pendingCashClosingBalance')) {
+            historicalClosingBalance =
+                (data['pendingCashClosingBalance'] as num?)?.toDouble();
           }
 
           if (openingStock <= 0 && carriedForwardOpening > 0) {
@@ -270,6 +276,18 @@ class ReportRepositoryImpl implements ReportRepository {
             date.month == DateTime.now().month &&
             date.day == DateTime.now().day;
 
+        // NEW: For historical dates, if we have a recorded closing balance, use it.
+        // Otherwise, if it's NOT the current date, we cannot trust the live pendingCashBalance.
+        double effectivePendingBalance = pendingCashBalance;
+        if (!isCurrentDate) {
+          if (historicalClosingBalance != null) {
+            effectivePendingBalance = historicalClosingBalance;
+          } else {
+            // If historical report and no closing balance recorded, default to 0 to avoid showing live data
+            effectivePendingBalance = 0.0;
+          }
+        }
+
         bool logHasActivity = false;
         if (logEvent.snapshot.exists) {
           final data =
@@ -339,15 +357,15 @@ class ReportRepositoryImpl implements ReportRepository {
 
         // 2. Fallback logic if no snapshot exists
         if (!usedSnapshot) {
-          // Fallback: Reconstruct Start of Day Balance
-          // Live Balance = Start of Day Balance + Today's Cash Collected (cashInHand) - Today's Settlement
-          // Therefore: Start of Day Balance = Live Balance - cashInHand + settlementAmountToday
-          salesmanPreviousBalanceAtStart =
-              pendingCashBalance - cashInHand + settlementAmountToday;
+          // Fallback: Reconstruct Start of Day Balance ONLY for today's report.
+          // For historical reports, if we don't have a snapshot, we show 0 instead of confusing live data.
+          if (isCurrentDate) {
+            salesmanPreviousBalanceAtStart =
+                effectivePendingBalance - cashInHand + settlementAmountToday;
+          } else {
+            salesmanPreviousBalanceAtStart = 0.0;
+          }
 
-          // Safety Guard: The live balance calculation can sometimes go negative
-          // due to out-of-sync legacy data. Never show a negative "Old Balance"
-          // when inferring it, as it creates confusion.
           if (salesmanPreviousBalanceAtStart < 0) {
             salesmanPreviousBalanceAtStart = 0.0;
           }
@@ -377,9 +395,10 @@ class ReportRepositoryImpl implements ReportRepository {
           bottlesReturned: effectiveReturned,
           manualBottlesCollected: logReturned,
           netBottlesOut: effectiveDelivered - effectiveReturned,
-          totalBottlesWithCustomers:
-              snapshotTotalBottles ??
-              relevantCustomers.fold(0, (sum, c) => sum + c.bottleBalance),
+          totalBottlesWithCustomers: isActivityToday
+              ? (snapshotTotalBottles ??
+                  relevantCustomers.fold(0, (sum, c) => sum + c.bottleBalance))
+              : 0,
           salesRevenue: salesRevenue,
           totalCollected: totalCollected,
           totalCreditPending: totalCreditPending,
@@ -392,21 +411,23 @@ class ReportRepositoryImpl implements ReportRepository {
           securityDepositsRefundedCash: securityDepositsRefundedCash,
           securityDepositsRefundedOnline: securityDepositsRefundedOnline,
           netDeposits: netDeposits,
-          totalDepositsHeld: totalDepositsHeld,
+          totalDepositsHeld: isActivityToday ? totalDepositsHeld : 0.0,
           cashInHand: cashInHand,
           upiCollections: upiCollections,
           avgPricePerCan: avgPrice,
           stockTurnover: turnover,
-          totalCustomers: relevantCustomers.length,
-          activeCustomers: calculatedActiveCustomers,
-          newCustomers: calculatedNewCustomers,
-          inactiveCustomers: calculatedInactiveCustomers,
+          totalCustomers: isActivityToday ? relevantCustomers.length : 0,
+          activeCustomers: isActivityToday ? calculatedActiveCustomers : 0,
+          newCustomers: isActivityToday ? calculatedNewCustomers : 0,
+          inactiveCustomers: isActivityToday ? calculatedInactiveCustomers : 0,
           salesmanId: salesmanId,
           salesmanName: salesmanName,
           isSettled: isSettled,
           settlementAmountToday: settlementAmountToday,
-          salesmanPreviousBalance: salesmanPreviousBalanceAtStart,
-          pendingCashBalance: pendingCashBalance,
+          salesmanPreviousBalance:
+              isActivityToday ? salesmanPreviousBalanceAtStart : 0.0,
+          pendingCashBalance:
+              isActivityToday ? effectivePendingBalance : 0.0,
         );
       },
     );
@@ -980,19 +1001,7 @@ class ReportRepositoryImpl implements ReportRepository {
         final isWh = r.salesmanId == agencyId ||
             r.salesmanId == '' ||
             r.salesmanId == null;
-        if (isWh) return false;
-
-        // Filter: Only show salesmen in breakdown if they had ANY activity today
-        // This avoids confusing "ghost" cards in the Agency Breakdown.
-        final bool hasActivity = r.totalDeliveries > 0 ||
-            r.totalCollected > 0 ||
-            r.securityDepositsCollected > 0 ||
-            r.securityDepositsRefunded > 0 ||
-            r.stockLoaded > 0 ||
-            r.damagedStock > 0 ||
-            r.isSettled;
-
-        return hasActivity;
+        return !isWh;
       }).toList(),
     );
   }
