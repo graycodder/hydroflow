@@ -282,7 +282,7 @@ class AgencyDailyReportView extends StatelessWidget {
 
   Widget _buildStockReconciliation() {
     return buildCard(
-      title: "Agency Stock Reconciliation",
+      title: "Stock Reconciliation",
       icon: Icons.inventory_2_outlined,
       subtitle: "Aggregated opening to closing stock",
       child: Column(
@@ -324,7 +324,7 @@ class AgencyDailyReportView extends StatelessWidget {
 
   Widget _buildBottleReconciliation() {
     return buildCard(
-      title: "Agency Bottle Reconciliation",
+      title: "Bottle Reconciliation",
       icon: Icons.loop,
       subtitle: "Circular economy tracking for today",
       child: Column(
@@ -333,7 +333,7 @@ class AgencyDailyReportView extends StatelessWidget {
             children: [
               Expanded(
                 child: buildStatBox(
-                  "Total Delivered",
+                  "Delivered",
                   "${report.bottlesDelivered}",
                   Colors.orange,
                 ),
@@ -341,7 +341,7 @@ class AgencyDailyReportView extends StatelessWidget {
               const SizedBox(width: 16),
               Expanded(
                 child: buildStatBox(
-                  "Total Returned",
+                  "Returned",
                   "${report.manualBottlesCollected}",
                   Colors.teal,
                 ),
@@ -393,7 +393,7 @@ class AgencyDailyReportView extends StatelessWidget {
 
   Widget _buildFinancialSummary() {
     return buildCard(
-      title: "Agency Financial Summary",
+      title: "Financial Summary",
       icon: Icons.attach_money,
       subtitle: "Revenue breakdown by payment mode",
       child: Column(
@@ -554,7 +554,7 @@ class AgencyDailyReportView extends StatelessWidget {
 
   Widget _buildPerformanceMetrics() {
     return buildCard(
-      title: "Agency Performance Metrics",
+      title: "Performance Metrics",
       icon: Icons.show_chart,
       subtitle: "",
       child: Row(
@@ -570,11 +570,15 @@ class AgencyDailyReportView extends StatelessWidget {
                 children: [
                   const Text(
                     "Avg Price/Can",
+                    maxLines: 1,
+          overflow: TextOverflow.ellipsis,
                     style: TextStyle(color: Colors.grey),
                   ),
                   const SizedBox(height: 8),
                   Text(
                     "₹${report.avgPricePerCan.toStringAsFixed(0)}",
+                    maxLines: 1,
+          overflow: TextOverflow.ellipsis,
                     style: const TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
@@ -596,11 +600,15 @@ class AgencyDailyReportView extends StatelessWidget {
                 children: [
                   const Text(
                     "Stock Turnover",
+                    maxLines: 1,
+          overflow: TextOverflow.ellipsis,
                     style: TextStyle(color: Colors.grey),
                   ),
                   const SizedBox(height: 8),
                   Text(
                     "${report.stockTurnover.toStringAsFixed(0)}%",
+                    maxLines: 1,
+          overflow: TextOverflow.ellipsis,
                     style: const TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.bold,

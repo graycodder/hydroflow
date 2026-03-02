@@ -203,7 +203,7 @@ class AgencyMonthlyReportView extends StatelessWidget {
 
   Widget _buildRevenueBreakdown() {
     return buildCard(
-      title: "Agency Revenue Breakdown",
+      title: "Revenue Breakdown",
       icon: Icons.attach_money,
       subtitle: "Monthly financial summary",
       child: Column(
@@ -298,7 +298,9 @@ class AgencyMonthlyReportView extends StatelessWidget {
               Icon(Icons.opacity, color: Color(0xFF2962FF)),
               const SizedBox(width: 8),
               Text(
-                "Agency Monthly Bottle Tracking",
+                "Monthly Bottle Tracking",
+                 maxLines: 1,
+                 overflow: TextOverflow.ellipsis,
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
@@ -309,6 +311,8 @@ class AgencyMonthlyReportView extends StatelessWidget {
           ),
           const Text(
             "Circular economy summary for the month",
+             maxLines: 1,
+          overflow: TextOverflow.ellipsis,
             style: TextStyle(color: Color(0xFF2962FF), fontSize: 14),
           ),
           const SizedBox(height: 20),
@@ -409,7 +413,10 @@ class AgencyMonthlyReportView extends StatelessWidget {
                 color: color,
               ),
               const SizedBox(width: 4),
-              Text(label, style: const TextStyle(color: Colors.grey, fontSize: 14)),
+              Text(label, 
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(color: Colors.grey, fontSize: 14)),
             ],
           ),
           const SizedBox(height: 8),
@@ -422,7 +429,7 @@ class AgencyMonthlyReportView extends StatelessWidget {
 
   Widget _buildCustomerStatistics() {
     return buildCard(
-      title: "Agency Customer Statistics",
+      title: "Customer Statistics",
       icon: Icons.people_outline,
       subtitle: "",
       child: Row(
@@ -480,7 +487,7 @@ class AgencyMonthlyReportView extends StatelessWidget {
 
   Widget _buildStockSummary() {
     return buildCard(
-      title: "Agency Stock Summary",
+      title: "Stock Summary",
       icon: Icons.inventory_2_outlined,
       subtitle: "",
       child: Column(
@@ -540,7 +547,7 @@ class AgencyMonthlyReportView extends StatelessWidget {
 
   Widget _buildMonthlyPerformanceMetrics() {
     return buildCard(
-      title: "Agency Performance Metrics",
+      title: "Performance Metrics",
       icon: Icons.show_chart,
       subtitle: "",
       child: GridView.count(
@@ -572,11 +579,16 @@ class AgencyMonthlyReportView extends StatelessWidget {
         children: [
           Text(
             label,
+            maxLines: 1,
+          overflow: TextOverflow.ellipsis,
             style: const TextStyle(color: Colors.grey, fontSize: 12),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 4),
-          Text(value, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+          Text(value, 
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
         ],
       ),
     );

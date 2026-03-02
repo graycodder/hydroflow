@@ -58,6 +58,8 @@ Widget buildRow(String label, String value, {bool isBold = false, Color? valueCo
           flex: 2,
           child: Text(
             label,
+            maxLines: 1,
+          overflow: TextOverflow.ellipsis,
             style: TextStyle(
               color: Colors.black87,
               fontSize: 15,
@@ -67,6 +69,8 @@ Widget buildRow(String label, String value, {bool isBold = false, Color? valueCo
         ),
         Text(
           value,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
           style: TextStyle(
             color: valueColor ?? Colors.black,
             fontSize: 15,
@@ -105,6 +109,7 @@ Widget buildStatBox(String label, String value, Color color) {
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         Row(
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(
               label == "Delivered" ? Icons.arrow_downward : Icons.arrow_upward,
@@ -144,7 +149,10 @@ Widget buildLargeSummaryCard({
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        Text(title, style: const TextStyle(color: Colors.white, fontSize: 16)),
+        Text(title, 
+        maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        style: const TextStyle(color: Colors.white, fontSize: 16)),
         const SizedBox(height: 8),
         Text(
          value,
@@ -159,6 +167,8 @@ Widget buildLargeSummaryCard({
         const SizedBox(height: 4),
         Text(
           subtitle,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
           style: TextStyle(color: Colors.white.withOpacity(0.8), fontSize: 12),
         ),
       ],
