@@ -35,6 +35,7 @@ class _AddSalesmanDialogState extends State<AddSalesmanDialog> {
  // final _zoneController = TextEditingController();
   final _quotaController = TextEditingController();
   bool _isChecking = false;
+  bool _isPasswordVisible = false;
   String? _phoneError;
 
   @override
@@ -182,8 +183,21 @@ class _AddSalesmanDialogState extends State<AddSalesmanDialog> {
                const SizedBox(height: 12),
               TextFormField(
                 controller: _passwordController,
-                decoration: const InputDecoration(labelText: 'Password'),
-                obscureText: true,
+                decoration: InputDecoration(
+                  labelText: 'Password',
+                  prefixIcon: const Icon(Icons.lock_outline),
+                  suffixIcon: IconButton(
+                    icon: Icon(
+                      _isPasswordVisible ? Icons.visibility : Icons.visibility_off,
+                    ),
+                    onPressed: () {
+                      setState(() {
+                        _isPasswordVisible = !_isPasswordVisible;
+                      });
+                    },
+                  ),
+                ),
+                obscureText: !_isPasswordVisible,
                 validator: (value) {
                   if (value == null || value.trim().isEmpty) {
                     return 'Please enter password';

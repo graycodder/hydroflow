@@ -26,10 +26,11 @@ class _EditSalesmanDialogState extends State<EditSalesmanDialog> {
   late TextEditingController _nameController;
   late TextEditingController _phoneController;
  // late TextEditingController _usernameController;
-  final _passwordController = TextEditingController(); // Empty by default
+  late TextEditingController _passwordController;
  // late TextEditingController _zoneController;
   late TextEditingController _quotaController;
   bool _isChecking = false;
+  bool _isPasswordVisible = false;
   String? _phoneError;
 
   @override
@@ -40,6 +41,7 @@ class _EditSalesmanDialogState extends State<EditSalesmanDialog> {
     _phoneController.addListener(_onPhoneChanged);
    // _usernameController = TextEditingController(text: widget.salesman.username);
    // _zoneController = TextEditingController(text: widget.salesman.zone);
+    _passwordController = TextEditingController(text: widget.salesman.password);
     _quotaController = TextEditingController(text: widget.salesman.maxCustomers.toString());
   }
 
@@ -174,11 +176,22 @@ class _EditSalesmanDialogState extends State<EditSalesmanDialog> {
               const SizedBox(height: 12),
               TextFormField(
                 controller: _passwordController,
-                decoration: const InputDecoration(
+                decoration: InputDecoration(
                   labelText: 'New Password',
                   helperText: 'Leave blank to keep current password',
+                  prefixIcon: const Icon(Icons.lock_outline),
+                  suffixIcon: IconButton(
+                    icon: Icon(
+                      _isPasswordVisible ? Icons.visibility : Icons.visibility_off,
+                    ),
+                    onPressed: () {
+                      setState(() {
+                        _isPasswordVisible = !_isPasswordVisible;
+                      });
+                    },
+                  ),
                 ),
-                obscureText: true,
+                obscureText: !_isPasswordVisible,
                 validator: (value) {
                   if (value != null && value.isNotEmpty && value.length < 6) {
                     return 'Min 6 characters';
