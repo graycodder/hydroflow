@@ -3,8 +3,9 @@ import 'package:url_launcher/url_launcher.dart';
 
 class ForceUpdatePage extends StatelessWidget {
   final String updateUrl;
+  final String currentVersion;
 
-  const ForceUpdatePage({super.key, required this.updateUrl});
+  const ForceUpdatePage({super.key, required this.updateUrl, required this.currentVersion});
 
   Future<void> _launchUpdateUrl() async {
     final uri = Uri.parse(updateUrl);
@@ -88,7 +89,7 @@ class ForceUpdatePage extends StatelessWidget {
             ),
             const SizedBox(height: 24),
             Text(
-              "HydroFlow v1.0.0",
+              "HydroFlow v$currentVersion",
               style: TextStyle(
                 color: Colors.white.withOpacity(0.5),
                 fontSize: 12,

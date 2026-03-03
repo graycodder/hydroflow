@@ -46,9 +46,10 @@ class AuthFailure extends AuthState {
 
 class AuthUpdateRequired extends AuthState {
   final String updateUrl;
+  final String currentVersion;
 
-  const AuthUpdateRequired(this.updateUrl);
+  const AuthUpdateRequired(this.updateUrl, this.currentVersion);
 
   @override
-  List<Object?> get props => [updateUrl];
+  List<Object?> get props => [updateUrl, currentVersion];
 }

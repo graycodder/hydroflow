@@ -77,7 +77,7 @@ final router = GoRouter(
       builder: (context, state) {
         final authState = context.read<AuthBloc>().state;
         if (authState is AuthUpdateRequired) {
-          return ForceUpdatePage(updateUrl: authState.updateUrl);
+          return ForceUpdatePage(updateUrl: authState.updateUrl, currentVersion: authState.currentVersion);
         }
         return const Scaffold(body: Center(child: CircularProgressIndicator()));
       },

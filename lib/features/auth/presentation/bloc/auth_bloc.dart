@@ -35,7 +35,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     // 1. Check for mandatory updates
     final updateInfo = await _authRepository.checkVersionUpdate();
     if (updateInfo != null && updateInfo['update_required'] == true) {
-      emit(AuthUpdateRequired(updateInfo['update_url'] as String));
+      emit(AuthUpdateRequired(updateInfo['update_url'] as String, updateInfo['current_version'] as String));
       return; // Stop further initialization
     }
 

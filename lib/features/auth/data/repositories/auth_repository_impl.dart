@@ -160,19 +160,15 @@ class AuthRepositoryImpl implements AuthRepository {
     try {
       final info = await PackageInfo.fromPlatform();
       final currentVersion = info.version;
-      print('FORCE_UPDATE_DEBUG: Current App Version: $currentVersion');
       
       final snapshot = await _database.ref().child('app_config').child('force_update').get();
       if (snapshot.exists) {
         final data = Map<String, dynamic>.from(snapshot.value as Map);
-        print('FORCE_UPDATE_DEBUG: Firebase Data: $data');
         
         final minVersion = data['min_version']?.toString() ?? '1.0.0';
         final updateUrl = data['update_url']?.toString() ?? '';
         
-        print('FORCE_UPDATE_DEBUG: Min Version Required: $minVersion');
         final isLower = _isVersionLower(currentVersion, minVersion);
-        print('FORCE_UPDATE_DEBUG: Is Current Lower? $isLower');
 
         if (isLower) {
            return {
