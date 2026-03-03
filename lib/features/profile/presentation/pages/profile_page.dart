@@ -313,6 +313,14 @@ class ProfilePage extends StatelessWidget {
 
   void _showSubscriptionSheet(
       BuildContext context, List<SubscriptionRecord> history, dynamic profile) {
+    
+    final sortedHistory = List<SubscriptionRecord>.from(history);
+    sortedHistory.sort((a, b) {
+      if (a.isActive && !b.isActive) return -1;
+      if (!a.isActive && b.isActive) return 1;
+      return b.expiryDate.compareTo(a.expiryDate);
+    });
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -322,7 +330,7 @@ class ProfilePage extends StatelessWidget {
         maxChildSize: 0.92,
         minChildSize: 0.4,
         builder: (_, controller) => _buildSheetContainer(
-            context, history, 'Subscription Details', Icons.history, controller,
+            context, sortedHistory, 'Subscription Details', Icons.history, controller,
             showCount: true),
       ),
     );

@@ -924,7 +924,7 @@ class _SalesmanCard extends StatelessWidget {
                   _VertDivider(),
                   _StockStat(
                     label: 'Customers',
-                    value: '${salesman.customerCount}',
+                    value: '${salesman.activeCustomers}',
                     icon: Icons.people_outline,
                     color: _kGreen,
                   ),
