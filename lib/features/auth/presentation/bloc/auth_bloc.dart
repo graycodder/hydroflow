@@ -143,6 +143,17 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
 
       final bool isAgencyInactive = agency != null && agency.status != 'active';
 
+      // Device ID Check
+      final currentDeviceId = await _authRepository.getCurrentDeviceId();
+      if (currentDeviceId != null) {
+        if (salesman.deviceId == null || 
+            salesman.deviceId!.isEmpty || 
+            salesman.deviceId != currentDeviceId) {
+           add(AuthLogoutRequested());
+           return;
+        }
+      }
+
       if (!salesman.isActive || isUserExpired || isAgencyInactive || isAgencyExpired) {
         emit(AuthSubscriptionExpired(salesman, agency));
       } else {

@@ -83,7 +83,7 @@ class AuthRepositoryImpl implements AuthRepository {
           // Get Current Device ID
           String? currentDeviceId;
           try {
-            currentDeviceId = await _getDeviceId();
+            currentDeviceId = await getCurrentDeviceId();
           } catch (e) {
             print('Error getting device ID: $e');
             // Fail open or closed? 
@@ -132,7 +132,8 @@ class AuthRepositoryImpl implements AuthRepository {
     }
   }
 
-  Future<String?> _getDeviceId() async {
+  @override
+  Future<String?> getCurrentDeviceId() async {
     try {
       final DeviceInfoPlugin deviceInfo = DeviceInfoPlugin();
       if (Platform.isAndroid) {

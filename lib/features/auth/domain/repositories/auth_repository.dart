@@ -15,4 +15,6 @@ abstract class AuthRepository {
   Future<void> restoreSession();
 
   Future<Map<String, dynamic>?> checkVersionUpdate();
+
+  Future<String?> getCurrentDeviceId();
 }
