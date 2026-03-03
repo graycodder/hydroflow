@@ -143,6 +143,8 @@ class _DeliveryViewState extends State<DeliveryView> {
 
         // 2. Handle specific actions based on status transitions
         if (state.status == DeliveryStatus.submitting) {
+          FocusScope.of(context).unfocus();
+          FocusManager.instance.primaryFocus?.unfocus();
           HydroFlowLoader.show(context, message: 'Submitting Transaction...');
         } else if (state.status == DeliveryStatus.submissionSuccess) {
           HydroFlowLoader.hide(context);
@@ -1187,65 +1189,71 @@ class _DeliveryViewState extends State<DeliveryView> {
       }
 
       FocusScope.of(context).unfocus();
+      FocusManager.instance.primaryFocus?.unfocus();
 
-      // Check Stock Availability (Strict)
-      final currentStock = context.read<DeliveryBloc>().state.currentStock;
-      if (cans > currentStock) {
-        _showStockErrorDialog(context, currentStock, cans);
-        return;
-      }
+      // Give the keyboard a moment to start dismissing
+      Future.delayed(const Duration(milliseconds: 100), () {
+        if (!mounted) return;
 
-      // Check for excess empty cans and block
-      if (emptyCans > selectedCustomer.bottleBalance) {
-        showDialog(
-          context: context,
-          builder: (context) => AlertDialog(
-            title: const Row(
-              children: [
-                Icon(Icons.error_outline, color: Colors.deepOrange),
-                SizedBox(width: 8),
-                Text('Excess Empty Bottles'),
-              ],
-            ),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'You are trying to collect $emptyCans empty bottles, but the customer only has ${selectedCustomer.bottleBalance} bottles on their balance.',
-                ),
-                const SizedBox(height: 8),
-                const Text(
-                  'Strict Blocking Enabled.',
-                  style: TextStyle(fontWeight: FontWeight.bold, color: Colors.red),
-                ),
-                const SizedBox(height: 8),
-                const Text(
-                  'You cannot collect more empty bottles than the customer currently holds.',
-                  style: TextStyle(fontSize: 12, color: Colors.grey),
-                ),
-              ],
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: const Text('OK'),
+        // Check Stock Availability (Strict)
+        final currentStock = context.read<DeliveryBloc>().state.currentStock;
+        if (cans > currentStock) {
+          _showStockErrorDialog(context, currentStock, cans);
+          return;
+        }
+
+        // Check for excess empty cans and block
+        if (emptyCans > selectedCustomer.bottleBalance) {
+          showDialog(
+            context: context,
+            builder: (context) => AlertDialog(
+              title: const Row(
+                children: [
+                  Icon(Icons.error_outline, color: Colors.deepOrange),
+                  SizedBox(width: 8),
+                  Text('Excess Empty Bottles'),
+                ],
               ),
-            ],
-          ),
-        );
-        return;
-      }
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'You are trying to collect $emptyCans empty bottles, but the customer only has ${selectedCustomer.bottleBalance} bottles on their balance.',
+                  ),
+                  const SizedBox(height: 8),
+                  const Text(
+                    'Strict Blocking Enabled.',
+                    style: TextStyle(fontWeight: FontWeight.bold, color: Colors.red),
+                  ),
+                  const SizedBox(height: 8),
+                  const Text(
+                    'You cannot collect more empty bottles than the customer currently holds.',
+                    style: TextStyle(fontSize: 12, color: Colors.grey),
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('OK'),
+                ),
+              ],
+            ),
+          );
+          return;
+        }
 
-      _showConfirmationDialog(
-        context,
-        salesmanId,
-        selectedCustomer,
-        total,
-        received,
-        cans,
-        emptyCans,
-      );
+        _showConfirmationDialog(
+          context,
+          salesmanId,
+          selectedCustomer,
+          total,
+          received,
+          cans,
+          emptyCans,
+        );
+      });
     }
   }
 
@@ -1287,6 +1295,9 @@ class _DeliveryViewState extends State<DeliveryView> {
           ),
           ElevatedButton(
             onPressed: () {
+              FocusScope.of(context).unfocus();
+              FocusManager.instance.primaryFocus?.unfocus();
+              
               Navigator.pop(context);
               final transaction = TransactionEntity(
                 id: const Uuid().v4(),

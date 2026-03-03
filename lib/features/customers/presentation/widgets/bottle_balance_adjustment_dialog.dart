@@ -204,76 +204,86 @@ class _BottleBalanceAdjustmentDialogState extends State<BottleBalanceAdjustmentD
 
   void _submitAdjustment() {
     if (_formKey.currentState!.validate()) {
-      final collectedBottles = int.parse(_bottlesCollectedController.text.trim());
-      
-      showDialog(
-        context: context,
-        builder: (confirmContext) => AlertDialog(
-          title: const Text('Confirm Adjustment'),
-          content: Text(
-            'Are you sure you want to adjust $collectedBottles bottles from customer balance?',
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(confirmContext),
-              child: const Text('Cancel'),
+      FocusScope.of(context).unfocus();
+      FocusManager.instance.primaryFocus?.unfocus();
+
+      // Give the keyboard a moment to start dismissing
+      Future.delayed(const Duration(milliseconds: 100), () {
+        if (!mounted) return;
+
+        final collectedBottles = int.parse(_bottlesCollectedController.text.trim());
+
+        showDialog(
+          context: context,
+          builder: (confirmContext) => AlertDialog(
+            title: const Text('Confirm Adjustment'),
+            content: Text(
+              'Are you sure you want to adjust $collectedBottles bottles from customer balance?',
             ),
-            ElevatedButton(
-              onPressed: () async {
-                Navigator.pop(confirmContext); // Close confirmation
-                
-                setState(() {
-                  _isSubmitting = true;
-                });
-
-                try {
-                  // 1. Calculate new bottle balance
-                  final newBottleBalance = widget.customer.bottleBalance - collectedBottles;
-
-                  // 2. Create updated customer object
-                  final updatedCustomer = widget.customer.copyWith(
-                    bottleBalance: newBottleBalance,
-                  );
-
-                  // 3. Dispatch UpdateCustomer event
-                  widget.customerBloc.add(UpdateCustomer(updatedCustomer));
-
-                  // 4. Record Transaction
-                  final tx = TransactionEntity(
-                    id: 'adj_bot_${DateTime.now().millisecondsSinceEpoch}',
-                    salesmanId: widget.customer.salesmanId,
-                    customerId: widget.customer.id,
-                    timestamp: DateTime.now(),
-                    type: 'Bottle Adjustment',
-                    amount: 0,
-                    amountReceived: 0,
-                    paymentMode: 'System Adjustment',
-                    emptyCollected: collectedBottles,
-                    notes: 'Quick Bottle Adjustment',
-                  );
-                  
-                  await di.sl<TransactionRepository>().recordAdjustment(tx);
-
-                } catch (e) {
-                  setState(() {
-                    _isSubmitting = false;
-                  });
-                  if (mounted) {
-                     ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('Error: $e')),
-                    );
-                  }
-                }
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF0D1117),
-                foregroundColor: Colors.white,
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(confirmContext),
+                child: const Text('Cancel'),
               ),
-              child: const Text('Confirm'),
-            ),
-          ],
-        ),
-      );
+              ElevatedButton(
+                onPressed: () async {
+                  FocusScope.of(context).unfocus();
+                  FocusManager.instance.primaryFocus?.unfocus();
+
+                  Navigator.pop(confirmContext); // Close confirmation
+
+                  setState(() {
+                    _isSubmitting = true;
+                  });
+
+                  try {
+                    // 1. Calculate new bottle balance
+                    final newBottleBalance = widget.customer.bottleBalance - collectedBottles;
+
+                    // 2. Create updated customer object
+                    final updatedCustomer = widget.customer.copyWith(
+                      bottleBalance: newBottleBalance,
+                    );
+
+                    // 3. Dispatch UpdateCustomer event
+                    widget.customerBloc.add(UpdateCustomer(updatedCustomer));
+
+                    // 4. Record Transaction
+                    final tx = TransactionEntity(
+                      id: 'adj_bot_${DateTime.now().millisecondsSinceEpoch}',
+                      salesmanId: widget.customer.salesmanId,
+                      customerId: widget.customer.id,
+                      timestamp: DateTime.now(),
+                      type: 'Bottle Adjustment',
+                      amount: 0,
+                      amountReceived: 0,
+                      paymentMode: 'System Adjustment',
+                      emptyCollected: collectedBottles,
+                      notes: 'Quick Bottle Adjustment',
+                    );
+
+                    await di.sl<TransactionRepository>().recordAdjustment(tx);
+                  } catch (e) {
+                    setState(() {
+                      _isSubmitting = false;
+                    });
+                    if (mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('Error: $e')),
+                      );
+                    }
+                  }
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF0D1117),
+                  foregroundColor: Colors.white,
+                ),
+                child: const Text('Confirm'),
+              ),
+            ],
+          ),
+        );
+      });
     }
   }
 }

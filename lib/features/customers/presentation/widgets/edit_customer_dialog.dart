@@ -95,13 +95,15 @@ class _EditCustomerDialogState extends State<EditCustomerDialog> {
       listener: (context, state) {
         if (_isSubmitting) {
           if (state.status == CustomerStatus.submitting) {
+            FocusScope.of(context).unfocus();
+            FocusManager.instance.primaryFocus?.unfocus();
             HydroFlowLoader.show(context, message: 'Saving Changes...');
           } else if (state.status == CustomerStatus.failure || 
                      (state.status == CustomerStatus.success && state.successMessage != null)) {
             HydroFlowLoader.hide(context);
             if (state.status == CustomerStatus.success) {
               _isSubmitting = false;
-              Navigator.of(context).pop(); // Close edit dialog
+              Navigator.of(context, rootNavigator: true).pop(); // Close edit dialog explicitly from root
             } else if (state.status == CustomerStatus.failure) {
               _isSubmitting = false;
             }
@@ -320,8 +322,18 @@ class _EditCustomerDialogState extends State<EditCustomerDialog> {
                   children: [
                     Expanded(
                       child: ElevatedButton(
-                        onPressed: () {
+                        onPressed: () async {
                           if (_formKey.currentState!.validate()) {
+                            // First, unfocus any active text field
+                            FocusScope.of(context).unfocus();
+                            // Also clear primary focus to be sure
+                            FocusManager.instance.primaryFocus?.unfocus();
+                            
+                            // Give the keyboard a moment to start dismissing
+                            await Future.delayed(const Duration(milliseconds: 100));
+
+                            if (!mounted) return;
+
                             final name = _nameController.text.trim();
                             final phone = _phoneController.text.trim();
                             final address = _addressController.text.trim();
@@ -340,6 +352,8 @@ class _EditCustomerDialogState extends State<EditCustomerDialog> {
                                   ),
                                   ElevatedButton(
                                     onPressed: () async {
+                                      FocusScope.of(context).unfocus();
+                                      FocusManager.instance.primaryFocus?.unfocus();
                                       setState(() {
                                         _isSubmitting = true;
                                       });

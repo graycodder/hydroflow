@@ -344,6 +344,16 @@ class AgencyEmployeesPage extends StatelessWidget {
                       onPressed: state is StockActionLoading
                           ? null
                           : () async {
+                              // First, unfocus any active text field
+                              FocusScope.of(context).unfocus();
+                              // Also clear primary focus to be sure
+                              FocusManager.instance.primaryFocus?.unfocus();
+
+                              // Give the keyboard a moment to start dismissing
+                              await Future.delayed(const Duration(milliseconds: 100));
+
+                              if (!context.mounted) return;
+
                               final tabIdx =
                                   DefaultTabController.of(btnCtx).index;
                               if (tabIdx == 0) {
@@ -364,6 +374,8 @@ class AgencyEmployeesPage extends StatelessWidget {
                                     'Confirm Refill',
                                     'Transfer $qty full bottles to ${salesman.name}?');
                                 if (ok == true && context.mounted) {
+                                  FocusScope.of(context).unfocus();
+                                  FocusManager.instance.primaryFocus?.unfocus();
                                   context.read<StockBloc>().add(
                                       StockLoadRequested(
                                         salesmanId: salesman.id,
@@ -389,6 +401,8 @@ class AgencyEmployeesPage extends StatelessWidget {
                                     'Confirm Collection',
                                     'Collect $qty empty bottles from ${salesman.name}?');
                                 if (ok == true && context.mounted) {
+                                  FocusScope.of(context).unfocus();
+                                  FocusManager.instance.primaryFocus?.unfocus();
                                   context.read<StockBloc>().add(
                                       EmptyBottlesCollected(
                                         salesmanId: salesman.id,
@@ -426,7 +440,11 @@ class AgencyEmployeesPage extends StatelessWidget {
               onPressed: () => Navigator.pop(ctx, false),
               child: const Text('Cancel')),
           ElevatedButton(
-            onPressed: () => Navigator.pop(ctx, true),
+            onPressed: () {
+              FocusScope.of(context).unfocus();
+              FocusManager.instance.primaryFocus?.unfocus();
+              Navigator.pop(ctx, true);
+            },
             style: ElevatedButton.styleFrom(
                 backgroundColor: _kBlue, foregroundColor: Colors.white),
             child: const Text('Yes, Proceed'),
@@ -454,6 +472,8 @@ class AgencyEmployeesPage extends StatelessWidget {
                 child: const Text('Cancel')),
             ElevatedButton(
               onPressed: () {
+                FocusScope.of(context).unfocus();
+                FocusManager.instance.primaryFocus?.unfocus();
                 Navigator.pop(dialogCtx);
                 agencyBloc.add(ResetDevice(
                     salesmanId: salesman.id,

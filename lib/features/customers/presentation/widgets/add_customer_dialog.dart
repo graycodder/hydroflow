@@ -88,13 +88,15 @@ class _AddCustomerDialogState extends State<AddCustomerDialog> {
       listener: (context, state) {
         if (_isSubmitting) {
           if (state.status == CustomerStatus.submitting) {
+            FocusScope.of(context).unfocus();
+            FocusManager.instance.primaryFocus?.unfocus();
             HydroFlowLoader.show(context, message: 'Adding Customer...');
           } else if (state.status == CustomerStatus.failure ||
               (state.status == CustomerStatus.success && state.successMessage != null)) {
             HydroFlowLoader.hide(context);
             if (state.status == CustomerStatus.success) {
               _isSubmitting = false;
-              Navigator.of(context).pop(); // Close add dialog
+              Navigator.of(context, rootNavigator: true).pop(); // Close add dialog explicitly from root
             } else if (state.status == CustomerStatus.failure) {
               _isSubmitting = false;
             }
@@ -300,8 +302,18 @@ class _AddCustomerDialogState extends State<AddCustomerDialog> {
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton(
-                      onPressed: () {
+                      onPressed: () async {
                         if (_formKey.currentState!.validate()) {
+                          // First, unfocus any active text field
+                          FocusScope.of(context).unfocus();
+                          // Also clear primary focus to be sure
+                          FocusManager.instance.primaryFocus?.unfocus();
+
+                          // Give the keyboard a moment to start dismissing
+                          await Future.delayed(const Duration(milliseconds: 100));
+
+                          if (!mounted) return;
+
                           if (_selectedSalesmanId == null) {
                              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please select a salesman')));
                              return;
@@ -320,7 +332,7 @@ class _AddCustomerDialogState extends State<AddCustomerDialog> {
 
                           if (targetSalesman.customerCount >= targetSalesman.maxCustomers) {
                              ScaffoldMessenger.of(context).showSnackBar(
-                               SnackBar(content: Text('Quota reached for ${targetSalesman.name} (${targetSalesman.customerCount}/${targetSalesman.maxCustomers})'))
+                                SnackBar(content: Text('Quota reached for ${targetSalesman.name} (${targetSalesman.customerCount}/${targetSalesman.maxCustomers})'))
                              );
                              return;
                           }
@@ -337,6 +349,8 @@ class _AddCustomerDialogState extends State<AddCustomerDialog> {
                                 ),
                                 ElevatedButton(
                                   onPressed: () {
+                                    FocusScope.of(context).unfocus();
+                                    FocusManager.instance.primaryFocus?.unfocus();
                                     setState(() {
                                       _isSubmitting = true;
                                     });

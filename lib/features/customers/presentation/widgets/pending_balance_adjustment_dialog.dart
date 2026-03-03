@@ -241,77 +241,88 @@ class _PendingBalanceAdjustmentDialogState
 
   void _submitAdjustment() {
     if (_formKey.currentState!.validate()) {
-      final receivedAmount = double.parse(
-        _amountReceivedController.text.trim(),
-      );
+      FocusScope.of(context).unfocus();
+      FocusManager.instance.primaryFocus?.unfocus();
 
-      showDialog(
-        context: context,
-        builder: (confirmContext) => AlertDialog(
-          title: const Text('Confirm Adjustment'),
-          content: Text(
-            'Are you sure you want to adjust ₹$receivedAmount from pending balance using $_selectedPaymentMode?',
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(confirmContext),
-              child: const Text('Cancel'),
+      // Give the keyboard a moment to start dismissing
+      Future.delayed(const Duration(milliseconds: 100), () {
+        if (!mounted) return;
+
+        final receivedAmount = double.parse(
+          _amountReceivedController.text.trim(),
+        );
+
+        showDialog(
+          context: context,
+          builder: (confirmContext) => AlertDialog(
+            title: const Text('Confirm Adjustment'),
+            content: Text(
+              'Are you sure you want to adjust ₹$receivedAmount from pending balance using $_selectedPaymentMode?',
             ),
-            ElevatedButton(
-              onPressed: () async {
-                Navigator.pop(confirmContext); // Close confirmation
-
-                setState(() {
-                  _isSubmitting = true;
-                });
-
-                try {
-                  HydroFlowLoader.show(
-                    context,
-                    message: 'Processing Payment...',
-                  );
-
-                  final tx = TransactionEntity(
-                    id: 'pay_${DateTime.now().millisecondsSinceEpoch}',
-                    salesmanId: widget.customer.salesmanId,
-                    customerId: widget.customer.id,
-                    timestamp: DateTime.now(),
-                    type: 'Payment',
-                    amount: 0,
-                    amountReceived: receivedAmount,
-                    paymentMode: _selectedPaymentMode!,
-                    notes: 'Pending Balance Collection',
-                  );
-
-                  // recordTransaction natively deducts the customer's balance,
-                  // increases salesman's pendingCashBalance, and tracks the collection.
-                  await di.sl<TransactionRepository>().recordTransaction(tx);
-
-                  if (mounted) {
-                    HydroFlowLoader.hide(context);
-                    Navigator.of(context).pop(); // Close dialog
-                  }
-                } catch (e) {
-                  if (mounted) {
-                    HydroFlowLoader.hide(context);
-                    setState(() {
-                      _isSubmitting = false;
-                    });
-                    ScaffoldMessenger.of(
-                      context,
-                    ).showSnackBar(SnackBar(content: Text('Error: $e')));
-                  }
-                }
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF0D1117),
-                foregroundColor: Colors.white,
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(confirmContext),
+                child: const Text('Cancel'),
               ),
-              child: const Text('Confirm'),
-            ),
-          ],
-        ),
-      );
+              ElevatedButton(
+                onPressed: () async {
+                  FocusScope.of(context).unfocus();
+                  FocusManager.instance.primaryFocus?.unfocus();
+
+                  Navigator.pop(confirmContext); // Close confirmation
+
+                  setState(() {
+                    _isSubmitting = true;
+                  });
+
+                  try {
+                    HydroFlowLoader.show(
+                      context,
+                      message: 'Processing Payment...',
+                    );
+
+                    final tx = TransactionEntity(
+                      id: 'pay_${DateTime.now().millisecondsSinceEpoch}',
+                      salesmanId: widget.customer.salesmanId,
+                      customerId: widget.customer.id,
+                      timestamp: DateTime.now(),
+                      type: 'Payment',
+                      amount: 0,
+                      amountReceived: receivedAmount,
+                      paymentMode: _selectedPaymentMode!,
+                      notes: 'Pending Balance Collection',
+                    );
+
+                    // recordTransaction natively deducts the customer's balance,
+                    // increases salesman's pendingCashBalance, and tracks the collection.
+                    await di.sl<TransactionRepository>().recordTransaction(tx);
+
+                    if (mounted) {
+                      HydroFlowLoader.hide(context);
+                      Navigator.of(context).pop(); // Close dialog
+                    }
+                  } catch (e) {
+                    if (mounted) {
+                      HydroFlowLoader.hide(context);
+                      setState(() {
+                        _isSubmitting = false;
+                      });
+                      ScaffoldMessenger.of(
+                        context,
+                      ).showSnackBar(SnackBar(content: Text('Error: $e')));
+                    }
+                  }
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF0D1117),
+                  foregroundColor: Colors.white,
+                ),
+                child: const Text('Confirm'),
+              ),
+            ],
+          ),
+        );
+      });
     }
   }
 }

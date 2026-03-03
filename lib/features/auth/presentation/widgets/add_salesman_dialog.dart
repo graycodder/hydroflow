@@ -65,6 +65,13 @@ class _AddSalesmanDialogState extends State<AddSalesmanDialog> {
 
   Future<void> _submit() async {
     if (_formKey.currentState!.validate()) {
+      FocusScope.of(context).unfocus();
+      FocusManager.instance.primaryFocus?.unfocus();
+
+      // Give keyboard a moment to dismiss
+      await Future.delayed(const Duration(milliseconds: 100));
+      if (!mounted) return;
+
       setState(() => _isChecking = true);
       HydroFlowLoader.show(context, message: 'Checking phone number...');
 
@@ -99,6 +106,8 @@ class _AddSalesmanDialogState extends State<AddSalesmanDialog> {
           createdAt: DateTime.now(), 
         );
 
+        FocusScope.of(context).unfocus();
+        FocusManager.instance.primaryFocus?.unfocus();
         Navigator.pop(context, newSalesman);
       } catch (e) {
         if (mounted) {
