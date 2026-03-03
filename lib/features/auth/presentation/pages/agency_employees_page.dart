@@ -463,9 +463,15 @@ class AgencyEmployeesPage extends StatelessWidget {
         child: AlertDialog(
           shape:
               RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          title: const Text('Reset Device Binding?'),
+          title: const Row(
+            children: [
+              Icon(Icons.phonelink_off, color: _kOrange),
+              SizedBox(width: 8),
+              Text('Unlink Device?'),
+            ],
+          ),
           content: Text(
-              'This will allow ${salesman.name} to log in from a new device. Are you sure?'),
+              'This will disconnect the current device for ${salesman.name}. They will be able to log in from a new device. Are you sure?'),
           actions: [
             TextButton(
                 onPressed: () => Navigator.pop(dialogCtx),
@@ -481,7 +487,7 @@ class AgencyEmployeesPage extends StatelessWidget {
               },
               style: ElevatedButton.styleFrom(
                   backgroundColor: _kOrange, foregroundColor: Colors.white),
-              child: const Text('Reset'),
+              child: const Text('Unlink Now'),
             ),
           ],
         ),
@@ -905,9 +911,9 @@ class _SalesmanCard extends StatelessWidget {
                       if (isLinked) ...[
                         const SizedBox(height: 6),
                         _CircleAction(
-                          icon: Icons.lock_reset,
+                          icon: Icons.phonelink_off,
                           color: _kOrange,
-                          tooltip: 'Reset Device',
+                          tooltip: 'Unlink Device',
                           onTap: onResetDevice,
                         ),
                       ],
