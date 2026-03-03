@@ -39,6 +39,8 @@ class DashboardStatCard extends StatelessWidget {
           children: [
             Text(
               title,
+              maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               style: TextStyle(
                 color: Colors.grey[600],
                 fontSize: 14,
@@ -61,6 +63,8 @@ class DashboardStatCard extends StatelessWidget {
             const SizedBox(height: 4),
             Text(
               subtitle,
+              maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               style: TextStyle(
                 color: Colors.grey[500],
                 fontSize: 12,

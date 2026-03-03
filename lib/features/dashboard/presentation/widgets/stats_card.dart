@@ -44,6 +44,8 @@ class StatsCard extends StatelessWidget {
           const SizedBox(height: 16),
           Text(
             value,
+            maxLines: 1,
+                overflow: TextOverflow.ellipsis,
             style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                   fontWeight: FontWeight.bold,
                   color: Colors.black87,
@@ -52,6 +54,8 @@ class StatsCard extends StatelessWidget {
           const SizedBox(height: 4),
           Text(
             title,
+            maxLines: 1,
+                overflow: TextOverflow.ellipsis,
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                   color: Colors.grey[600],
                 ),
