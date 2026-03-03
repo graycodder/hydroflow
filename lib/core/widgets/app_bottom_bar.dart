@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 
 class AppBottomBar extends StatelessWidget {
@@ -14,6 +15,9 @@ class AppBottomBar extends StatelessWidget {
       unselectedItemColor: Colors.grey,
       showUnselectedLabels: true,
       currentIndex: currentIndex,
+      selectedFontSize: 12.sp,
+      unselectedFontSize: 10.sp,
+      iconSize: 24.sp,
       onTap: (index) {
         if (index == currentIndex) return;
         

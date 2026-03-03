@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:hydroflow/features/dashboard/domain/entities/dashboard_summary.dart';
 import 'package:hydroflow/features/dashboard/presentation/widgets/dashboard_stat_card.dart';
 
@@ -16,8 +17,8 @@ class SalesmanStatusCards extends StatelessWidget {
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
       crossAxisCount: 2,
-      crossAxisSpacing: 16,
-      mainAxisSpacing: 16,
+      crossAxisSpacing: 16.w,
+      mainAxisSpacing: 16.h,
       childAspectRatio: 1.0,
       children: [
         DashboardStatCard(

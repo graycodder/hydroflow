@@ -22,6 +22,7 @@ import 'package:hydroflow/features/splash/presentation/widgets/splash_view.dart'
 import 'package:hydroflow/core/utils/router_refresh_listenable.dart';
 import 'package:hydroflow/core/bloc/connectivity/connectivity_bloc.dart';
 import 'package:hydroflow/core/widgets/connectivity_wrapper.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 
 void main() {
@@ -164,13 +165,20 @@ class HydroFlowApp extends StatelessWidget {
              // router.go('/update'); // Handled by Router or SplashPage
           }
         },
-        child: MaterialApp.router(
-          title: 'HydroFlow',
-          debugShowCheckedModeBanner: false,
-          theme: CodeTheme.lightTheme,
-          routerConfig: router,
+        child: ScreenUtilInit(
+          designSize: const Size(375, 812),
+          minTextAdapt: true,
+          splitScreenMode: true,
           builder: (context, child) {
-            return ConnectivityWrapper(child: child!);
+            return MaterialApp.router(
+              title: 'HydroFlow',
+              debugShowCheckedModeBanner: false,
+              theme: CodeTheme.lightTheme,
+              routerConfig: router,
+              builder: (context, materialChild) {
+                return ConnectivityWrapper(child: materialChild!);
+              },
+            );
           },
         ),
 

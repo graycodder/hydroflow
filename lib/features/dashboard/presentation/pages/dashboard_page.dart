@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:hydroflow/features/auth/domain/entities/salesman.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -43,15 +44,15 @@ class _DashboardPageState extends State<DashboardPage> with RouteAware {
   }
 
   @override
-  void dispose() {
-    routeObserver.unsubscribe(this);
-    super.dispose();
-  }
-
-  @override
   void didPopNext() {
     // Called when the top route has been popped off, and the current route shows up.
     _loadPersistedView();
+  }
+
+  @override
+  void dispose() {
+    routeObserver.unsubscribe(this);
+    super.dispose();
   }
 
   Future<void> _loadPersistedView() async {
@@ -104,18 +105,18 @@ class _DashboardPageState extends State<DashboardPage> with RouteAware {
             backgroundColor: Colors.grey[50],
             appBar: const HydroFlowAppBar(),
             body: SingleChildScrollView(
-              padding: const EdgeInsets.all(16.0),
+              padding: EdgeInsets.all(16.w),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   if (salesman.role == 'owner' && salesman.agencyId.isNotEmpty) 
                     Padding(
-                      padding: const EdgeInsets.only(bottom: 16.0),
+                      padding: EdgeInsets.only(bottom: 16.h),
                       child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                        padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 4.h),
                         decoration: BoxDecoration(
                           color: Colors.white,
-                          borderRadius: BorderRadius.circular(12),
+                          borderRadius: BorderRadius.circular(12.r),
                           border: Border.all(color: Colors.grey.shade300),
                         ),
                         child: DropdownButtonHideUnderline(
@@ -127,9 +128,9 @@ class _DashboardPageState extends State<DashboardPage> with RouteAware {
                                 value: 'personal',
                                 child: Row(
                                   children: [
-                                    Icon(Icons.person, size: 20, color: Colors.blue),
-                                    SizedBox(width: 8),
-                                    Text(salesman.name?? ""),
+                                    Icon(Icons.person, size: 20.sp, color: Colors.blue),
+                                    SizedBox(width: 8.w),
+                                    Text(salesman.name?? "", style: TextStyle(fontSize: 14.sp)),
                                   ],
                                 ),
                               ),
@@ -137,9 +138,9 @@ class _DashboardPageState extends State<DashboardPage> with RouteAware {
                                 value: 'agency',
                                 child: Row(
                                   children: [
-                                    Icon(Icons.business, size: 20, color: Colors.purple),
-                                    SizedBox(width: 8),
-                                    Text("Agency (Warehouse)"),
+                                    Icon(Icons.business, size: 20.sp, color: Colors.purple),
+                                    SizedBox(width: 8.w),
+                                    Text("Agency (Warehouse)", style: TextStyle(fontSize: 14.sp)),
                                   ],
                                 ),
                               ),
@@ -151,20 +152,21 @@ class _DashboardPageState extends State<DashboardPage> with RouteAware {
                                 final shouldSwitch = await showDialog<bool>(
                                   context: context,
                                   builder: (context) => AlertDialog(
-                                    title: const Text('Switch View'),
+                                    title: Text('Switch View', style: TextStyle(fontSize: 18.sp)),
                                     content: Text(
                                       value == 'agency' 
                                         ? 'Are you sure you want to switch to Agency View?'
-                                        : 'Are you sure you want to switch to Personal View?'
+                                        : 'Are you sure you want to switch to Personal View?',
+                                      style: TextStyle(fontSize: 14.sp),
                                     ),
                                     actions: [
                                       TextButton(
                                         onPressed: () => Navigator.pop(context, false),
-                                        child: const Text('Cancel'),
+                                        child: Text('Cancel', style: TextStyle(fontSize: 14.sp)),
                                       ),
                                       TextButton(
                                         onPressed: () => Navigator.pop(context, true),
-                                        child: const Text('Confirm'),
+                                        child: Text('Confirm', style: TextStyle(fontSize: 14.sp)),
                                       ),
                                     ],
                                   ),
@@ -193,10 +195,10 @@ class _DashboardPageState extends State<DashboardPage> with RouteAware {
                   if(_showSubscriptionReminder && expiry != null && daysRemaining <= 7) ...[
                     // Subscription Reminder Card
                     Container(
-                      padding: const EdgeInsets.all(16.0),
+                      padding: EdgeInsets.all(16.w),
                       decoration: BoxDecoration(
                         color: isExpired ? const Color(0xFFFFEBEE) : const Color(0xFFFFF9C4), // Red if expired, Yellow-100 if warning
-                        borderRadius: BorderRadius.circular(16),
+                        borderRadius: BorderRadius.circular(16.r),
                         border: Border.all(color: isExpired ? Colors.red.shade200 : const Color(0xFFFFF176)),
                       ),
                       child: Column(
@@ -205,14 +207,14 @@ class _DashboardPageState extends State<DashboardPage> with RouteAware {
                           Row(
                             children: [
                               Container(
-                                padding: const EdgeInsets.all(8),
+                                padding: EdgeInsets.all(8.w),
                                 decoration: BoxDecoration(
                                   color: isExpired ? Colors.red : const Color(0xFFF9A825), 
                                   shape: BoxShape.circle,
                                 ),
-                                child: const Icon(Icons.access_time_filled, color: Colors.white, size: 20),
+                                child: Icon(Icons.access_time_filled, color: Colors.white, size: 20.sp),
                               ),
-                              const SizedBox(width: 12),
+                              SizedBox(width: 12.w),
                               Expanded(
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -221,25 +223,25 @@ class _DashboardPageState extends State<DashboardPage> with RouteAware {
                                       isExpired ? 'Subscription Expired' : 'Subscription Reminder',
                                       style: TextStyle(
                                         fontWeight: FontWeight.bold,
-                                        fontSize: 16,
+                                        fontSize: 16.sp,
                                         color: isExpired ? Colors.red.shade900 : const Color(0xFF3E2723),
                                       ),
                                     ),
-                                    const SizedBox(height: 4),
+                                    SizedBox(height: 4.h),
                                     Text(
                                       isExpired 
                                           ? 'Your subscription expired on $expiryDateStr' 
                                           : 'Your subscription expires in $daysRemaining days',
                                       style: TextStyle(
                                         color: Colors.brown[900],
-                                        fontSize: 14,
+                                        fontSize: 14.sp,
                                       ),
                                     ),
                                   ],
                                 ),
                               ),
                               IconButton(
-                                icon: const Icon(Icons.close, color: Colors.brown),
+                                icon: Icon(Icons.close, color: Colors.brown, size: 24.sp),
                                 onPressed: () {
                                   setState(() {
                                     _showSubscriptionReminder = false;
@@ -248,72 +250,72 @@ class _DashboardPageState extends State<DashboardPage> with RouteAware {
                               ),
                             ],
                           ),
-                          const SizedBox(height: 12),
+                          SizedBox(height: 12.h),
                           Text(
                             'Expiry Date: $expiryDateStr',
                             style: TextStyle(
                               color: isExpired ? Colors.red.shade900 : const Color(0xFF5D4037),
-                              fontSize: 13,
+                              fontSize: 13.sp,
                               fontWeight: FontWeight.w500,
                             ),
                           ),
-                          const SizedBox(height: 4),
+                          SizedBox(height: 4.h),
                           Text(
                             isExpired 
                               ? 'Please contact admin immediately to restore access.'
                               : 'Contact your administrator to renew your subscription and avoid service interruption.',
                             style: TextStyle(
                               color: isExpired ? Colors.red.shade700 : const Color(0xFF5D4037),
-                              fontSize: 13,
+                              fontSize: 13.sp,
                             ),
                           ),
-                          const SizedBox(height: 12),
+                          SizedBox(height: 12.h),
                           LinearProgressIndicator(
                             value: isExpired ? 0 : progress,
                             backgroundColor: Colors.white54,
                             valueColor: AlwaysStoppedAnimation<Color>(isExpired ? Colors.red : const Color(0xFFF9A825)),
-                            minHeight: 6,
-                            borderRadius: BorderRadius.circular(4),
+                            minHeight: 6.h,
+                            borderRadius: BorderRadius.circular(4.r),
                           ),
                         ],
                       ),
                     ),
-                    const SizedBox(height: 24),
+                    SizedBox(height: 24.h),
                   ],
                    // Blue Welcome Card
                   Container(
-                    padding: const EdgeInsets.all(24.0),
+                    padding: EdgeInsets.all(24.w),
                     decoration: BoxDecoration(
                       gradient: const LinearGradient(
                          colors: [Color(0xFF2962FF), Color(0xFF1565C0)],
                          begin: Alignment.topLeft,
                          end: Alignment.bottomRight,
                       ),
-                      borderRadius: BorderRadius.circular(16),
+                      borderRadius: BorderRadius.circular(16.r),
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text(
+                        Text(
                           'Welcome Back!',
                           style: TextStyle(
                             color: Colors.white,
-                            fontSize: 24,
+                            fontSize: 24.sp,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
-                        const SizedBox(height: 8),
-                        const Text(
+                        SizedBox(height: 8.h),
+                        Text(
                           'Ready to start your deliveries today?',
                           style: TextStyle(
                             color: Colors.white70,
-                            fontSize: 16,
+                            fontSize: 16.sp,
                           ),
                         ),
                       ],
                     ),
                   ),
-                  const SizedBox(height: 24),
+                  SizedBox(height: 24.h),
                   // Stats Grid
                   BlocConsumer<DashboardBloc, DashboardState>(
                     listener: (context, state) {

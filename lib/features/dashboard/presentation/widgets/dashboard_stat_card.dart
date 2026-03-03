@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 class DashboardStatCard extends StatelessWidget {
   final String title;
@@ -21,10 +22,10 @@ class DashboardStatCard extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.all(7),
+        padding: EdgeInsets.all(7.w),
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(16.r),
           boxShadow: [
             BoxShadow(
               color: Colors.grey.withOpacity(0.1),
@@ -40,13 +41,13 @@ class DashboardStatCard extends StatelessWidget {
             Text(
               title,
               maxLines: 1,
-                overflow: TextOverflow.ellipsis,
+              overflow: TextOverflow.ellipsis,
               style: TextStyle(
                 color: Colors.grey[600],
-                fontSize: 14,
+                fontSize: 14.sp,
               ),
             ),
-            const SizedBox(height: 12),
+            SizedBox(height: 12.h),
             FittedBox(
               fit: BoxFit.scaleDown,
               child: Text(
@@ -55,19 +56,19 @@ class DashboardStatCard extends StatelessWidget {
                 overflow: TextOverflow.ellipsis,
                 style: TextStyle(
                   color: valueColor,
-                  fontSize: 28,
+                  fontSize: 28.sp,
                   fontWeight: FontWeight.bold,
                 ),
               ),
             ),
-            const SizedBox(height: 4),
+            SizedBox(height: 4.h),
             Text(
               subtitle,
               maxLines: 1,
-                overflow: TextOverflow.ellipsis,
+              overflow: TextOverflow.ellipsis,
               style: TextStyle(
                 color: Colors.grey[500],
-                fontSize: 12,
+                fontSize: 12.sp,
               ),
             ),
           ],
