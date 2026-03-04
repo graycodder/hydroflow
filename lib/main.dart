@@ -22,6 +22,7 @@ import 'package:hydroflow/features/splash/presentation/widgets/splash_view.dart'
 import 'package:hydroflow/core/utils/router_refresh_listenable.dart';
 import 'package:hydroflow/core/bloc/connectivity/connectivity_bloc.dart';
 import 'package:hydroflow/core/widgets/connectivity_wrapper.dart';
+import 'package:hydroflow/features/auth/presentation/bloc/agency_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 
@@ -143,6 +144,7 @@ class HydroFlowApp extends StatelessWidget {
         BlocProvider<NotificationBloc>(create: (_) => di.sl<NotificationBloc>()),
         BlocProvider<DashboardBloc>(create: (_) => di.sl<DashboardBloc>()),
         BlocProvider<ConnectivityBloc>(create: (_) => di.sl<ConnectivityBloc>()),
+        BlocProvider<AgencyBloc>(create: (_) => di.sl<AgencyBloc>()),
       ],
 
       child: BlocListener<AuthBloc, AuthState>(

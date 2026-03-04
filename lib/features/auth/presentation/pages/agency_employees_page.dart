@@ -49,9 +49,8 @@ class AgencyEmployeesPage extends StatelessWidget {
 
     return MultiBlocProvider(
       providers: [
-        BlocProvider(
-            create: (_) =>
-                sl<AgencyBloc>()..add(LoadAgencySalesmen(agencyId))),
+        BlocProvider.value(
+            value: context.read<AgencyBloc>()..add(LoadAgencySalesmen(agencyId))),
         BlocProvider(
             create: (_) =>
                 sl<StockBloc>()..add(LoadAgencyStock(agencyId))),

@@ -14,6 +14,9 @@ import 'package:hydroflow/features/dashboard/presentation/bloc/dashboard_state.d
 import 'package:hydroflow/core/widgets/hydro_flow_app_bar.dart';
 import 'package:hydroflow/core/widgets/hydro_flow_loader.dart';
 import 'package:intl/intl.dart';
+import 'package:hydroflow/features/auth/presentation/bloc/agency_bloc.dart';
+import 'package:hydroflow/features/auth/presentation/bloc/agency_state.dart';
+import 'package:hydroflow/features/auth/presentation/bloc/agency_event.dart';
 
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:hydroflow/core/service_locator.dart'; // Import sl for SharedPreferences
@@ -32,7 +35,6 @@ class _DashboardPageState extends State<DashboardPage> with RouteAware {
   bool _showSubscriptionReminder = true;
   bool _isAgencyView = false; // Default to personal view
   bool _isViewSwitching = false;
-  Future<List<Salesman>>? _salesmenListFuture;
   String? _lastAgencyIdForSalesmen;
   
   @override
@@ -107,7 +109,8 @@ class _DashboardPageState extends State<DashboardPage> with RouteAware {
           if (isOwner && currentAgencyId.isNotEmpty) {
              if (_lastAgencyIdForSalesmen != currentAgencyId) {
                 _lastAgencyIdForSalesmen = currentAgencyId;
-                _salesmenListFuture = sl<AgencyRepository>().getSalesmenByAgency(currentAgencyId);
+                // AgencyBloc will handle loading the list
+                context.read<AgencyBloc>().add(LoadAgencySalesmen(currentAgencyId));
              }
           }
 
@@ -146,10 +149,14 @@ class _DashboardPageState extends State<DashboardPage> with RouteAware {
                           border: Border.all(color: Colors.grey.shade300),
                         ),
                         child: DropdownButtonHideUnderline(
-                          child: FutureBuilder<List<Salesman>>(
-                            future: _salesmenListFuture,
-                            builder: (context, snapshot) {
-                              final salesmenList = snapshot.data ?? <Salesman>[];
+                          child: BlocBuilder<AgencyBloc, AgencyState>(
+                            builder: (context, agencyState) {
+                               // If state is initial, trigger load
+                               if (agencyState is AgencyInitial && currentAgencyId.isNotEmpty) {
+                                  context.read<AgencyBloc>().add(LoadAgencySalesmen(currentAgencyId));
+                               }
+                               
+                               final salesmenList = agencyState is AgencySalesmenLoaded ? agencyState.salesmen : <Salesman>[];
                               
                               List<DropdownMenuItem<String>> items = [];
                               items.add(
@@ -164,18 +171,23 @@ class _DashboardPageState extends State<DashboardPage> with RouteAware {
                                   ),
                                 ),
                               );
-                              items.add(
-                                DropdownMenuItem(
-                                  value: 'personal',
-                                  child: Row(
-                                    children: [
-                                      Icon(Icons.person, size: 20.sp, color: Colors.blue),
-                                      SizedBox(width: 8.w),
-                                      Text("${originalOwner?.name ?? salesman.name} (Owner)", style: TextStyle(fontSize: 14.sp)),
-                                    ],
-                                  ),
-                                ),
-                              );
+                               final rawOwnerName = originalOwner?.name ?? salesman.name;
+                               final displayOwnerName = rawOwnerName.isNotEmpty 
+                                  ? rawOwnerName[0].toUpperCase() + rawOwnerName.substring(1) 
+                                  : rawOwnerName;
+                               
+                               items.add(
+                                 DropdownMenuItem(
+                                   value: 'personal',
+                                   child: Row(
+                                     children: [
+                                       Icon(Icons.person, size: 20.sp, color: Colors.blue),
+                                       SizedBox(width: 8.w),
+                                       Text("$displayOwnerName (Owner)", style: TextStyle(fontSize: 14.sp)),
+                                     ],
+                                   ),
+                                 ),
+                               );
                               
                               for (var s in salesmenList) {
                                 if (s.id == (originalOwner?.id ?? salesman.id)) continue;
@@ -186,7 +198,7 @@ class _DashboardPageState extends State<DashboardPage> with RouteAware {
                                       children: [
                                         Icon(Icons.person, size: 20.sp, color: Colors.blue),
                                         SizedBox(width: 8.w),
-                                        Text(s.name + " (" +s.role[0].toUpperCase()+s.role.substring(1)+")", style: TextStyle(fontSize: 14.sp)),
+                                        Text(s.name[0].toUpperCase() + s.name.substring(1) + " (" +s.role[0].toUpperCase()+s.role.substring(1)+")", style: TextStyle(fontSize: 14.sp)),
                                       ],
                                     ),
                                   ),
@@ -204,7 +216,7 @@ class _DashboardPageState extends State<DashboardPage> with RouteAware {
                                         children: [
                                          Icon(Icons.person, size: 20.sp, color: Colors.blue),
                                           SizedBox(width: 8.w),
-                                          Text(salesman.name + " (" +salesman.role[0].toUpperCase()+salesman.role.substring(1)+")", style: TextStyle(fontSize: 14.sp)),
+                                          Text(salesman.name[0].toUpperCase() + salesman.name.substring(1) + " (" +salesman.role[0].toUpperCase()+salesman.role.substring(1)+")", style: TextStyle(fontSize: 14.sp)),
                                         ],
                                       ),
                                     ),
