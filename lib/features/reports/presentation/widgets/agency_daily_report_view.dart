@@ -122,6 +122,12 @@ class AgencyDailyReportView extends StatelessWidget {
                     ),
                     const SizedBox(height: 8),
                     _buildBreakdownRow(
+                      "Deliveries",
+                      "${subReport.totalDeliveries} cans",
+                      Colors.teal,
+                    ),
+                    const SizedBox(height: 8),
+                    _buildBreakdownRow(
                       "Cash in Hand (Today)",
                       "₹${subReport.cashInHand.toStringAsFixed(0)}",
                       Colors.green,
