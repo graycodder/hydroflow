@@ -131,6 +131,7 @@ class _AddSalesmanDialogState extends State<AddSalesmanDialog> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
+               const SizedBox(height: 12),
               TextFormField(
                 controller: _nameController,
                 decoration: const InputDecoration(labelText: 'Full Name'),
@@ -226,28 +227,33 @@ class _AddSalesmanDialogState extends State<AddSalesmanDialog> {
               //   decoration: const InputDecoration(labelText: 'Zone (Optional)'),
               // ),
               const SizedBox(height: 12),
-              TextFormField(
-                controller: _quotaController,
-                decoration: const InputDecoration(
-                  labelText: 'Customer Quota',
-                  helperText: 'Max customers this salesman can manage',
-                ),
-                keyboardType: TextInputType.number,
-                inputFormatters: [
-                  FilteringTextInputFormatter.digitsOnly,
-                ],
-                validator: (value) {
-                  if (value == null || value.isEmpty) return 'Please enter quota';
-                  final qty = int.tryParse(value);
-                  if (qty == null || qty < 0) return 'Enter a valid number';
-                  
+              Builder(
+                builder: (context) {
                   final alreadyAllocated = widget.existingSalesmen.fold<int>(0, (sum, s) => sum + s.maxCustomers);
-                  final remaining = widget.maxAgencyCustomers - alreadyAllocated;
+                  final remaining = (widget.maxAgencyCustomers - alreadyAllocated).clamp(0, widget.maxAgencyCustomers);
                   
-                  if (qty > remaining) {
-                    return 'Exceeds Agency Limit ($remaining remaining)';
-                  }
-                  return null;
+                  return TextFormField(
+                    controller: _quotaController,
+                    decoration: InputDecoration(
+                      labelText: 'Customer Quota',
+                      helperText: 'Agency Limit: ${widget.maxAgencyCustomers}. Already Allocated: $alreadyAllocated. Available to Assign: $remaining',
+                      helperMaxLines: 3,
+                    ),
+                    keyboardType: TextInputType.number,
+                    inputFormatters: [
+                      FilteringTextInputFormatter.digitsOnly,
+                    ],
+                    validator: (value) {
+                      if (value == null || value.isEmpty) return 'Please enter quota';
+                      final qty = int.tryParse(value);
+                      if (qty == null || qty < 0) return 'Enter a valid number';
+                      
+                      if (qty > remaining) {
+                        return 'Exceeds Agency Limit ($remaining remaining)';
+                      }
+                      return null;
+                    },
+                  );
                 },
               ),
             ],

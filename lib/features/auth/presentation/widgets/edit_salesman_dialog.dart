@@ -221,7 +221,7 @@ class _EditSalesmanDialogState extends State<EditSalesmanDialog> {
                 controller: _quotaController,
                 decoration: InputDecoration(
                   labelText: 'Customer Quota',
-                  helperText: 'Max customers allowed for this salesman. Pool Limit: ${widget.maxAgencyCustomers}. Already used by others: $otherAllocated. Remaining: $remainingForThisUser',
+                  helperText: 'Agency Limit: ${widget.maxAgencyCustomers}. Already used by others: $otherAllocated. Available for this salesman: $remainingForThisUser',
                   helperMaxLines: 3,
                 ),
                 keyboardType: TextInputType.number,

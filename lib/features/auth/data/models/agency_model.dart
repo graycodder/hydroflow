@@ -100,8 +100,8 @@ class AgencyModel extends Agency {
       maxCreditLimit: (settings?['maxCreditLimit'] as num?)?.toDouble() ?? 5000.0,
       defaultBottlePrice: (settings?['defaultBottlePrice'] as num?)?.toDouble() ?? 60.0,
       enforceFixedPrice: settings?['enforceFixedPrice'] as bool? ?? false,
-      maxSalesmen: (data['maxSalesmen'] as num?)?.toInt() ?? 5,
-      maxCustomers: subMaxCustomers ?? rootMaxCustomers, // Prioritize subscription limit
+      maxSalesmen: (data['maxSalesmen'] as num?)?.toInt() ?? 0,
+      maxCustomers: subMaxCustomers ?? (data['maxCustomers'] as num?)?.toInt() ?? 0,
       totalCustomersCount: (data['totalCustomersCount'] as num?)?.toInt() ?? 0,
       createdAt: data['createdAt'] != null
           ? DateTime.fromMillisecondsSinceEpoch(data['createdAt'] as int)
