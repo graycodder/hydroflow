@@ -448,7 +448,21 @@ class _DeliveryViewState extends State<DeliveryView> {
   }
 
   Widget _buildStatsHeader(DeliveryState state) {
-    return Column(
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withOpacity(0.1),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child:
+    Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
@@ -548,7 +562,7 @@ class _DeliveryViewState extends State<DeliveryView> {
           ],
         ),
       ],
-    );
+    ));
   }
 
   Widget _buildSummaryCard({
@@ -558,7 +572,7 @@ class _DeliveryViewState extends State<DeliveryView> {
     required Color textColor,
   }) {
     return Container(
-      padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
+      padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 10),
       decoration: BoxDecoration(
         color: bgColor,
         borderRadius: BorderRadius.circular(16),
@@ -567,6 +581,8 @@ class _DeliveryViewState extends State<DeliveryView> {
         children: [
           Text(
             value,
+             maxLines: 1,
+            overflow: TextOverflow.ellipsis,
             textAlign: TextAlign.center,
             style: TextStyle(
               color: textColor,
@@ -577,6 +593,8 @@ class _DeliveryViewState extends State<DeliveryView> {
           const SizedBox(height: 4),
           Text(
             label,
+             maxLines: 1,
+            overflow: TextOverflow.ellipsis,
             textAlign: TextAlign.center,
             style: const TextStyle(
               color: Color(0xFF5F6368),
@@ -597,7 +615,7 @@ class _DeliveryViewState extends State<DeliveryView> {
     required Color textColor,
   }) {
     return Container(
-      padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
+      padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 10),
       decoration: BoxDecoration(
         color: bgColor,
         borderRadius: BorderRadius.circular(16),
@@ -609,6 +627,8 @@ class _DeliveryViewState extends State<DeliveryView> {
           const SizedBox(width: 8),
           Text(
             value,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
             style: TextStyle(
               color: textColor,
               fontSize: 18,
@@ -618,6 +638,8 @@ class _DeliveryViewState extends State<DeliveryView> {
           const SizedBox(width: 6),
           Text(
             label,
+             maxLines: 1,
+            overflow: TextOverflow.ellipsis,
             style: const TextStyle(
               color: Color(0xFF5F6368),
               fontSize: 13,

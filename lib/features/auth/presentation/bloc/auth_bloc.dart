@@ -23,6 +23,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   Salesman? _currentSalesman;
   Agency? _currentAgency;
   Salesman? _originalOwner;
+  bool _isRestoringImpersonation = false;
 
   AuthBloc({
     required AuthRepository authRepository,
@@ -79,16 +80,27 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
                 
                 // Check for existing impersonation on startup/reconnect
                 final savedImpersonatedId = _prefs.getString(_impersonatedKey);
-                if (salesman.role == 'owner' && savedImpersonatedId != null && savedImpersonatedId != salesman.id) {
+                if (salesman.role == 'owner' && 
+                    savedImpersonatedId != null && 
+                    savedImpersonatedId != salesman.id && 
+                    !_isRestoringImpersonation) {
+                    
+                    _isRestoringImpersonation = true;
                     // Try to fetch impersonated salesman data
                     _authRepository.getSalesmanStream(savedImpersonatedId).first.then((target) {
+                       _isRestoringImpersonation = false;
                        add(AuthImpersonateRequested(target));
                     }).catchError((e) {
+                       _isRestoringImpersonation = false;
                        _prefs.remove(_impersonatedKey);
+                       add(AuthStatusChanged(salesman, _currentAgency));
                     });
+                    return; // Skip initial owner-state emission if restoring impersonation
                 }
                 
-                add(AuthStatusChanged(salesman, _currentAgency));
+                if (!_isRestoringImpersonation) {
+                   add(AuthStatusChanged(salesman, _currentAgency));
+                }
               }
             }
           },
