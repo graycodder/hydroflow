@@ -439,11 +439,29 @@ class AgencyDailyReportView extends StatelessWidget {
                   "+₹${report.securityDepositsCollected.toStringAsFixed(0)}",
                   valueColor: Colors.green,
                 ),
-                const SizedBox(height: 4),
+                Padding(
+                  padding: const EdgeInsets.only(left: 12),
+                  child: Column(
+                    children: [
+                      buildRow("  - Cash", "₹${report.securityDepositsCollectedCash.toStringAsFixed(0)}"),
+                      buildRow("  - UPI/Online", "₹${report.securityDepositsCollectedOnline.toStringAsFixed(0)}"),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 8),
                 buildRow(
                   "• Refunded",
                   "-₹${report.securityDepositsRefunded.toStringAsFixed(0)}",
                   valueColor: Colors.red,
+                ),
+                Padding(
+                  padding: const EdgeInsets.only(left: 12),
+                  child: Column(
+                    children: [
+                      buildRow("  - Cash", "₹${report.securityDepositsRefundedCash.toStringAsFixed(0)}"),
+                      buildRow("  - UPI/Online", "₹${report.securityDepositsRefundedOnline.toStringAsFixed(0)}"),
+                    ],
+                  ),
                 ),
               ],
             ),

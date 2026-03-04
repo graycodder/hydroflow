@@ -61,7 +61,7 @@ Widget buildRow(String label, String value, {bool isBold = false, Color? valueCo
             maxLines: 1,
           overflow: TextOverflow.ellipsis,
             style: TextStyle(
-              color: Colors.black87,
+              color: Colors.black,
               fontSize: 15,
               fontWeight: isBold ? FontWeight.bold : FontWeight.normal,
             ),
@@ -88,7 +88,7 @@ Widget buildSubRow(String label, String value, {Color? color}) {
     child: Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text("• $label", style: const TextStyle(color: Colors.grey, fontSize: 14)),
+        Text("• $label", style: const TextStyle(color: Colors.black, fontSize: 14)),
         Text(
           value,
           style: TextStyle(color: color ?? Colors.black87, fontSize: 14),

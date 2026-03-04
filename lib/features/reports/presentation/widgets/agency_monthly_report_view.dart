@@ -241,12 +241,31 @@ class AgencyMonthlyReportView extends StatelessWidget {
             "+₹${NumberFormat('#,##,###').format(report.securityDepositsCollected)}",
             color: Colors.green,
           ),
+          Padding(
+            padding: const EdgeInsets.only(left: 24),
+            child: Column(
+              children: [
+                buildRow("  - Cash", "₹${NumberFormat('#,##,###').format(report.securityDepositsCollectedCash)}", valueColor: Colors.grey[700]),
+                buildRow("  - UPI/Online", "₹${NumberFormat('#,##,###').format(report.securityDepositsCollectedOnline)}", valueColor: Colors.grey[700]),
+              ],
+            ),
+          ),
           const SizedBox(height: 4),
           buildSubRow(
             "Refunded",
             "-₹${NumberFormat('#,##,###').format(report.securityDepositsRefunded)}",
             color: Colors.red,
           ),
+          Padding(
+            padding: const EdgeInsets.only(left: 24),
+            child: Column(
+              children: [
+                buildRow("  - Cash", "₹${NumberFormat('#,##,###').format(report.securityDepositsRefundedCash)}", valueColor: Colors.grey[700]),
+                buildRow("  - UPI/Online", "₹${NumberFormat('#,##,###').format(report.securityDepositsRefundedOnline)}", valueColor: Colors.grey[700]),
+              ],
+            ),
+          ),
+          const Divider(height: 16),
           buildRow(
             "Net Deposits",
             "₹${NumberFormat('#,##,###').format(report.netDeposits)}",
