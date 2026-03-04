@@ -64,11 +64,20 @@ class _DashboardPageState extends State<DashboardPage> with RouteAware {
     final savedIsAgency = prefs.getBool('dashboard_is_agency_view') ?? false;
     
     if (mounted) {
+      final authState = context.read<AuthBloc>().state;
+      bool effectiveIsAgency = savedIsAgency;
+
+      if (authState is AuthAuthenticated) {
+        final isOwner = authState.salesman.role == 'owner' || authState.originalOwner?.role == 'owner';
+        if (!isOwner) {
+          effectiveIsAgency = false;
+        }
+      }
+
       setState(() {
-        _isAgencyView = savedIsAgency;
+        _isAgencyView = effectiveIsAgency;
       });
       
-      final authState = context.read<AuthBloc>().state;
       if (authState is AuthAuthenticated) {
          // Always force reload to ensure the view matches exactly what was persisted
          // since build() might have already fired with the default `false`
@@ -427,7 +436,7 @@ class _DashboardPageState extends State<DashboardPage> with RouteAware {
                       }
                       if (dashboardState is DashboardLoaded) {
                         final summary = dashboardState.summary;
-                        if (_isAgencyView && originalOwner == null) {
+                        if (isOwner && _isAgencyView && originalOwner == null) {
                           return AgencyStatusCards(summary: summary);
                         } else {
                           return SalesmanStatusCards(summary: summary);
@@ -451,9 +460,10 @@ class _DashboardPageState extends State<DashboardPage> with RouteAware {
   }
 
   void _loadDashboardData(Salesman salesman, Salesman? originalOwner) {
+    final isOwner = salesman.role == 'owner' || originalOwner?.role == 'owner';
     context.read<DashboardBloc>().add(LoadDashboard(
       salesmanId: salesman.id,
-      agencyId: (originalOwner == null && _isAgencyView) ? salesman.agencyId : null,
+      agencyId: (isOwner && originalOwner == null && _isAgencyView) ? salesman.agencyId : null,
     ));
   }
 }
