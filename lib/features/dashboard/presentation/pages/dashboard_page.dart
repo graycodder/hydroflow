@@ -212,6 +212,39 @@ class _DashboardPageState extends State<DashboardPage> with RouteAware {
                                 onChanged: (value) async {
                                   if (value == null || value == currentValue) return;
 
+                                  String switchMessage = '';
+                                  if (value == 'agency') {
+                                    switchMessage = 'Are you sure you want to switch to Agency View?';
+                                  } else if (value == 'personal') {
+                                    switchMessage = 'Are you sure you want to switch to Personal View?';
+                                  } else {
+                                    final targetName = salesmenList.firstWhere((s) => s.id == value).name;
+                                    switchMessage = 'Are you sure you want to switch to $targetName\'s profile?';
+                                  }
+
+                                  final shouldSwitch = await showDialog<bool>(
+                                    context: context,
+                                    builder: (context) => AlertDialog(
+                                      title: Text('Switch View', style: TextStyle(fontSize: 18.sp)),
+                                      content: Text(
+                                        switchMessage,
+                                        style: TextStyle(fontSize: 14.sp),
+                                      ),
+                                      actions: [
+                                        TextButton(
+                                          onPressed: () => Navigator.pop(context, false),
+                                          child: Text('Cancel', style: TextStyle(fontSize: 14.sp)),
+                                        ),
+                                        TextButton(
+                                          onPressed: () => Navigator.pop(context, true),
+                                          child: Text('Confirm', style: TextStyle(fontSize: 14.sp)),
+                                        ),
+                                      ],
+                                    ),
+                                  );
+
+                                  if (shouldSwitch != true) return;
+
                                   if (value == 'agency' || value == 'personal') {
                                     if (originalOwner != null) {
                                         context.read<AuthBloc>().add(AuthStopImpersonationRequested());
