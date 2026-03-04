@@ -1276,7 +1276,7 @@ class _DeliveryViewState extends State<DeliveryView> {
               const SizedBox(height: 2),
               Text(
                 isSelected
-                    ? (mode == 'Credit' ? 'No payment' : 'Full amount')
+                    ? (mode == 'Credit' ? 'No payment' : '')
                     : '',
                 style: const TextStyle(
                   fontSize: 10,
