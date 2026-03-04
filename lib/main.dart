@@ -166,7 +166,7 @@ class HydroFlowApp extends StatelessWidget {
           }
         },
         child: ScreenUtilInit(
-          designSize: const Size(375, 812),
+          designSize: const Size(390, 844),
           minTextAdapt: true,
           splitScreenMode: true,
           builder: (context, child) {
@@ -176,7 +176,14 @@ class HydroFlowApp extends StatelessWidget {
               theme: CodeTheme.lightTheme,
               routerConfig: router,
               builder: (context, materialChild) {
-                return ConnectivityWrapper(child: materialChild!);
+                final media = MediaQuery.of(context);
+                final scaleText = ScreenUtil().scaleText;
+                return MediaQuery(
+                  data: media.copyWith(
+                    textScaler: TextScaler.linear(media.textScaler.scale(1) * scaleText),
+                  ),
+                  child: ConnectivityWrapper(child: materialChild!),
+                );
               },
             );
           },
