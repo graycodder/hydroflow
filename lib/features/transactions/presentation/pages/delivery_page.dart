@@ -486,7 +486,7 @@ class _DeliveryViewState extends State<DeliveryView> {
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Text(
-                  '${state.totalDeliveriesCount} deliveries',
+                  '${state.totalDeliveriesCount} ${state.totalDeliveriesCount == 1 ? 'Delivery' : 'Deliveries'}',
                   style: const TextStyle(color: Colors.blue, fontSize: 11, fontWeight: FontWeight.bold),
                 ),
               ),
