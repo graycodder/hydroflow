@@ -35,7 +35,11 @@ class DeliveryPage extends StatelessWidget {
         child: const DeliveryView(),
       );
     }
-    return const DeliveryView();
+    return const Scaffold(
+      body: Center(
+        child: HydroFlowLoader(message: 'Authenticating...', isOverlay: false),
+      ),
+    );
   }
 }
 
