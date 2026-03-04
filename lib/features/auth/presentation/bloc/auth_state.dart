@@ -16,11 +16,12 @@ class AuthLoading extends AuthState {}
 class AuthAuthenticated extends AuthState {
   final Salesman salesman;
   final Agency? agency;
+  final Salesman? originalOwner;
 
-  const AuthAuthenticated(this.salesman, [this.agency]);
+  const AuthAuthenticated(this.salesman, [this.agency, this.originalOwner]);
 
   @override
-  List<Object?> get props => [salesman, agency];
+  List<Object?> get props => [salesman, agency, originalOwner];
 }
 
 class AuthUnauthenticated extends AuthState {}
@@ -28,11 +29,12 @@ class AuthUnauthenticated extends AuthState {}
 class AuthSubscriptionExpired extends AuthState {
   final Salesman salesman;
   final Agency? agency;
+  final Salesman? originalOwner;
 
-  const AuthSubscriptionExpired(this.salesman, [this.agency]);
+  const AuthSubscriptionExpired(this.salesman, [this.agency, this.originalOwner]);
 
   @override
-  List<Object?> get props => [salesman, agency];
+  List<Object?> get props => [salesman, agency, originalOwner];
 }
 
 class AuthFailure extends AuthState {

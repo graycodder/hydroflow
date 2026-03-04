@@ -3,7 +3,9 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:hydroflow/features/auth/domain/entities/salesman.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:hydroflow/features/auth/domain/repositories/agency_repository.dart';
 import 'package:hydroflow/features/auth/presentation/bloc/auth_bloc.dart';
+import 'package:hydroflow/features/auth/presentation/bloc/auth_event.dart';
 import 'package:hydroflow/features/auth/presentation/bloc/auth_state.dart';
 import 'package:hydroflow/core/widgets/app_bottom_bar.dart';
 import 'package:hydroflow/features/dashboard/presentation/bloc/dashboard_bloc.dart';
@@ -30,6 +32,8 @@ class _DashboardPageState extends State<DashboardPage> with RouteAware {
   bool _showSubscriptionReminder = true;
   bool _isAgencyView = false; // Default to personal view
   bool _isViewSwitching = false;
+  Future<List<Salesman>>? _salesmenListFuture;
+  String? _lastAgencyIdForSalesmen;
   
   @override
   void initState() {
@@ -68,7 +72,7 @@ class _DashboardPageState extends State<DashboardPage> with RouteAware {
       if (authState is AuthAuthenticated) {
          // Always force reload to ensure the view matches exactly what was persisted
          // since build() might have already fired with the default `false`
-         _loadDashboardData(authState.salesman);
+         _loadDashboardData(authState.salesman, authState.originalOwner);
       }
     }
   }
@@ -85,12 +89,23 @@ class _DashboardPageState extends State<DashboardPage> with RouteAware {
         if (authState is AuthAuthenticated) {
           final salesman = authState.salesman;
           final agency = authState.agency;
+          final originalOwner = authState.originalOwner;
+          final isOwner = salesman.role == 'owner' || originalOwner?.role == 'owner';
+          final currentAgencyId = originalOwner?.agencyId ?? salesman.agencyId;
+          
+          if (isOwner && currentAgencyId.isNotEmpty) {
+             if (_lastAgencyIdForSalesmen != currentAgencyId) {
+                _lastAgencyIdForSalesmen = currentAgencyId;
+                _salesmenListFuture = sl<AgencyRepository>().getSalesmenByAgency(currentAgencyId);
+             }
+          }
+
           // Trigger initial load if not already loaded or if view changed - simplified for now to just load on build for this example, 
           // but ideally we should check if bloc has data or use a separate init method.
           // For this specific flow, let's trigger it once via a post-frame callback if needed, or rely on the user interacting.
           // However, to ensure data is loaded:
           if (context.read<DashboardBloc>().state is DashboardInitial) {
-             _loadDashboardData(salesman);
+             _loadDashboardData(salesman, originalOwner);
           }
   
           // Subscription Logic
@@ -109,7 +124,7 @@ class _DashboardPageState extends State<DashboardPage> with RouteAware {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  if (salesman.role == 'owner' && salesman.agencyId.isNotEmpty) 
+                  if (isOwner && currentAgencyId.isNotEmpty) 
                     Padding(
                       padding: EdgeInsets.only(bottom: 16.h),
                       child: Container(
@@ -120,73 +135,114 @@ class _DashboardPageState extends State<DashboardPage> with RouteAware {
                           border: Border.all(color: Colors.grey.shade300),
                         ),
                         child: DropdownButtonHideUnderline(
-                          child: DropdownButton<String>(
-                            value: _isAgencyView ? 'agency' : 'personal',
-                            isExpanded: true,
-                            items:  [
-                              DropdownMenuItem(
-                                value: 'personal',
-                                child: Row(
-                                  children: [
-                                    Icon(Icons.person, size: 20.sp, color: Colors.blue),
-                                    SizedBox(width: 8.w),
-                                    Text(salesman.name?? "", style: TextStyle(fontSize: 14.sp)),
-                                  ],
-                                ),
-                              ),
-                              DropdownMenuItem(
-                                value: 'agency',
-                                child: Row(
-                                  children: [
-                                    Icon(Icons.business, size: 20.sp, color: Colors.purple),
-                                    SizedBox(width: 8.w),
-                                    Text("Agency (Warehouse)", style: TextStyle(fontSize: 14.sp)),
-                                  ],
-                                ),
-                              ),
-                            ],
-                            onChanged: (value) async {
-                              if (value != null) {
-                                if (value == (_isAgencyView ? 'agency' : 'personal')) return;
-
-                                final shouldSwitch = await showDialog<bool>(
-                                  context: context,
-                                  builder: (context) => AlertDialog(
-                                    title: Text('Switch View', style: TextStyle(fontSize: 18.sp)),
-                                    content: Text(
-                                      value == 'agency' 
-                                        ? 'Are you sure you want to switch to Agency View?'
-                                        : 'Are you sure you want to switch to Personal View?',
-                                      style: TextStyle(fontSize: 14.sp),
-                                    ),
-                                    actions: [
-                                      TextButton(
-                                        onPressed: () => Navigator.pop(context, false),
-                                        child: Text('Cancel', style: TextStyle(fontSize: 14.sp)),
-                                      ),
-                                      TextButton(
-                                        onPressed: () => Navigator.pop(context, true),
-                                        child: Text('Confirm', style: TextStyle(fontSize: 14.sp)),
-                                      ),
+                          child: FutureBuilder<List<Salesman>>(
+                            future: _salesmenListFuture,
+                            builder: (context, snapshot) {
+                              final salesmenList = snapshot.data ?? <Salesman>[];
+                              
+                              List<DropdownMenuItem<String>> items = [];
+                              items.add(
+                                DropdownMenuItem(
+                                  value: 'agency',
+                                  child: Row(
+                                    children: [
+                                      Icon(Icons.business, size: 20.sp, color: Colors.purple),
+                                      SizedBox(width: 8.w),
+                                      Text("Agency (Warehouse)", style: TextStyle(fontSize: 14.sp)),
                                     ],
                                   ),
+                                ),
+                              );
+                              items.add(
+                                DropdownMenuItem(
+                                  value: 'personal',
+                                  child: Row(
+                                    children: [
+                                      Icon(Icons.person, size: 20.sp, color: Colors.blue),
+                                      SizedBox(width: 8.w),
+                                      Text("${originalOwner?.name ?? salesman.name} (Owner)", style: TextStyle(fontSize: 14.sp)),
+                                    ],
+                                  ),
+                                ),
+                              );
+                              
+                              for (var s in salesmenList) {
+                                if (s.id == (originalOwner?.id ?? salesman.id)) continue;
+                                items.add(
+                                  DropdownMenuItem(
+                                    value: s.id,
+                                    child: Row(
+                                      children: [
+                                        Icon(Icons.switch_account_outlined, size: 20.sp, color: Colors.green),
+                                        SizedBox(width: 8.w),
+                                        Text(s.name, style: TextStyle(fontSize: 14.sp)),
+                                      ],
+                                    ),
+                                  ),
                                 );
-
-                                if (shouldSwitch == true) {
-                                  final isAgency = value == 'agency';
-                                  setState(() {
-                                    _isAgencyView = isAgency;
-                                    _isViewSwitching = true;
-                                  });
-                                  
-                                  // Save preference
-                                  final prefs = sl<SharedPreferences>();
-                                  await prefs.setBool('dashboard_is_agency_view', isAgency);
-
-                                  _loadDashboardData(salesman);
-                                }
                               }
-                            },
+
+                              String currentValue;
+                              if (originalOwner != null) {
+                                currentValue = salesman.id; 
+                                if (!items.any((item) => item.value == currentValue)) {
+                                  items.add(
+                                    DropdownMenuItem(
+                                      value: currentValue,
+                                      child: Row(
+                                        children: [
+                                          Icon(Icons.switch_account_outlined, size: 20.sp, color: Colors.green),
+                                          SizedBox(width: 8.w),
+                                          Text(salesman.name, style: TextStyle(fontSize: 14.sp)),
+                                        ],
+                                      ),
+                                    ),
+                                  );
+                                }
+                              } else {
+                                currentValue = _isAgencyView ? 'agency' : 'personal';
+                              }
+
+                              return DropdownButton<String>(
+                                value: currentValue,
+                                isExpanded: true,
+                                items: items,
+                                onChanged: (value) async {
+                                  if (value == null || value == currentValue) return;
+
+                                  if (value == 'agency' || value == 'personal') {
+                                    if (originalOwner != null) {
+                                        context.read<AuthBloc>().add(AuthStopImpersonationRequested());
+                                    }
+                                    
+                                    final isAgency = value == 'agency';
+                                    setState(() {
+                                        _isAgencyView = isAgency;
+                                        _isViewSwitching = true;
+                                    });
+                                    
+                                    final prefs = sl<SharedPreferences>();
+                                    await prefs.setBool('dashboard_is_agency_view', isAgency);
+                                    
+                                    if (originalOwner == null) {
+                                      _loadDashboardData(salesman, null);
+                                    }
+                                  } else {
+                                    Salesman? targetSalesman;
+                                    try {
+                                      targetSalesman = salesmenList.firstWhere((s) => s.id == value);
+                                    } catch (_) {}
+                                    
+                                    if (targetSalesman != null) {
+                                      context.read<AuthBloc>().add(AuthImpersonateRequested(targetSalesman));
+                                      setState(() {
+                                        _isViewSwitching = true;
+                                      });
+                                    }
+                                  }
+                                },
+                              );
+                            }
                           ),
                         ),
                       ),
@@ -359,10 +415,10 @@ class _DashboardPageState extends State<DashboardPage> with RouteAware {
     );
   }
 
-  void _loadDashboardData(Salesman salesman) {
+  void _loadDashboardData(Salesman salesman, Salesman? originalOwner) {
     context.read<DashboardBloc>().add(LoadDashboard(
       salesmanId: salesman.id,
-      agencyId: _isAgencyView ? salesman.agencyId : null,
+      agencyId: (originalOwner == null && _isAgencyView) ? salesman.agencyId : null,
     ));
   }
 }

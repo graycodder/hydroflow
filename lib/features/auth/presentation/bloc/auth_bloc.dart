@@ -14,9 +14,11 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   StreamSubscription<String?>? _authSubscription;
   StreamSubscription<Salesman>? _salesmanSubscription;
   StreamSubscription<Agency>? _agencySubscription;
+  StreamSubscription<Salesman>? _impersonatedSalesmanSubscription;
 
   Salesman? _currentSalesman;
   Agency? _currentAgency;
+  Salesman? _originalOwner;
 
   AuthBloc({
     required AuthRepository authRepository,
@@ -29,6 +31,8 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     on<AuthLoginRequested>(_onLoginRequested);
     on<AuthLogoutRequested>(_onLogoutRequested);
     on<AuthStatusChanged>(_onAuthStatusChanged);
+    on<AuthImpersonateRequested>(_onImpersonateRequested);
+    on<AuthStopImpersonationRequested>(_onStopImpersonationRequested);
   }
 
   Future<void> _onAppStarted(AppStarted event, Emitter<AuthState> emit) async {
@@ -60,15 +64,25 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         .listen(
           (salesman) {
             if (!isClosed) {
-              _currentSalesman = salesman;
-              _subscribeToAgency(salesman.agencyId);
-              add(AuthStatusChanged(salesman, _currentAgency));
+              if (_originalOwner != null) {
+                _originalOwner = salesman;
+                add(AuthStatusChanged(_currentSalesman, _currentAgency));
+              } else {
+                _currentSalesman = salesman;
+                _subscribeToAgency(salesman.agencyId);
+                add(AuthStatusChanged(salesman, _currentAgency));
+              }
             }
           },
           onError: (error) {
             if (!isClosed) {
-              _currentSalesman = null;
-              add(const AuthStatusChanged(null, null));
+              if (_originalOwner != null) {
+                _originalOwner = null;
+                add(AuthLogoutRequested());
+              } else {
+                _currentSalesman = null;
+                add(const AuthStatusChanged(null, null));
+              }
             }
           },
         );
@@ -118,7 +132,47 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     AuthLogoutRequested event,
     Emitter<AuthState> emit,
   ) async {
+    _impersonatedSalesmanSubscription?.cancel();
+    _impersonatedSalesmanSubscription = null;
+    _originalOwner = null;
     await _authRepository.signOut();
+  }
+
+  Future<void> _onImpersonateRequested(
+    AuthImpersonateRequested event,
+    Emitter<AuthState> emit,
+  ) async {
+    if (_currentSalesman?.role != 'owner') return; 
+    
+    _originalOwner = _currentSalesman;
+    _currentSalesman = event.targetSalesman;
+    
+    _impersonatedSalesmanSubscription?.cancel();
+    _impersonatedSalesmanSubscription = _authRepository
+        .getSalesmanStream(event.targetSalesman.id)
+        .listen((salesman) {
+          if (!isClosed && _originalOwner != null) {
+            _currentSalesman = salesman;
+            add(AuthStatusChanged(salesman, _currentAgency));
+          }
+        });
+
+    add(AuthStatusChanged(_currentSalesman, _currentAgency));
+  }
+
+  Future<void> _onStopImpersonationRequested(
+    AuthStopImpersonationRequested event,
+    Emitter<AuthState> emit,
+  ) async {
+    if (_originalOwner == null) return;
+    
+    _impersonatedSalesmanSubscription?.cancel();
+    _impersonatedSalesmanSubscription = null;
+    
+    _currentSalesman = _originalOwner;
+    _originalOwner = null;
+    
+    add(AuthStatusChanged(_currentSalesman, _currentAgency));
   }
 
   Future<void> _onAuthStatusChanged(
@@ -145,7 +199,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
 
       // Device ID Check
       final currentDeviceId = await _authRepository.getCurrentDeviceId();
-      if (currentDeviceId != null) {
+      if (currentDeviceId != null && _originalOwner == null) {
         if (salesman.deviceId == null || 
             salesman.deviceId!.isEmpty || 
             salesman.deviceId != currentDeviceId) {
@@ -155,17 +209,20 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       }
 
       if (!salesman.isActive || isUserExpired || isAgencyInactive || isAgencyExpired) {
-        emit(AuthSubscriptionExpired(salesman, agency));
+        emit(AuthSubscriptionExpired(salesman, agency, _originalOwner));
       } else {
-        emit(AuthAuthenticated(salesman, agency));
+        emit(AuthAuthenticated(salesman, agency, _originalOwner));
       }
     } else {
       _currentSalesman = null;
       _currentAgency = null;
+      _originalOwner = null;
       _salesmanSubscription?.cancel();
       _salesmanSubscription = null;
       _agencySubscription?.cancel();
       _agencySubscription = null;
+      _impersonatedSalesmanSubscription?.cancel();
+      _impersonatedSalesmanSubscription = null;
       
       emit(AuthUnauthenticated());
     }
@@ -176,6 +233,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     _authSubscription?.cancel();
     _salesmanSubscription?.cancel();
     _agencySubscription?.cancel();
+    _impersonatedSalesmanSubscription?.cancel();
     return super.close();
   }
 }

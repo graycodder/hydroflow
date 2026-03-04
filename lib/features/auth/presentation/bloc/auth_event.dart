@@ -31,3 +31,12 @@ class AuthStatusChanged extends AuthEvent {
   @override
   List<Object?> get props => [salesman, agency];
 }
+
+class AuthImpersonateRequested extends AuthEvent {
+  final Salesman targetSalesman;
+  const AuthImpersonateRequested(this.targetSalesman);
+  @override
+  List<Object?> get props => [targetSalesman];
+}
+
+class AuthStopImpersonationRequested extends AuthEvent {}
