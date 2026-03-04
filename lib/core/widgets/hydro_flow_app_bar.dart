@@ -17,7 +17,7 @@ class HydroFlowAppBar extends StatelessWidget implements PreferredSizeWidget {
 
   @override
   Widget build(BuildContext context) {
-    final authState = context.read<AuthBloc>().state;
+    final authState = context.watch<AuthBloc>().state;
     final role = authState is AuthAuthenticated ? authState.salesman.role : '';
     final bool canShowNotifications = showNotifications && role != 'salesman';
 

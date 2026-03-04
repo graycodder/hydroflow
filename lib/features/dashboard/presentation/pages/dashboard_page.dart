@@ -83,6 +83,8 @@ class _DashboardPageState extends State<DashboardPage> with RouteAware {
       listener: (context, state) {
         if (state is AuthUnauthenticated) {
           context.go('/login');
+        } else if (state is AuthAuthenticated) {
+          _loadDashboardData(state.salesman, state.originalOwner);
         }
       },
       builder: (context, authState) {
@@ -226,13 +228,6 @@ class _DashboardPageState extends State<DashboardPage> with RouteAware {
                                     
                                     if (originalOwner == null) {
                                       _loadDashboardData(salesman, null);
-                                    } else {
-                                      // Override the default load dispatched by main.dart when AuthState changes
-                                      Future.delayed(const Duration(milliseconds: 100), () {
-                                        if (mounted) {
-                                          _loadDashboardData(originalOwner, null);
-                                        }
-                                      });
                                     }
                                   } else {
                                     Salesman? targetSalesman;
