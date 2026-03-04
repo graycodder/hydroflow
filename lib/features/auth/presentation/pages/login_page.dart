@@ -28,6 +28,7 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   void _onLoginPressed() {
+    FocusManager.instance.primaryFocus?.unfocus();
     if (_formKey.currentState!.validate()) {
       if (!_termsAccepted) {
         ScaffoldMessenger.of(context).showSnackBar(
