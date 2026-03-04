@@ -413,6 +413,13 @@ class _DeliveryViewState extends State<DeliveryView> {
                     ),
                     const SizedBox(height: 8),
 
+                     // ── Stats Banner (always visible for salesman) ────────────
+                    if (!isAgency)
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 16),
+                        child: _buildStatsHeader(state),
+                      ),
+
                     // Form Card (Only for Salesman, hidden for Agency)
                     if (!isAgency)
                       _buildDeliveryForm(context, state, salesmanId),
@@ -441,61 +448,99 @@ class _DeliveryViewState extends State<DeliveryView> {
   }
 
   Widget _buildStatsHeader(DeliveryState state) {
-    return Column(
-      children: [
-        Row(
-          children: [
-            Expanded(
-              child: _buildInfoCard(
-                'Total Sales',
-                '₹${state.totalSales.toStringAsFixed(0)}',
-                Colors.blue[50]!,
-                Colors.blue,
-              ),
-            ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: _buildInfoCard(
-                'Cash',
-                '₹${state.totalCash.toStringAsFixed(0)}',
-                Colors.green[50]!,
-                Colors.green,
-              ),
-            ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: _buildInfoCard(
-                'UPI',
-                '₹${state.totalUpi.toStringAsFixed(0)}',
-                Colors.purple[50]!,
-                Colors.purple,
-              ),
-            ),
-          ],
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [Color(0xFF1565C0), Color(0xFF2962FF)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
         ),
-        const SizedBox(height: 12),
-        Row(
-          children: [
-            Expanded(
-              child: _buildInfoCard(
-                'Delivered',
-                '↓ ${state.totalDelivered}',
-                Colors.orange[50]!,
-                Colors.orange,
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.today_outlined, color: Colors.white70, size: 16),
+              const SizedBox(width: 6),
+              Text(
+                "Today's Summary",
+                style: TextStyle(color: Colors.white.withOpacity(0.85), fontSize: 13, fontWeight: FontWeight.w500),
               ),
-            ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: _buildInfoCard(
-                'Returned',
-                '↑ ${state.totalReturned}',
-                Colors.teal[50]!,
-                Colors.teal,
+              const Spacer(),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.2),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Text(
+                  '${state.todayTransactions.length} deliveries',
+                  style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
+                ),
               ),
-            ),
-          ],
-        ),
-      ],
+            ],
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: _buildStatChip('Cash', '₹${state.totalCash.toStringAsFixed(0)}', Icons.money, Colors.greenAccent.shade400),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: _buildStatChip('UPI', '₹${state.totalUpi.toStringAsFixed(0)}', Icons.qr_code, Colors.purpleAccent.shade100),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: _buildStatChip('Total', '₹${state.totalSales.toStringAsFixed(0)}', Icons.account_balance_wallet_outlined, Colors.orangeAccent),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              Expanded(
+                child: _buildStatChip('Delivered', '${state.totalDelivered}', Icons.arrow_downward, Colors.lightBlueAccent),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: _buildStatChip('Returned', '${state.totalReturned}', Icons.arrow_upward, Colors.tealAccent),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: _buildStatChip('Stock', '${state.currentStock}', Icons.inventory_2_outlined, Colors.white70),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStatChip(String label, String value, IconData icon, Color color) {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.12),
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(icon, size: 14, color: color),
+              const SizedBox(width: 4),
+              Text(label, style: TextStyle(color: Colors.white.withOpacity(0.8), fontSize: 10)),
+            ],
+          ),
+          const SizedBox(height: 2),
+          Text(value, style: const TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.bold)),
+        ],
+      ),
     );
   }
 
@@ -557,34 +602,42 @@ class _DeliveryViewState extends State<DeliveryView> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Row(
+
+            // ── Header ──────────────────────────────────────────────────
+            Row(
               children: [
-                Icon(Icons.local_shipping_outlined, size: 20),
-                SizedBox(width: 8),
-                Text(
-                  "Record Delivery & Return",
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFE8EDFF),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Icon(Icons.local_shipping_outlined, size: 20, color: Color(0xFF2962FF)),
+                ),
+                const SizedBox(width: 10),
+                const Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('New Delivery', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF1A1A2E))),
+                    Text('Select customer and fill details', style: TextStyle(fontSize: 11, color: Colors.grey)),
+                  ],
                 ),
               ],
             ),
             const SizedBox(height: 16),
 
-            // Customer Dropdown
-            // Customer Dropdown with Search
+            // ── Customer Dropdown ────────────────────────────────────────
             DropdownSearch<Customer>(
               items: (filter, loadProps) {
                 final activeCustomers = state.filteredCustomers
                     .where((c) => c.status == 'Active')
                     .toList();
                 if (filter.isEmpty) return activeCustomers;
-
                 final query = filter.toLowerCase();
                 final filtered = activeCustomers.where((c) {
                   return c.name.toLowerCase().contains(query) ||
                       c.phone.contains(query);
                 }).toList();
-
-                // Sort: prioritize those starting with the query
                 filtered.sort((a, b) {
                   final aNameMatch = a.name.toLowerCase().startsWith(query);
                   final bNameMatch = b.name.toLowerCase().startsWith(query);
@@ -592,7 +645,6 @@ class _DeliveryViewState extends State<DeliveryView> {
                   if (!aNameMatch && bNameMatch) return 1;
                   return a.name.compareTo(b.name);
                 });
-
                 return filtered;
               },
               itemAsString: (Customer c) => c.name,
@@ -600,20 +652,24 @@ class _DeliveryViewState extends State<DeliveryView> {
               decoratorProps: DropDownDecoratorProps(
                 decoration: InputDecoration(
                   labelText: 'Select Customer',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
+                  prefixIcon: const Icon(Icons.search, color: Color(0xFF2962FF)),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: BorderSide(color: Colors.grey.shade300),
                   ),
                   filled: true,
                   fillColor: Colors.grey[50],
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
                 ),
               ),
               popupProps: PopupProps.menu(
                 showSearchBox: true,
                 searchDelay: Duration.zero,
                 searchFieldProps: const TextFieldProps(
-                  autofocus: false,
+                  autofocus: true,
                   decoration: InputDecoration(
-                    hintText: "Search with Name or Phone...",
+                    hintText: 'Search by name or phone...',
                     prefixIcon: Icon(Icons.search),
                     contentPadding: EdgeInsets.symmetric(horizontal: 12),
                     border: OutlineInputBorder(),
@@ -621,57 +677,31 @@ class _DeliveryViewState extends State<DeliveryView> {
                 ),
                 itemBuilder: (context, item, isSelected, isHovered) {
                   return ListTile(
-                    title: Text(
-                      item.name,
-                      style: const TextStyle(fontSize: 14),
-                    ),
+                    title: Text(item.name, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
                     subtitle: Row(
                       children: [
                         if (item.zone.isNotEmpty) ...[
                           Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 6,
-                              vertical: 2,
-                            ),
-                            decoration: BoxDecoration(
-                              color: Colors.blue[50],
-                              borderRadius: BorderRadius.circular(4),
-                            ),
-                            child: Text(
-                              item.zone,
-                              style: TextStyle(
-                                color: Colors.blue[700],
-                                fontSize: 10,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
+                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            decoration: BoxDecoration(color: Colors.blue[50], borderRadius: BorderRadius.circular(4)),
+                            child: Text(item.zone, style: TextStyle(color: Colors.blue[700], fontSize: 10, fontWeight: FontWeight.bold)),
                           ),
-                          const SizedBox(width: 8),
+                          const SizedBox(width: 6),
                         ],
                         Expanded(
-                          child: Text(
-                            item.address,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(fontSize: 12),
-                          ),
+                          child: Text(item.phone, style: const TextStyle(fontSize: 12)),
                         ),
+                        Text('🫙 ${item.bottleBalance}', style: TextStyle(fontSize: 11, color: Colors.blue.shade700, fontWeight: FontWeight.w600)),
                       ],
                     ),
                     selected: isSelected,
                     dense: true,
                     visualDensity: VisualDensity.compact,
-                    contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 0,
-                    ),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 0),
                   );
                 },
               ),
-              selectedItem:
-                  state.filteredCustomers.any(
-                    (c) => c == state.selectedCustomer,
-                  )
+              selectedItem: state.filteredCustomers.any((c) => c == state.selectedCustomer)
                   ? state.selectedCustomer
                   : null,
               onChanged: (Customer? value) {
@@ -680,126 +710,307 @@ class _DeliveryViewState extends State<DeliveryView> {
                 }
               },
               validator: (value) {
-                if (value == null) {
-                  return 'Please select a customer';
-                }
+                if (value == null) return 'Please select a customer';
                 return null;
               },
             ),
 
-            const SizedBox(height: 16),
-
-            // Quantities
-            Row(
-              children: [
-                Expanded(
-                  child: TextFormField(
-                    controller: _fullCansController,
-                    autofocus: false,
-                    keyboardType: TextInputType.number,
-                    inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                    decoration: const InputDecoration(
-                      labelText: 'Full Bottles',
-                      prefixIcon: Icon(
-                        Icons.arrow_downward,
-                        color: Colors.orange,
-                      ),
-                      border: OutlineInputBorder(),
+            // ── Customer Info Card ───────────────────────────────────────
+            if (state.selectedCustomer != null)
+              AnimatedContainer(
+                duration: const Duration(milliseconds: 250),
+                margin: const EdgeInsets.only(top: 10),
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF0F4FF),
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: const Color(0xFFDDE5FF)),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Name + Zone row
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF2962FF),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: const Icon(Icons.person, size: 18, color: Colors.white),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                state.selectedCustomer!.name,
+                                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Color(0xFF1A1A2E)),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              if (state.selectedCustomer!.zone.isNotEmpty)
+                                const SizedBox(height: 2),
+                              if (state.selectedCustomer!.zone.isNotEmpty)
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                  decoration: BoxDecoration(
+                                    color: Colors.grey,
+                                    borderRadius: BorderRadius.circular(20),
+                                  ),
+                                  child: Text(
+                                    state.selectedCustomer!.zone,
+                                    style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
+                                  ),
+                                ),
+                            ],
+                          ),
+                        ),
+                      ],
                     ),
-                    onChanged: (_) => _calculateTotal(),
-                    validator: (value) {
-                      if (value == null || value.isEmpty) return 'Required';
-                      final n = int.tryParse(value);
-                      if (n == null) return 'Invalid';
-                      if (n < 0) return 'Cannot be negative';
-                      // Strict "Must be > 0"? User's manual edit suggested cans==0 is blocked.
-                      // User asked: "show same validation error message like Amount Received Texfiled ? for Full Cans TextFormField"
-                      // Amount Received validator checks for > 0.
-                      // I will enforce > 0 to match user intent.
-                      if (n <= 0) return 'Must be greater than 0';
-                      return null;
-                    },
+                    const SizedBox(height: 12),
+                    // Stat boxes row
+                    Row(
+                      children: [
+                        Expanded(
+                          child: _buildCustomerStatBox(
+                            icon: Icons.local_drink_outlined,
+                            iconColor: Colors.blueGrey,
+                            label: 'Bottles',
+                            value: '${state.selectedCustomer!.bottleBalance}',
+                            valueColor: state.selectedCustomer!.bottleBalance < 0 ? Colors.red : const Color(0xFF1A1A2E),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: _buildCustomerStatBox(
+                            icon: Icons.currency_rupee,
+                            iconColor: Colors.green,
+                            label: 'Pending',
+                            value: '₹${state.selectedCustomer!.pendingBalance.toStringAsFixed(0)}',
+                            valueColor: state.selectedCustomer!.pendingBalance > 0 ? Colors.orange.shade700 : Colors.green.shade700,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: _buildCustomerStatBox(
+                            icon: Icons.location_on_outlined,
+                            iconColor: Colors.grey,
+                            label: 'Location',
+                            value: state.selectedCustomer!.address.isNotEmpty
+                                ? state.selectedCustomer!.address.split(',').first.trim()
+                                : '—',
+                            valueColor: const Color(0xFF1A1A2E),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+
+
+            const SizedBox(height: 18),
+            const Divider(height: 1, color: Color(0xFFF0F0F0)),
+            const SizedBox(height: 14),
+
+            // ── Bottle Steppers ──────────────────────────────────────────
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Full Bottles
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          const Icon(Icons.arrow_downward, size: 14, color: Colors.orange),
+                          const SizedBox(width: 4),
+                          const Text('Full Bottles', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Colors.orange)),
+                        ],
+                      ),
+                      const SizedBox(height: 6),
+                      _buildStepper(
+                        controller: _fullCansController,
+                        color: Colors.orange,
+                        borderColor: Colors.orange.shade300,
+                        onChanged: () => _calculateTotal(),
+                      ),
+                      FormField<String>(
+                        validator: (_) {
+                          final n = int.tryParse(_fullCansController.text) ?? 0;
+                          if (n <= 0) return 'Must be > 0';
+                          return null;
+                        },
+                        builder: (f) => f.errorText != null
+                            ? Padding(
+                                padding: const EdgeInsets.only(top: 4),
+                                child: Text(f.errorText!, style: const TextStyle(color: Colors.red, fontSize: 11)),
+                              )
+                            : const SizedBox.shrink(),
+                      ),
+                    ],
                   ),
                 ),
                 const SizedBox(width: 16),
+                // Empty Bottles
                 Expanded(
-                  child: TextFormField(
-                    controller: _emptyCansController,
-                    autofocus: false,
-                    keyboardType: TextInputType.number,
-                    inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                    decoration: const InputDecoration(
-                      labelText: 'Empty Bottles',
-                      prefixIcon: Icon(Icons.arrow_upward, color: Colors.teal),
-                      border: OutlineInputBorder(),
-                    ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          const Icon(Icons.arrow_upward, size: 14, color: Color(0xFF00897B)),
+                          const SizedBox(width: 4),
+                          const Text('Empty Return', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Color(0xFF00897B))),
+                        ],
+                      ),
+                      const SizedBox(height: 6),
+                      _buildStepper(
+                        controller: _emptyCansController,
+                        color: const Color(0xFF00897B),
+                        borderColor: const Color(0xFF80CBC4),
+                        onChanged: () => setState(() {}),
+                      ),
+                    ],
                   ),
                 ),
               ],
             ),
 
+            // "Use balance" centered below both steppers
+            if (state.selectedCustomer != null)
+              Center(
+                child: Padding(
+                  padding: const EdgeInsets.only(top: 8),
+                  child: GestureDetector(
+                    onTap: () {
+                      final balance = state.selectedCustomer!.bottleBalance;
+                      if (balance > 0) {
+                        setState(() {
+                          _emptyCansController.text = '$balance';
+                        });
+                      }
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFE0F2F1),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Text(
+                        'Use balance (${state.selectedCustomer!.bottleBalance})',
+                        style: const TextStyle(fontSize: 12, color: Color(0xFF00897B), fontWeight: FontWeight.w600),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+
             const SizedBox(height: 16),
 
-            // Price Per Bottle
-            TextFormField(
-              controller: _pricePerBottleController,
-              enabled: !isPriceFixed,
-              autofocus: false,
-            //  readOnly: isPriceFixed,
-              keyboardType: TextInputType.number,
-              inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-              decoration: InputDecoration(
-                labelText: isPriceFixed ? 'Price Per Bottle (Fixed by Agency)' : 'Price Per Bottle (₹)',
-                prefixText: '₹ ',
-                border: const OutlineInputBorder(),
-                hintText: 'Enter rate per bottle',
-                suffixIcon: isPriceFixed ? const Icon(Icons.lock_outline, size: 16) : null,
+            // ── Rate + Live Total Banner ─────────────────────────────────
+            IntrinsicHeight(
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  // Rate field
+                  Expanded(
+                    child: TextFormField(
+                      controller: _pricePerBottleController,
+                      enabled: !isPriceFixed,
+                      keyboardType: TextInputType.number,
+                      inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                      decoration: InputDecoration(
+                        labelText: 'Rate / Bottle',
+                        prefixText: '₹ ',
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10),
+                          borderSide: BorderSide(color: Colors.grey.shade300),
+                        ),
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+                        suffixIcon: isPriceFixed ? const Icon(Icons.lock_outline, size: 16, color: Colors.grey) : null,
+                      ),
+                      onChanged: (_) => _calculateTotal(),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  // Live Total preview — same size as Rate field
+                  Expanded(
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 0),
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                          colors: [Color(0xFF2962FF), Color(0xFF1565C0)],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        ),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Row(
+                            children: [
+                              const Text('Total', style: TextStyle(color: Colors.white60, fontSize: 10)),
+                              const SizedBox(width: 4),
+                              Text(
+                                '(${_fullCansController.text.isEmpty ? '0' : _fullCansController.text}×₹${_pricePerBottleController.text.isEmpty ? '0' : _pricePerBottleController.text})',
+                                style: const TextStyle(color: Colors.white38, fontSize: 9),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            '₹${_priceController.text.isEmpty ? '0' : _priceController.text}',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                              letterSpacing: -0.5,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+
+
+                ],
               ),
-              onChanged: (_) => _calculateTotal(),
             ),
 
             const SizedBox(height: 16),
 
-            // Total Amount
-            TextFormField(
-              controller: _priceController,
-              autofocus: false,
-              keyboardType: TextInputType.number,
-              inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-              decoration: const InputDecoration(
-                labelText: 'Total Amount (₹)',
-                prefixText: '₹ ',
-                border: OutlineInputBorder(),
-                helperText: "Auto-calculated: Full Bottles × Rate",
-              ),
-            ),
-
-            const SizedBox(height: 16),
-
-            // Amount Received (Partial Payment)
+            // ── Amount Received ──────────────────────────────────────────
             TextFormField(
               controller: _amountReceivedController,
               autofocus: false,
               keyboardType: TextInputType.number,
               inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-              decoration: const InputDecoration(
+              decoration: InputDecoration(
                 labelText: 'Amount Received (₹)',
                 prefixText: '₹ ',
-                border: OutlineInputBorder(),
-                helperText: "Mandatory: Enter actual amount received",
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10),
+                  borderSide: BorderSide(color: Colors.grey.shade300),
+                ),
+                contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+                helperText: 'Enter actual amount received from customer',
               ),
               validator: (value) {
-                if (_paymentMode == 'Credit')
-                  return null; // Credit implies 0 received, no validation needed
-                if (value == null || value.isEmpty) {
-                  return 'Amount received is required';
-                }
+                if (_paymentMode == 'Credit') return null;
+                if (value == null || value.isEmpty) return 'Amount received is required';
                 final amount = double.tryParse(value);
-                if (amount == null) {
-                  return 'Please enter a valid amount';
-                }
-                if ((_paymentMode == 'Cash' || _paymentMode == 'UPI') &&
-                    amount <= 0) {
+                if (amount == null) return 'Please enter a valid amount';
+                if ((_paymentMode == 'Cash' || _paymentMode == 'UPI') && amount <= 0) {
                   return 'Amount must be greater than 0 for $_paymentMode';
                 }
                 return null;
@@ -808,44 +1019,78 @@ class _DeliveryViewState extends State<DeliveryView> {
 
             const SizedBox(height: 16),
 
-            // Payment Mode
-            const Text(
-              "Payment Mode",
-              style: TextStyle(fontWeight: FontWeight.w500),
-            ),
+            // ── Payment Mode (merged with quick-pay) ─────────────────────
+            const Text('Payment Mode', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13, color: Color(0xFF1A1A2E))),
             const SizedBox(height: 8),
             Row(
               children: [
-                _buildPaymentRadio('Cash', Icons.money),
-                const SizedBox(width: 12),
-                _buildPaymentRadio('UPI', Icons.qr_code),
-                const SizedBox(width: 12),
-                _buildPaymentRadio(
-                  'Credit',
-                  Icons.account_balance_wallet_outlined,
+                _buildPaymentOption(
+                  mode: 'Cash',
+                  icon: Icons.payments_outlined,
+                  color: Colors.green,
+                  onTap: () {
+                    final total = _priceController.text;
+                    setState(() {
+                      _paymentMode = 'Cash';
+                      _amountReceivedController.text = total;
+                    });
+                  },
+                ),
+                const SizedBox(width: 8),
+                _buildPaymentOption(
+                  mode: 'UPI',
+                  icon: Icons.qr_code_scanner_outlined,
+                  color: Colors.purple,
+                  onTap: () {
+                    final total = _priceController.text;
+                    setState(() {
+                      _paymentMode = 'UPI';
+                      _amountReceivedController.text = total;
+                    });
+                  },
+                ),
+                const SizedBox(width: 8),
+                _buildPaymentOption(
+                  mode: 'Credit',
+                  icon: Icons.account_balance_wallet_outlined,
+                  color: Colors.orange,
+                  onTap: () {
+                    setState(() {
+                      _paymentMode = 'Credit';
+                      _amountReceivedController.text = '0';
+                    });
+                  },
                 ),
               ],
             ),
 
-            const SizedBox(height: 24),
+            const SizedBox(height: 20),
 
-            // Submit Button
+            // ── Submit Button ────────────────────────────────────────────
             SizedBox(
               width: double.infinity,
-              height: 50,
+              height: 54,
               child: ElevatedButton(
                 onPressed: state.status == DeliveryStatus.loading
                     ? null
                     : () => _submitTransaction(context, salesmanId),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF2962FF),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
+                  backgroundColor: _paymentMode.isEmpty ? Colors.grey.shade400 : const Color(0xFF2962FF),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  elevation: _paymentMode.isEmpty ? 0 : 2,
                 ),
-                child: const Text(
-                  'Complete Transaction',
-                  style: TextStyle(color: Colors.white, fontSize: 16),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(Icons.check_circle_outline, color: Colors.white, size: 20),
+                    const SizedBox(width: 8),
+                    Text(
+                      _paymentMode.isEmpty
+                          ? 'Select Payment Mode First'
+                          : 'Confirm ₹${_amountReceivedController.text.isEmpty ? '0' : _amountReceivedController.text} · $_paymentMode',
+                      style: const TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.bold),
+                    ),
+                  ],
                 ),
               ),
             ),
@@ -855,45 +1100,150 @@ class _DeliveryViewState extends State<DeliveryView> {
     );
   }
 
-  Widget _buildPaymentRadio(String mode, IconData icon) {
+  Widget _buildPaymentOption({
+    required String mode,
+    required IconData icon,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
     final bool isSelected = _paymentMode == mode;
+
+    // Each mode has a gradient when selected
+    final Map<String, List<Color>> gradients = {
+      'Cash':   [const Color(0xFF00B09B), const Color(0xFF96C93D)],
+      'UPI':    [const Color(0xFFB621FE), const Color(0xFFFF78AC)],
+      'Credit': [const Color(0xFFFF6B35), const Color(0xFFFFB347)],
+    };
+    final List<Color> gradient = gradients[mode] ?? [color, color];
+
     return Expanded(
-      child: InkWell(
-        onTap: () {
-          setState(() {
-            _paymentMode = mode;
-          });
-        },
-        child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 12),
+      child: GestureDetector(
+        onTap: onTap,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 180),
+          padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 6),
           decoration: BoxDecoration(
+            gradient: isSelected
+                ? LinearGradient(
+                    colors: gradient,
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  )
+                : null,
+            color: isSelected ? null : Colors.white,
             border: Border.all(
-              color: isSelected ? const Color(0xFF2962FF) : Colors.grey[300]!,
+              color: isSelected ? gradient.first : Colors.grey.shade200,
+              width: isSelected ? 1.5 : 1,
             ),
-            borderRadius: BorderRadius.circular(8),
-            color: isSelected ? const Color(0xFFE3F2FD) : Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            boxShadow: isSelected
+                ? [BoxShadow(color: gradient.first.withOpacity(0.3), blurRadius: 8, offset: const Offset(0, 3))]
+                : [BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 4, offset: const Offset(0, 2))],
           ),
-          child: Row(
+          child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Icon(
                 icon,
-                size: 20,
-                color: isSelected ? const Color(0xFF2962FF) : Colors.grey[600],
+                size: 26,
+                color: isSelected ? Colors.white : Colors.grey.shade400,
               ),
-              const SizedBox(width: 8),
+              const SizedBox(height: 6),
               Text(
                 mode,
                 style: TextStyle(
-                  color: isSelected
-                      ? const Color(0xFF2962FF)
-                      : Colors.grey[600],
-                  fontWeight: FontWeight.bold,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: isSelected ? Colors.white : Colors.grey.shade600,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                isSelected
+                    ? (mode == 'Credit' ? 'No payment' : 'Full amount')
+                    : '',
+                style: const TextStyle(
+                  fontSize: 10,
+                  color: Colors.white70,
                 ),
               ),
             ],
           ),
         ),
+      ),
+    );
+  }
+
+
+  Widget _buildStepper({
+    required TextEditingController controller,
+    required Color color,
+    Color? borderColor,
+    required VoidCallback onChanged,
+  }) {
+    return Container(
+      decoration: BoxDecoration(
+        border: Border.all(color: borderColor ?? Colors.grey.shade300, width: 1.5),
+        borderRadius: BorderRadius.circular(10),
+        color: Colors.white,
+      ),
+      child: Row(
+        children: [
+          // Minus
+          Material(
+            color: Colors.transparent,
+            child: InkWell(
+              borderRadius: const BorderRadius.horizontal(left: Radius.circular(9)),
+              onTap: () {
+                final current = int.tryParse(controller.text) ?? 0;
+                if (current > 0) {
+                  controller.text = '${current - 1}';
+                  onChanged();
+                }
+              },
+              onLongPress: () {
+                // Long-press reset to 0
+                controller.text = '0';
+                onChanged();
+              },
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                child: Icon(Icons.remove, size: 16, color: color),
+              ),
+            ),
+          ),
+          // Value
+          Expanded(
+            child: TextFormField(
+              controller: controller,
+              textAlign: TextAlign.center,
+              keyboardType: TextInputType.number,
+              inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: color),
+              decoration: const InputDecoration(
+                border: InputBorder.none,
+                contentPadding: EdgeInsets.symmetric(vertical: 10),
+              ),
+              onChanged: (_) => onChanged(),
+            ),
+          ),
+          // Plus
+          Material(
+            color: Colors.transparent,
+            child: InkWell(
+              borderRadius: const BorderRadius.horizontal(right: Radius.circular(9)),
+              onTap: () {
+                final current = int.tryParse(controller.text) ?? 0;
+                controller.text = '${current + 1}';
+                onChanged();
+              },
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                child: Icon(Icons.add, size: 16, color: color),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -1021,7 +1371,13 @@ class _DeliveryViewState extends State<DeliveryView> {
                                   vertical: 4,
                                 ),
                                 decoration: BoxDecoration(
-                                  color: Colors.black,
+                                  color: tx.paymentMode == 'Cash'
+                                      ? Colors.green.shade600
+                                      : tx.paymentMode == 'UPI'
+                                          ? Colors.purple.shade600
+                                          : tx.paymentMode == 'Credit'
+                                              ? Colors.orange.shade700
+                                              : Colors.blueGrey.shade700,
                                   borderRadius: BorderRadius.circular(6),
                                 ),
                                 child: Text(
@@ -1121,6 +1477,53 @@ class _DeliveryViewState extends State<DeliveryView> {
             ),
         ],
       ),
+    );
+  }
+
+  Widget _buildCustomerStatBox({
+    required IconData icon,
+    required Color iconColor,
+    required String label,
+    required String value,
+    required Color valueColor,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: const Color(0xFFE8EDFF)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(icon, size: 12, color: iconColor),
+              const SizedBox(width: 4),
+              Text(label, style: const TextStyle(fontSize: 10, color: Colors.grey)),
+            ],
+          ),
+          const SizedBox(height: 4),
+          Text(
+            value,
+            style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: valueColor),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCustomerStat(String label, String value, Color color) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(label, style: const TextStyle(fontSize: 11, color: Colors.grey)),
+        const SizedBox(height: 2),
+        Text(value, style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: color)),
+      ],
     );
   }
 
