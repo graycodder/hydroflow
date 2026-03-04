@@ -173,9 +173,9 @@ class _DashboardPageState extends State<DashboardPage> with RouteAware {
                                     value: s.id,
                                     child: Row(
                                       children: [
-                                        Icon(Icons.switch_account_outlined, size: 20.sp, color: Colors.green),
+                                        Icon(Icons.person, size: 20.sp, color: Colors.blue),
                                         SizedBox(width: 8.w),
-                                        Text(s.name, style: TextStyle(fontSize: 14.sp)),
+                                        Text(s.name + " (" +s.role[0].toUpperCase()+s.role.substring(1)+")", style: TextStyle(fontSize: 14.sp)),
                                       ],
                                     ),
                                   ),
