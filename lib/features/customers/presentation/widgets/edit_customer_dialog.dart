@@ -106,6 +106,19 @@ class _EditCustomerDialogState extends State<EditCustomerDialog> {
               Navigator.of(context, rootNavigator: true).pop(); // Close edit dialog explicitly from root
             } else if (state.status == CustomerStatus.failure) {
               _isSubmitting = false;
+              showDialog(
+                context: context,
+                builder: (context) => AlertDialog(
+                  title: const Text('Error'),
+                  content: Text(state.errorMessage ?? 'Failed to update customer. Please try again.'),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(context),
+                      child: const Text('OK'),
+                    ),
+                  ],
+                ),
+              );
             }
           }
         }

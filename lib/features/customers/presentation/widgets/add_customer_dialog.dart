@@ -99,6 +99,19 @@ class _AddCustomerDialogState extends State<AddCustomerDialog> {
               Navigator.of(context, rootNavigator: true).pop(); // Close add dialog explicitly from root
             } else if (state.status == CustomerStatus.failure) {
               _isSubmitting = false;
+              showDialog(
+                context: context,
+                builder: (context) => AlertDialog(
+                  title: const Text('Error'),
+                  content: Text(state.errorMessage ?? 'Failed to add customer. Please try again.'),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(context),
+                      child: const Text('OK'),
+                    ),
+                  ],
+                ),
+              );
             }
           }
         }
@@ -316,9 +329,10 @@ class _AddCustomerDialogState extends State<AddCustomerDialog> {
 
                           if (_selectedSalesmanId == null) {
                              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please select a salesman')));
-                             return;
+                            return;
                           }
 
+                          // Data collection
                           final name = _nameController.text.trim();
                           final phone = _phoneController.text.trim();
                           final address = _addressController.text.trim();
@@ -331,10 +345,42 @@ class _AddCustomerDialogState extends State<AddCustomerDialog> {
                               : widget.currentUser;
 
                           if (targetSalesman.customerCount >= targetSalesman.maxCustomers) {
-                             ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(content: Text('Quota reached for ${targetSalesman.name} (${targetSalesman.customerCount}/${targetSalesman.maxCustomers})'))
-                             );
-                             return;
+                            showDialog(
+                              context: context,
+                              builder: (context) => AlertDialog(
+                                title: const Text('Limit Reached'),
+                                content: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text('Insufficient customer quota for ${targetSalesman.name}.'),
+                                    const SizedBox(height: 8),
+                                    Text('Current Count: ${targetSalesman.customerCount}'),
+                                    Text('Maximum Allowed: ${targetSalesman.maxCustomers}'),
+                                    const Divider(height: 24),
+                                    const Text(
+                                      'Please contact support to upgrade your quota.',
+                                      style: TextStyle(fontSize: 13, color: Colors.grey),
+                                    ),
+                                  ],
+                                ),
+                                actions: [
+                                  TextButton(
+                                    onPressed: () => Navigator.pop(context),
+                                    child: const Text('Close'),
+                                  ),
+                                  ElevatedButton(
+                                    onPressed: () => Navigator.pop(context),
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: const Color(0xFF0D1117),
+                                      foregroundColor: Colors.white,
+                                    ),
+                                    child: const Text('Contact Support'),
+                                  ),
+                                ],
+                              ),
+                            );
+                            return;
                           }
 
                           showDialog(
