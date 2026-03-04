@@ -1118,6 +1118,7 @@ class _DeliveryViewState extends State<DeliveryView> {
                 contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
                 helperText: 'Enter actual amount received from customer',
               ),
+              onChanged: (_) => setState(() {}),
               validator: (value) {
                 if (_paymentMode == 'Credit') return null;
                 if (value == null || value.isEmpty) return 'Amount received is required';
@@ -1142,10 +1143,9 @@ class _DeliveryViewState extends State<DeliveryView> {
                   icon: Icons.payments_outlined,
                   color: Colors.green,
                   onTap: () {
-                    final total = _priceController.text;
                     setState(() {
                       _paymentMode = 'Cash';
-                      _amountReceivedController.text = total;
+                      _amountReceivedController.clear();
                     });
                   },
                 ),
@@ -1155,10 +1155,9 @@ class _DeliveryViewState extends State<DeliveryView> {
                   icon: Icons.qr_code_scanner_outlined,
                   color: Colors.purple,
                   onTap: () {
-                    final total = _priceController.text;
                     setState(() {
                       _paymentMode = 'UPI';
-                      _amountReceivedController.text = total;
+                      _amountReceivedController.clear();
                     });
                   },
                 ),
@@ -1894,7 +1893,7 @@ class _DeliveryViewState extends State<DeliveryView> {
     _emptyCansController.text = '0';
     // We KEEP _pricePerBottleController text as per user requirement (it doesn't change every day)
     _priceController.text = '0';
-    _amountReceivedController.text = '0';
+    _amountReceivedController.clear();
     setState(() {
       _paymentMode = ''; // Clear selection
       // Selected customer is reset by BLoC state change
