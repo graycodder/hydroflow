@@ -66,7 +66,9 @@ class ProfilePage extends StatelessWidget {
               final agency = state.agency;
 
               final displayName = isAgency ? (agency?.name ?? 'Agency Name') : profile.name;
-              final displayRole = isAgency ? 'Agency Profile' : '${profile.role} • ${profile.zone}';
+              final displayRole = isAgency
+                  ? 'Agency Profile'
+                  : '${profile.role![0].toUpperCase() + profile.role!.substring(1)}${profile.zone != null && profile.zone!.isNotEmpty ? ' • ${profile.zone![0].toUpperCase() + profile.zone!.substring(1)}' : ''}';
 
               final agencyPhone = agency?.contactPhone ?? '';
               final displayPhone =
