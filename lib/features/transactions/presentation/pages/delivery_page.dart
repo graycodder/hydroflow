@@ -228,6 +228,13 @@ class _DeliveryViewState extends State<DeliveryView> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
+                      // ── Stats Banner (always visible for salesman) ────────────
+                    if (!isAgency)
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 16),
+                        child: _buildStatsHeader(state),
+                      ),
+                      
                     // Salesman Filter (Only in Agency View)
                     if (isAgency)
                       BlocBuilder<AgencyBloc, AgencyState>(
@@ -413,13 +420,6 @@ class _DeliveryViewState extends State<DeliveryView> {
                     ),
                     const SizedBox(height: 8),
 
-                     // ── Stats Banner (always visible for salesman) ────────────
-                    if (!isAgency)
-                      Padding(
-                        padding: const EdgeInsets.only(bottom: 16),
-                        child: _buildStatsHeader(state),
-                      ),
-
                     // Form Card (Only for Salesman, hidden for Agency)
                     if (!isAgency)
                       _buildDeliveryForm(context, state, salesmanId),
@@ -477,7 +477,7 @@ class _DeliveryViewState extends State<DeliveryView> {
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Text(
-                  '${state.todayTransactions.length} deliveries',
+                  '${state.totalDeliveriesCount} deliveries',
                   style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
                 ),
               ),

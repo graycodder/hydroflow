@@ -15,6 +15,7 @@ class DeliveryState extends Equatable {
   final double totalUpi;
   final int totalDelivered;
   final int totalReturned;
+  final int totalDeliveriesCount;
   final String? errorMessage;
   final int currentStock;
   final String? selectedZone;
@@ -33,6 +34,7 @@ class DeliveryState extends Equatable {
     this.totalUpi = 0,
     this.totalDelivered = 0,
     this.totalReturned = 0,
+    this.totalDeliveriesCount = 0,
     this.errorMessage,
     this.currentStock = 0,
     this.selectedZone,
@@ -53,6 +55,7 @@ class DeliveryState extends Equatable {
     double? totalUpi,
     int? totalDelivered,
     int? totalReturned,
+    int? totalDeliveriesCount,
     String? errorMessage,
     int? currentStock,
     String? selectedZone,
@@ -73,6 +76,7 @@ class DeliveryState extends Equatable {
       totalUpi: totalUpi ?? this.totalUpi,
       totalDelivered: totalDelivered ?? this.totalDelivered,
       totalReturned: totalReturned ?? this.totalReturned,
+      totalDeliveriesCount: totalDeliveriesCount ?? this.totalDeliveriesCount,
       errorMessage: errorMessage ?? this.errorMessage,
       currentStock: currentStock ?? this.currentStock,
       selectedZone: clearSelectedZone ? null : (selectedZone ?? this.selectedZone),
@@ -94,6 +98,7 @@ class DeliveryState extends Equatable {
         totalUpi,
         totalDelivered,
         totalReturned,
+        totalDeliveriesCount,
         errorMessage,
         currentStock,
         selectedZone,

@@ -279,6 +279,7 @@ class DeliveryBloc extends Bloc<DeliveryEvent, DeliveryState> {
     double upi = 0;
     int delivered = 0;
     int returned = 0;
+    int deliveryCount = 0;
 
     for (var tx in filteredTransactions) {
        // stats now based on FILTERED transactions
@@ -287,6 +288,11 @@ class DeliveryBloc extends Bloc<DeliveryEvent, DeliveryState> {
        if (tx.paymentMode == 'UPI' || tx.paymentMode == 'Online') upi += tx.amountReceived;
        delivered += tx.cansDelivered;
        returned += tx.emptyCollected;
+       
+       // Only count as a "delivery" if bottles were actually delivered
+       if (tx.cansDelivered > 0) {
+         deliveryCount++;
+       }
     }
 
     return state.copyWith(
@@ -300,6 +306,7 @@ class DeliveryBloc extends Bloc<DeliveryEvent, DeliveryState> {
       totalUpi: upi,
       totalDelivered: delivered,
       totalReturned: returned,
+      totalDeliveriesCount: deliveryCount,
       currentStock: currentStock,
       filteredCustomers: filtered['customers'] as List<Customer>,
     );
