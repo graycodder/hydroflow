@@ -448,97 +448,182 @@ class _DeliveryViewState extends State<DeliveryView> {
   }
 
   Widget _buildStatsHeader(DeliveryState state) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [Color(0xFF1565C0), Color(0xFF2962FF)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              const Icon(Icons.today_outlined, color: Colors.white70, size: 16),
-              const SizedBox(width: 6),
-              Text(
-                "Today's Summary",
-                style: TextStyle(color: Colors.white.withOpacity(0.85), fontSize: 13, fontWeight: FontWeight.w500),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            const Icon(Icons.analytics_outlined, color: Color(0xFF1A1A2E), size: 18),
+            const SizedBox(width: 8),
+            const Text(
+              "Today's Summary",
+              style: TextStyle(
+                color: Color(0xFF1A1A2E),
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
               ),
-              const Spacer(),
+            ),
+            const Spacer(),
+            if (state.totalDeliveriesCount > 0)
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.2),
+                  color: Colors.blue.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Text(
                   '${state.totalDeliveriesCount} deliveries',
-                  style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
+                  style: const TextStyle(color: Colors.blue, fontSize: 11, fontWeight: FontWeight.bold),
                 ),
               ),
-            ],
+          ],
+        ),
+        const SizedBox(height: 16),
+        
+        // Top Row: Sales, Cash, UPI
+        Row(
+          children: [
+            Expanded(
+              child: _buildSummaryCard(
+                label: 'Total Sales',
+                value: '₹${state.totalSales.toStringAsFixed(0)}',
+                bgColor: const Color(0xFFEBF3FF),
+                textColor: const Color(0xFF0061FF),
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: _buildSummaryCard(
+                label: 'Cash',
+                value: '₹${state.totalCash.toStringAsFixed(0)}',
+                bgColor: const Color(0xFFF0FAF0),
+                textColor: const Color(0xFF2E7D32),
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: _buildSummaryCard(
+                label: 'UPI',
+                value: '₹${state.totalUpi.toStringAsFixed(0)}',
+                bgColor: const Color(0xFFF5F0FF),
+                textColor: const Color(0xFF8B00FF),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 10),
+        
+        // Bottom Row: Delivered, Returned
+        Row(
+          children: [
+            Expanded(
+              child: _buildSimpleChip(
+                label: 'Delivered',
+                value: '${state.totalDelivered}',
+                icon: Icons.south_east,
+                bgColor: const Color(0xFFFFF5F0),
+                textColor: const Color(0xFFFF5E00),
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: _buildSimpleChip(
+                label: 'Returned',
+                value: '${state.totalReturned}',
+                icon: Icons.north_east,
+                bgColor: const Color(0xFFF5F0FF),
+                textColor: const Color(0xFF00A6A6),
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: _buildSimpleChip(
+                label: 'Stock',
+                value: '${state.currentStock}',
+                icon: Icons.inventory_2_outlined,
+                bgColor: const Color(0xFFFFF5F0),
+                textColor: const Color(0xFF00A6A6),
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSummaryCard({
+    required String label,
+    required String value,
+    required Color bgColor,
+    required Color textColor,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
+      decoration: BoxDecoration(
+        color: bgColor,
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Column(
+        children: [
+          Text(
+            value,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: textColor,
+              fontSize: 20,
+              fontWeight: FontWeight.w900,
+            ),
           ),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              Expanded(
-                child: _buildStatChip('Cash', '₹${state.totalCash.toStringAsFixed(0)}', Icons.money, Colors.greenAccent.shade400),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: _buildStatChip('UPI', '₹${state.totalUpi.toStringAsFixed(0)}', Icons.qr_code, Colors.purpleAccent.shade100),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: _buildStatChip('Total', '₹${state.totalSales.toStringAsFixed(0)}', Icons.account_balance_wallet_outlined, Colors.orangeAccent),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Row(
-            children: [
-              Expanded(
-                child: _buildStatChip('Delivered', '${state.totalDelivered}', Icons.arrow_downward, Colors.lightBlueAccent),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: _buildStatChip('Returned', '${state.totalReturned}', Icons.arrow_upward, Colors.tealAccent),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: _buildStatChip('Stock', '${state.currentStock}', Icons.inventory_2_outlined, Colors.white70),
-              ),
-            ],
+          const SizedBox(height: 4),
+          Text(
+            label,
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              color: Color(0xFF5F6368),
+              fontSize: 12,
+              fontWeight: FontWeight.w500,
+            ),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildStatChip(String label, String value, IconData icon, Color color) {
+  Widget _buildSimpleChip({
+    required String label,
+    required String value,
+    required IconData icon,
+    required Color bgColor,
+    required Color textColor,
+  }) {
     return Container(
-      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
+      padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.12),
-        borderRadius: BorderRadius.circular(10),
+        color: bgColor,
+        borderRadius: BorderRadius.circular(16),
       ),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Row(
-            children: [
-              Icon(icon, size: 14, color: color),
-              const SizedBox(width: 4),
-              Text(label, style: TextStyle(color: Colors.white.withOpacity(0.8), fontSize: 10)),
-            ],
+         // Icon(icon, size: 16, color: textColor),
+          const SizedBox(width: 8),
+          Text(
+            value,
+            style: TextStyle(
+              color: textColor,
+              fontSize: 18,
+              fontWeight: FontWeight.w900,
+            ),
           ),
-          const SizedBox(height: 2),
-          Text(value, style: const TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.bold)),
+          const SizedBox(width: 6),
+          Text(
+            label,
+            style: const TextStyle(
+              color: Color(0xFF5F6368),
+              fontSize: 13,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
         ],
       ),
     );
