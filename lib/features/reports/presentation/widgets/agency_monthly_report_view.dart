@@ -143,29 +143,35 @@ class AgencyMonthlyReportView extends StatelessWidget {
               icon: Icons.chevron_left,
               onTap: onLeftChevronPressed,
             ),
-            Column(
-              children: [
-                const Text(
-                  "Agency Monthly Report",
-                  style: TextStyle(
-                    fontSize: 22,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.deepOrange, // Agency View Color
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Icon(Icons.calendar_today_outlined, size: 14, color: Colors.grey),
-                    const SizedBox(width: 8),
-                    Text(
-                      DateFormat('MMMM y').format(selectedMonth),
-                      style: const TextStyle(color: Colors.grey, fontSize: 16),
+            Expanded(
+              child: Column(
+                children: [
+                  const Text(
+                    "Agency Monthly Report",
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.deepOrange, // Agency View Color
                     ),
-                  ],
-                ),
-              ],
+                  ),
+                  const SizedBox(height: 4),
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.calendar_today_outlined, size: 14, color: Colors.grey),
+                      const SizedBox(width: 8),
+                      Flexible(
+                        child: Text(
+                          DateFormat('MMMM y').format(selectedMonth),
+                          style: const TextStyle(color: Colors.grey, fontSize: 16),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
             buildChevronButton(
               icon: Icons.chevron_right,

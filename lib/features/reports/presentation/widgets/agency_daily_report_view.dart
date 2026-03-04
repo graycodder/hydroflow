@@ -571,16 +571,16 @@ class AgencyDailyReportView extends StatelessWidget {
                   const Text(
                     "Avg Price/Can",
                     maxLines: 1,
-          overflow: TextOverflow.ellipsis,
+                    overflow: TextOverflow.ellipsis,
                     style: TextStyle(color: Colors.grey),
                   ),
                   const SizedBox(height: 8),
                   Text(
                     "₹${report.avgPricePerCan.toStringAsFixed(0)}",
                     maxLines: 1,
-          overflow: TextOverflow.ellipsis,
+                    overflow: TextOverflow.ellipsis,
                     style: const TextStyle(
-                      fontSize: 20,
+                      fontSize: 18,
                       fontWeight: FontWeight.bold,
                     ),
                   ),

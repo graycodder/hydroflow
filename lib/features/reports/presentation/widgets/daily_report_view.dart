@@ -436,11 +436,18 @@ class DailyReportView extends StatelessWidget {
               ),
               child: Column(
                 children: [
-                  const Text("Avg Price/Can", style: TextStyle(color: Colors.grey)),
+                  const Text(
+                    "Avg Price/Can",
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis, 
+                    style: TextStyle(color: Colors.grey,fontSize: 12),
+                  ),
                   const SizedBox(height: 8),
                   Text(
                     "₹${report.avgPricePerCan.toStringAsFixed(0)}",
-                    style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                   ),
                 ],
               ),
@@ -456,10 +463,17 @@ class DailyReportView extends StatelessWidget {
               ),
               child: Column(
                 children: [
-                  const Text("Stock Turnover", style: TextStyle(color: Colors.grey)),
+                  const Text(
+                    "Stock Turnover",
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis, 
+                    style: TextStyle(color: Colors.grey),
+                  ),
                   const SizedBox(height: 8),
                   Text(
                     "${report.stockTurnover.toStringAsFixed(0)}%",
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                     style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                   ),
                 ],
