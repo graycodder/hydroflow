@@ -191,9 +191,9 @@ class _DashboardPageState extends State<DashboardPage> with RouteAware {
                                       value: currentValue,
                                       child: Row(
                                         children: [
-                                          Icon(Icons.switch_account_outlined, size: 20.sp, color: Colors.green),
+                                         Icon(Icons.person, size: 20.sp, color: Colors.blue),
                                           SizedBox(width: 8.w),
-                                          Text(salesman.name, style: TextStyle(fontSize: 14.sp)),
+                                          Text(salesman.name + " (" +salesman.role[0].toUpperCase()+salesman.role.substring(1)+")", style: TextStyle(fontSize: 14.sp)),
                                         ],
                                       ),
                                     ),
@@ -226,6 +226,13 @@ class _DashboardPageState extends State<DashboardPage> with RouteAware {
                                     
                                     if (originalOwner == null) {
                                       _loadDashboardData(salesman, null);
+                                    } else {
+                                      // Override the default load dispatched by main.dart when AuthState changes
+                                      Future.delayed(const Duration(milliseconds: 100), () {
+                                        if (mounted) {
+                                          _loadDashboardData(originalOwner, null);
+                                        }
+                                      });
                                     }
                                   } else {
                                     Salesman? targetSalesman;
@@ -392,7 +399,7 @@ class _DashboardPageState extends State<DashboardPage> with RouteAware {
                       }
                       if (dashboardState is DashboardLoaded) {
                         final summary = dashboardState.summary;
-                        if (_isAgencyView) {
+                        if (_isAgencyView && originalOwner == null) {
                           return AgencyStatusCards(summary: summary);
                         } else {
                           return SalesmanStatusCards(summary: summary);
