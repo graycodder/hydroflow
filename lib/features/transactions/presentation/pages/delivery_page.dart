@@ -1067,14 +1067,20 @@ class _DeliveryViewState extends State<DeliveryView> {
                             children: [
                               const Text('Total', style: TextStyle(color: Colors.white60, fontSize: 10)),
                               const SizedBox(width: 4),
-                              Text(
-                                '(${_fullCansController.text.isEmpty ? '0' : _fullCansController.text}×₹${_pricePerBottleController.text.isEmpty ? '0' : _pricePerBottleController.text})',
-                                style: const TextStyle(color: Colors.white38, fontSize: 9),
+                              Expanded(
+                                child: Text(
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  '(${_fullCansController.text.isEmpty ? '0' : _fullCansController.text}×₹${_pricePerBottleController.text.isEmpty ? '0' : _pricePerBottleController.text})',
+                                  style: const TextStyle(color: Colors.white38, fontSize: 9),
+                                ),
                               ),
                             ],
                           ),
                           const SizedBox(height: 2),
                           Text(
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                             '₹${_priceController.text.isEmpty ? '0' : _priceController.text}',
                             style: const TextStyle(
                               color: Colors.white,
@@ -1191,11 +1197,15 @@ class _DeliveryViewState extends State<DeliveryView> {
                   children: [
                     const Icon(Icons.check_circle_outline, color: Colors.white, size: 20),
                     const SizedBox(width: 8),
-                    Text(
-                      _paymentMode.isEmpty
-                          ? 'Select Payment Mode First'
-                          : 'Confirm ₹${_amountReceivedController.text.isEmpty ? '0' : _amountReceivedController.text} · $_paymentMode',
-                      style: const TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.bold),
+                    Flexible(
+                      child: Text(
+                        _paymentMode.isEmpty
+                            ? 'Select Payment Mode First'
+                            : 'Confirm ₹${_amountReceivedController.text.isEmpty ? '0' : _amountReceivedController.text} · $_paymentMode',
+                        style: const TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.bold),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
                     ),
                   ],
                 ),
