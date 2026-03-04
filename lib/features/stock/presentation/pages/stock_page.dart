@@ -28,6 +28,7 @@ class _StockPageState extends State<StockPage> {
   final _refillStockController = TextEditingController();
   final _damagedStockController = TextEditingController();
   final _openingStockController = TextEditingController();
+  String _selectedDamageType = 'Full';
 
   @override
   void dispose() {
@@ -255,82 +256,6 @@ class _StockPageState extends State<StockPage> {
                             ),
                           ),
                           const SizedBox(height: 24),
-
-                          // // Today's Log Summary (Salesman only)
-                          // if (!isAgency && state.todayLog != null) ...[
-                          //   Container(
-                          //     padding: const EdgeInsets.all(20),
-                          //     decoration: BoxDecoration(
-                          //       color: Colors.white,
-                          //       borderRadius: BorderRadius.circular(16),
-                          //       border: Border.all(color: Colors.grey.shade200),
-                          //       boxShadow: [
-                          //         BoxShadow(
-                          //           color: Colors.grey.withOpacity(0.08),
-                          //           blurRadius: 10,
-                          //           offset: const Offset(0, 4),
-                          //         ),
-                          //       ],
-                          //     ),
-                          //     child: Column(
-                          //       crossAxisAlignment: CrossAxisAlignment.start,
-                          //       children: [
-                          //         const Row(
-                          //           children: [
-                          //             Icon(Icons.today_outlined, color: Color(0xFF2962FF), size: 20),
-                          //             SizedBox(width: 8),
-                          //             Text(
-                          //               "Today's Stock Journey",
-                          //               style: TextStyle(
-                          //                 fontSize: 16,
-                          //                 fontWeight: FontWeight.bold,
-                          //                 color: Colors.black87,
-                          //               ),
-                          //             ),
-                          //           ],
-                          //         ),
-                          //         const SizedBox(height: 16),
-                          //         // Stock flow rows
-                          //         _buildLogRow('Opening Stock', '${state.todayLog!.openingStock} cans', Colors.black87),
-                          //         _buildLogRow(' + Loaded', '+${state.todayLog!.loaded} cans', Colors.green[700]!),
-                          //         const Divider(height: 20),
-                          //         _buildLogRow(' - Delivered', '-${state.todayLog!.totalDelivered} cans', Colors.red),
-                          //         if (state.todayLog!.damaged > 0)
-                          //           _buildLogRow(' - Damaged', '-${state.todayLog!.damaged} cans', Colors.orange),
-                          //         const Divider(height: 20),
-                          //         _buildLogRow(
-                          //           'Closing Stock',
-                          //           '${state.todayLog!.closingStock} cans',
-                          //           const Color(0xFF2962FF),
-                          //           isBold: true,
-                          //         ),
-                          //         const SizedBox(height: 12),
-                          //         _buildLogRow(
-                          //           'Empties Collected',
-                          //           '${state.todayLog!.totalEmptyCollected} bottles',
-                          //           Colors.teal,
-                          //         ),
-                          //         // const Divider(height: 20),
-                          //         // // Collections
-                          //         // _buildLogRow(
-                          //         //   'Cash Collected',
-                          //         //   '₹${state.todayLog!.cashCollected.toStringAsFixed(0)}',
-                          //         //   Colors.green,
-                          //         //   isBold: true,
-                          //         // ),
-                          //         // const SizedBox(height: 4),
-                          //         // _buildLogRow(
-                          //         //   'UPI Collected',
-                          //         //   '₹${state.todayLog!.onlineCollected.toStringAsFixed(0)}',
-                          //         //   Colors.purple,
-                          //         //   isBold: true,
-                          //         // ),
-                          //       ],
-                          //     ),
-                          //   ),
-                          //   const SizedBox(height: 16),
-                          // ],
-
 
                           // For Agency: If they have logs OR have current stock > 0, we consider setup done.
                           // For Salesman: Only if they have logs (or carry forward logic handled by repo/bloc)
@@ -822,103 +747,119 @@ class _StockPageState extends State<StockPage> {
                                       color: Colors.grey[600],
                                     ),
                                   ),
-                                  const SizedBox(height: 16),
-                                  const Text(
-                                    'Number of Bottles',
-                                    style: TextStyle(fontWeight: FontWeight.w600),
-                                  ),
-                                  const SizedBox(height: 8),
-                                  TextFormField(
-                                    autofocus: false,
-                                    controller: _damagedStockController,
-                                    keyboardType: TextInputType.number,
-                                    inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                                    decoration: InputDecoration(
-                                      hintText: 'Enter quantity',
-                                      filled: true,
-                                      fillColor: Colors.grey[100],
-                                      border: OutlineInputBorder(
-                                        borderRadius: BorderRadius.circular(8),
-                                        borderSide: BorderSide.none,
-                                      ),
-                                    ),
-                                  ),
-                                  const SizedBox(height: 16),
-                                  SizedBox(
-                                    width: double.infinity,
-                                    child: Builder(
-                                      builder: (context) {
-                                        return ElevatedButton.icon(
-                                          onPressed: () {
-                                            final qtyText = _damagedStockController.text;
-                                            final qty = int.tryParse(qtyText) ?? 0;
-                                            if (qty <= 0) return;
+                                   const SizedBox(height: 16),
+                                   const Text(
+                                     'Bottle Type',
+                                     style: TextStyle(fontWeight: FontWeight.w600),
+                                   ),
+                                   const SizedBox(height: 8),
+                                   Row(
+                                     children: [
+                                       Expanded(
+                                         child: GestureDetector(
+                                           onTap: () => setState(() => _selectedDamageType = 'Full'),
+                                           child: Container(
+                                             padding: const EdgeInsets.symmetric(vertical: 12),
+                                             decoration: BoxDecoration(
+                                               color: _selectedDamageType == 'Full' ? Colors.blue : Colors.grey[100],
+                                               borderRadius: BorderRadius.circular(8),
+                                               border: Border.all(
+                                                 color: _selectedDamageType == 'Full' ? Colors.blue : Colors.transparent,
+                                               ),
+                                             ),
+                                             child: Center(
+                                               child: Text(
+                                                 'Full Stock',
+                                                 style: TextStyle(
+                                                   color: _selectedDamageType == 'Full' ? Colors.white : Colors.black87,
+                                                   fontWeight: FontWeight.bold,
+                                                 ),
+                                               ),
+                                             ),
+                                           ),
+                                         ),
+                                       ),
+                                       const SizedBox(width: 12),
+                                       Expanded(
+                                         child: GestureDetector(
+                                           onTap: () => setState(() => _selectedDamageType = 'Empty'),
+                                           child: Container(
+                                             padding: const EdgeInsets.symmetric(vertical: 12),
+                                             decoration: BoxDecoration(
+                                               color: _selectedDamageType == 'Empty' ? Colors.teal : Colors.grey[100],
+                                               borderRadius: BorderRadius.circular(8),
+                                               border: Border.all(
+                                                 color: _selectedDamageType == 'Empty' ? Colors.teal : Colors.transparent,
+                                               ),
+                                             ),
+                                             child: Center(
+                                               child: Text(
+                                                 'Empty Bottles',
+                                                 style: TextStyle(
+                                                   color: _selectedDamageType == 'Empty' ? Colors.white : Colors.black87,
+                                                   fontWeight: FontWeight.bold,
+                                                 ),
+                                               ),
+                                             ),
+                                           ),
+                                         ),
+                                       ),
+                                     ],
+                                   ),
+                                   const SizedBox(height: 16),
+                                   const Text(
+                                     'Number of Bottles',
+                                     style: TextStyle(fontWeight: FontWeight.w600),
+                                   ),
+                                   const SizedBox(height: 8),
+                                   TextFormField(
+                                     autofocus: false,
+                                     controller: _damagedStockController,
+                                     keyboardType: TextInputType.number,
+                                     inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                                     decoration: InputDecoration(
+                                       hintText: 'Enter quantity',
+                                       filled: true,
+                                       fillColor: Colors.grey[100],
+                                       border: OutlineInputBorder(
+                                         borderRadius: BorderRadius.circular(8),
+                                         borderSide: BorderSide.none,
+                                       ),
+                                     ),
+                                   ),
+                                   const SizedBox(height: 16),
+                                   SizedBox(
+                                     width: double.infinity,
+                                     child: Builder(
+                                       builder: (context) {
+                                         return ElevatedButton.icon(
+                                           onPressed: () {
+                                             final qtyText = _damagedStockController.text;
+                                             final qty = int.tryParse(qtyText) ?? 0;
+                                             if (qty <= 0) return;
 
-                                            FocusManager.instance.primaryFocus?.unfocus();
+                                             FocusManager.instance.primaryFocus?.unfocus();
 
-                                            // Check if stock is sufficient
-                                            if (qty > currentStock) {
-                                              showDialog(
-                                                context: context,
-                                                builder: (dialogContext) => AlertDialog(
-                                                  title: const Row(
-                                                    children: [
-                                                      Icon(Icons.error_outline, color: Colors.deepOrange),
-                                                      SizedBox(width: 8),
-                                                      Text('Insufficient Stock'),
-                                                    ],
-                                                  ),
-                                                  content: Column(
-                                                    mainAxisSize: MainAxisSize.min,
-                                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                                    children: [
-                                                        Text('You are trying to remove $qty bottles, but Agency Warehouse only has $currentStock bottles.'),
-                                                        const SizedBox(height: 12),
-                                                        const Text(
-                                                          'This action is blocked to prevent negative stock.',
-                                                          style: TextStyle(fontSize: 12, color: Colors.grey),
-                                                        ),
-                                                    ],
-                                                  ),
-                                                  actions: [
-                                                    TextButton(
-                                                      onPressed: () => Navigator.pop(dialogContext),
-                                                      child: const Text('OK'),
-                                                    ),
-                                                  ],
-                                                ),
-                                              );
-                                              return;
-                                            }
+                                             final isFromEmpty = _selectedDamageType == 'Empty';
+                                             final fullBottles = state.agencyStock?['fullBottles'] ?? 0;
+                                             final emptyBottles = state.agencyStock?['emptyBottles'] ?? 0;
+                                             
+                                             final available = isFromEmpty ? emptyBottles : fullBottles;
 
-                                            showDialog(
-                                              context: context,
-                                              builder: (dialogContext) => AlertDialog(
-                                                title: const Text('Confirm Damage'),
-                                                content: Text('Are you sure you want to remove $qty bottles from Agency Stock as Damaged?'),
-                                                actions: [
-                                                  TextButton(
-                                                    onPressed: () => Navigator.pop(dialogContext),
-                                                    child: const Text('Cancel'),
-                                                  ),
-                                                  ElevatedButton(
-                                                    onPressed: () {
-                                                      FocusManager.instance.primaryFocus?.unfocus();
-                                                      Navigator.pop(dialogContext);
-                                                      context.read<StockBloc>().add(AgencyStockDamagedReported(
-                                                        agencyId: salesman.agencyId,
-                                                        quantity: qty
-                                                      ));
-                                                    },
-                                                    style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-                                                    child: const Text('Confirm', style: TextStyle(color: Colors.white)),
-                                                  ),
-                                                ],
-                                              ),
-                                            );
-                                          },
-                                          icon: const Icon(Icons.remove),
-                                          label: const Text('Remove from Agency Stock'),
+                                             if (qty > available) {
+                                               ScaffoldMessenger.of(context).showSnackBar(
+                                                 SnackBar(
+                                                   content: Text('Insufficient ${isFromEmpty ? 'Empty' : 'Full'} Stock! Available: $available'), 
+                                                   backgroundColor: Colors.orange
+                                                 ),
+                                               );
+                                               return;
+                                             }
+
+                                             _confirmAndDamaged(context, salesman.agencyId, qty, isFromEmpty);
+                                           },
+                                           icon: const Icon(Icons.remove),
+                                           label: const Text('Remove from Agency Stock'),
                                           style: ElevatedButton.styleFrom(
                                             backgroundColor: const Color(0xFFEF5350).withOpacity(0.8),
                                             foregroundColor: Colors.white,
@@ -1047,6 +988,35 @@ class _StockPageState extends State<StockPage> {
               fontSize: 12,
               color: Colors.grey[600],
             ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _confirmAndDamaged(BuildContext context, String agencyId, int qty, bool fromEmpty) {
+    showDialog(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Confirm Damage'),
+        content: Text('Are you sure you want to remove $qty ${fromEmpty ? 'Empty' : 'Full'} bottles from Agency Stock as Damaged?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              FocusManager.instance.primaryFocus?.unfocus();
+              Navigator.pop(dialogContext);
+              context.read<StockBloc>().add(AgencyStockDamagedReported(
+                agencyId: agencyId,
+                quantity: qty,
+                isFromEmpty: fromEmpty,
+              ));
+            },
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            child: const Text('Confirm', style: TextStyle(color: Colors.white)),
           ),
         ],
       ),

@@ -109,9 +109,14 @@ class AgencyStockRefillRequested extends StockEvent {
 class AgencyStockDamagedReported extends StockEvent {
   final String agencyId;
   final int quantity;
-  const AgencyStockDamagedReported({required this.agencyId, required this.quantity});
+  final bool isFromEmpty;
+  const AgencyStockDamagedReported({
+    required this.agencyId,
+    required this.quantity,
+    this.isFromEmpty = false,
+  });
   @override
-  List<Object?> get props => [agencyId, quantity];
+  List<Object?> get props => [agencyId, quantity, isFromEmpty];
 }
 class EmptyBottlesCollected extends StockEvent {
   final String salesmanId;

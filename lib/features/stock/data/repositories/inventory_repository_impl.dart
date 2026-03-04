@@ -662,62 +662,98 @@ class InventoryRepositoryImpl implements InventoryRepository {
   }
 
   @override
-  Future<void> recordAgencyDamagedStock({required String agencyId, required int quantity}) async {
+  Future<void> recordAgencyDamagedStock({required String agencyId, required int quantity, bool isFromEmpty = false}) async {
     final dateKey = DateTime.now().toIso8601String().substring(0, 10).replaceAll('-', '_');
     final logRef = _database.ref().child('Stock_logs').child('LOG_${dateKey}_$agencyId');
     
-    // Fetch current warehouse stock (Yesterday's closing / Today's opening)
-    final stockSnapshot = await _database.ref().child('Agencies').child(agencyId).child('stock').get();
-    final stockData = stockSnapshot.value as Map?;
-    final currentWarehouseStock = (stockData?['fullCans'] as num?)?.toInt() ?? 0;
+    if (isFromEmpty) {
+      // 1. Decrement empties and increment damaged in Agency stock node
+      final agencyStockRef = _database.ref().child('Agencies').child(agencyId).child('stock');
+      final transactionResult = await agencyStockRef.runTransaction((Object? post) {
+        final stockMap = post == null 
+            ? <String, dynamic>{} 
+            : Map<String, dynamic>.from(post as Map);
+            
+        int currentEmpties = (stockMap['emptyCans'] as num?)?.toInt() ?? 0;
+        int currentDamaged = (stockMap['damagedCans'] as num?)?.toInt() ?? 0;
+        
+        if (currentEmpties < quantity) {
+          return Transaction.abort(); // Prevent negative empties
+        }
+        
+        stockMap['emptyCans'] = currentEmpties - quantity;
+        stockMap['damagedCans'] = currentDamaged + quantity;
+        
+        return Transaction.success(stockMap);
+      });
 
-    await logRef.runTransaction((Object? post) {
-       final logMap = post == null 
-           ? <String, dynamic>{} 
-           : Map<String, dynamic>.from(post as Map);
-
-      if (!logMap.containsKey('date')) {
-        logMap['date'] = DateTime.now().toIso8601String().substring(0, 10);
-        logMap['agencyId'] = agencyId;
-        logMap['salesmanId'] = '';
+      if (!transactionResult.committed) {
+         throw Exception("Not enough empty bottles available in Warehouse to mark as damaged.");
       }
-      
-      logMap['openingStock'] ??= 0;
-      
-      // Carry Forward Logic
-      if ((logMap['openingStock'] == 0) && !logMap.containsKey('openingStock_set')) {
-        logMap['openingStock'] = currentWarehouseStock;
+    } else {
+      // Fetch current warehouse stock (Yesterday's closing / Today's opening)
+      final stockSnapshot = await _database.ref().child('Agencies').child(agencyId).child('stock').get();
+      final stockData = stockSnapshot.value as Map?;
+      final currentWarehouseStock = (stockData?['fullCans'] as num?)?.toInt() ?? 0;
+
+      await logRef.runTransaction((Object? post) {
+         final logMap = post == null 
+             ? <String, dynamic>{} 
+             : Map<String, dynamic>.from(post as Map);
+
+        if (!logMap.containsKey('date')) {
+          logMap['date'] = DateTime.now().toIso8601String().substring(0, 10);
+          logMap['agencyId'] = agencyId;
+          logMap['salesmanId'] = agencyId; // Match other logs
+        }
+        
+        logMap['openingStock'] ??= 0;
+        
+        // Carry Forward Logic
+        if ((logMap['openingStock'] == 0) && !logMap.containsKey('openingStock_set')) {
+          logMap['openingStock'] = currentWarehouseStock;
+        }
+
+        logMap['loaded'] ??= 0;
+        logMap['totalDelivered'] ??= 0;
+        logMap['damaged'] ??= 0;
+        
+        final currentDamaged = (logMap['damaged'] as num?)?.toInt() ?? 0;
+        logMap['damaged'] = currentDamaged + quantity;
+        
+        final opening = (logMap['openingStock'] as num?)?.toInt() ?? 0;
+        final loaded = (logMap['loaded'] as num?)?.toInt() ?? 0;
+        final delivered = (logMap['totalDelivered'] as num?)?.toInt() ?? 0;
+        
+        logMap['closingStock'] = opening + loaded - delivered - logMap['damaged'];
+
+         return Transaction.success(logMap);
+      });
+
+      // Update Agency Warehouse Stock (Full Cans)
+      final snapshot = await logRef.get();
+      if (snapshot.exists) {
+         final data = Map<String, dynamic>.from(snapshot.value as Map);
+         final closing = (data['closingStock'] as num?)?.toInt() ?? 0;
+         await _updateAgencyWarehouseCount(agencyId, closing);
+         
+         // Also increment damagedCans in Agency node
+         await _database.ref().child('Agencies').child(agencyId).child('stock').child('damagedCans').runTransaction((Object? val) {
+            final current = (val as num?)?.toInt() ?? 0;
+            return Transaction.success(current + quantity);
+         });
       }
-
-      logMap['loaded'] ??= 0;
-      logMap['totalDelivered'] ??= 0;
-      logMap['damaged'] ??= 0;
-      
-      final currentDamaged = (logMap['damaged'] as num?)?.toInt() ?? 0;
-      logMap['damaged'] = currentDamaged + quantity;
-      
-      final opening = (logMap['openingStock'] as num?)?.toInt() ?? 0;
-      final loaded = (logMap['loaded'] as num?)?.toInt() ?? 0;
-      final delivered = (logMap['totalDelivered'] as num?)?.toInt() ?? 0;
-      
-      logMap['closingStock'] = opening + loaded - delivered - logMap['damaged'];
-
-       return Transaction.success(logMap);
-    });
-
-    // Update Agency Warehouse Stock (Full Cans)
-    final snapshot = await logRef.get();
-    if (snapshot.exists) {
-       final data = Map<String, dynamic>.from(snapshot.value as Map);
-       final closing = (data['closingStock'] as num?)?.toInt() ?? 0;
-       await _updateAgencyWarehouseCount(agencyId, closing);
-       
-       // Also increment damagedCans in Agency node
-       await _database.ref().child('Agencies').child(agencyId).child('stock').child('damagedCans').runTransaction((Object? val) {
-          final current = (val as num?)?.toInt() ?? 0;
-          return Transaction.success(current + quantity);
-       });
     }
+
+    // 3. Audit log for both cases
+    final historyRef = _database.ref().child('Agency_Stock_History').push();
+    await historyRef.set({
+      'agencyId': agencyId,
+      'date': DateTime.now().toIso8601String(),
+      'type': isFromEmpty ? 'Damage(Empty)' : 'Damage(Full)',
+      'quantity': quantity,
+      'timestamp': ServerValue.timestamp,
+    });
   }
 
   @override

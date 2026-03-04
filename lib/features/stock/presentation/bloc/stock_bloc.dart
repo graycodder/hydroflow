@@ -297,6 +297,7 @@ class StockBloc extends Bloc<StockEvent, StockState> {
       await _inventoryRepository.recordAgencyDamagedStock(
         agencyId: event.agencyId,
         quantity: event.quantity,
+        isFromEmpty: event.isFromEmpty,
       );
       emit(StockActionSuccess('Damaged Stock Recorded', todayLog: state.todayLog, hasAnyLogs: state.hasAnyLogs, agencyStock: state.agencyStock, isAgencyView: state.isAgencyView));
     } catch (e) {
