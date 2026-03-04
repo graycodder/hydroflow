@@ -104,7 +104,7 @@ Future<void> init() async {
   sl.registerLazySingleton(() => GetPlansUseCase(sl()));
 
   // BLoCs
-  sl.registerFactory(() => AuthBloc(authRepository: sl(), agencyRepository: sl()));
+  sl.registerFactory(() => AuthBloc(authRepository: sl(), agencyRepository: sl(), prefs: sl()));
   sl.registerFactory(() => StockBloc(
     inventoryRepository: sl(),
     customerRepository: sl(),

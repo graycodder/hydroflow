@@ -25,6 +25,7 @@ class DeliveryBloc extends Bloc<DeliveryEvent, DeliveryState> {
   final SharedPreferences _prefs;
 
   static const String _zoneKey = 'PREF_SELECTED_ZONE_DELIVERY';
+  static const String _salesmanKey = 'PREF_SELECTED_SALESMAN_DELIVERY';
   
   DeliveryBloc({
     required AddTransactionUseCase addTransactionUseCase,
@@ -55,11 +56,15 @@ class DeliveryBloc extends Bloc<DeliveryEvent, DeliveryState> {
     Emitter<DeliveryState> emit,
   ) async {
     final savedZone = _prefs.getString(_zoneKey);
+    final savedSalesman = _prefs.getString(_salesmanKey);
+    
     emit(state.copyWith(
       status: DeliveryStatus.loading,
       clearSelectedCustomer: true,
       selectedZone: savedZone,
       clearSelectedZone: savedZone == null,
+      selectedSalesmanId: savedSalesman,
+      clearSelectedSalesman: savedSalesman == null,
       isAgencyView: false,
     ));
     
@@ -113,10 +118,14 @@ class DeliveryBloc extends Bloc<DeliveryEvent, DeliveryState> {
     Emitter<DeliveryState> emit,
   ) async {
     final savedZone = _prefs.getString(_zoneKey);
+    final savedSalesman = _prefs.getString(_salesmanKey);
+    
     emit(state.copyWith(
       status: DeliveryStatus.loading,
       selectedZone: savedZone,
       clearSelectedZone: savedZone == null,
+      selectedSalesmanId: savedSalesman,
+      clearSelectedSalesman: savedSalesman == null,
       isAgencyView: true,
     ));
 
@@ -192,6 +201,13 @@ class DeliveryBloc extends Bloc<DeliveryEvent, DeliveryState> {
     Emitter<DeliveryState> emit,
   ) {
     final newSalesmanId = event.salesmanId;
+    
+    // Persist selection
+    if (newSalesmanId == null) {
+      _prefs.remove(_salesmanKey);
+    } else {
+      _prefs.setString(_salesmanKey, newSalesmanId);
+    }
     
     final filtered = _applyFilters(state.customers, state.allTodayTransactions, state.selectedZone, newSalesmanId);
     emit(state.copyWith(

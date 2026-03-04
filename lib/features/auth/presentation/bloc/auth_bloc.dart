@@ -4,12 +4,16 @@ import '../../domain/repositories/auth_repository.dart';
 import '../../domain/repositories/agency_repository.dart';
 import '../../domain/entities/salesman.dart';
 import '../../domain/entities/agency.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'auth_event.dart';
 import 'auth_state.dart';
 
 class AuthBloc extends Bloc<AuthEvent, AuthState> {
   final AuthRepository _authRepository;
   final AgencyRepository _agencyRepository;
+  final SharedPreferences _prefs;
+  
+  static const String _impersonatedKey = 'impersonated_salesman_id';
   
   StreamSubscription<String?>? _authSubscription;
   StreamSubscription<Salesman>? _salesmanSubscription;
@@ -23,9 +27,11 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   AuthBloc({
     required AuthRepository authRepository,
     required AgencyRepository agencyRepository,
+    required SharedPreferences prefs,
   })
     : _authRepository = authRepository,
       _agencyRepository = agencyRepository,
+      _prefs = prefs,
       super(AuthInitial()) {
     on<AppStarted>(_onAppStarted);
     on<AuthLoginRequested>(_onLoginRequested);
@@ -70,6 +76,18 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
               } else {
                 _currentSalesman = salesman;
                 _subscribeToAgency(salesman.agencyId);
+                
+                // Check for existing impersonation on startup/reconnect
+                final savedImpersonatedId = _prefs.getString(_impersonatedKey);
+                if (salesman.role == 'owner' && savedImpersonatedId != null && savedImpersonatedId != salesman.id) {
+                    // Try to fetch impersonated salesman data
+                    _authRepository.getSalesmanStream(savedImpersonatedId).first.then((target) {
+                       add(AuthImpersonateRequested(target));
+                    }).catchError((e) {
+                       _prefs.remove(_impersonatedKey);
+                    });
+                }
+                
                 add(AuthStatusChanged(salesman, _currentAgency));
               }
             }
@@ -157,6 +175,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
           }
         });
 
+    await _prefs.setString(_impersonatedKey, event.targetSalesman.id);
     add(AuthStatusChanged(_currentSalesman, _currentAgency));
   }
 
@@ -172,6 +191,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     _currentSalesman = _originalOwner;
     _originalOwner = null;
     
+    await _prefs.remove(_impersonatedKey);
     add(AuthStatusChanged(_currentSalesman, _currentAgency));
   }
 
