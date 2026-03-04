@@ -817,7 +817,7 @@ class _SubscriptionCard extends StatelessWidget {
                             borderRadius: BorderRadius.circular(20),
                           ),
                           child: Text(
-                            record.status,
+                            record.status[0].toUpperCase()+record.status.substring(1),
                             style: TextStyle(
                               color: badgeTextColor,
                               fontSize: 10,
