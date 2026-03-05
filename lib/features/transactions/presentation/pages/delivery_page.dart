@@ -758,7 +758,7 @@ class _DeliveryViewState extends State<DeliveryView> {
                 });
                 return filtered;
               },
-              itemAsString: (Customer c) => c.name,
+              itemAsString: (Customer c) => c.name[0].toUpperCase()+c.name.substring(1),
               compareFn: (i, s) => i.id == s.id,
               decoratorProps: DropDownDecoratorProps(
                 decoration: InputDecoration(
@@ -788,7 +788,7 @@ class _DeliveryViewState extends State<DeliveryView> {
                 ),
                 itemBuilder: (context, item, isSelected, isHovered) {
                   return ListTile(
-                    title: Text(item.name, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
+                    title: Text(item.name[0].toUpperCase()+item.name.substring(1), style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
                     subtitle: Row(
                       children: [
                         if (item.zone.isNotEmpty) ...[
@@ -858,7 +858,7 @@ class _DeliveryViewState extends State<DeliveryView> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                state.selectedCustomer!.name,
+                                state.selectedCustomer!.name[0].toUpperCase()+state.selectedCustomer!.name.substring(1),
                                 style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Color(0xFF1A1A2E)),
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
