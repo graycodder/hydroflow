@@ -226,6 +226,16 @@ class _EditSalesmanDialogState extends State<EditSalesmanDialog> {
                 ),
                 keyboardType: TextInputType.number,
                 inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                onChanged: (value) {
+                  if (value.length > 1 && value.startsWith('0')) {
+                    String newText = value.replaceFirst(RegExp(r'^0+'), '');
+                    if (newText.isEmpty) newText = '0';
+                    _quotaController.value = TextEditingValue(
+                      text: newText,
+                      selection: TextSelection.collapsed(offset: newText.length),
+                    );
+                  }
+                },
                 validator: (value) {
                   if (value == null || value.isEmpty) return 'Please enter quota';
                   final qty = int.tryParse(value);

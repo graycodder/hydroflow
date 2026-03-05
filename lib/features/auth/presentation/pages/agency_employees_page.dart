@@ -1111,7 +1111,17 @@ class _SalesmanCard extends StatelessWidget {
                               ? 'Must be greater than 0'
                               : null,
                     ),
-                    onChanged: (_) => setState(() {}),
+                    onChanged: (value) {
+                      if (value.length > 1 && value.startsWith('0')) {
+                        String newText = value.replaceFirst(RegExp(r'^0+'), '');
+                        if (newText.isEmpty) newText = '0';
+                        amtCtrl.value = TextEditingValue(
+                          text: newText,
+                          selection: TextSelection.collapsed(offset: newText.length),
+                        );
+                      }
+                      setState(() {});
+                    },
                   ),
                   const SizedBox(height: 12),
                   if ((double.tryParse(amtCtrl.text) ?? 0) >=
@@ -1434,7 +1444,19 @@ class _StockTabContent extends StatelessWidget {
           controller: controller,
           keyboardType: TextInputType.number,
           inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-          onChanged: onChanged,
+          onChanged: (value) {
+            if (value.length > 1 && value.startsWith('0')) {
+              String newText = value.replaceFirst(RegExp(r'^0+'), '');
+              if (newText.isEmpty) newText = '0';
+              controller.value = TextEditingValue(
+                text: newText,
+                selection: TextSelection.collapsed(offset: newText.length),
+              );
+            }
+            if (onChanged != null) {
+              onChanged!(value);
+            }
+          },
           decoration: InputDecoration(
             labelText: fieldLabel,
             errorText: errorText,
