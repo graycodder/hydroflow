@@ -1289,20 +1289,13 @@ class _DeliveryViewState extends State<DeliveryView> {
               const SizedBox(height: 6),
               Text(
                 mode,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
                   color: isSelected ? Colors.white : Colors.grey.shade600,
-                ),
-              ),
-              const SizedBox(height: 2),
-              Text(
-                isSelected
-                    ? (mode == 'Credit' ? 'No payment' : '')
-                    : '',
-                style: const TextStyle(
-                  fontSize: 10,
-                  color: Colors.white70,
                 ),
               ),
             ],
