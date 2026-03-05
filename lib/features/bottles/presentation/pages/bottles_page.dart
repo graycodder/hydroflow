@@ -182,63 +182,7 @@ class _BottlesPageState extends State<BottlesPage> {
                                   ],
                                 ),
                               ),
-                            if (state.highBalanceCount > 0) const SizedBox(height: 24),
-
-                            // // Formula Card
-                            // Container(
-                            //   width: double.infinity,
-                            //   padding: const EdgeInsets.all(16),
-                            //   decoration: BoxDecoration(
-                            //     color: const Color(0xFFE3F2FD), // Light Blue
-                            //     borderRadius: BorderRadius.circular(12),
-                            //     border: Border.all(color: const Color(0xFFBBDEFB)),
-                            //   ),
-                            //   child: Column(
-                            //     crossAxisAlignment: CrossAxisAlignment.start,
-                            //     children: [
-                            //       const Row(
-                            //         children: [
-                            //           Icon(Icons.refresh, color: Color(0xFF1565C0), size: 20),
-                            //           SizedBox(width: 8),
-                            //           Text(
-                            //             'Bottle Balance Formula',
-                            //             style: TextStyle(
-                            //               color: Color(0xFF0D47A1),
-                            //               fontWeight: FontWeight.bold,
-                            //               fontSize: 16,
-                            //             ),
-                            //           ),
-                            //         ],
-                            //       ),
-                            //       const SizedBox(height: 12),
-                            //       Container(
-                            //         width: double.infinity,
-                            //         padding: const EdgeInsets.all(12),
-                            //         decoration: BoxDecoration(
-                            //           color: Colors.white,
-                            //           borderRadius: BorderRadius.circular(8),
-                            //         ),
-                            //         child: const Text(
-                            //           'Net Bottles = (Previous Balance + Delivered) - Returned',
-                            //           style: TextStyle(
-                            //             fontFamily: 'Courier',
-                            //             color: Color(0xFF263238),
-                            //             fontWeight: FontWeight.w500,
-                            //           ),
-                            //         ),
-                            //       ),
-                            //       const SizedBox(height: 8),
-                            //       const Text(
-                            //         'This formula tracks the circular economy of bottle exchange',
-                            //         style: TextStyle(
-                            //           color: Color(0xFF1565C0),
-                            //           fontSize: 12,
-                            //         ),
-                            //       ),
-                            //     ],
-                            //   ),
-                            // ),
-                            //const SizedBox(height: 10),
+                            if (state.highBalanceCount > 0) const SizedBox(height: 0),
 
                             // Customer/Salesman List Header
                             if(isAgency ? state.salesmen.isNotEmpty : state.customers.isNotEmpty)
