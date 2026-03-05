@@ -297,8 +297,8 @@ class DeliveryBloc extends Bloc<DeliveryEvent, DeliveryState> {
     int returned = 0;
     int deliveryCount = 0;
 
-    for (var tx in filteredTransactions) {
-       // stats now based on FILTERED transactions
+    for (var tx in transactions) {
+       // stats now based on UNFILTERED transactions
        sales += tx.amountReceived;
        if (tx.paymentMode == 'Cash') cash += tx.amountReceived;
        if (tx.paymentMode == 'UPI' || tx.paymentMode == 'Online') upi += tx.amountReceived;

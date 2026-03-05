@@ -590,7 +590,7 @@ class _DeliveryViewState extends State<DeliveryView> {
             textAlign: TextAlign.center,
             style: TextStyle(
               color: textColor,
-              fontSize: 20,
+              fontSize: 18,
               fontWeight: FontWeight.w900,
             ),
           ),
@@ -1191,6 +1191,7 @@ class _DeliveryViewState extends State<DeliveryView> {
                   onTap: () {
                     setState(() {
                       _paymentMode = 'Credit';
+                      _amountReceivedController.text = '0';
                     });
                   },
                 ),
