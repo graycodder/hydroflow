@@ -270,7 +270,9 @@ class _DeliveryViewState extends State<DeliveryView> {
                     padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 8.0),
                     child: DropdownSearch<String>(
                       items: (filter, loadProps) {
-                        final relevantCustomers = state.selectedSalesmanId == null ? state.customers : state.customers.where((c) => c.salesmanId == state.selectedSalesmanId);
+                        final relevantCustomers = (!isAgency || state.selectedSalesmanId == null)
+                            ? state.customers
+                            : state.customers.where((c) => c.salesmanId == state.selectedSalesmanId);
                         final zones = relevantCustomers.map((c) => c.zone).where((z) => z.isNotEmpty).toSet().toList()..sort();
                         return ['All', ...zones];
                       },

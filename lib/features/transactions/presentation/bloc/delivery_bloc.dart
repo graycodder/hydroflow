@@ -288,7 +288,28 @@ class DeliveryBloc extends Bloc<DeliveryEvent, DeliveryState> {
     int currentStock, {
     Customer? updatedSelectedCustomer,
   }) {
-    final filtered = _applyFilters(customers, transactions, state.selectedZone, state.selectedSalesmanId);
+    // Validate filters: Clear them if they no longer match any data
+    String? validatedZone = state.selectedZone;
+    if (validatedZone != null && validatedZone != 'All') {
+      final zoneExists = customers.any((c) => c.zone == validatedZone);
+      if (!zoneExists) validatedZone = null;
+    }
+
+    String? validatedSalesmanId = state.selectedSalesmanId;
+    if (validatedSalesmanId != null && state.isAgencyView) {
+      // In agency view, we can't easily check all salesmen here without passing them,
+      // but we can check if any customers belong to this salesman. 
+      // If no customers belong to this salesman, it might be a stale filter.
+      final salesmanHasData = customers.any((c) => c.salesmanId == validatedSalesmanId);
+      if (!salesmanHasData) validatedSalesmanId = null;
+    }
+
+    final filtered = _applyFilters(
+      customers,
+      transactions,
+      validatedZone,
+      state.isAgencyView ? validatedSalesmanId : null,
+    );
     final filteredTransactions = filtered['transactions'] as List<TransactionEntity>;
 
     double sales = 0;
@@ -326,6 +347,10 @@ class DeliveryBloc extends Bloc<DeliveryEvent, DeliveryState> {
       totalDeliveriesCount: deliveryCount,
       currentStock: currentStock,
       filteredCustomers: filtered['customers'] as List<Customer>,
+      selectedZone: validatedZone,
+      clearSelectedZone: validatedZone == null,
+      selectedSalesmanId: validatedSalesmanId,
+      clearSelectedSalesman: validatedSalesmanId == null,
     );
   }
 }
