@@ -139,7 +139,7 @@ class _CustomersPageState extends State<CustomersPage> {
                                         ...filteredSalesmen,
                                       ];
                                     },
-                                    itemAsString: (Salesman s) => s.id == 'all' ? s.name : '${s.name} (${s.phoneNumber})',
+                                    itemAsString: (Salesman s) => s.id == 'all' ? s.name[0].toUpperCase() + s.name.substring(1) : '${s.name[0].toUpperCase() + s.name.substring(1)} (${s.phoneNumber})',
                                     decoratorProps: DropDownDecoratorProps(
                                       decoration: InputDecoration(
                                         labelText: 'Filter by Salesman',
@@ -230,7 +230,7 @@ class _CustomersPageState extends State<CustomersPage> {
                               ),
                               itemBuilder: (context, item, isSelected, isHovered) {
                                 return ListTile(
-                                  title: Text(item, style: const TextStyle(fontSize: 14)),
+                                  title: Text(item[0].toUpperCase() + item.substring(1), style: const TextStyle(fontSize: 14)),
                                   selected: isSelected,
                                   dense: true,
                                 );

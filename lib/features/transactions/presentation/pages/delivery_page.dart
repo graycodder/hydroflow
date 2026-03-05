@@ -236,7 +236,7 @@ class _DeliveryViewState extends State<DeliveryView> {
                                   ...filteredSalesmen,
                                 ];
                               },
-                              itemAsString: (Salesman s) => s.id == 'all' ? s.name : '${s.name} (${s.phoneNumber})',
+                              itemAsString: (Salesman s) => s.id == 'all' ? s.name[0].toUpperCase() + s.name.substring(1) : '${s.name[0].toUpperCase() + s.name.substring(1)} (${s.phoneNumber})',
                               decoratorProps: DropDownDecoratorProps(
                                 decoration: InputDecoration(
                                   labelText: 'Filter by Salesman',
@@ -293,7 +293,7 @@ class _DeliveryViewState extends State<DeliveryView> {
                         searchDelay: Duration.zero,
                         searchFieldProps: const TextFieldProps(decoration: InputDecoration(hintText: "Search Zone...", prefixIcon: Icon(Icons.search), border: OutlineInputBorder(), contentPadding: EdgeInsets.symmetric(horizontal: 12))),
                         itemBuilder: (context, item, isSelected, isHovered) {
-                          return ListTile(title: Text(item, style: const TextStyle(fontSize: 14)), selected: isSelected, dense: true);
+                          return ListTile(title: Text(item[0].toUpperCase() + item.substring(1), style: const TextStyle(fontSize: 14)), selected: isSelected, dense: true);
                         },
                       ),
                       selectedItem: state.selectedZone ?? 'All',
