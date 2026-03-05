@@ -45,7 +45,7 @@ class SalesmanStatusCards extends StatelessWidget {
         DashboardStatCard(
           title: "My Collection",
           value: '₹${summary.todayCollection.toStringAsFixed(0).replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]},')}',
-          subtitle: 'Cash + Online',
+          subtitle: 'Cash + UPI',
           valueColor: const Color(0xFF00C853),
           onTap: () {},
         ),

@@ -325,7 +325,7 @@ class _AddCustomerDialogState extends State<AddCustomerDialog> {
                                     onTap: () => onSelected(option),
                                     child: Padding(
                                       padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-                                      child: Text(option),
+                                      child: Text(option[0].toUpperCase() + option.substring(1)),
                                     ),
                                   );
                                 },
