@@ -446,14 +446,46 @@ class ProfilePage extends StatelessWidget {
             child: const Text('Cancel'),
           ),
           ElevatedButton(
-            onPressed: () {
+            onPressed: () async {
               final price = double.tryParse(controller.text);
               if (price != null) {
-                context.read<ProfileBloc>().add(UpdateAgencySettings(
-                      agency.id,
-                      {'defaultBottlePrice': price},
-                    ));
-                Navigator.pop(dialogContext);
+                // Focus out before showing confirmation to prevent keyboard glitches
+                FocusScope.of(dialogContext).unfocus();
+                FocusManager.instance.primaryFocus?.unfocus();
+                await Future.delayed(const Duration(milliseconds: 100));
+
+                if (!dialogContext.mounted) return;
+
+                final confirmed = await showDialog<bool>(
+                  context: dialogContext,
+                  builder: (ctx) => AlertDialog(
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                    title: const Text('Confirm Price Change'),
+                    content: Text('Are you sure you want to set the default bottle price to ₹${price.toStringAsFixed(0)}?'),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.pop(ctx, false),
+                        child: const Text('Cancel'),
+                      ),
+                      ElevatedButton(
+                        onPressed: () => Navigator.pop(ctx, true),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFFE65100),
+                          foregroundColor: Colors.white,
+                        ),
+                        child: const Text('Yes, Change'),
+                      ),
+                    ],
+                  ),
+                );
+
+                if (confirmed == true && dialogContext.mounted && context.mounted) {
+                  context.read<ProfileBloc>().add(UpdateAgencySettings(
+                        agency.id,
+                        {'defaultBottlePrice': price},
+                      ));
+                  Navigator.pop(dialogContext); // Close main edit dialog
+                }
               }
             },
             style: ElevatedButton.styleFrom(
@@ -731,11 +763,37 @@ class _EnforceFixedPriceTile extends StatelessWidget {
           Switch.adaptive(
             value: agency.enforceFixedPrice,
             activeColor: const Color(0xFFE65100),
-            onChanged: (value) {
-              context.read<ProfileBloc>().add(UpdateAgencySettings(
-                    agency.id,
-                    {'enforceFixedPrice': value},
-                  ));
+            onChanged: (value) async {
+              final actionText = value ? 'enable' : 'disable';
+              final confirmed = await showDialog<bool>(
+                context: context,
+                builder: (ctx) => AlertDialog(
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  title: Text('${value ? 'Enable' : 'Disable'} Fixed Price'),
+                  content: Text('Are you sure you want to $actionText enforced fixed pricing?'),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(ctx, false),
+                      child: const Text('Cancel'),
+                    ),
+                    ElevatedButton(
+                      onPressed: () => Navigator.pop(ctx, true),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFFE65100),
+                        foregroundColor: Colors.white,
+                      ),
+                      child: const Text('Yes, Proceed'),
+                    ),
+                  ],
+                ),
+              );
+
+              if (confirmed == true && context.mounted) {
+                context.read<ProfileBloc>().add(UpdateAgencySettings(
+                      agency.id,
+                      {'enforceFixedPrice': value},
+                    ));
+              }
             },
           ),
         ],
