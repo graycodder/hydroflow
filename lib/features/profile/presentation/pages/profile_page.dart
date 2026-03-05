@@ -429,6 +429,16 @@ class ProfilePage extends StatelessWidget {
             prefixText: '₹ ',
             border: OutlineInputBorder(),
           ),
+          onChanged: (value) {
+            if (value.length > 1 && value.startsWith('0')) {
+              String newText = value.replaceFirst(RegExp(r'^0+'), '');
+              if (newText.isEmpty) newText = '0';
+              controller.value = TextEditingValue(
+                text: newText,
+                selection: TextSelection.collapsed(offset: newText.length),
+              );
+            }
+          },
         ),
         actions: [
           TextButton(
