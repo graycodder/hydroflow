@@ -130,325 +130,194 @@ class _DeliveryViewState extends State<DeliveryView> {
         }
       },
       child: BlocConsumer<DeliveryBloc, DeliveryState>(
-      listenWhen: (previous, current) =>
-          previous.status != current.status ||
-          previous.selectedZone != current.selectedZone,
-      listener: (context, state) {
-        // 1. Handle submission loader dismissal (if active)
-        if (state.status != DeliveryStatus.submitting &&
-            ModalRoute.of(context)?.isCurrent == false) {
-          // We only pop if we are sure the current route is NOT the DeliveryPage
-          // Note: This assumes the loader is the only thing that could be on top.
-          // However, if the receipt dialog is already up, we don't want to pop it.
-          // A safer way is using a Navigator observer or checking route names,
-          // but AlertDialog usually doesn't have a unique name easily accessible here.
-          // Let's use rootNavigator: true to be specific to the loader dialog.
-        }
-
-        // 2. Handle specific actions based on status transitions
-        if (state.status == DeliveryStatus.submitting) {
-          FocusScope.of(context).unfocus();
-          FocusManager.instance.primaryFocus?.unfocus();
-          HydroFlowLoader.show(context, message: 'Submitting Transaction...');
-        } else if (state.status == DeliveryStatus.submissionSuccess) {
-          HydroFlowLoader.hide(context);
-          _amountReceivedController.clear();
-
-          FocusScope.of(context).unfocus();
-          if (state.todayTransactions.isNotEmpty) {
-            final tx = state.todayTransactions.first;
-            final customer = state.customers.cast<Customer>().firstWhere(
-              (c) => c.id == tx.customerId,
-              orElse: () => const Customer(
-                id: '',
-                salesmanId: '',
-                agencyId: '',
-                name: 'Unknown',
-                phone: '',
-                address: '',
-                status: '',
-                securityDeposit: 0,
-                pendingBalance: 0,
-                bottleBalance: 0,
-              ),
+        listenWhen: (previous, current) =>
+            previous.status != current.status ||
+            previous.selectedZone != current.selectedZone,
+        listener: (context, state) {
+          if (state.status == DeliveryStatus.submitting) {
+            FocusScope.of(context).unfocus();
+            FocusManager.instance.primaryFocus?.unfocus();
+            HydroFlowLoader.show(context, message: 'Submitting Transaction...');
+          } else if (state.status == DeliveryStatus.submissionSuccess) {
+            HydroFlowLoader.hide(context);
+            _amountReceivedController.clear();
+            FocusScope.of(context).unfocus();
+            if (state.todayTransactions.isNotEmpty) {
+              final tx = state.todayTransactions.first;
+              final customer = state.customers.cast<Customer>().firstWhere(
+                    (c) => c.id == tx.customerId,
+                    orElse: () => const Customer(
+                      id: '',
+                      salesmanId: '',
+                      agencyId: '',
+                      name: 'Unknown',
+                      phone: '',
+                      address: '',
+                      status: '',
+                      securityDeposit: 0,
+                      pendingBalance: 0,
+                      bottleBalance: 0,
+                    ),
+                  );
+              showDialog(
+                context: context,
+                builder: (_) => TransactionReceiptDialog(
+                  transaction: tx,
+                  customer: customer,
+                  salesmanName: (context.read<AuthBloc>().state as AuthAuthenticated).salesman.displayName,
+                  agencyName: (context.read<AuthBloc>().state as AuthAuthenticated).salesman.agencyName ?? 'HydroFlow Agency',
+                ),
+              );
+            }
+            _resetForm();
+            context.read<DeliveryBloc>().add(ResetDeliveryStatus());
+          } else if (state.status == DeliveryStatus.failure) {
+            HydroFlowLoader.hide(context);
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text(state.errorMessage ?? 'An error occurred')),
             );
-            showDialog(
-              context: context,
-              builder: (_) => TransactionReceiptDialog(
-                transaction: tx,
-                customer: customer,
-                salesmanName:
-                    (context.read<AuthBloc>().state as AuthAuthenticated)
-                        .salesman
-                        .displayName,
-                agencyName:
-                    (context.read<AuthBloc>().state as AuthAuthenticated)
-                        .salesman
-                        .agencyName ?? 'HydroFlow Agency',
+            context.read<DeliveryBloc>().add(ResetDeliveryStatus());
+          }
+        },
+        builder: (context, state) {
+          final authState = context.read<AuthBloc>().state;
+          final salesman = (authState is AuthAuthenticated) ? authState.salesman : null;
+          final salesmanId = salesman?.id ?? '';
+          final prefs = sl<SharedPreferences>();
+          final isAgencyViewPref = prefs.getBool('dashboard_is_agency_view') ?? false;
+          final isOwner = salesman?.role == 'owner';
+
+          bool isSwitchingView = false;
+          if (isOwner && isAgencyViewPref != state.isAgencyView) {
+            isSwitchingView = true;
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              if (isAgencyViewPref) {
+                context.read<DeliveryBloc>().add(LoadAgencyDeliveries(salesman!.agencyId));
+              } else {
+                context.read<DeliveryBloc>().add(LoadDeliveryPage(salesman!.id));
+              }
+            });
+          }
+
+          final isAgency = state.isAgencyView;
+          Widget content;
+
+          if (isSwitchingView) {
+            content = const Center(child: HydroFlowLoader(message: 'Switching View...', isOverlay: false));
+          } else if (state.status == DeliveryStatus.loading) {
+            content = const Center(child: HydroFlowLoader(message: 'Syncing Delivery Data...', isOverlay: false));
+          } else {
+            content = SingleChildScrollView(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  if (!isAgency)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 16),
+                      child: _buildStatsHeader(state),
+                    ),
+                  if (isAgency)
+                    BlocBuilder<AgencyBloc, AgencyState>(
+                      builder: (context, agencyState) {
+                        if (agencyState is AgencySalesmenLoaded) {
+                          final salesmen = agencyState.salesmen;
+                          return Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 8.0),
+                            child: DropdownSearch<Salesman>(
+                              items: (filter, loadProps) {
+                                var filteredSalesmen = salesmen;
+                                if (state.selectedZone != null) {
+                                  final activeInZone = state.customers.where((c) => c.zone == state.selectedZone).map((c) => c.salesmanId).toSet();
+                                  filteredSalesmen = salesmen.where((s) => activeInZone.contains(s.id)).toList();
+                                }
+                                return [
+                                  const Salesman(id: 'all', name: 'All Salesmen', agencyId: '', username: '', password: '', phoneNumber: ''),
+                                  ...filteredSalesmen,
+                                ];
+                              },
+                              itemAsString: (Salesman s) => s.id == 'all' ? s.name : '${s.name} (${s.phoneNumber})',
+                              decoratorProps: DropDownDecoratorProps(
+                                decoration: InputDecoration(
+                                  labelText: 'Filter by Salesman',
+                                  hintText: 'Select Salesman',
+                                  prefixIcon: const Icon(Icons.person_outline, color: Colors.blueGrey),
+                                  filled: true,
+                                  fillColor: Colors.white,
+                                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: Colors.grey[300]!)),
+                                  enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: Colors.grey[300]!)),
+                                  contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                ),
+                              ),
+                              popupProps: PopupProps.menu(
+                                showSearchBox: true,
+                                searchFieldProps: const TextFieldProps(decoration: InputDecoration(hintText: "Search Salesman...", prefixIcon: Icon(Icons.search), border: OutlineInputBorder())),
+                              ),
+                              selectedItem: state.selectedSalesmanId == null
+                                  ? const Salesman(id: 'all', name: 'All Salesmen', agencyId: '', username: '', password: '', phoneNumber: '')
+                                  : salesmen.firstWhere((s) => s.id == state.selectedSalesmanId, orElse: () => const Salesman(id: 'all', name: 'All Salesmen', agencyId: '', username: '', password: '', phoneNumber: '')),
+                              onChanged: (Salesman? value) {
+                                context.read<DeliveryBloc>().add(FilterDeliveryBySalesman(value?.id == 'all' ? null : value?.id));
+                              },
+                              compareFn: (s1, s2) => s1.id == s2.id,
+                            ),
+                          );
+                        }
+                        return const SizedBox.shrink();
+                      },
+                    ),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 8.0),
+                    child: DropdownSearch<String>(
+                      items: (filter, loadProps) {
+                        final relevantCustomers = state.selectedSalesmanId == null ? state.customers : state.customers.where((c) => c.salesmanId == state.selectedSalesmanId);
+                        final zones = relevantCustomers.map((c) => c.zone).where((z) => z.isNotEmpty).toSet().toList()..sort();
+                        return ['All', ...zones];
+                      },
+                      decoratorProps: DropDownDecoratorProps(
+                        decoration: InputDecoration(
+                          labelText: 'Filter by Zone',
+                          hintText: 'Select or Search Zone',
+                          prefixIcon: const Icon(Icons.grid_view_rounded, color: Colors.blueGrey),
+                          filled: true,
+                          fillColor: Colors.white,
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: Colors.grey[300]!)),
+                          enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: Colors.grey[300]!)),
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        ),
+                      ),
+                      popupProps: PopupProps.menu(
+                        showSearchBox: true,
+                        searchDelay: Duration.zero,
+                        searchFieldProps: const TextFieldProps(decoration: InputDecoration(hintText: "Search Zone...", prefixIcon: Icon(Icons.search), border: OutlineInputBorder(), contentPadding: EdgeInsets.symmetric(horizontal: 12))),
+                        itemBuilder: (context, item, isSelected, isHovered) {
+                          return ListTile(title: Text(item, style: const TextStyle(fontSize: 14)), selected: isSelected, dense: true);
+                        },
+                      ),
+                      selectedItem: state.selectedZone ?? 'All',
+                      onChanged: (String? value) {
+                        context.read<DeliveryBloc>().add(FilterDeliveryByZone(value == 'All' ? null : value));
+                      },
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  if (!isAgency) _buildDeliveryForm(context, state, salesmanId),
+                  const SizedBox(height: 10),
+                  _buildTransactionsList(state),
+                ],
               ),
             );
           }
-          _resetForm();
-        } else if (state.status == DeliveryStatus.failure) {
-          HydroFlowLoader.hide(context);
 
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(state.errorMessage ?? 'An error occurred')),
+          return Scaffold(
+            backgroundColor: Colors.grey[50],
+            appBar: const HydroFlowAppBar(),
+            body: content,
+            bottomNavigationBar: const AppBottomBar(currentIndex: 4),
           );
-        }
-      },
-      builder: (context, state) {
-        final authState = context.read<AuthBloc>().state;
-        final salesman = (authState is AuthAuthenticated) ? authState.salesman : null;
-        final salesmanId = salesman?.id ?? '';
-
-        final prefs = sl<SharedPreferences>();
-        final isAgencyViewPref = prefs.getBool('dashboard_is_agency_view') ?? false;
-        final isOwner = salesman?.role == 'owner';
-        
-        // Check for view mismatch
-        if (isOwner) {
-           if (isAgencyViewPref != state.isAgencyView) {
-              WidgetsBinding.instance.addPostFrameCallback((_) {
-                 if (isAgencyViewPref) {
-                    context.read<DeliveryBloc>().add(LoadAgencyDeliveries(salesman!.agencyId));
-                 } else {
-                    context.read<DeliveryBloc>().add(LoadDeliveryPage(salesman!.id));
-                 }
-              });
-              return const Scaffold(body: Center(child: HydroFlowLoader(message: 'Switching View...', isOverlay: false)));
-           }
-        }
-
-        final isAgency = state.isAgencyView;
-
-        Widget content = state.status == DeliveryStatus.loading
-            ? const HydroFlowLoader(
-                message: 'Syncing Delivery Data...',
-                isOverlay: false,
-              )
-            : SingleChildScrollView(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                      // ── Stats Banner (always visible for salesman) ────────────
-                    if (!isAgency)
-                      Padding(
-                        padding: const EdgeInsets.only(bottom: 16),
-                        child: _buildStatsHeader(state),
-                      ),
-                      
-                    // Salesman Filter (Only in Agency View)
-                    if (isAgency)
-                      BlocBuilder<AgencyBloc, AgencyState>(
-                        builder: (context, agencyState) {
-                          if (agencyState is AgencySalesmenLoaded) {
-                            final salesmen = agencyState.salesmen;
-                            return Padding(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 0,
-                                vertical: 8.0,
-                              ),
-                              child: DropdownSearch<Salesman>(
-                                items: (filter, loadProps) {
-                                  var filteredSalesmen = salesmen;
-                                  if (state.selectedZone != null) {
-                                    final activeInZone = state.customers
-                                        .where((c) => c.zone == state.selectedZone)
-                                        .map((c) => c.salesmanId)
-                                        .toSet();
-                                    filteredSalesmen = salesmen
-                                        .where((s) => activeInZone.contains(s.id))
-                                        .toList();
-                                  }
-                                  return [
-                                    const Salesman(
-                                      id: 'all',
-                                      name: 'All Salesmen',
-                                      agencyId: '',
-                                      username: '',
-                                      password: '',
-                                      phoneNumber: '',
-                                    ),
-                                    ...filteredSalesmen,
-                                  ];
-                                },
-                                itemAsString: (Salesman s) => s.id == 'all'
-                                    ? s.name
-                                    : '${s.name} (${s.phoneNumber})',
-                                decoratorProps: DropDownDecoratorProps(
-                                  decoration: InputDecoration(
-                                    labelText: 'Filter by Salesman',
-                                    hintText: 'Select Salesman',
-                                    prefixIcon: const Icon(
-                                      Icons.person_outline,
-                                      color: Colors.blueGrey,
-                                    ),
-                                    filled: true,
-                                    fillColor: Colors.white,
-                                    border: OutlineInputBorder(
-                                      borderRadius: BorderRadius.circular(12),
-                                      borderSide:
-                                          BorderSide(color: Colors.grey[300]!),
-                                    ),
-                                    enabledBorder: OutlineInputBorder(
-                                      borderRadius: BorderRadius.circular(12),
-                                      borderSide:
-                                          BorderSide(color: Colors.grey[300]!),
-                                    ),
-                                    contentPadding: const EdgeInsets.symmetric(
-                                      horizontal: 12,
-                                      vertical: 8,
-                                    ),
-                                  ),
-                                ),
-                                popupProps: PopupProps.menu(
-                                  showSearchBox: true,
-                                  searchFieldProps: const TextFieldProps(
-                                    decoration: InputDecoration(
-                                      hintText: "Search Salesman...",
-                                      prefixIcon: Icon(Icons.search),
-                                      border: OutlineInputBorder(),
-                                    ),
-                                  ),
-                                ),
-                                selectedItem: state.selectedSalesmanId == null
-                                    ? const Salesman(
-                                        id: 'all',
-                                        name: 'All Salesmen',
-                                        agencyId: '',
-                                        username: '',
-                                        password: '',
-                                        phoneNumber: '',
-                                      )
-                                    : salesmen.firstWhere(
-                                        (s) => s.id == state.selectedSalesmanId,
-                                        orElse: () => const Salesman(
-                                          id: 'all',
-                                          name: 'All Salesmen',
-                                          agencyId: '',
-                                          username: '',
-                                          password: '',
-                                          phoneNumber: '',
-                                        ),
-                                      ),
-                                onChanged: (Salesman? value) {
-                                  context.read<DeliveryBloc>().add(
-                                        FilterDeliveryBySalesman(
-                                          value?.id == 'all' ? null : value?.id,
-                                        ),
-                                      );
-                                },
-                                compareFn: (s1, s2) => s1.id == s2.id,
-                              ),
-                            );
-                          }
-                          return const SizedBox.shrink();
-                        },
-                      ),
-
-                    // Zone Filters Dropdown
-                    Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 0,
-                        vertical: 8.0,
-                      ),
-                      child: DropdownSearch<String>(
-                        items: (filter, loadProps) {
-                          final relevantCustomers = state.selectedSalesmanId == null
-                              ? state.customers
-                              : state.customers.where((c) => c.salesmanId == state.selectedSalesmanId);
-                              
-                          final zones = relevantCustomers
-                              .map((c) => c.zone)
-                              .where((z) => z.isNotEmpty)
-                              .toSet()
-                              .toList()
-                            ..sort();
-                          return ['All', ...zones];
-                        },
-                        decoratorProps: DropDownDecoratorProps(
-                          decoration: InputDecoration(
-                            labelText: 'Filter by Zone',
-                            hintText: 'Select or Search Zone',
-                            prefixIcon: const Icon(
-                              Icons.grid_view_rounded,
-                              color: Colors.blueGrey,
-                            ),
-                            filled: true,
-                            fillColor: Colors.white,
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                              borderSide: BorderSide(color: Colors.grey[300]!),
-                            ),
-                            enabledBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                              borderSide: BorderSide(color: Colors.grey[300]!),
-                            ),
-                            contentPadding: const EdgeInsets.symmetric(
-                              horizontal: 12,
-                              vertical: 8,
-                            ),
-                          ),
-                        ),
-                        popupProps: PopupProps.menu(
-                          showSearchBox: true,
-                          searchDelay: Duration.zero,
-                          searchFieldProps: const TextFieldProps(
-                            decoration: InputDecoration(
-                              hintText: "Search Zone...",
-                              prefixIcon: Icon(Icons.search),
-                              border: OutlineInputBorder(),
-                              contentPadding:
-                                  EdgeInsets.symmetric(horizontal: 12),
-                            ),
-                          ),
-                          itemBuilder: (context, item, isSelected, isHovered) {
-                            return ListTile(
-                              title: Text(item, style: const TextStyle(fontSize: 14)),
-                              selected: isSelected,
-                              dense: true,
-                            );
-                          },
-                        ),
-                        selectedItem: state.selectedZone ?? 'All',
-                        onChanged: (String? value) {
-                          context.read<DeliveryBloc>().add(
-                                FilterDeliveryByZone(
-                                  value == 'All' ? null : value,
-                                ),
-                              );
-                        },
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-
-                    // Form Card (Only for Salesman, hidden for Agency)
-                    if (!isAgency)
-                      _buildDeliveryForm(context, state, salesmanId),
-
-                    const SizedBox(height: 10),
-
-                    // Transactions List
-                    _buildTransactionsList(state),
-                  ],
-                ),
-              );
-
-        Widget scaffold = Scaffold(
-          backgroundColor: Colors.grey[50],
-          appBar: const HydroFlowAppBar(),
-          body: content,
-          bottomNavigationBar: const AppBottomBar(
-            currentIndex: 4,
-          ),
-        );
-
-        return scaffold;
-      },
-    ),
-   );
+        },
+      ),
+    );
   }
 
   Widget _buildStatsHeader(DeliveryState state) {
@@ -802,7 +671,6 @@ class _DeliveryViewState extends State<DeliveryView> {
                         Expanded(
                           child: Text(item.phone, style: const TextStyle(fontSize: 12)),
                         ),
-                        Text('🫙 ${item.bottleBalance}', style: TextStyle(fontSize: 11, color: Colors.blue.shade700, fontWeight: FontWeight.w600)),
                       ],
                     ),
                     selected: isSelected,

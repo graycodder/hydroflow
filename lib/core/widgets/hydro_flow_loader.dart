@@ -81,6 +81,14 @@ class HydroFlowLoader extends StatelessWidget {
 
   /// Static helper to hide the loader
   static void hide(BuildContext context) {
-    Navigator.of(context, rootNavigator: true).pop();
+    try {
+      // Only pop if the widget is still mounted and the current route is not the top one.
+      // This prevents "Looking up a deactivated widget's ancestor" errors.
+      if (context.mounted && ModalRoute.of(context)?.isCurrent == false) {
+        Navigator.of(context, rootNavigator: true).pop();
+      }
+    } catch (e) {
+      debugPrint('HydroFlowLoader.hide error: $e');
+    }
   }
 }

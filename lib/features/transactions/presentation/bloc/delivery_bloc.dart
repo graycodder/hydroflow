@@ -49,6 +49,7 @@ class DeliveryBloc extends Bloc<DeliveryEvent, DeliveryState> {
     on<SubmitTransaction>(_onSubmitTransaction);
     on<FilterDeliveryByZone>(_onFilterDeliveryByZone);
     on<FilterDeliveryBySalesman>(_onFilterBySalesman);
+    on<ResetDeliveryStatus>((event, emit) => emit(state.copyWith(status: DeliveryStatus.success)));
   }
 
   Future<void> _onLoadDeliveryPage(

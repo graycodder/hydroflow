@@ -62,23 +62,24 @@ class _CustomersPageState extends State<CustomersPage> {
           final customerState = context.watch<CustomerBloc>().state;
 
           // Check for view mismatch
-          if (isOwner) {
-            if (isAgencyViewPref != customerState.isAgencyView) {
-               WidgetsBinding.instance.addPostFrameCallback((_) {
-                  if (isAgencyViewPref) {
-                     context.read<CustomerBloc>().add(LoadAgencyCustomers(salesman.agencyId));
-                  } else {
-                     context.read<CustomerBloc>().add(LoadCustomers(salesman.id));
-                  }
-               });
-               return const Scaffold(body: Center(child: HydroFlowLoader(message: 'Switching View...', isOverlay: false)));
-            }
+          bool isSwitchingView = false;
+          if (isOwner && isAgencyViewPref != customerState.isAgencyView) {
+            isSwitchingView = true;
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              if (isAgencyViewPref) {
+                context.read<CustomerBloc>().add(LoadAgencyCustomers(salesman.agencyId));
+              } else {
+                context.read<CustomerBloc>().add(LoadCustomers(salesman.id));
+              }
+            });
           }
           
           return Scaffold(
               backgroundColor: Colors.grey[50], 
               appBar: const HydroFlowAppBar(),
-              body: BlocBuilder<CustomerBloc, CustomerState>(
+              body: isSwitchingView 
+                ? const HydroFlowLoader(message: 'Switching View...', isOverlay: false)
+                : BlocBuilder<CustomerBloc, CustomerState>(
                   builder: (context, state) {
                     if (state.status == CustomerStatus.loading) {
                       return const HydroFlowLoader(message: 'Loading Customers...', isOverlay: false);

@@ -109,33 +109,28 @@ class _StockPageState extends State<StockPage> {
               final isAgency = stockState.isAgencyView;
 
               // Synchronization Logic
-              if (isOwner) {
-                 if (isAgencyViewPref != stockState.isAgencyView) {
-                    // Mismatch detected. Trigger reload.
-                    // We must do this asynchronously to avoid build conflicts.
-                    WidgetsBinding.instance.addPostFrameCallback((_) {
-                       if (isAgencyViewPref) {
-                          context.read<StockBloc>().add(LoadAgencyStock(salesman.agencyId));
-                       } else {
-                          context.read<StockBloc>().add(LoadStockPage(salesman.id));
-                       }
-                    });
-                    
-                    // Show loader while switching
-                    return const Scaffold(
-                      body: Center(child: HydroFlowLoader(message: 'Switching View...', isOverlay: false)),
-                    );
-                 }
+              bool isSwitchingView = false;
+              if (isOwner && isAgencyViewPref != stockState.isAgencyView) {
+                isSwitchingView = true;
+                WidgetsBinding.instance.addPostFrameCallback((_) {
+                  if (isAgencyViewPref) {
+                    context.read<StockBloc>().add(LoadAgencyStock(salesman.agencyId));
+                  } else {
+                    context.read<StockBloc>().add(LoadStockPage(salesman.id));
+                  }
+                });
               }
 
               return Scaffold(
                 backgroundColor: Colors.grey[50],
                 appBar: const HydroFlowAppBar(),
-                body: BlocBuilder<StockBloc, StockState>(
-                  builder: (context, state) {
-                    if (state is StockInitial || state is StockLoading) {
-                       return const Center(child: HydroFlowLoader(message: 'Fetching Stock...', isOverlay: false));
-                    }
+                body: isSwitchingView 
+                    ? const Center(child: HydroFlowLoader(message: 'Switching View...', isOverlay: false))
+                    : BlocBuilder<StockBloc, StockState>(
+                        builder: (context, state) {
+                          if (state is StockInitial || state is StockLoading) {
+                             return const Center(child: HydroFlowLoader(message: 'Fetching Stock...', isOverlay: false));
+                          }
 
                     // Determine current stock to display
                     final currentStock = isAgency 

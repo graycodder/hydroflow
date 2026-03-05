@@ -62,3 +62,5 @@ class FilterDeliveryBySalesman extends DeliveryEvent {
   @override
   List<Object?> get props => [salesmanId];
 }
+
+class ResetDeliveryStatus extends DeliveryEvent {}

@@ -54,17 +54,16 @@ class _ReportsPageState extends State<ReportsPage> {
           final salesman = (authState is AuthAuthenticated) ? authState.salesman : null;
           final isAgencyViewPref = (prefs.getBool('dashboard_is_agency_view') ?? false) && (salesman?.role == 'owner');
           
-          if (salesman != null && salesman.role == 'owner') {
-             if (isAgencyViewPref != reportsState.isAgencyView) {
-                WidgetsBinding.instance.addPostFrameCallback((_) {
-                   if (isAgencyViewPref) {
-                      context.read<ReportsBloc>().add(LoadAgencyDailyReport(salesman.agencyId, selectedDate));
-                   } else {
-                      context.read<ReportsBloc>().add(LoadDailyReport(salesman.id, selectedDate));
-                   }
-                });
-                return const Scaffold(body: Center(child: HydroFlowLoader(message: 'Switching View...', isOverlay: false)));
-             }
+          bool isSwitchingView = false;
+          if (salesman != null && salesman.role == 'owner' && isAgencyViewPref != reportsState.isAgencyView) {
+            isSwitchingView = true;
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              if (isAgencyViewPref) {
+                context.read<ReportsBloc>().add(LoadAgencyDailyReport(salesman.agencyId, selectedDate));
+              } else {
+                context.read<ReportsBloc>().add(LoadDailyReport(salesman.id, selectedDate));
+              }
+            });
           }
           
           final isAgency = reportsState.isAgencyView;
@@ -72,21 +71,23 @@ class _ReportsPageState extends State<ReportsPage> {
           return Scaffold(
             backgroundColor: Colors.white,
             appBar: const HydroFlowAppBar(),
-            body: Column(
-              children: [
-                _buildTopTabs(context, id, isAgency),
-                Expanded(
-                  child: BlocBuilder<ReportsBloc, ReportsState>(
-                    builder: (context, state) {
-                      if (state is ReportsLoading) {
-                        return const HydroFlowLoader(isOverlay: false);
-                      } else if (state is ReportsFailure) {
-                        return Center(child: Text('Error: ${state.message}'));
-                      } else if (state is ReportsLoaded) {
-                        final now = DateTime.now();
-                        final isCurrentMonth = selectedMonth.year == now.year && selectedMonth.month == now.month;
-                        
-                        return SingleChildScrollView(
+            body: isSwitchingView 
+              ? const Center(child: HydroFlowLoader(message: 'Switching View...', isOverlay: false))
+              : Column(
+                  children: [
+                    _buildTopTabs(context, id, isAgency),
+                    Expanded(
+                      child: BlocBuilder<ReportsBloc, ReportsState>(
+                        builder: (context, state) {
+                          if (state is ReportsLoading) {
+                            return const HydroFlowLoader(isOverlay: false);
+                          } else if (state is ReportsFailure) {
+                            return Center(child: Text('Error: ${state.message}'));
+                          } else if (state is ReportsLoaded) {
+                            final now = DateTime.now();
+                            final isCurrentMonth = selectedMonth.year == now.year && selectedMonth.month == now.month;
+                            
+                            return SingleChildScrollView(
                           padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8),
                           child: isMonthly 
                             ? (isAgency 
