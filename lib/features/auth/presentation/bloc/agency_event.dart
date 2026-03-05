@@ -17,6 +17,8 @@ class LoadAgencySalesmen extends AgencyEvent {
   List<Object> get props => [agencyId];
 }
 
+class ResetAgency extends AgencyEvent {}
+
 class ResetDevice extends AgencyEvent {
   final String salesmanId;
   final String agencyId;

@@ -15,6 +15,12 @@ class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
     on<LoadDashboard>(_onLoadDashboard);
     on<DashboardUpdated>(_onDashboardUpdated);
     on<DashboardSummaryError>(_onDashboardError);
+    on<ResetDashboard>(_onResetDashboard);
+  }
+
+  void _onResetDashboard(ResetDashboard event, Emitter<DashboardState> emit) {
+    _dashboardSubscription?.cancel();
+    emit(DashboardInitial());
   }
 
   Future<void> _onLoadDashboard(LoadDashboard event, Emitter<DashboardState> emit) async {

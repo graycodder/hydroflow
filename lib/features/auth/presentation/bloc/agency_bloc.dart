@@ -16,6 +16,7 @@ class AgencyBloc extends Bloc<AgencyEvent, AgencyState> {
     on<ResetDevice>(_onResetDevice);
     on<AddSalesman>(_onAddSalesman);
     on<UpdateSalesman>(_onUpdateSalesman);
+    on<ResetAgency>((event, emit) => emit(AgencyInitial()));
   }
 
   Future<void> _onLoadAgencySalesmen(

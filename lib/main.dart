@@ -23,6 +23,7 @@ import 'package:hydroflow/core/utils/router_refresh_listenable.dart';
 import 'package:hydroflow/core/bloc/connectivity/connectivity_bloc.dart';
 import 'package:hydroflow/core/widgets/connectivity_wrapper.dart';
 import 'package:hydroflow/features/auth/presentation/bloc/agency_bloc.dart';
+import 'package:hydroflow/features/auth/presentation/bloc/agency_event.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 
@@ -161,6 +162,8 @@ class HydroFlowApp extends StatelessWidget {
           } else if (state is AuthSubscriptionExpired) {
             // router.go('/lock', extra: state.salesman); // Handled by Router or SplashPage
           } else if (state is AuthUnauthenticated) {
+             context.read<DashboardBloc>().add(ResetDashboard());
+             context.read<AgencyBloc>().add(ResetAgency());
              // router.go('/login'); // Handled by Router or SplashPage
           } else if (state is AuthUpdateRequired) {
              // router.go('/update'); // Handled by Router or SplashPage

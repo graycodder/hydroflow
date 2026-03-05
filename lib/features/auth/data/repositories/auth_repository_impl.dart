@@ -152,6 +152,11 @@ class AuthRepositoryImpl implements AuthRepository {
   @override
   Future<void> signOut() async {
     await _prefs.remove(_userKey);
+    await _prefs.remove('agencyId');
+    await _prefs.remove('role');
+    await _prefs.remove('dashboard_is_agency_view');
+    await _prefs.remove('PREF_SELECTED_ZONE_DELIVERY');
+    await _prefs.remove('PREF_SELECTED_SALESMAN_DELIVERY');
     _authStateController.add(null);
   }
 

@@ -18,6 +18,8 @@ class LoadDashboard extends DashboardEvent {
   List<Object?> get props => [salesmanId, agencyId];
 }
 
+class ResetDashboard extends DashboardEvent {}
+
 class DashboardUpdated extends DashboardEvent {
   final DashboardSummary summary;
 
