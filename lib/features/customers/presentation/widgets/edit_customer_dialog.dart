@@ -12,6 +12,7 @@ import 'package:hydroflow/features/transactions/domain/entities/transaction_enti
 import 'package:hydroflow/features/transactions/domain/repositories/transaction_repository.dart';
 import 'package:flutter/services.dart';
 import 'package:hydroflow/core/service_locator.dart' as di;
+import 'package:firebase_database/firebase_database.dart';
 
 class EditCustomerDialog extends StatefulWidget {
   final Customer customer;
@@ -38,11 +39,13 @@ class _EditCustomerDialogState extends State<EditCustomerDialog> {
   late TextEditingController _addressController;
   late TextEditingController _zoneController;
   late TextEditingController _depositController;
+  final _zoneFocusNode = FocusNode();
   late String? _paymentMode;
   String? _selectedSalesmanId;
   List<Salesman> _availableSalesmen = [];
   bool _isLoadingSalesmen = false;
   bool _isSubmitting = false;
+  List<String> _agencyZones = [];
 
   @override
   void initState() {
@@ -58,6 +61,32 @@ class _EditCustomerDialogState extends State<EditCustomerDialog> {
     
     if (widget.isAgencyView) {
       _fetchSalesmen();
+    }
+    _fetchAgencyZones();
+  }
+
+  Future<void> _fetchAgencyZones() async {
+    try {
+      final ref = FirebaseDatabase.instance.ref().child('Customers');
+      final snapshot = await ref.orderByChild('agencyId').equalTo(widget.currentUser.agencyId).get();
+      if (snapshot.exists) {
+        final data = snapshot.value as Map<dynamic, dynamic>;
+        final Set<String> zones = {};
+        for (final value in data.values) {
+          final customer = Map<String, dynamic>.from(value as Map);
+          final zone = customer['zone'] as String?;
+          if (zone != null && zone.trim().isNotEmpty) {
+            zones.add(zone.trim());
+          }
+        }
+        if (mounted) {
+          setState(() {
+            _agencyZones = zones.toList()..sort();
+          });
+        }
+      }
+    } catch (e) {
+      print('Error fetching agency zones: $e');
     }
   }
 
@@ -84,6 +113,7 @@ class _EditCustomerDialogState extends State<EditCustomerDialog> {
     _phoneController.dispose();
     _addressController.dispose();
     _zoneController.dispose();
+    _zoneFocusNode.dispose();
     _depositController.dispose();
     super.dispose();
   }
@@ -256,18 +286,73 @@ class _EditCustomerDialogState extends State<EditCustomerDialog> {
                 ),
                 const SizedBox(height: 16),
                 _buildLabel('Zone', isMandatory: true),
-                _buildTextFormField(
-                  _zoneController, 
-                  'Enter zone',
-                  inputFormatters: [
-                    FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z0-9 ]')),
-                  ],
-                  validator: (value) {
-                    if (value == null || value.trim().isEmpty) {
-                      return 'Please enter zone';
-                    }
-                    return null;
-                  },
+                LayoutBuilder(
+                  builder: (context, constraints) => RawAutocomplete<String>(
+                    textEditingController: _zoneController,
+                    focusNode: _zoneFocusNode,
+                    optionsBuilder: (TextEditingValue textEditingValue) {
+                      final Set<String> combinedZones = {..._agencyZones};
+                      for (var c in widget.customerBloc.state.customers) {
+                        if (c.zone.isNotEmpty) combinedZones.add(c.zone.trim());
+                      }
+                      final suggestions = combinedZones.toList()..sort();
+
+                      if (textEditingValue.text.isEmpty) {
+                        return suggestions;
+                      }
+                      return suggestions.where((String option) {
+                        return option.toLowerCase().contains(textEditingValue.text.toLowerCase());
+                      });
+                    },
+                    onSelected: (String selection) {
+                      _zoneController.text = selection;
+                    },
+                    fieldViewBuilder: (context, controller, focusNode, onFieldSubmitted) {
+                      return _buildTextFormField(
+                        controller,
+                        'Enter zone',
+                        focusNode: focusNode,
+                        inputFormatters: [
+                          FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z0-9 ]')),
+                        ],
+                        validator: (value) {
+                          if (value == null || value.trim().isEmpty) {
+                            return 'Please enter zone';
+                          }
+                          return null;
+                        },
+                      );
+                    },
+                    optionsViewBuilder: (context, onSelected, options) {
+                      return Align(
+                        alignment: Alignment.topLeft,
+                        child: Material(
+                          elevation: 4.0,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: ConstrainedBox(
+                            constraints: BoxConstraints(maxHeight: 200, maxWidth: constraints.maxWidth),
+                            child: ListView.builder(
+                              padding: const EdgeInsets.symmetric(vertical: 8),
+                              shrinkWrap: true,
+                              itemCount: options.length,
+                              itemBuilder: (context, index) {
+                                final option = options.elementAt(index);
+                                return InkWell(
+                                  onTap: () => onSelected(option),
+                                  child: Padding(
+                                    padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                                    child: Text(option),
+                                  ),
+                                );
+                              },
+                            ),
+                          ),
+                        ),
+                      );
+                    },
+                  ),
                 ),
                 const SizedBox(height: 16),
                 _buildLabel('Security Deposit (₹)', isMandatory: true),
@@ -471,9 +556,11 @@ class _EditCustomerDialogState extends State<EditCustomerDialog> {
     TextInputType keyboardType = TextInputType.text,
     List<TextInputFormatter>? inputFormatters,
     String? Function(String?)? validator,
+    FocusNode? focusNode,
   }) {
     return TextFormField(
       controller: controller,
+      focusNode: focusNode,
       keyboardType: keyboardType,
       inputFormatters: inputFormatters,
       validator: validator,
