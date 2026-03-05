@@ -391,7 +391,7 @@ class _StockPageState extends State<StockPage> {
                                     });
                                   },
                                   icon: const Icon(Icons.shopping_cart_outlined),
-                                  label: const Text('Agency Purchase'),
+                                  label: const Text('Purchase'),
                                   style: ElevatedButton.styleFrom(
                                     backgroundColor: const Color(0xFF0D1117),
                                     foregroundColor: Colors.white,
@@ -423,7 +423,7 @@ class _StockPageState extends State<StockPage> {
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     const Text(
-                                     'Agency Stock Purchase',
+                                     'Stock Purchase',
                                       style: TextStyle(
                                         fontSize: 18,
                                         fontWeight: FontWeight.bold,
@@ -554,7 +554,7 @@ class _StockPageState extends State<StockPage> {
                                     });
                                   },
                                   icon: const Icon(Icons.sync),
-                                  label: const Text('Agency Refill (Exchange)'),
+                                  label: const Text('Refill (Exchange)'),
                                   style: ElevatedButton.styleFrom(
                                     backgroundColor: const Color(0xFF2E7D32),
                                     foregroundColor: Colors.white,
@@ -586,7 +586,7 @@ class _StockPageState extends State<StockPage> {
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     const Text(
-                                     'Agency Stock Refill',
+                                     'Stock Refill',
                                       style: TextStyle(
                                         fontSize: 18,
                                         fontWeight: FontWeight.bold,
@@ -731,7 +731,7 @@ class _StockPageState extends State<StockPage> {
                                       const Icon(Icons.error_outline, color: Colors.orange),
                                       const SizedBox(width: 8),
                                       const Text(
-                                        'Agency Damaged',
+                                        'Damaged',
                                         style: TextStyle(
                                           fontSize: 18,
                                           fontWeight: FontWeight.bold,
@@ -859,7 +859,7 @@ class _StockPageState extends State<StockPage> {
                                              _confirmAndDamaged(context, salesman.agencyId, qty, isFromEmpty);
                                            },
                                            icon: const Icon(Icons.remove),
-                                           label: const Text('Remove from Agency Stock'),
+                                           label: const Text('Remove from Stock'),
                                           style: ElevatedButton.styleFrom(
                                             backgroundColor: const Color(0xFFEF5350).withOpacity(0.8),
                                             foregroundColor: Colors.white,
