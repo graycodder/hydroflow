@@ -1047,7 +1047,17 @@ class _DeliveryViewState extends State<DeliveryView> {
                         contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
                         suffixIcon: isPriceFixed ? const Icon(Icons.lock_outline, size: 16, color: Colors.grey) : null,
                       ),
-                      onChanged: (_) => _calculateTotal(),
+                      onChanged: (value) {
+                        if (value.length > 1 && value.startsWith('0')) {
+                          String newText = value.replaceFirst(RegExp(r'^0+'), '');
+                          if (newText.isEmpty) newText = '0';
+                          _pricePerBottleController.value = TextEditingValue(
+                            text: newText,
+                            selection: TextSelection.collapsed(offset: newText.length),
+                          );
+                        }
+                        _calculateTotal();
+                      },
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -1122,7 +1132,17 @@ class _DeliveryViewState extends State<DeliveryView> {
                 contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
                 helperText: 'Enter actual amount received from customer',
               ),
-              onChanged: (_) => setState(() {}),
+              onChanged: (value) {
+                if (value.length > 1 && value.startsWith('0')) {
+                  String newText = value.replaceFirst(RegExp(r'^0+'), '');
+                  if (newText.isEmpty) newText = '0';
+                  _amountReceivedController.value = TextEditingValue(
+                    text: newText,
+                    selection: TextSelection.collapsed(offset: newText.length),
+                  );
+                }
+                setState(() {});
+              },
               validator: (value) {
                 if (_paymentMode == 'Credit') return null;
                 if (value == null || value.isEmpty) return 'Amount received is required';
@@ -1149,7 +1169,6 @@ class _DeliveryViewState extends State<DeliveryView> {
                   onTap: () {
                     setState(() {
                       _paymentMode = 'Cash';
-                      _amountReceivedController.clear();
                     });
                   },
                 ),
@@ -1161,7 +1180,6 @@ class _DeliveryViewState extends State<DeliveryView> {
                   onTap: () {
                     setState(() {
                       _paymentMode = 'UPI';
-                      _amountReceivedController.clear();
                     });
                   },
                 ),
@@ -1173,7 +1191,6 @@ class _DeliveryViewState extends State<DeliveryView> {
                   onTap: () {
                     setState(() {
                       _paymentMode = 'Credit';
-                      _amountReceivedController.text = '0';
                     });
                   },
                 ),
@@ -1241,7 +1258,7 @@ class _DeliveryViewState extends State<DeliveryView> {
         onTap: onTap,
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 180),
-          padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 6),
+          padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 6),
           decoration: BoxDecoration(
             gradient: isSelected
                 ? LinearGradient(
@@ -1262,6 +1279,7 @@ class _DeliveryViewState extends State<DeliveryView> {
           ),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               Icon(
                 icon,
@@ -1344,7 +1362,17 @@ class _DeliveryViewState extends State<DeliveryView> {
                 border: InputBorder.none,
                 contentPadding: EdgeInsets.symmetric(vertical: 10),
               ),
-              onChanged: (_) => onChanged(),
+              onChanged: (value) {
+                if (value.length > 1 && value.startsWith('0')) {
+                  String newText = value.replaceFirst(RegExp(r'^0+'), '');
+                  if (newText.isEmpty) newText = '0';
+                  controller.value = TextEditingValue(
+                    text: newText,
+                    selection: TextSelection.collapsed(offset: newText.length),
+                  );
+                }
+                onChanged();
+              },
             ),
           ),
           // Plus
