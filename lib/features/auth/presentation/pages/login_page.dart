@@ -5,6 +5,8 @@ import 'package:go_router/go_router.dart';
 import 'package:hydroflow/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:hydroflow/features/auth/presentation/bloc/auth_event.dart';
 import 'package:hydroflow/features/auth/presentation/bloc/auth_state.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:hydroflow/core/service_locator.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -52,10 +54,16 @@ class _LoginPageState extends State<LoginPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: BlocListener<AuthBloc, AuthState>(
-        listener: (context, state) {
+        listener: (context, state) async {
           if (state is AuthAuthenticated) {
+            if (state.salesman.role == 'owner') {
+              final prefs = sl<SharedPreferences>();
+              await prefs.setBool('dashboard_is_agency_view', true);
+            }
             // Navigate to Home/Dashboard
-            context.go('/home'); // Assuming /home route will be defined
+            if (context.mounted) {
+              context.go('/home'); // Assuming /home route will be defined
+            }
           } else if (state is AuthFailure) {
             ScaffoldMessenger.of(
               context,
