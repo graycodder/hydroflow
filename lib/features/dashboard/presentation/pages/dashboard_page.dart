@@ -36,11 +36,17 @@ class _DashboardPageState extends State<DashboardPage> with RouteAware {
   bool _isAgencyView = false; // Default to personal view
   bool _isViewSwitching = false;
   String? _lastAgencyIdForSalesmen;
+  List<Salesman> _cachedSalesmenList = [];
   
   @override
   void initState() {
     super.initState();
     _loadPersistedView();
+    // Pre-fill cached list before any new load requests trigger loading states
+    final initialAgencyState = context.read<AgencyBloc>().state;
+    if (initialAgencyState is AgencySalesmenLoaded) {
+      _cachedSalesmenList = initialAgencyState.salesmen;
+    }
   }
 
   @override
@@ -151,7 +157,10 @@ class _DashboardPageState extends State<DashboardPage> with RouteAware {
                                   context.read<AgencyBloc>().add(LoadAgencySalesmen(currentAgencyId));
                                }
                                
-                               final salesmenList = agencyState is AgencySalesmenLoaded ? agencyState.salesmen : <Salesman>[];
+                               if (agencyState is AgencySalesmenLoaded) {
+                                  _cachedSalesmenList = agencyState.salesmen;
+                               }
+                               final salesmenList = _cachedSalesmenList;
                               
                               List<DropdownMenuItem<String>> items = [];
                               items.add(
