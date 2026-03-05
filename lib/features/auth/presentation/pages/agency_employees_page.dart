@@ -1158,7 +1158,14 @@ class _SalesmanCard extends StatelessWidget {
                     ((double.tryParse(amtCtrl.text) ?? 0) > totalOutstanding ||
                             (double.tryParse(amtCtrl.text) ?? 0) <= 0)
                         ? null
-                        : () {
+                        : () async {
+                            FocusScope.of(context).unfocus();
+                            FocusManager.instance.primaryFocus?.unfocus();
+                            
+                            // Give the keyboard a moment to start dismissing
+                            await Future.delayed(const Duration(milliseconds: 100));
+                            if (!context.mounted) return;
+
                             final amt =
                                 double.tryParse(amtCtrl.text);
                             if (amt != null && amt >= 0) {
@@ -1166,16 +1173,44 @@ class _SalesmanCard extends StatelessWidget {
                                   (amt >= totalOutstanding)
                                       ? isFinal
                                       : false;
-                              context.read<ReportsBloc>().add(
-                                    SettleSalesmanDailyCash(
-                                      salesmanId: subReport.salesmanId!,
-                                      date: DateTime.now(),
-                                      amount: amt,
-                                      recordedBy: agencyId,
-                                      isFinal: finalSettlement,
+
+                              final confirmed = await showDialog<bool>(
+                                context: context,
+                                builder: (ctx) => AlertDialog(
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                                  title: Text(finalSettlement ? 'Confirm Final Settlement' : 'Confirm Payment'),
+                                  content: Text('Are you sure you have collected ₹${amt.toStringAsFixed(0)} from ${subReport.salesmanName}?'),
+                                  actions: [
+                                    TextButton(
+                                      onPressed: () => Navigator.pop(ctx, false),
+                                      child: const Text('Cancel'),
                                     ),
-                                  );
-                              Navigator.pop(dialogCtx);
+                                    ElevatedButton(
+                                      onPressed: () {
+                                        Navigator.pop(ctx, true);
+                                      },
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: const Color(0xFF1565C0), 
+                                        foregroundColor: Colors.white,
+                                      ),
+                                      child: const Text('Yes, Proceed'),
+                                    ),
+                                  ],
+                                ),
+                              );
+
+                              if (confirmed == true && context.mounted) {
+                                context.read<ReportsBloc>().add(
+                                      SettleSalesmanDailyCash(
+                                        salesmanId: subReport.salesmanId!,
+                                        date: DateTime.now(),
+                                        amount: amt,
+                                        recordedBy: agencyId,
+                                        isFinal: finalSettlement,
+                                      ),
+                                    );
+                                Navigator.pop(dialogCtx);
+                              }
                             }
                           },
                 child: Text(
