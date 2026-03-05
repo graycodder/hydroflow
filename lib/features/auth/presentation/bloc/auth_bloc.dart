@@ -172,9 +172,11 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     AuthImpersonateRequested event,
     Emitter<AuthState> emit,
   ) async {
-    if (_currentSalesman?.role != 'owner') return; 
+    if (_originalOwner == null && _currentSalesman?.role != 'owner') return; 
     
-    _originalOwner = _currentSalesman;
+    if (_originalOwner == null) {
+      _originalOwner = _currentSalesman;
+    }
     _currentSalesman = event.targetSalesman;
     
     _impersonatedSalesmanSubscription?.cancel();

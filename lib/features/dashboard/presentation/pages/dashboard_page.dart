@@ -79,12 +79,7 @@ class _DashboardPageState extends State<DashboardPage> with RouteAware {
       setState(() {
         _isAgencyView = effectiveIsAgency;
       });
-      
-      if (authState is AuthAuthenticated) {
-         // Always force reload to ensure the view matches exactly what was persisted
-         // since build() might have already fired with the default `false`
-         _loadDashboardData(authState.salesman, authState.originalOwner);
-      }
+      // Removed forced reload to prevent loading screen and unnecessary data fetching on every tab switch
     }
   }
 
