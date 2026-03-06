@@ -298,10 +298,9 @@ class _DeliveryViewState extends State<DeliveryView> {
                       ),
                       selectedItem: (state.selectedZone == null || state.selectedZone!.isEmpty)
                           ? 'All'
-                          : state.selectedZone![0].toUpperCase() +
-                              state.selectedZone!.substring(1),
+                          : state.selectedZone,
                       onChanged: (String? value) {
-                        context.read<DeliveryBloc>().add(FilterDeliveryByZone(value == 'All' ? null : value![0].toLowerCase() + value!.substring(1)));
+                        context.read<DeliveryBloc>().add(FilterDeliveryByZone(value == 'All' ? null : value));
                       },
                     ),
                   ),

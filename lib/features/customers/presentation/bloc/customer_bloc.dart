@@ -204,7 +204,7 @@ class CustomerBloc extends Bloc<CustomerEvent, CustomerState> {
           customer.name.toLowerCase().contains(query.toLowerCase()) ||
           customer.phone.contains(query.toLowerCase());
       
-      final matchesZone = zone == null || customer.zone == zone;
+      final matchesZone = zone == null || customer.zone.toLowerCase() == zone.toLowerCase();
       final matchesSalesman = salesmanId == null || customer.salesmanId == salesmanId;
       
       return matchesSearch && matchesZone && matchesSalesman;

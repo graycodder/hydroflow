@@ -222,7 +222,7 @@ class DeliveryBloc extends Bloc<DeliveryEvent, DeliveryState> {
 
   Map<String, dynamic> _applyFilters(List<Customer> customers, List<TransactionEntity> transactions, String? zone, String? salesmanId) {
     final filteredCustomers = customers.where((c) {
-      final matchesZone = zone == null || c.zone == zone;
+      final matchesZone = zone == null || c.zone.toLowerCase() == zone.toLowerCase();
       final matchesSalesman = salesmanId == null || c.salesmanId == salesmanId;
       return matchesZone && matchesSalesman;
     }).toList();
@@ -237,7 +237,7 @@ class DeliveryBloc extends Bloc<DeliveryEvent, DeliveryState> {
           (c) => c?.id == tx.customerId,
           orElse: () => null,
         );
-        matchesZone = customer?.zone == zone;
+        matchesZone = customer?.zone.toLowerCase() == zone.toLowerCase();
       }
       
       return matchesSalesman && matchesZone;
