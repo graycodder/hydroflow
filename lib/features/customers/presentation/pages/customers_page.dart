@@ -405,7 +405,7 @@ class _CustomersPageState extends State<CustomersPage> {
                     borderRadius: BorderRadius.circular(12),
                   ),
                    child: Text(
-                    customer.status.toLowerCase(),
+                    customer.status[0].toUpperCase() + customer.status.substring(1),
                     style: TextStyle(
                       color: isActive ? Colors.white : Colors.black,
                       fontSize: 12,
@@ -421,7 +421,7 @@ class _CustomersPageState extends State<CustomersPage> {
                   const Icon(Icons.grid_view_rounded, size: 14, color: Colors.blueGrey),
                   const SizedBox(width: 4),
                   Text(
-                    customer.zone,
+                    customer.zone[0].toUpperCase() + customer.zone.substring(1),
                     style: TextStyle(
                       color: Colors.blueGrey[700],
                       fontSize: 12,
