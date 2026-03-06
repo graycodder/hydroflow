@@ -69,26 +69,61 @@ class HydroFlowLoader extends StatelessWidget {
     );
   }
 
+  static bool _isShowing = false;
+  static Route? _currentRoute;
+  
   /// Static helper to show the loader as a dialog
   static void show(BuildContext context, {String? message}) {
+    if (_isShowing) return;
+    _isShowing = true;
+    
     showDialog(
       context: context,
       barrierDismissible: false,
       barrierColor: Colors.transparent, // Handled by BackdropFilter
-      builder: (context) => HydroFlowLoader(message: message),
-    );
+      routeSettings: const RouteSettings(name: 'hydro_flow_loader'),
+      builder: (dialogContext) {
+        // Capture the route to allow reliable removal
+        _currentRoute = ModalRoute.of(dialogContext);
+        return HydroFlowLoader(message: message);
+      },
+    ).then((_) {
+      _isShowing = false;
+      _currentRoute = null;
+    });
   }
 
   /// Static helper to hide the loader
   static void hide(BuildContext context) {
     try {
-      // Only pop if the widget is still mounted and the current route is not the top one.
-      // This prevents "Looking up a deactivated widget's ancestor" errors.
-      if (context.mounted && ModalRoute.of(context)?.isCurrent == false) {
-        Navigator.of(context, rootNavigator: true).pop();
+      if (!context.mounted) return;
+      
+      // Attempt immediate removal if we have the route
+      if (_currentRoute != null && _currentRoute!.isActive) {
+        Navigator.of(context, rootNavigator: true).removeRoute(_currentRoute!);
+        _currentRoute = null;
+        _isShowing = false;
+      } else {
+        // Fallback for race conditions: try to pop by name in the next frame
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (!context.mounted) return;
+          
+          if (_currentRoute != null && _currentRoute!.isActive) {
+            Navigator.of(context, rootNavigator: true).removeRoute(_currentRoute!);
+            _currentRoute = null;
+            _isShowing = false;
+          } else {
+            // Last resort: pop top if it's the loader
+            Navigator.of(context, rootNavigator: true).popUntil((route) {
+              return route.settings.name != 'hydro_flow_loader';
+            });
+            _isShowing = false;
+          }
+        });
       }
     } catch (e) {
       debugPrint('HydroFlowLoader.hide error: $e');
+      _isShowing = false;
     }
   }
 }

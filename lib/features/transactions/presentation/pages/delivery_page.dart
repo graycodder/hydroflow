@@ -142,35 +142,41 @@ class _DeliveryViewState extends State<DeliveryView> {
             HydroFlowLoader.hide(context);
             _amountReceivedController.clear();
             FocusScope.of(context).unfocus();
-            if (state.todayTransactions.isNotEmpty) {
-              final tx = state.todayTransactions.first;
-              final customer = state.customers.cast<Customer>().firstWhere(
-                    (c) => c.id == tx.customerId,
-                    orElse: () => const Customer(
-                      id: '',
-                      salesmanId: '',
-                      agencyId: '',
-                      name: 'Unknown',
-                      phone: '',
-                      address: '',
-                      status: '',
-                      securityDeposit: 0,
-                      pendingBalance: 0,
-                      bottleBalance: 0,
-                    ),
-                  );
-              showDialog(
-                context: context,
-                builder: (_) => TransactionReceiptDialog(
-                  transaction: tx,
-                  customer: customer,
-                  salesmanName: (context.read<AuthBloc>().state as AuthAuthenticated).salesman.displayName,
-                  agencyName: (context.read<AuthBloc>().state as AuthAuthenticated).salesman.agencyName ?? 'HydroFlow Agency',
-                ),
-              );
-            }
-            _resetForm();
-            context.read<DeliveryBloc>().add(ResetDeliveryStatus());
+            
+            // Wait for loader to disappear before showing receipt dialog
+            Future.delayed(const Duration(milliseconds: 300), () {
+              if (!context.mounted) return;
+              
+              if (state.todayTransactions.isNotEmpty) {
+                final tx = state.todayTransactions.first;
+                final customer = state.customers.cast<Customer>().firstWhere(
+                      (c) => c.id == tx.customerId,
+                      orElse: () => const Customer(
+                        id: '',
+                        salesmanId: '',
+                        agencyId: '',
+                        name: 'Unknown',
+                        phone: '',
+                        address: '',
+                        status: '',
+                        securityDeposit: 0,
+                        pendingBalance: 0,
+                        bottleBalance: 0,
+                      ),
+                    );
+                showDialog(
+                  context: context,
+                  builder: (_) => TransactionReceiptDialog(
+                    transaction: tx,
+                    customer: customer,
+                    salesmanName: (context.read<AuthBloc>().state as AuthAuthenticated).salesman.displayName,
+                    agencyName: (context.read<AuthBloc>().state as AuthAuthenticated).salesman.agencyName ?? 'HydroFlow Agency',
+                  ),
+                );
+              }
+              _resetForm();
+              context.read<DeliveryBloc>().add(ResetDeliveryStatus());
+            });
           } else if (state.status == DeliveryStatus.failure) {
             HydroFlowLoader.hide(context);
             ScaffoldMessenger.of(context).showSnackBar(
