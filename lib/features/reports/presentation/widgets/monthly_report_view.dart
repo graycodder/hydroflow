@@ -101,7 +101,7 @@ class MonthlyReportView extends StatelessWidget {
           child: buildLargeSummaryCard(
             title: "Total Revenue",
             value: "₹${NumberFormat('#,##,###').format(report.totalRevenue)}",
-            subtitle: "${report.workingDays} working days",
+            subtitle: "${report.workingDays} working day${report.workingDays <= 1 ? '' : 's'}",
             color: const Color(0xFF9155FD), // Purple
           ),
         ),
@@ -489,7 +489,7 @@ class MonthlyReportView extends StatelessWidget {
           _buildMetricBox("Avg Daily Revenue", "₹${report.avgDailyRevenue.toStringAsFixed(0)}"),
           _buildMetricBox("Avg Deliveries/Day", "${report.avgDailyDeliveries.toStringAsFixed(1)}"),
           _buildMetricBox("Avg Price/Can", "₹${report.avgPricePerCan.toStringAsFixed(0)}"),
-          _buildMetricBox("Working Days", "${report.workingDays}"),
+          _buildMetricBox(report.workingDays <= 1 ? "Working Day" : "Working Days", "${report.workingDays}"),
         ],
       ),
     );
@@ -521,47 +521,6 @@ class MonthlyReportView extends StatelessWidget {
           ),
         ],
       ),
-    );
-  }
-
-  Widget _buildMonthlyActionButtons() {
-    return Column(
-      children: [
-        // SizedBox(
-        //   width: double.infinity,
-        //   height: 50,
-        //   child: ElevatedButton.icon(
-        //     onPressed: onExportPressed,
-        //     icon: const Icon(Icons.download, color: Colors.white),
-        //     label: const Text(
-        //       "Export Monthly Report",
-        //       style: TextStyle(color: Colors.white, fontSize: 16),
-        //     ),
-        //     style: ElevatedButton.styleFrom(
-        //       backgroundColor: const Color(0xFF11142A),
-        //       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        //     ),
-        //   ),
-        // ),
-      //  const SizedBox(height: 12),
-        // SizedBox(
-        //   width: double.infinity,
-        //   height: 50,
-        //   child: OutlinedButton.icon(
-        //     onPressed: onSharePressed,
-        //     icon: const Icon(Icons.people_outline, color: Colors.black),
-        //     label: const Text(
-        //       "Share with Admin",
-        //       style: TextStyle(color: Colors.black, fontSize: 16),
-        //     ),
-        //     style: OutlinedButton.styleFrom(
-        //       backgroundColor: Colors.white,
-        //       side: BorderSide(color: Colors.grey[300]!),
-        //       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        //     ),
-        //   ),
-        // ),
-      ],
     );
   }
 }

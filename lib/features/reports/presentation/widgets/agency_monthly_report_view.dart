@@ -194,7 +194,7 @@ class AgencyMonthlyReportView extends StatelessWidget {
           child: buildLargeSummaryCard(
             title: "Total Sales",
             value: "₹${NumberFormat('#,##,###').format(report.totalRevenue)}",
-            subtitle: "${report.workingDays} working days",
+            subtitle: "${report.workingDays} working day${report.workingDays <= 1 ? '' : 's'}",
             color: const Color(0xFF9155FD), // Purple
           ),
         ),
@@ -590,7 +590,7 @@ class AgencyMonthlyReportView extends StatelessWidget {
           _buildMetricBox("Avg Daily Revenue", "₹${report.avgDailyRevenue.toStringAsFixed(0)}"),
           _buildMetricBox("Avg Deliveries/Day", "${report.avgDailyDeliveries.toStringAsFixed(1)}"),
           _buildMetricBox("Avg Price/Can", "₹${report.avgPricePerCan.toStringAsFixed(0)}"),
-          _buildMetricBox("Working Days", "${report.workingDays}"),
+          _buildMetricBox(report.workingDays <= 1 ? "Working Day" : "Working Days", "${report.workingDays}"),
         ],
       ),
     );
