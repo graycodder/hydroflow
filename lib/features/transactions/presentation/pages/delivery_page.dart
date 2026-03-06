@@ -274,7 +274,8 @@ class _DeliveryViewState extends State<DeliveryView> {
                             ? state.customers
                             : state.customers.where((c) => c.salesmanId == state.selectedSalesmanId);
                         final zones = relevantCustomers.map((c) => c.zone).where((z) => z.isNotEmpty).toSet().toList()..sort();
-                        return ['All', ...zones];
+                        final capitalizedZones = zones.map((z) => z[0].toUpperCase() + z.substring(1)).toList();
+                        return ['All', ...capitalizedZones];
                       },
                       decoratorProps: DropDownDecoratorProps(
                         decoration: InputDecoration(
@@ -298,7 +299,7 @@ class _DeliveryViewState extends State<DeliveryView> {
                       ),
                       selectedItem: (state.selectedZone == null || state.selectedZone!.isEmpty)
                           ? 'All'
-                          : state.selectedZone,
+                          : state.selectedZone![0].toUpperCase() + state.selectedZone!.substring(1),
                       onChanged: (String? value) {
                         context.read<DeliveryBloc>().add(FilterDeliveryByZone(value == 'All' ? null : value));
                       },

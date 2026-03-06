@@ -197,7 +197,8 @@ class _CustomersPageState extends State<CustomersPage> {
                                   .toSet()
                                   .toList()
                                 ..sort();
-                              return ['All', ...zones];
+                              final capitalizedZones = zones.map((z) => z[0].toUpperCase() + z.substring(1)).toList();
+                              return ['All', ...capitalizedZones];
                             },
                             decoratorProps: DropDownDecoratorProps(
                               decoration: InputDecoration(
