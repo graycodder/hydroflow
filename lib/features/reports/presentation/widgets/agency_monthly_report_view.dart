@@ -107,7 +107,9 @@ class AgencyMonthlyReportView extends StatelessWidget {
                     const SizedBox(height: 8),
                     _buildBreakdownRow("Stock Turnover", "${subReport.stockTurnover.toStringAsFixed(0)}%", Colors.teal),
                     const SizedBox(height: 8),
-                     _buildBreakdownRow("Avg Price", "₹${subReport.avgPricePerCan.toStringAsFixed(0)}", Colors.blue),
+                    _buildBreakdownRow("Avg Price", "₹${subReport.avgPricePerCan.toStringAsFixed(0)}", Colors.blue),
+                    const SizedBox(height: 8),
+                    _buildBreakdownRow("Damaged", "${subReport.damagedStock} cans", Colors.red),
                   ],
                 ),
               );
@@ -541,7 +543,7 @@ class AgencyMonthlyReportView extends StatelessWidget {
             "${report.deliveredStock} cans",
             valueColor: const Color(0xFF1976D2),
           ),
-          buildRow("Total Damaged", "${report.damagedStock} cans", valueColor: Colors.red),
+          buildRow("Total Damaged/Return", "${report.damagedStock} cans", valueColor: Colors.red),
           const SizedBox(height: 16),
           Container(
             padding: const EdgeInsets.all(16),

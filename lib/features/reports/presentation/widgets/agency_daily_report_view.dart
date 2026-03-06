@@ -163,6 +163,12 @@ class AgencyDailyReportView extends StatelessWidget {
                       "${subReport.closingStock} cans",
                       Colors.orange,
                     ),
+                    const SizedBox(height: 8),
+                    _buildBreakdownRow(
+                      "Damaged",
+                      "${subReport.damagedStock} cans",
+                      Colors.red,
+                    ),
                   ],
                 ),
               );
@@ -312,7 +318,7 @@ class AgencyDailyReportView extends StatelessWidget {
             valueColor: Colors.red,
           ),
           buildRow(
-            " - Total Damaged",
+            " - Total Damaged/Return",
             "-${report.damagedStock} cans",
             valueColor: Colors.red,
           ),

@@ -863,13 +863,14 @@ class ReportRepositoryImpl implements ReportRepository {
 
       totalRevenue += r.totalRevenue;
 
+      damagedStock += r.damagedStock;
+
       // Consolidated counts:
       if (isWarehouse) {
         openingStock = r.openingStock;
         stockLoaded = r.stockLoaded;
         deliveredStock = r.deliveredStock;
         closingStock = r.closingStock;
-        damagedStock = r.damagedStock;
         stockMismatch = r.stockMismatch;
       }
       if (isWarehouse) {
