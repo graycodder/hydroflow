@@ -34,12 +34,12 @@ class WhatsappHelper {
 Water Delivery Service
 -------------------------------------------
 *Date:* $dateStr
-*Salesman:* $salesmanName
+*Salesman:* ${salesmanName[0].toUpperCase() + salesmanName.substring(1)}
 
 *Customer Details:*
-$customerName
+${customerName[0].toUpperCase() + customerName.substring(1)}
 $phone
-$address
+${address[0].toUpperCase() + address.substring(1)}
 
 -------------------------------------------
 *Delivered Cans:* $delivered

@@ -60,13 +60,13 @@ class ReceiptPdfGenerator {
               pw.SizedBox(height: 10),
               
               pw.Text("Date: ${dateFormat.format(date)}", style: const pw.TextStyle(fontSize: 10)),
-              pw.Text("Salesman: $salesmanName", style: const pw.TextStyle(fontSize: 10)),
+              pw.Text("Salesman: $salesmanName[0].toUpperCase() + salesmanName.substring(1)}", style: const pw.TextStyle(fontSize: 10)),
               pw.SizedBox(height: 5),
               
               pw.Text("Customer Details:", style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 10)),
-              pw.Text(customerName, style: const pw.TextStyle(fontSize: 10)),
+              pw.Text(customerName[0].toUpperCase() + customerName.substring(1), style: const pw.TextStyle(fontSize: 10)),
               pw.Text(phone, style: const pw.TextStyle(fontSize: 10)),
-              pw.Text(address, style: const pw.TextStyle(fontSize: 10)),
+              pw.Text(address[0].toUpperCase() + address.substring(1), style: const pw.TextStyle(fontSize: 10)),
               
               pw.Divider(borderStyle: pw.BorderStyle.dashed),
               pw.SizedBox(height: 5),
