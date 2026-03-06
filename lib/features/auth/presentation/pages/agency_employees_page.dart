@@ -203,10 +203,12 @@ class AgencyEmployeesPage extends StatelessWidget {
   void _showStockDialog(BuildContext context, Salesman salesman) {
     final refillCtrl = TextEditingController();
     final collectCtrl = TextEditingController();
+    final damageCtrl = TextEditingController(); // Added damage controller
     final agencyBloc = context.read<AgencyBloc>();
     final stockBloc = context.read<StockBloc>();
     String? refillError;
     String? collectError;
+    String? damageError; // Added damage error state
 
     showDialog(
       context: context,
@@ -216,7 +218,7 @@ class AgencyEmployeesPage extends StatelessWidget {
           BlocProvider.value(value: stockBloc),
         ],
         child: DefaultTabController(
-          length: 2,
+          length: 3,
           child: BlocConsumer<StockBloc, StockState>(
             listener: (ctx, state) {
               if (state is StockActionLoading) {
@@ -279,6 +281,7 @@ class AgencyEmployeesPage extends StatelessWidget {
                       tabs: [
                         Tab(text: 'Refill Full'),
                         Tab(text: 'Collect Empty'),
+                        Tab(text: 'Report Damage'),
                       ],
                     ),
                   ],
@@ -321,6 +324,24 @@ class AgencyEmployeesPage extends StatelessWidget {
                         onChanged: (_) {
                           if (collectError != null) {
                             setState(() => collectError = null);
+                          }
+                        },
+                      ),
+                      _StockTabContent(
+                        icon: Icons.error_outline,
+                        iconColor: _kRed,
+                        bgColor: _kRed.withOpacity(0.08),
+                        infoText:
+                            'On Vehicle: ${salesman.currentStock} full bottles',
+                        label: 'Quantity of bottles reported as damaged:',
+                        fieldLabel: 'Damaged Bottles',
+                        fieldIcon: Icons.report_problem_outlined,
+                        fieldColor: _kRed,
+                        controller: damageCtrl,
+                        errorText: damageError,
+                        onChanged: (_) {
+                          if (damageError != null) {
+                            setState(() => damageError = null);
                           }
                         },
                       ),
@@ -382,7 +403,7 @@ class AgencyEmployeesPage extends StatelessWidget {
                                         agencyId: salesman.agencyId,
                                       ));
                                 }
-                              } else {
+                              } else if (tabIdx == 1) {
                                 final qty =
                                     int.tryParse(collectCtrl.text) ?? 0;
                                 if (qty <= 0) return;
@@ -406,6 +427,32 @@ class AgencyEmployeesPage extends StatelessWidget {
                                       EmptyBottlesCollected(
                                         salesmanId: salesman.id,
                                         agencyId: salesman.agencyId,
+                                        quantity: qty,
+                                      ));
+                                }
+                              } else if (tabIdx == 2) {
+                                final qty =
+                                    int.tryParse(damageCtrl.text) ?? 0;
+                                if (qty <= 0) return;
+                                if (qty > salesman.currentStock) {
+                                  setState(() {
+                                    damageError = 'Not enough stock on vehicle';
+                                  });
+                                  return;
+                                }
+                                setState(() {
+                                  damageError = null;
+                                });
+                                final ok = await _confirm(
+                                    context,
+                                    'Confirm Damage Report',
+                                    'Mark $qty bottles as damaged for ${salesman.name}? This will remove them from the vehicle stock.');
+                                if (ok == true && context.mounted) {
+                                  FocusScope.of(context).unfocus();
+                                  FocusManager.instance.primaryFocus?.unfocus();
+                                  context.read<StockBloc>().add(
+                                      StockDamagedReported(
+                                        salesmanId: salesman.id,
                                         quantity: qty,
                                       ));
                                 }

@@ -873,7 +873,127 @@ class _StockPageState extends State<StockPage> {
                             ),
                           ],
 
+                          if (!isAgency && state.hasAnyLogs) ...[
+                             // Salesman Record Damage Section
+                             Container(
+                               padding: const EdgeInsets.all(20),
+                               decoration: BoxDecoration(
+                                 color: Colors.white,
+                                 borderRadius: BorderRadius.circular(16),
+                                 border: Border.all(color: Colors.grey.withOpacity(0.2)),
+                               ),
+                               child: Column(
+                                 crossAxisAlignment: CrossAxisAlignment.start,
+                                 children: [
+                                   Row(
+                                     children: [
+                                       const Icon(Icons.error_outline, color: Color(0xFFD32F2F)),
+                                       const SizedBox(width: 8),
+                                       const Text(
+                                         'Record Damage',
+                                         style: TextStyle(
+                                           fontSize: 18,
+                                           fontWeight: FontWeight.bold,
+                                         ),
+                                       ),
+                                     ],
+                                   ),
+                                   const SizedBox(height: 4),
+                                   Text(
+                                     'Log damaged bottles in your current vehicle stock.',
+                                     style: TextStyle(
+                                       fontSize: 14,
+                                       color: Colors.grey[600],
+                                     ),
+                                   ),
+                                   const SizedBox(height: 20),
+                                   const Text(
+                                     'Number of Bottles',
+                                     style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+                                   ),
+                                   const SizedBox(height: 8),
+                                   TextFormField(
+                                     autofocus: false,
+                                     controller: _damagedStockController,
+                                     keyboardType: TextInputType.number,
+                                     inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                                     decoration: InputDecoration(
+                                       hintText: 'Enter quantity',
+                                       filled: true,
+                                       fillColor: Colors.grey[100],
+                                       border: OutlineInputBorder(
+                                         borderRadius: BorderRadius.circular(8),
+                                         borderSide: BorderSide.none,
+                                       ),
+                                     ),
+                                   ),
+                                   const SizedBox(height: 20),
+                                   SizedBox(
+                                     width: double.infinity,
+                                     child: ElevatedButton(
+                                       onPressed: () {
+                                         final qtyText = _damagedStockController.text;
+                                         final qty = int.tryParse(qtyText) ?? 0;
+                                         if (qty <= 0) return;
+                                         
+                                         if (qty > salesman.currentStock) {
+                                           ScaffoldMessenger.of(context).showSnackBar(
+                                             const SnackBar(
+                                               content: Text('Not enough stock on vehicle!'),
+                                               backgroundColor: Colors.orange,
+                                             ),
+                                           );
+                                           return;
+                                         }
+                                         
+                                         showDialog(
+                                           context: context,
+                                           builder: (dialogCtx) => AlertDialog(
+                                             title: const Text('Confirm Damage'),
+                                             content: Text('Are you sure you want to mark $qty bottles as damaged? This will remove them from your current stock.'),
+                                             actions: [
+                                               TextButton(
+                                                 onPressed: () => Navigator.pop(dialogCtx),
+                                                 child: const Text('Cancel'),
+                                               ),
+                                               ElevatedButton(
+                                                 onPressed: () {
+                                                   FocusManager.instance.primaryFocus?.unfocus();
+                                                   Navigator.pop(dialogCtx);
+                                                   context.read<StockBloc>().add(StockDamagedReported(
+                                                     salesmanId: salesman.id,
+                                                     quantity: qty,
+                                                   ));
+                                                 },
+                                                 style: ElevatedButton.styleFrom(
+                                                   backgroundColor: const Color(0xFFD32F2F),
+                                                   foregroundColor: Colors.white,
+                                                 ),
+                                                 child: const Text('Confirm'),
+                                               ),
+                                             ],
+                                           ),
+                                         );
+                                       },
+                                       style: ElevatedButton.styleFrom(
+                                         backgroundColor: const Color(0xFFD32F2F),
+                                         padding: const EdgeInsets.symmetric(vertical: 16),
+                                         shape: RoundedRectangleBorder(
+                                           borderRadius: BorderRadius.circular(8),
+                                         ),
+                                         elevation: 0,
+                                       ),
+                                       child: const Text(
+                                         'Mark as Damaged', 
+                                         style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)
+                                       ),
+                                     ),
+                                   ),
+                                 ],
+                               ),
+                             ),
                           ],
+                        ],
                       ),
                     );
                   },
