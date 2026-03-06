@@ -24,8 +24,8 @@ class DeliveryBloc extends Bloc<DeliveryEvent, DeliveryState> {
   final InventoryRepository _inventoryRepository;
   final SharedPreferences _prefs;
 
-  static const String _zoneKey = 'PREF_SELECTED_ZONE_DELIVERY';
-  static const String _salesmanKey = 'PREF_SELECTED_SALESMAN_DELIVERY';
+  static const String prefZoneKey = 'PREF_SELECTED_ZONE_DELIVERY';
+  static const String prefSalesmanKey = 'PREF_SELECTED_SALESMAN_DELIVERY';
   
   DeliveryBloc({
     required AddTransactionUseCase addTransactionUseCase,
@@ -50,15 +50,36 @@ class DeliveryBloc extends Bloc<DeliveryEvent, DeliveryState> {
     on<FilterDeliveryByZone>(_onFilterDeliveryByZone);
     on<FilterDeliveryBySalesman>(_onFilterBySalesman);
     on<ResetDeliveryStatus>((event, emit) => emit(state.copyWith(status: DeliveryStatus.success)));
+    on<ClearDeliveryFilters>(_onClearFilters);
+  }
+
+  void _onClearFilters(
+    ClearDeliveryFilters event,
+    Emitter<DeliveryState> emit,
+  ) {
+    // Immediate refresh with no filters
+    final filtered = _applyFilters(state.customers, state.allTodayTransactions, null, null);
+    emit(state.copyWith(
+      clearSelectedZone: true,
+      clearSelectedSalesman: true,
+      clearSelectedCustomer: true,
+      filteredCustomers: filtered['customers'] as List<Customer>,
+      todayTransactions: filtered['transactions'] as List<TransactionEntity>,
+    ));
   }
 
   Future<void> _onLoadDeliveryPage(
     LoadDeliveryPage event,
     Emitter<DeliveryState> emit,
   ) async {
-    final savedZone = _prefs.getString(_zoneKey);
-    final savedSalesman = _prefs.getString(_salesmanKey);
-    
+    if (event.resetFilters) {
+      await _prefs.remove(prefZoneKey);
+      await _prefs.remove(prefSalesmanKey);
+    }
+
+    final savedZone = event.resetFilters ? null : _prefs.getString(prefZoneKey);
+    final savedSalesman = event.resetFilters ? null : _prefs.getString(prefSalesmanKey);
+
     emit(state.copyWith(
       status: DeliveryStatus.loading,
       clearSelectedCustomer: true,
@@ -118,11 +139,17 @@ class DeliveryBloc extends Bloc<DeliveryEvent, DeliveryState> {
     LoadAgencyDeliveries event,
     Emitter<DeliveryState> emit,
   ) async {
-    final savedZone = _prefs.getString(_zoneKey);
-    final savedSalesman = _prefs.getString(_salesmanKey);
-    
+    if (event.resetFilters) {
+      await _prefs.remove(prefZoneKey);
+      await _prefs.remove(prefSalesmanKey);
+    }
+
+    final savedZone = event.resetFilters ? null : _prefs.getString(prefZoneKey);
+    final savedSalesman = event.resetFilters ? null : _prefs.getString(prefSalesmanKey);
+
     emit(state.copyWith(
       status: DeliveryStatus.loading,
+      clearSelectedCustomer: true,
       selectedZone: savedZone,
       clearSelectedZone: savedZone == null,
       selectedSalesmanId: savedSalesman,
@@ -182,9 +209,9 @@ class DeliveryBloc extends Bloc<DeliveryEvent, DeliveryState> {
     
     // Persist selection
     if (newZone == null) {
-      _prefs.remove(_zoneKey);
+      _prefs.remove(prefZoneKey);
     } else {
-      _prefs.setString(_zoneKey, newZone);
+      _prefs.setString(prefZoneKey, newZone);
     }
 
     final filtered = _applyFilters(state.customers, state.allTodayTransactions, newZone, state.selectedSalesmanId);
@@ -205,9 +232,9 @@ class DeliveryBloc extends Bloc<DeliveryEvent, DeliveryState> {
     
     // Persist selection
     if (newSalesmanId == null) {
-      _prefs.remove(_salesmanKey);
+      _prefs.remove(prefSalesmanKey);
     } else {
-      _prefs.setString(_salesmanKey, newSalesmanId);
+      _prefs.setString(prefSalesmanKey, newSalesmanId);
     }
     
     final filtered = _applyFilters(state.customers, state.allTodayTransactions, state.selectedZone, newSalesmanId);
@@ -288,21 +315,8 @@ class DeliveryBloc extends Bloc<DeliveryEvent, DeliveryState> {
     int currentStock, {
     Customer? updatedSelectedCustomer,
   }) {
-    // Validate filters: Clear them if they no longer match any data
     String? validatedZone = state.selectedZone;
-    if (validatedZone != null && validatedZone != 'All') {
-      final zoneExists = customers.any((c) => c.zone == validatedZone);
-      if (!zoneExists) validatedZone = null;
-    }
-
     String? validatedSalesmanId = state.selectedSalesmanId;
-    if (validatedSalesmanId != null && state.isAgencyView) {
-      // In agency view, we can't easily check all salesmen here without passing them,
-      // but we can check if any customers belong to this salesman. 
-      // If no customers belong to this salesman, it might be a stale filter.
-      final salesmanHasData = customers.any((c) => c.salesmanId == validatedSalesmanId);
-      if (!salesmanHasData) validatedSalesmanId = null;
-    }
 
     final filtered = _applyFilters(
       customers,

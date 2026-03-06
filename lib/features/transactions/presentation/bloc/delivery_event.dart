@@ -11,11 +11,12 @@ abstract class DeliveryEvent extends Equatable {
 
 class LoadDeliveryPage extends DeliveryEvent {
   final String salesmanId;
+  final bool resetFilters;
 
-  const LoadDeliveryPage(this.salesmanId);
+  const LoadDeliveryPage(this.salesmanId, {this.resetFilters = false});
 
   @override
-  List<Object?> get props => [salesmanId];
+  List<Object?> get props => [salesmanId, resetFilters];
 }
 
 class SelectCustomer extends DeliveryEvent {
@@ -47,11 +48,12 @@ class FilterDeliveryByZone extends DeliveryEvent {
 
 class LoadAgencyDeliveries extends DeliveryEvent {
   final String agencyId;
+  final bool resetFilters;
 
-  const LoadAgencyDeliveries(this.agencyId);
+  const LoadAgencyDeliveries(this.agencyId, {this.resetFilters = false});
 
   @override
-  List<Object?> get props => [agencyId];
+  List<Object?> get props => [agencyId, resetFilters];
 }
 
 class FilterDeliveryBySalesman extends DeliveryEvent {
@@ -64,3 +66,5 @@ class FilterDeliveryBySalesman extends DeliveryEvent {
 }
 
 class ResetDeliveryStatus extends DeliveryEvent {}
+
+class ClearDeliveryFilters extends DeliveryEvent {}

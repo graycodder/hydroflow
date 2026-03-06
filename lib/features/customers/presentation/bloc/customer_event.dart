@@ -10,21 +10,25 @@ abstract class CustomerEvent extends Equatable {
 
 class LoadCustomers extends CustomerEvent {
   final String salesmanId;
+  final bool resetFilters;
 
-  const LoadCustomers(this.salesmanId);
+  const LoadCustomers(this.salesmanId, {this.resetFilters = false});
 
   @override
-  List<Object> get props => [salesmanId];
+  List<Object> get props => [salesmanId, resetFilters];
 }
 
 class LoadAgencyCustomers extends CustomerEvent {
   final String agencyId;
+  final bool resetFilters;
 
-  const LoadAgencyCustomers(this.agencyId);
+  const LoadAgencyCustomers(this.agencyId, {this.resetFilters = false});
 
   @override
-  List<Object> get props => [agencyId];
+  List<Object> get props => [agencyId, resetFilters];
 }
+
+class ClearCustomerFilters extends CustomerEvent {}
 
 class SearchCustomers extends CustomerEvent {
   final String query;

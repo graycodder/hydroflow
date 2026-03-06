@@ -17,7 +17,8 @@ class CustomerBloc extends Bloc<CustomerEvent, CustomerState> {
   final SettleCustomerUseCase settleCustomer;
   final SharedPreferences _prefs;
 
-  static const String _zoneKey = 'PREF_SELECTED_ZONE_CUSTOMERS';
+  static const String prefZoneKey = 'PREF_SELECTED_ZONE_CUSTOMERS';
+  static const String prefSalesmanKey = 'PREF_SELECTED_SALESMAN_CUSTOMERS';
 
   CustomerBloc({
     required this.getCustomers,
@@ -38,17 +39,37 @@ class CustomerBloc extends Bloc<CustomerEvent, CustomerState> {
     on<SettleCustomer>(_onSettleCustomer);
     on<FilterByZone>(_onFilterByZone);
     on<FilterBySalesman>(_onFilterBySalesman);
+    on<ClearCustomerFilters>(_onClearFilters);
+  }
+
+  void _onClearFilters(
+    ClearCustomerFilters event,
+    Emitter<CustomerState> emit,
+  ) {
+    final unfiltered = _applyFilters(state.customers, state.searchQuery, null, null);
+    emit(state.copyWith(
+      clearSelectedZone: true,
+      clearSelectedSalesman: true,
+      filteredCustomers: unfiltered,
+    ));
   }
 
   Future<void> _onLoadCustomers(
     LoadCustomers event,
     Emitter<CustomerState> emit,
   ) async {
-    final savedZone = _prefs.getString(_zoneKey);
+    if (event.resetFilters) {
+      await _prefs.remove(prefZoneKey);
+      await _prefs.remove(prefSalesmanKey);
+    }
+
+    final savedZone = event.resetFilters ? null : _prefs.getString(prefZoneKey);
+    // In salesman view, we never filter by another salesman
     emit(state.copyWith(
       status: CustomerStatus.loading,
       selectedZone: savedZone,
       clearSelectedZone: savedZone == null,
+      clearSelectedSalesman: true, // Always clear in salesman view
       isAgencyView: false,
     ));
     
@@ -81,11 +102,20 @@ class CustomerBloc extends Bloc<CustomerEvent, CustomerState> {
     LoadAgencyCustomers event,
     Emitter<CustomerState> emit,
   ) async {
-    final savedZone = _prefs.getString(_zoneKey);
+    if (event.resetFilters) {
+      await _prefs.remove(prefZoneKey);
+      await _prefs.remove(prefSalesmanKey);
+    }
+
+    final savedZone = event.resetFilters ? null : _prefs.getString(prefZoneKey);
+    final savedSalesman = event.resetFilters ? null : _prefs.getString(prefSalesmanKey);
+    
     emit(state.copyWith(
       status: CustomerStatus.loading,
       selectedZone: savedZone,
       clearSelectedZone: savedZone == null,
+      selectedSalesmanId: savedSalesman,
+      clearSelectedSalesman: savedSalesman == null,
       isAgencyView: true,
     ));
     
@@ -169,9 +199,9 @@ class CustomerBloc extends Bloc<CustomerEvent, CustomerState> {
     
     // Persist selection
     if (newZone == null) {
-      _prefs.remove(_zoneKey);
+      _prefs.remove(prefZoneKey);
     } else {
-      _prefs.setString(_zoneKey, newZone);
+      _prefs.setString(prefZoneKey, newZone);
     }
 
     final filtered = _applyFilters(state.customers, state.searchQuery, newZone, state.selectedSalesmanId);
@@ -189,6 +219,13 @@ class CustomerBloc extends Bloc<CustomerEvent, CustomerState> {
   ) {
     final newId = state.selectedSalesmanId == event.salesmanId ? null : event.salesmanId;
     
+    // Persist selection
+    if (newId == null) {
+      _prefs.remove(prefSalesmanKey);
+    } else {
+      _prefs.setString(prefSalesmanKey, newId);
+    }
+
     final filtered = _applyFilters(state.customers, state.searchQuery, state.selectedZone, newId);
     emit(state.copyWith(
       selectedSalesmanId: newId,

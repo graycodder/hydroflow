@@ -84,9 +84,9 @@ class _DeliveryViewState extends State<DeliveryView> {
       final isAgencyView = prefs.getBool('dashboard_is_agency_view') ?? false;
 
       if (salesman.role == 'owner' && isAgencyView) {
-        context.read<DeliveryBloc>().add(LoadAgencyDeliveries(salesman.agencyId));
+        context.read<DeliveryBloc>().add(LoadAgencyDeliveries(salesman.agencyId, resetFilters: false));
       } else {
-        context.read<DeliveryBloc>().add(LoadDeliveryPage(salesman.id));
+        context.read<DeliveryBloc>().add(LoadDeliveryPage(salesman.id, resetFilters: false));
       }
 
       // Always load agency details to get pricing settings
@@ -194,13 +194,13 @@ class _DeliveryViewState extends State<DeliveryView> {
           final isOwner = salesman?.role == 'owner';
 
           bool isSwitchingView = false;
-          if (isOwner && isAgencyViewPref != state.isAgencyView) {
+          if (isOwner && state.status != DeliveryStatus.initial && isAgencyViewPref != state.isAgencyView) {
             isSwitchingView = true;
             WidgetsBinding.instance.addPostFrameCallback((_) {
               if (isAgencyViewPref) {
-                context.read<DeliveryBloc>().add(LoadAgencyDeliveries(salesman!.agencyId));
+                context.read<DeliveryBloc>().add(LoadAgencyDeliveries(salesman!.agencyId, resetFilters: true));
               } else {
-                context.read<DeliveryBloc>().add(LoadDeliveryPage(salesman!.id));
+                context.read<DeliveryBloc>().add(LoadDeliveryPage(salesman!.id, resetFilters: true));
               }
             });
           }
@@ -279,9 +279,14 @@ class _DeliveryViewState extends State<DeliveryView> {
                         final relevantCustomers = (!isAgency || state.selectedSalesmanId == null)
                             ? state.customers
                             : state.customers.where((c) => c.salesmanId == state.selectedSalesmanId);
-                        final zones = relevantCustomers.map((c) => c.zone).where((z) => z.isNotEmpty).toSet().toList()..sort();
-                        final capitalizedZones = zones.map((z) => z[0].toUpperCase() + z.substring(1)).toList();
-                        return ['All', ...capitalizedZones];
+                        final zones = relevantCustomers
+                            .map((c) => c.zone.trim())
+                            .where((z) => z.isNotEmpty)
+                            .map((z) => z[0].toUpperCase() + z.substring(1).toLowerCase())
+                            .toSet()
+                            .toList()
+                          ..sort();
+                        return ['All', ...zones];
                       },
                       decoratorProps: DropDownDecoratorProps(
                         decoration: InputDecoration(

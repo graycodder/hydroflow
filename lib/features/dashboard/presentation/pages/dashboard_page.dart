@@ -17,6 +17,10 @@ import 'package:intl/intl.dart';
 import 'package:hydroflow/features/auth/presentation/bloc/agency_bloc.dart';
 import 'package:hydroflow/features/auth/presentation/bloc/agency_state.dart';
 import 'package:hydroflow/features/auth/presentation/bloc/agency_event.dart';
+import 'package:hydroflow/features/transactions/presentation/bloc/delivery_bloc.dart';
+import 'package:hydroflow/features/transactions/presentation/bloc/delivery_event.dart';
+import 'package:hydroflow/features/customers/presentation/bloc/customer_bloc.dart';
+import 'package:hydroflow/features/customers/presentation/bloc/customer_event.dart';
 
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:hydroflow/core/service_locator.dart'; // Import sl for SharedPreferences
@@ -283,6 +287,16 @@ class _DashboardPageState extends State<DashboardPage> with RouteAware {
                                     
                                     final prefs = sl<SharedPreferences>();
                                     await prefs.setBool('dashboard_is_agency_view', isAgency);
+                                    // Reset delivery and customer filters when switching view from dashboard
+                                    await prefs.remove(DeliveryBloc.prefZoneKey);
+                                    await prefs.remove(DeliveryBloc.prefSalesmanKey);
+                                    await prefs.remove(CustomerBloc.prefZoneKey);
+                                    await prefs.remove(CustomerBloc.prefSalesmanKey);
+                                    
+                                    if (mounted) {
+                                      context.read<DeliveryBloc>().add(ClearDeliveryFilters());
+                                      context.read<CustomerBloc>().add(ClearCustomerFilters());
+                                    }
                                     
                                     if (originalOwner == null) {
                                       _loadDashboardData(salesman, null);
@@ -294,6 +308,18 @@ class _DashboardPageState extends State<DashboardPage> with RouteAware {
                                     } catch (_) {}
                                     
                                     if (targetSalesman != null) {
+                                      final prefs = sl<SharedPreferences>();
+                                      // Reset delivery and customer filters when switching to a different salesman
+                                      await prefs.remove(DeliveryBloc.prefZoneKey);
+                                      await prefs.remove(DeliveryBloc.prefSalesmanKey);
+                                      await prefs.remove(CustomerBloc.prefZoneKey);
+                                      await prefs.remove(CustomerBloc.prefSalesmanKey);
+                                      
+                                      if (mounted) {
+                                        context.read<DeliveryBloc>().add(ClearDeliveryFilters());
+                                        context.read<CustomerBloc>().add(ClearCustomerFilters());
+                                      }
+
                                       context.read<AuthBloc>().add(AuthImpersonateRequested(targetSalesman));
                                       setState(() {
                                         _isViewSwitching = true;
