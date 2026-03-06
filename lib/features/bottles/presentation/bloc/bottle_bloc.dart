@@ -1,4 +1,5 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:rxdart/rxdart.dart';
 import 'package:hydroflow/features/bottles/domain/usecases/get_bottle_ledger_usecase.dart';
 import 'package:hydroflow/features/bottles/presentation/bloc/bottle_event.dart';
 import 'package:hydroflow/features/bottles/presentation/bloc/bottle_state.dart';
@@ -17,9 +18,18 @@ class BottleBloc extends Bloc<BottleEvent, BottleState> {
   })  : _getBottleLedger = getBottleLedger,
         _getSalesmanBottleLedger = getSalesmanBottleLedger,
         super(BottleInitial()) {
-    on<LoadBottleLedger>(_onLoadBottleLedger);
-    on<LoadAgencyBottleLedger>(_onLoadAgencyBottleLedger);
-    on<LoadSalesmanBottleLedger>(_onLoadSalesmanBottleLedger);
+    on<BottleStreamEvent>(
+      (event, emit) async {
+        if (event is LoadBottleLedger) {
+          await _onLoadBottleLedger(event, emit);
+        } else if (event is LoadAgencyBottleLedger) {
+          await _onLoadAgencyBottleLedger(event, emit);
+        } else if (event is LoadSalesmanBottleLedger) {
+          await _onLoadSalesmanBottleLedger(event, emit);
+        }
+      },
+      transformer: (events, mapper) => events.switchMap(mapper),
+    );
   }
 
   Future<void> _onLoadBottleLedger(

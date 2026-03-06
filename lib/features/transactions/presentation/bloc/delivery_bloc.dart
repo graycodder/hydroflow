@@ -43,8 +43,16 @@ class DeliveryBloc extends Bloc<DeliveryEvent, DeliveryState> {
         _inventoryRepository = inventoryRepository,
         _prefs = prefs,
         super(const DeliveryState()) {
-    on<LoadDeliveryPage>(_onLoadDeliveryPage);
-    on<LoadAgencyDeliveries>(_onLoadAgencyDeliveries);
+    on<DeliveryStreamEvent>(
+      (event, emit) async {
+        if (event is LoadDeliveryPage) {
+          await _onLoadDeliveryPage(event, emit);
+        } else if (event is LoadAgencyDeliveries) {
+          await _onLoadAgencyDeliveries(event, emit);
+        }
+      },
+      transformer: (events, mapper) => events.switchMap(mapper),
+    );
     on<SelectCustomer>(_onSelectCustomer);
     on<SubmitTransaction>(_onSubmitTransaction);
     on<FilterDeliveryByZone>(_onFilterDeliveryByZone);

@@ -1,4 +1,5 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:rxdart/rxdart.dart';
 import 'package:hydroflow/features/customers/domain/entities/customer.dart';
 import 'package:hydroflow/features/customers/domain/usecases/add_customer_usecase.dart';
 import 'package:hydroflow/features/customers/domain/usecases/get_customers_usecase.dart';
@@ -29,8 +30,16 @@ class CustomerBloc extends Bloc<CustomerEvent, CustomerState> {
     required SharedPreferences prefs,
   }) : _prefs = prefs,
        super(const CustomerState()) {
-    on<LoadCustomers>(_onLoadCustomers);
-    on<LoadAgencyCustomers>(_onLoadAgencyCustomers);
+    on<CustomerStreamEvent>(
+      (event, emit) async {
+        if (event is LoadCustomers) {
+          await _onLoadCustomers(event, emit);
+        } else if (event is LoadAgencyCustomers) {
+          await _onLoadAgencyCustomers(event, emit);
+        }
+      },
+      transformer: (events, mapper) => events.switchMap(mapper),
+    );
 
     on<AddCustomer>(_onAddCustomer);
     on<SearchCustomers>(_onSearchCustomers);

@@ -1,4 +1,5 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:rxdart/rxdart.dart';
 import 'package:hydroflow/features/reports/domain/usecases/record_settlement_usecase.dart';
 import 'package:equatable/equatable.dart';
 import 'package:hydroflow/features/reports/domain/entities/report_entity.dart';
@@ -14,7 +15,11 @@ abstract class ReportsEvent extends Equatable {
   List<Object> get props => [];
 }
 
-class LoadDailyReport extends ReportsEvent {
+abstract class ReportsStreamEvent extends ReportsEvent {
+  const ReportsStreamEvent();
+}
+
+class LoadDailyReport extends ReportsStreamEvent {
   final String salesmanId;
   final DateTime date;
   const LoadDailyReport(this.salesmanId, this.date);
@@ -22,7 +27,7 @@ class LoadDailyReport extends ReportsEvent {
   List<Object> get props => [salesmanId, date];
 }
 
-class LoadMonthlyReport extends ReportsEvent {
+class LoadMonthlyReport extends ReportsStreamEvent {
   final String salesmanId;
   final DateTime month;
   const LoadMonthlyReport(this.salesmanId, this.month);
@@ -30,7 +35,7 @@ class LoadMonthlyReport extends ReportsEvent {
   List<Object> get props => [salesmanId, month];
 }
 
-class LoadAgencyDailyReport extends ReportsEvent {
+class LoadAgencyDailyReport extends ReportsStreamEvent {
   final String agencyId;
   final DateTime date;
   const LoadAgencyDailyReport(this.agencyId, this.date);
@@ -38,7 +43,7 @@ class LoadAgencyDailyReport extends ReportsEvent {
   List<Object> get props => [agencyId, date];
 }
 
-class LoadAgencyMonthlyReport extends ReportsEvent {
+class LoadAgencyMonthlyReport extends ReportsStreamEvent {
   final String agencyId;
   final DateTime month;
   const LoadAgencyMonthlyReport(this.agencyId, this.month);
@@ -116,10 +121,20 @@ class ReportsBloc extends Bloc<ReportsEvent, ReportsState> {
         _getAgencyMonthlyReportUseCase = getAgencyMonthlyReportUseCase,
         _recordSettlementUseCase = recordSettlementUseCase,
         super(const ReportsInitial()) {
-    on<LoadDailyReport>(_onLoadDailyReport);
-    on<LoadMonthlyReport>(_onLoadMonthlyReport);
-    on<LoadAgencyDailyReport>(_onLoadAgencyDailyReport);
-    on<LoadAgencyMonthlyReport>(_onLoadAgencyMonthlyReport);
+    on<ReportsStreamEvent>(
+      (event, emit) async {
+        if (event is LoadDailyReport) {
+          await _onLoadDailyReport(event, emit);
+        } else if (event is LoadMonthlyReport) {
+          await _onLoadMonthlyReport(event, emit);
+        } else if (event is LoadAgencyDailyReport) {
+          await _onLoadAgencyDailyReport(event, emit);
+        } else if (event is LoadAgencyMonthlyReport) {
+          await _onLoadAgencyMonthlyReport(event, emit);
+        }
+      },
+      transformer: (events, mapper) => events.switchMap(mapper),
+    );
     on<SettleSalesmanDailyCash>(_onSettleSalesmanDailyCash);
   }
 

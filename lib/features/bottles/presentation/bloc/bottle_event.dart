@@ -7,7 +7,11 @@ abstract class BottleEvent extends Equatable {
   List<Object?> get props => [];
 }
 
-class LoadBottleLedger extends BottleEvent {
+abstract class BottleStreamEvent extends BottleEvent {
+  const BottleStreamEvent();
+}
+
+class LoadBottleLedger extends BottleStreamEvent {
   final String salesmanId;
 
   const LoadBottleLedger(this.salesmanId);
@@ -16,7 +20,7 @@ class LoadBottleLedger extends BottleEvent {
   List<Object?> get props => [salesmanId];
 }
 
-class LoadAgencyBottleLedger extends BottleEvent {
+class LoadAgencyBottleLedger extends BottleStreamEvent {
   final String agencyId;
 
   const LoadAgencyBottleLedger(this.agencyId);
@@ -25,7 +29,7 @@ class LoadAgencyBottleLedger extends BottleEvent {
   List<Object?> get props => [agencyId];
 }
 
-class LoadSalesmanBottleLedger extends BottleEvent {
+class LoadSalesmanBottleLedger extends BottleStreamEvent {
   final String salesmanId;
   final DateTime date;
 

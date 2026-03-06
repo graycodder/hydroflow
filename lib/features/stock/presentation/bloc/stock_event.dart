@@ -29,7 +29,11 @@ class StockDamagedReported extends StockEvent {
   List<Object?> get props => [salesmanId, quantity];
 }
 
-class LoadStockPage extends StockEvent {
+abstract class StockStreamEvent extends StockEvent {
+  const StockStreamEvent();
+}
+
+class LoadStockPage extends StockStreamEvent {
   final String salesmanId;
   const LoadStockPage(this.salesmanId);
 
@@ -76,7 +80,7 @@ class StockAgencyPurchase extends StockEvent {
   List<Object?> get props => [agencyId, quantity];
 }
 
-class LoadAgencyStock extends StockEvent {
+class LoadAgencyStock extends StockStreamEvent {
   final String agencyId;
   const LoadAgencyStock(this.agencyId);
   @override

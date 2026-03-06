@@ -8,7 +8,11 @@ abstract class CustomerEvent extends Equatable {
   List<Object> get props => [];
 }
 
-class LoadCustomers extends CustomerEvent {
+abstract class CustomerStreamEvent extends CustomerEvent {
+  const CustomerStreamEvent();
+}
+
+class LoadCustomers extends CustomerStreamEvent {
   final String salesmanId;
   final bool resetFilters;
 
@@ -18,7 +22,7 @@ class LoadCustomers extends CustomerEvent {
   List<Object> get props => [salesmanId, resetFilters];
 }
 
-class LoadAgencyCustomers extends CustomerEvent {
+class LoadAgencyCustomers extends CustomerStreamEvent {
   final String agencyId;
   final bool resetFilters;
 

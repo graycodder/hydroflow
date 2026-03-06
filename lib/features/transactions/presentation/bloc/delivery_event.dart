@@ -9,7 +9,11 @@ abstract class DeliveryEvent extends Equatable {
   List<Object?> get props => [];
 }
 
-class LoadDeliveryPage extends DeliveryEvent {
+abstract class DeliveryStreamEvent extends DeliveryEvent {
+  const DeliveryStreamEvent();
+}
+
+class LoadDeliveryPage extends DeliveryStreamEvent {
   final String salesmanId;
   final bool resetFilters;
 
@@ -46,7 +50,7 @@ class FilterDeliveryByZone extends DeliveryEvent {
   List<Object?> get props => [zone];
 }
 
-class LoadAgencyDeliveries extends DeliveryEvent {
+class LoadAgencyDeliveries extends DeliveryStreamEvent {
   final String agencyId;
   final bool resetFilters;
 
