@@ -89,7 +89,9 @@ class AgencyMonthlyReportView extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      subReport.salesmanName ?? "Unknown",
+                      (subReport.salesmanName != null && subReport.salesmanName!.isNotEmpty)
+                          ? subReport.salesmanName![0].toUpperCase() + subReport.salesmanName!.substring(1)
+                          : "Unknown",
                       style: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
