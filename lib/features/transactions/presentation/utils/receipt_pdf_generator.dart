@@ -60,7 +60,7 @@ class ReceiptPdfGenerator {
               pw.SizedBox(height: 10),
               
               pw.Text("Date: ${dateFormat.format(date)}", style: const pw.TextStyle(fontSize: 10)),
-              pw.Text("Salesman: $salesmanName[0].toUpperCase() + salesmanName.substring(1)}", style: const pw.TextStyle(fontSize: 10)),
+              pw.Text("Salesman: ${salesmanName[0].toUpperCase() + salesmanName.substring(1)}", style: const pw.TextStyle(fontSize: 10)),
               pw.SizedBox(height: 5),
               
               pw.Text("Customer Details:", style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 10)),
