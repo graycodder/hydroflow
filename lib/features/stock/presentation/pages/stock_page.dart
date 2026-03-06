@@ -873,7 +873,7 @@ class _StockPageState extends State<StockPage> {
                             ),
                           ],
 
-                          if (!isAgency && state.hasAnyLogs) ...[
+                          if (!isAgency) ...[
                              // Salesman Record Damage Section
                              Container(
                                padding: const EdgeInsets.all(20),
