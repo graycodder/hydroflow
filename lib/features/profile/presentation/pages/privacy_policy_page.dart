@@ -28,7 +28,7 @@ class PrivacyPolicyPage extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             const Text(
-              'Last Updated: February 2026',
+              'Last Updated: March 2026',
               style: TextStyle(
                 color: Colors.grey,
                 fontStyle: FontStyle.italic,
@@ -58,6 +58,10 @@ class PrivacyPolicyPage extends StatelessWidget {
             _buildSection(
               '6. Policy Updates',
               'We may update this Privacy Policy periodically. Continued use of the Service after changes constitutes acceptance of the revised policy.',
+            ),
+            _buildSection(
+              '7. Contact Us',
+              'If you have any questions, concerns, or requests regarding this Privacy Policy or your data, please contact our support team through the application or via our official support channels.',
             ),
             const SizedBox(height: 40),
             Center(

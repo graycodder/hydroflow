@@ -28,7 +28,7 @@ class TermsAndConditionsPage extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             const Text(
-              'Last Updated: February 2026',
+              'Last Updated: March 2026',
               style: TextStyle(
                 color: Colors.grey,
                 fontStyle: FontStyle.italic,
@@ -58,6 +58,10 @@ class TermsAndConditionsPage extends StatelessWidget {
             _buildSection(
               '6. Termination',
               'We reserve the right to terminate or suspend access to the Service immediately and without prior notice for any breach of these Terms, including but not limited to fraudulent activity or unauthorized usage.',
+            ),
+            _buildSection(
+              '7. Contact Information',
+              'For any questions or concerns regarding these Terms and Conditions, please contact us for support and assistance.',
             ),
             const SizedBox(height: 40),
             Center(
