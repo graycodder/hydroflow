@@ -296,9 +296,12 @@ class _DeliveryViewState extends State<DeliveryView> {
                           return ListTile(title: Text(item[0].toUpperCase() + item.substring(1), style: const TextStyle(fontSize: 14)), selected: isSelected, dense: true);
                         },
                       ),
-                      selectedItem: state.selectedZone ?? 'All',
+                      selectedItem: (state.selectedZone == null || state.selectedZone!.isEmpty)
+                          ? 'All'
+                          : state.selectedZone![0].toUpperCase() +
+                              state.selectedZone!.substring(1),
                       onChanged: (String? value) {
-                        context.read<DeliveryBloc>().add(FilterDeliveryByZone(value == 'All' ? null : value));
+                        context.read<DeliveryBloc>().add(FilterDeliveryByZone(value == 'All' ? null : value![0].toLowerCase() + value!.substring(1)));
                       },
                     ),
                   ),
@@ -666,7 +669,7 @@ class _DeliveryViewState extends State<DeliveryView> {
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                             decoration: BoxDecoration(color: Colors.blue[50], borderRadius: BorderRadius.circular(4)),
-                            child: Text(item.zone, style: TextStyle(color: Colors.blue[700], fontSize: 10, fontWeight: FontWeight.bold)),
+                            child: Text(item.zone[0].toUpperCase() + item.zone.substring(1), style: TextStyle(color: Colors.blue[700], fontSize: 10, fontWeight: FontWeight.bold)),
                           ),
                           const SizedBox(width: 6),
                         ],
@@ -743,7 +746,7 @@ class _DeliveryViewState extends State<DeliveryView> {
                                     borderRadius: BorderRadius.circular(20),
                                   ),
                                   child: Text(
-                                    state.selectedCustomer!.zone,
+                                    state.selectedCustomer!.zone[0].toUpperCase() + state.selectedCustomer!.zone.substring(1),
                                     style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
                                   ),
                                 ),
