@@ -236,7 +236,10 @@ class _CustomersPageState extends State<CustomersPage> {
                                 );
                               },
                             ),
-                            selectedItem: state.selectedZone ?? 'All',
+                            selectedItem: (state.selectedZone == null || state.selectedZone!.isEmpty)
+                          ? 'All'
+                          : state.selectedZone![0].toUpperCase() +
+                              state.selectedZone!.substring(1),
                             onChanged: (String? value) {
                               context.read<CustomerBloc>().add(FilterByZone(value == 'All' ? null : value));
                             },
