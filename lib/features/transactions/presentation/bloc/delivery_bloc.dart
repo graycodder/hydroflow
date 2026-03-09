@@ -343,9 +343,16 @@ class DeliveryBloc extends Bloc<DeliveryEvent, DeliveryState> {
 
     for (var tx in transactions) {
        // stats now based on UNFILTERED transactions
-       sales += tx.amountReceived;
-       if (tx.paymentMode == 'Cash') cash += tx.amountReceived;
-       if (tx.paymentMode == 'UPI' || tx.paymentMode == 'Online') upi += tx.amountReceived;
+
+       if (tx.type != 'Deposit' && tx.type != 'Refund') {
+         // Total Sales should be the invoiced amount, not the collected amount
+         sales += tx.amount;
+
+         // Cash and UPI should not include Deposit or Refund amounts
+         if (tx.paymentMode == 'Cash') cash += tx.amountReceived;
+         if (tx.paymentMode == 'UPI' || tx.paymentMode == 'Online') upi += tx.amountReceived;
+       }
+       
        delivered += tx.cansDelivered;
        returned += tx.emptyCollected;
        
