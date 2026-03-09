@@ -68,7 +68,7 @@ class DefaultFirebaseOptions {
     messagingSenderId: '123456789',
     projectId: 'mock-project-id',
     storageBucket: 'mock-project-id.appspot.com',
-    iosBundleId: 'com.example.hydroflow',
+    iosBundleId: 'com.graycodder.hydroflow',
   );
 
   static const FirebaseOptions macos = FirebaseOptions(
@@ -77,6 +77,6 @@ class DefaultFirebaseOptions {
     messagingSenderId: '123456789',
     projectId: 'mock-project-id',
     storageBucket: 'mock-project-id.appspot.com',
-    iosBundleId: 'com.example.hydroflow',
+    iosBundleId: 'com.graycodder.hydroflow',
   );
 }

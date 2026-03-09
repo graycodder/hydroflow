@@ -1,4 +1,4 @@
-package com.example.hydroflow
+package com.graycodder.hydroflow
 
 import io.flutter.embedding.android.FlutterActivity
 
