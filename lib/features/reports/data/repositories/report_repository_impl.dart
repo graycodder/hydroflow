@@ -98,6 +98,12 @@ class ReportRepositoryImpl implements ReportRepository {
         // Snapshot Support
         int? snapshotTotalBottles;
         double? historicalClosingBalance;
+        
+        // FIX: Calculate Old Balance (Previous Balance) variables declared early
+        double salesmanPreviousBalanceAtStart = 0.0;
+        bool usedSnapshot = false;
+        
+        final targetDateStr = date.toIso8601String().substring(0, 10);
 
         // Determine Opening Stock from Previous Day Closing if available
         int carriedForwardOpening = 0;
@@ -107,7 +113,6 @@ class ReportRepositoryImpl implements ReportRepository {
           final allLogs = Map<dynamic, dynamic>.from(
             prevLogEvent.snapshot.value as Map,
           );
-          final targetDateStr = date.toIso8601String().substring(0, 10);
 
           List<Map<String, dynamic>> sortedLogs = [];
           allLogs.forEach((key, value) {
@@ -123,13 +128,45 @@ class ReportRepositoryImpl implements ReportRepository {
               (a, b) => (b['date'] as String).compareTo(a['date'] as String),
             );
             mostRecentPrevLog = sortedLogs.first;
+            
+            // Carry-forward stock
             final isReconciled = mostRecentPrevLog['isReconciled'] == true;
-            // PROPER FIX: Prioritize 'actualClosingStock' (physical count) over calculated 'closingStock' ONLY if reconciled
             carriedForwardOpening = isReconciled
                 ? ((mostRecentPrevLog['actualClosingStock'] as num?)?.toInt() ?? 0)
                 : ((mostRecentPrevLog['closingStock'] as num?)?.toInt() ?? 0);
+                
           }
         }
+        
+        // 1.5 Calculate Opening Balance purely mathematically (Sum Past Cash - Sum Past Settlements)
+        // This ensures the Old Balance is always accurate, even if database snapshots were missed.
+        double sumPastCash = 0.0;
+        if (prevLogEvent.snapshot.exists) {
+          final allLogs = Map<dynamic, dynamic>.from(prevLogEvent.snapshot.value as Map);
+          allLogs.forEach((key, value) {
+             final log = Map<String, dynamic>.from(value as Map);
+             final logDateStr = log['date'] as String?;
+             if (logDateStr != null && logDateStr.compareTo(targetDateStr) < 0) {
+                 sumPastCash += (log['cashCollected'] as num?)?.toDouble() ?? 0.0;
+             }
+          });
+        }
+
+        double sumPastSettlements = 0.0;
+        if (settlementEvent.snapshot.exists) {
+          final allSettlements = Map<dynamic, dynamic>.from(settlementEvent.snapshot.value as Map);
+          allSettlements.forEach((dayKey, value) {
+             final sData = Map<String, dynamic>.from(value as Map);
+             final sDateKey = dayKey.toString(); 
+             final sDateStr = sDateKey.replaceAll('_', '-');
+             if (sDateStr.compareTo(targetDateStr) < 0) {
+                 sumPastSettlements += (sData['amount'] as num?)?.toDouble() ?? 0.0;
+             }
+          });
+        }
+        
+        salesmanPreviousBalanceAtStart = (sumPastCash - sumPastSettlements).toDouble();
+        if (salesmanPreviousBalanceAtStart < 0) salesmanPreviousBalanceAtStart = 0.0;
 
         if (logEvent.snapshot.exists) {
           final data = Map<String, dynamic>.from(
@@ -168,9 +205,7 @@ class ReportRepositoryImpl implements ReportRepository {
         String salesmanName = "Unknown Salesman";
         double pendingCashBalance = 0.0;
         
-        // FIX: Calculate Old Balance (Previous Balance) variables declared early
-        double salesmanPreviousBalanceAtStart = 0.0;
-        bool usedSnapshot = false;
+        // FIX: Old Balance variables have been moved to the top of the function
 
         if (salesmanEvent.snapshot.exists) {
           final data = Map<String, dynamic>.from(
@@ -275,60 +310,24 @@ class ReportRepositoryImpl implements ReportRepository {
             date.month == DateTime.now().month &&
             date.day == DateTime.now().day;
 
-        // NEW: For historical dates, if we have a recorded closing balance, use it.
-        // Otherwise, if it's NOT the current date, we cannot trust the live pendingCashBalance.
-        // 8. MASTER BALANCE RECONSTRUCTION (Self-Healing Ledger)
-        // We calculate the Opening Balance of ANY day by starting from the LIVE Current Balance
-        // and working backwards through all collections and settlements recorded from that day until now.
-        
-        final double liveBalance = (salesmanEvent.snapshot.value as Map?)?['pendingCashBalance']?.toDouble() ?? 0.0;
-        double collectionsSinceTargetDate = 0.0;
-        double settlementsSinceTargetDate = 0.0;
-        
-        final targetDateStr = date.toIso8601String().substring(0, 10);
-        
-        // Sum all cash collections from logs dated >= TargetDate
-        if (prevLogEvent.snapshot.exists) {
-          final allLogs = Map<dynamic, dynamic>.from(prevLogEvent.snapshot.value as Map);
-          allLogs.forEach((key, value) {
-             final log = Map<String, dynamic>.from(value as Map);
-             final logDateStr = log['date'] as String?;
-             if (logDateStr != null && logDateStr.compareTo(targetDateStr) >= 0) {
-                // IMPORTANT: We only track CASH collections for the pendingCashBalance
-                final double cash = (log['cashCollected'] as num?)?.toDouble() ?? 0.0;
-                collectionsSinceTargetDate += cash;
-             }
-          });
-        }
-        
-        // Sum all settlements dated >= TargetDate
-        if (settlementEvent.snapshot.exists) {
-          final allSettlements = Map<dynamic, dynamic>.from(settlementEvent.snapshot.value as Map);
-          allSettlements.forEach((dayKey, value) {
-             final sData = Map<String, dynamic>.from(value as Map);
-             final sDateKey = dayKey.toString(); // format YYYY_MM_DD
-             final sDateStr = sDateKey.replaceAll('_', '-');
-             
-             if (sDateStr.compareTo(targetDateStr) >= 0) {
-                settlementsSinceTargetDate += (sData['amount'] as num?)?.toDouble() ?? 0.0;
-             }
-             
-             // Extract today's specific settlement status
-             if (sDateKey == dateKey) {
-                isSettled = sData['status'] == 'Settled';
-                settlementAmountToday = (sData['amount'] as num?)?.toDouble() ?? 0.0;
-             }
-          });
-        }
+        // 8. Financials & Balances State
+        final double currentCashInHand = cashSales + cashFromDeposits - securityDepositsRefundedCash;
+        double effectivePendingBalance = 0.0;
 
-        // Opening Balance = Current - Future Collections + Future Settlements
-        salesmanPreviousBalanceAtStart = liveBalance - collectionsSinceTargetDate + settlementsSinceTargetDate;
+        if (isCurrentDate) {
+          // For today, the LIVE node balance is the ultimate source of truth
+          effectivePendingBalance = pendingCashBalance;
+          
+          // Calculate true Opening Balance mathematically.
+          salesmanPreviousBalanceAtStart = pendingCashBalance - currentCashInHand + settlementAmountToday;
+        } else {
+          // For ALL historical dates, completely ignore stale snapshots.
+          // Outstanding = Mathematically Constructed Old Balance + Today's Cash In Hand - Today's Settlement
+          effectivePendingBalance = salesmanPreviousBalanceAtStart + currentCashInHand - settlementAmountToday;
+        }
         
         if (salesmanPreviousBalanceAtStart < 0) salesmanPreviousBalanceAtStart = 0.0;
-
-        // Closing Balance (Outstanding) is Opening + Today's Collections - Today's Settlement
-        final double currentCashInHand = cashSales + cashFromDeposits - securityDepositsRefundedCash;
-        final double effectivePendingBalance = salesmanPreviousBalanceAtStart + currentCashInHand - settlementAmountToday;
+        if (effectivePendingBalance < 0) effectivePendingBalance = 0.0;
 
         // A day is active if something happened OR it's the live view for today
 
@@ -351,33 +350,47 @@ class ReportRepositoryImpl implements ReportRepository {
 
         int finalOpening = openingStock;
 
-        // MASTER STOCK RECONSTRUCTION (Self-Healing)
-        // Works similarly to balance: calculate Opening Stock by working backwards from Live Stock level.
-        final int liveStock = (salesmanEvent.snapshot.value as Map?)?['currentStock']?.toInt() ?? 0;
-        int netActivitySinceTargetDate = 0;
-        
-        if (prevLogEvent.snapshot.exists) {
-           final allLogs = Map<dynamic, dynamic>.from(prevLogEvent.snapshot.value as Map);
-           allLogs.forEach((key, value) {
-              final log = Map<String, dynamic>.from(value as Map);
-              final logDateStr = log['date'] as String?;
-              if (logDateStr != null && logDateStr.compareTo(targetDateStr) >= 0) {
-                 final int loaded = (log['loaded'] as num?)?.toInt() ?? 0;
-                 final int del = (log['totalDelivered'] as num?)?.toInt() ?? 0;
-                 final int dmg = (log['damaged'] as num?)?.toInt() ?? 0;
-                 netActivitySinceTargetDate += (loaded - del - dmg);
-              }
-           });
+        // Mathematical fallback: Reconstruction ONLY for the current date to fix live inconsistencies.
+        // Historical reports should NEVER use future data.
+        if (isCurrentDate && finalOpening <= 0) {
+          final int inferredOpening =
+              currentStock - loaded + effectiveDelivered + damaged;
+          if (inferredOpening >= 0) {
+            finalOpening = inferredOpening;
+          }
         }
         
-        finalOpening = liveStock - netActivitySinceTargetDate;
-        if (finalOpening < 0) finalOpening = 0;
+        if (!isCurrentDate && finalOpening <= 0 && carriedForwardOpening > 0) {
+           finalOpening = carriedForwardOpening;
+        }
 
         final finalAvailable = finalOpening + loaded;
         final calculatedClosing = finalAvailable - effectiveDelivered - damaged;
+        int finalClosing = calculatedClosing;
 
-        // We calculate closing to ensure Opening + Loaded - Delivered = Closing consistency.
-        final finalClosing = calculatedClosing;
+        // 9. SUPPRESS GHOST DATA
+        // Safety Check: Check if salesman even existed on this date
+        bool salesmanExisted = true;
+        if (salesmanEvent.snapshot.exists) {
+           final sModel = Map<String, dynamic>.from(salesmanEvent.snapshot.value as Map);
+           final createdAtStr = sModel['createdAt'] as String?;
+           if (createdAtStr != null && createdAtStr.length >= 10) {
+              if (targetDateStr.compareTo(createdAtStr.substring(0, 10)) < 0) {
+                 salesmanExisted = false;
+              }
+           }
+        }
+
+        final bool hasState = finalOpening > 0 || finalClosing > 0 || salesmanPreviousBalanceAtStart > 0 || effectivePendingBalance > 0;
+        final bool shouldShow = isActivityToday || hasState;
+
+        if (!salesmanExisted || !shouldShow) {
+            finalOpening = 0;
+            finalClosing = 0;
+            salesmanPreviousBalanceAtStart = 0.0;
+            effectivePendingBalance = 0.0;
+        }
+
         final netDeposits =
             securityDepositsCollected - securityDepositsRefunded;
 
@@ -1019,7 +1032,17 @@ class ReportRepositoryImpl implements ReportRepository {
         final isWh = r.salesmanId == agencyId ||
             r.salesmanId == '' ||
             r.salesmanId == null;
-        return !isWh;
+        if (isWh) return false;
+        
+        // Only show salesmen who have activity OR non-zero state.
+        // This keeps the breakdown list clean of inactive/unhired salesmen.
+        // We also check salesmanExisted logic effectively here.
+        return r.openingStock > 0 || 
+               r.closingStock > 0 || 
+               r.salesmanPreviousBalance > 0 || 
+               r.pendingCashBalance > 0 || 
+               r.totalRevenue > 0 ||
+               isDaily; // Always show breakdown today
       }).toList(),
     );
   }
