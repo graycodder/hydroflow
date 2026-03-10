@@ -1,18 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:hydroflow/core/service_locator.dart';
-import 'package:hydroflow/core/widgets/app_bottom_bar.dart';
-import 'package:hydroflow/features/auth/presentation/bloc/auth_bloc.dart';
-import 'package:hydroflow/features/auth/presentation/bloc/auth_state.dart';
-import 'package:hydroflow/features/bottles/presentation/bloc/bottle_bloc.dart';
-import 'package:hydroflow/features/bottles/presentation/bloc/bottle_event.dart';
-import 'package:hydroflow/features/bottles/presentation/bloc/bottle_state.dart';
-import 'package:hydroflow/features/customers/domain/entities/customer.dart';
-import 'package:hydroflow/features/auth/domain/entities/salesman.dart';
-import 'package:hydroflow/core/widgets/hydro_flow_app_bar.dart';
-import 'package:hydroflow/core/widgets/hydro_flow_loader.dart';
-import 'package:hydroflow/features/bottles/presentation/pages/salesman_bottle_ledger_page.dart' as hydroflow_salesman_page;
+import 'package:watermemo/core/service_locator.dart';
+import 'package:watermemo/core/widgets/app_bottom_bar.dart';
+import 'package:watermemo/features/auth/presentation/bloc/auth_bloc.dart';
+import 'package:watermemo/features/auth/presentation/bloc/auth_state.dart';
+import 'package:watermemo/features/bottles/presentation/bloc/bottle_bloc.dart';
+import 'package:watermemo/features/bottles/presentation/bloc/bottle_event.dart';
+import 'package:watermemo/features/bottles/presentation/bloc/bottle_state.dart';
+import 'package:watermemo/features/customers/domain/entities/customer.dart';
+import 'package:watermemo/features/auth/domain/entities/salesman.dart';
+import 'package:watermemo/core/widgets/hydro_flow_app_bar.dart';
+import 'package:watermemo/core/widgets/hydro_flow_loader.dart';
+import 'package:watermemo/features/bottles/presentation/pages/salesman_bottle_ledger_page.dart' as watermemo_salesman_page;
 
 class BottlesPage extends StatefulWidget {
   const BottlesPage({super.key});
@@ -66,21 +66,21 @@ class _BottlesPageState extends State<BottlesPage> {
                       context.read<BottleBloc>().add(LoadBottleLedger(salesman.id));
                    }
                 });
-                return const Scaffold(body: Center(child: HydroFlowLoader(message: 'Switching View...', isOverlay: false)));
+                return const Scaffold(body: Center(child: WaterMemoLoader(message: 'Switching View...', isOverlay: false)));
              }
           }
 
           return Scaffold(
             backgroundColor: Colors.grey[50],
-            appBar: const HydroFlowAppBar(),
+            appBar: const WaterMemoAppBar(),
             body: BlocBuilder<BottleBloc, BottleState>(
                 builder: (context, state) {
                   if (state is BottleLoading || state is BottleInitial) {
-                    return const HydroFlowLoader(isOverlay: false);
+                    return const WaterMemoLoader(isOverlay: false);
                   } else if (state is BottleFailure) {
                     return Center(child: Text('Error: ${state.error}'));
                   } else if (state is SalesmanBottleLoaded) {
-                     return const hydroflow_salesman_page.SalesmanBottleLedgerPage();
+                     return const watermemo_salesman_page.SalesmanBottleLedgerPage();
                   } else if (state is BottleLoaded) {
                       final prefs = sl<SharedPreferences>();
                       final isAgencyView = prefs.getBool('dashboard_is_agency_view') ?? false;
@@ -294,7 +294,7 @@ class _BottlesPageState extends State<BottlesPage> {
                 bottomNavigationBar: const AppBottomBar(currentIndex: 2),
               );
             }
-           return const Scaffold(body: HydroFlowLoader(isOverlay: false));
+           return const Scaffold(body: WaterMemoLoader(isOverlay: false));
       },
     );
   }

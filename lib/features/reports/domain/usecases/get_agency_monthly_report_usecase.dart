@@ -1,5 +1,5 @@
-import 'package:hydroflow/features/reports/domain/repositories/report_repository.dart';
-import 'package:hydroflow/features/reports/domain/entities/report_entity.dart';
+import 'package:watermemo/features/reports/domain/repositories/report_repository.dart';
+import 'package:watermemo/features/reports/domain/entities/report_entity.dart';
 
 class GetAgencyMonthlyReportUseCase {
   final ReportRepository repository;

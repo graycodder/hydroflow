@@ -1,5 +1,5 @@
 import 'package:equatable/equatable.dart';
-import 'package:hydroflow/features/dashboard/domain/entities/dashboard_summary.dart';
+import 'package:watermemo/features/dashboard/domain/entities/dashboard_summary.dart';
 
 abstract class DashboardState extends Equatable {
   const DashboardState();

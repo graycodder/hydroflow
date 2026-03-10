@@ -1,5 +1,5 @@
 import 'package:firebase_database/firebase_database.dart';
-import 'package:hydroflow/features/notifications/domain/entities/notification_entity.dart';
+import 'package:watermemo/features/notifications/domain/entities/notification_entity.dart';
 
 class NotificationModel extends NotificationEntity {
   const NotificationModel({

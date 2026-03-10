@@ -4,9 +4,9 @@ import 'dart:io' show Platform;
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:hydroflow/features/auth/domain/repositories/auth_repository.dart';
-import 'package:hydroflow/features/auth/domain/entities/salesman.dart';
-import 'package:hydroflow/features/auth/data/models/salesman_model.dart';
+import 'package:watermemo/features/auth/domain/repositories/auth_repository.dart';
+import 'package:watermemo/features/auth/domain/entities/salesman.dart';
+import 'package:watermemo/features/auth/data/models/salesman_model.dart';
 
 class AuthRepositoryImpl implements AuthRepository {
   final FirebaseDatabase _database;

@@ -1,5 +1,5 @@
-import 'package:hydroflow/features/dashboard/domain/entities/dashboard_summary.dart';
-import 'package:hydroflow/features/dashboard/domain/repositories/dashboard_repository.dart';
+import 'package:watermemo/features/dashboard/domain/entities/dashboard_summary.dart';
+import 'package:watermemo/features/dashboard/domain/repositories/dashboard_repository.dart';
 
 class GetDashboardSummaryUseCase {
   final DashboardRepository repository;

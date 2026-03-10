@@ -1,5 +1,5 @@
-import 'package:hydroflow/features/stock/domain/entities/stock_log.dart';
-import 'package:hydroflow/features/auth/domain/entities/salesman.dart';
+import 'package:watermemo/features/stock/domain/entities/stock_log.dart';
+import 'package:watermemo/features/auth/domain/entities/salesman.dart';
 
 abstract class InventoryRepository {
   Future<void> addStock({required String salesmanId, required int quantity, String? agencyId});

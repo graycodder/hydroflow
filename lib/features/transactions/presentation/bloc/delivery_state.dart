@@ -1,6 +1,6 @@
 import 'package:equatable/equatable.dart';
-import 'package:hydroflow/features/transactions/domain/entities/transaction_entity.dart';
-import 'package:hydroflow/features/customers/domain/entities/customer.dart';
+import 'package:watermemo/features/transactions/domain/entities/transaction_entity.dart';
+import 'package:watermemo/features/customers/domain/entities/customer.dart';
 
 enum DeliveryStatus { initial, loading, submitting, success, failure, submissionSuccess }
 

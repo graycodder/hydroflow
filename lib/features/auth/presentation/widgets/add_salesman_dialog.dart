@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:hydroflow/features/auth/domain/entities/salesman.dart';
-import 'package:hydroflow/features/auth/presentation/bloc/agency_bloc.dart';
-import 'package:hydroflow/features/auth/presentation/bloc/agency_event.dart';
+import 'package:watermemo/features/auth/domain/entities/salesman.dart';
+import 'package:watermemo/features/auth/presentation/bloc/agency_bloc.dart';
+import 'package:watermemo/features/auth/presentation/bloc/agency_event.dart';
 import 'package:flutter/services.dart';
-import 'package:hydroflow/features/auth/domain/repositories/agency_repository.dart';
-import 'package:hydroflow/core/service_locator.dart' as di;
-import 'package:hydroflow/core/widgets/hydro_flow_loader.dart';
+import 'package:watermemo/features/auth/domain/repositories/agency_repository.dart';
+import 'package:watermemo/core/service_locator.dart' as di;
+import 'package:watermemo/core/widgets/hydro_flow_loader.dart';
 
 class AddSalesmanDialog extends StatefulWidget {
   final String agencyId;
@@ -73,7 +73,7 @@ class _AddSalesmanDialogState extends State<AddSalesmanDialog> {
       if (!mounted) return;
 
       setState(() => _isChecking = true);
-      HydroFlowLoader.show(context, message: 'Checking phone number...');
+      WaterMemoLoader.show(context, message: 'Checking phone number...');
 
       try {
         final repo = di.sl<AgencyRepository>();
@@ -81,7 +81,7 @@ class _AddSalesmanDialogState extends State<AddSalesmanDialog> {
         final isUnique = await repo.isPhoneNumberUnique(phone);
 
         if (!mounted) return;
-        HydroFlowLoader.hide(context);
+        WaterMemoLoader.hide(context);
 
         if (!isUnique) {
           setState(() {
@@ -111,7 +111,7 @@ class _AddSalesmanDialogState extends State<AddSalesmanDialog> {
         Navigator.pop(context, newSalesman);
       } catch (e) {
         if (mounted) {
-          HydroFlowLoader.hide(context);
+          WaterMemoLoader.hide(context);
           setState(() => _isChecking = false);
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text('Error validating phone number: $e')),

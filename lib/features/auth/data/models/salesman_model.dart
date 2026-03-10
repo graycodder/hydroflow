@@ -1,5 +1,5 @@
 import 'package:firebase_database/firebase_database.dart';
-import 'package:hydroflow/features/auth/domain/entities/salesman.dart';
+import 'package:watermemo/features/auth/domain/entities/salesman.dart';
 
 class SalesmanModel extends Salesman {
   const SalesmanModel({

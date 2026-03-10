@@ -1,10 +1,10 @@
 import 'dart:async';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:hydroflow/features/auth/domain/repositories/agency_repository.dart';
-import 'package:hydroflow/features/auth/domain/entities/agency.dart';
-import 'package:hydroflow/features/auth/domain/entities/salesman.dart';
-import 'package:hydroflow/features/auth/presentation/bloc/agency_event.dart';
-import 'package:hydroflow/features/auth/presentation/bloc/agency_state.dart';
+import 'package:watermemo/features/auth/domain/repositories/agency_repository.dart';
+import 'package:watermemo/features/auth/domain/entities/agency.dart';
+import 'package:watermemo/features/auth/domain/entities/salesman.dart';
+import 'package:watermemo/features/auth/presentation/bloc/agency_event.dart';
+import 'package:watermemo/features/auth/presentation/bloc/agency_state.dart';
 
 class AgencyBloc extends Bloc<AgencyEvent, AgencyState> {
   final AgencyRepository _agencyRepository;

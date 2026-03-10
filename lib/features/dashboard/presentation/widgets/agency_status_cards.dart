@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:hydroflow/features/dashboard/domain/entities/dashboard_summary.dart';
-import 'package:hydroflow/features/dashboard/presentation/widgets/dashboard_stat_card.dart';
+import 'package:watermemo/features/dashboard/domain/entities/dashboard_summary.dart';
+import 'package:watermemo/features/dashboard/presentation/widgets/dashboard_stat_card.dart';
 
 class AgencyStatusCards extends StatelessWidget {
   final DashboardSummary summary;

@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter/services.dart';
-import 'package:hydroflow/features/customers/domain/entities/customer.dart';
-import 'package:hydroflow/features/customers/presentation/bloc/customer_bloc.dart';
-import 'package:hydroflow/features/customers/presentation/bloc/customer_event.dart';
-import 'package:hydroflow/features/customers/presentation/bloc/customer_state.dart';
-import 'package:hydroflow/core/widgets/hydro_flow_loader.dart';
-import 'package:hydroflow/features/transactions/domain/entities/transaction_entity.dart';
-import 'package:hydroflow/features/transactions/domain/repositories/transaction_repository.dart';
-import 'package:hydroflow/core/service_locator.dart' as di;
+import 'package:watermemo/features/customers/domain/entities/customer.dart';
+import 'package:watermemo/features/customers/presentation/bloc/customer_bloc.dart';
+import 'package:watermemo/features/customers/presentation/bloc/customer_event.dart';
+import 'package:watermemo/features/customers/presentation/bloc/customer_state.dart';
+import 'package:watermemo/core/widgets/hydro_flow_loader.dart';
+import 'package:watermemo/features/transactions/domain/entities/transaction_entity.dart';
+import 'package:watermemo/features/transactions/domain/repositories/transaction_repository.dart';
+import 'package:watermemo/core/service_locator.dart' as di;
 
 class BottleBalanceAdjustmentDialog extends StatefulWidget {
   final Customer customer;
@@ -48,10 +48,10 @@ class _BottleBalanceAdjustmentDialogState extends State<BottleBalanceAdjustmentD
       listener: (context, state) {
         if (_isSubmitting) {
           if (state.status == CustomerStatus.submitting) {
-            HydroFlowLoader.show(context, message: 'Processing Adjustment...');
+            WaterMemoLoader.show(context, message: 'Processing Adjustment...');
           } else if (state.status == CustomerStatus.failure || 
                      (state.status == CustomerStatus.success && state.successMessage != null)) {
-            HydroFlowLoader.hide(context);
+            WaterMemoLoader.hide(context);
             if (state.status == CustomerStatus.success) {
               _isSubmitting = false;
               Navigator.of(context).pop(); // Close dialog

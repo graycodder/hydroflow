@@ -1,32 +1,32 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:hydroflow/features/auth/domain/entities/salesman.dart';
+import 'package:watermemo/features/auth/domain/entities/salesman.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
-import 'package:hydroflow/features/auth/domain/repositories/agency_repository.dart';
-import 'package:hydroflow/features/auth/presentation/bloc/auth_bloc.dart';
-import 'package:hydroflow/features/auth/presentation/bloc/auth_event.dart';
-import 'package:hydroflow/features/auth/presentation/bloc/auth_state.dart';
-import 'package:hydroflow/core/widgets/app_bottom_bar.dart';
-import 'package:hydroflow/features/dashboard/presentation/bloc/dashboard_bloc.dart';
-import 'package:hydroflow/features/dashboard/presentation/bloc/dashboard_event.dart';
-import 'package:hydroflow/features/dashboard/presentation/bloc/dashboard_state.dart';
-import 'package:hydroflow/core/widgets/hydro_flow_app_bar.dart';
-import 'package:hydroflow/core/widgets/hydro_flow_loader.dart';
+import 'package:watermemo/features/auth/domain/repositories/agency_repository.dart';
+import 'package:watermemo/features/auth/presentation/bloc/auth_bloc.dart';
+import 'package:watermemo/features/auth/presentation/bloc/auth_event.dart';
+import 'package:watermemo/features/auth/presentation/bloc/auth_state.dart';
+import 'package:watermemo/core/widgets/app_bottom_bar.dart';
+import 'package:watermemo/features/dashboard/presentation/bloc/dashboard_bloc.dart';
+import 'package:watermemo/features/dashboard/presentation/bloc/dashboard_event.dart';
+import 'package:watermemo/features/dashboard/presentation/bloc/dashboard_state.dart';
+import 'package:watermemo/core/widgets/hydro_flow_app_bar.dart';
+import 'package:watermemo/core/widgets/hydro_flow_loader.dart';
 import 'package:intl/intl.dart';
-import 'package:hydroflow/features/auth/presentation/bloc/agency_bloc.dart';
-import 'package:hydroflow/features/auth/presentation/bloc/agency_state.dart';
-import 'package:hydroflow/features/auth/presentation/bloc/agency_event.dart';
-import 'package:hydroflow/features/transactions/presentation/bloc/delivery_bloc.dart';
-import 'package:hydroflow/features/transactions/presentation/bloc/delivery_event.dart';
-import 'package:hydroflow/features/customers/presentation/bloc/customer_bloc.dart';
-import 'package:hydroflow/features/customers/presentation/bloc/customer_event.dart';
+import 'package:watermemo/features/auth/presentation/bloc/agency_bloc.dart';
+import 'package:watermemo/features/auth/presentation/bloc/agency_state.dart';
+import 'package:watermemo/features/auth/presentation/bloc/agency_event.dart';
+import 'package:watermemo/features/transactions/presentation/bloc/delivery_bloc.dart';
+import 'package:watermemo/features/transactions/presentation/bloc/delivery_event.dart';
+import 'package:watermemo/features/customers/presentation/bloc/customer_bloc.dart';
+import 'package:watermemo/features/customers/presentation/bloc/customer_event.dart';
 
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:hydroflow/core/service_locator.dart'; // Import sl for SharedPreferences
-import 'package:hydroflow/router/route_observer.dart'; // Import routeObserver
-import 'package:hydroflow/features/dashboard/presentation/widgets/agency_status_cards.dart';
-import 'package:hydroflow/features/dashboard/presentation/widgets/salesman_status_cards.dart';
+import 'package:watermemo/core/service_locator.dart'; // Import sl for SharedPreferences
+import 'package:watermemo/router/route_observer.dart'; // Import routeObserver
+import 'package:watermemo/features/dashboard/presentation/widgets/agency_status_cards.dart';
+import 'package:watermemo/features/dashboard/presentation/widgets/salesman_status_cards.dart';
 
 class DashboardPage extends StatefulWidget {
   const DashboardPage({super.key});
@@ -137,7 +137,7 @@ class _DashboardPageState extends State<DashboardPage> with RouteAware {
 
           return Scaffold(
             backgroundColor: Colors.grey[50],
-            appBar: const HydroFlowAppBar(),
+            appBar: const WaterMemoAppBar(),
             body: SingleChildScrollView(
               padding: EdgeInsets.all(16.w),
               child: Column(
@@ -473,7 +473,7 @@ class _DashboardPageState extends State<DashboardPage> with RouteAware {
                       if (_isViewSwitching || dashboardState is DashboardLoading) {
                         return const Padding(
                           padding: EdgeInsets.all(32.0),
-                          child: HydroFlowLoader(isOverlay: false),
+                          child: WaterMemoLoader(isOverlay: false),
                         );
                       }
                       if (dashboardState is DashboardLoaded) {
@@ -496,7 +496,7 @@ class _DashboardPageState extends State<DashboardPage> with RouteAware {
             bottomNavigationBar: const AppBottomBar(currentIndex: 0),
           );
         }
-        return const HydroFlowLoader(isOverlay: false);
+        return const WaterMemoLoader(isOverlay: false);
       },
     );
   }

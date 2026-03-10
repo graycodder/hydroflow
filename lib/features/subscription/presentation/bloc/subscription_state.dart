@@ -1,5 +1,5 @@
 import 'package:equatable/equatable.dart';
-import 'package:hydroflow/features/subscription/domain/entities/plan.dart';
+import 'package:watermemo/features/subscription/domain/entities/plan.dart';
 
 abstract class SubscriptionState extends Equatable {
   const SubscriptionState();

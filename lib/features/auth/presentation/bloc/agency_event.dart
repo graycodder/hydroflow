@@ -1,5 +1,5 @@
 import 'package:equatable/equatable.dart';
-import 'package:hydroflow/features/auth/domain/entities/salesman.dart';
+import 'package:watermemo/features/auth/domain/entities/salesman.dart';
 
 abstract class AgencyEvent extends Equatable {
   const AgencyEvent();

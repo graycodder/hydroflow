@@ -2,11 +2,11 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:bloc_test/bloc_test.dart';
 import 'package:mockito/mockito.dart';
 import 'package:mockito/annotations.dart';
-import 'package:hydroflow/features/stock/presentation/bloc/stock_bloc.dart';
-import 'package:hydroflow/features/stock/presentation/bloc/stock_event.dart';
-import 'package:hydroflow/features/stock/presentation/bloc/stock_state.dart';
-import 'package:hydroflow/features/stock/domain/repositories/inventory_repository.dart';
-import 'package:hydroflow/features/customers/domain/repositories/customer_repository.dart';
+import 'package:watermemo/features/stock/presentation/bloc/stock_bloc.dart';
+import 'package:watermemo/features/stock/presentation/bloc/stock_event.dart';
+import 'package:watermemo/features/stock/presentation/bloc/stock_state.dart';
+import 'package:watermemo/features/stock/domain/repositories/inventory_repository.dart';
+import 'package:watermemo/features/customers/domain/repositories/customer_repository.dart';
 
 @GenerateMocks([InventoryRepository, CustomerRepository])
 import 'stock_bloc_test.mocks.dart';

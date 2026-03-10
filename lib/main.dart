@@ -2,28 +2,28 @@ import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
-import 'package:hydroflow/core/theme.dart';
-import 'package:hydroflow/core/service_locator.dart' as di;
-import 'package:hydroflow/router/app_router.dart';
-import 'package:hydroflow/firebase_options.dart';
+import 'package:watermemo/core/theme.dart';
+import 'package:watermemo/core/service_locator.dart' as di;
+import 'package:watermemo/router/app_router.dart';
+import 'package:watermemo/firebase_options.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:hydroflow/features/auth/presentation/bloc/auth_bloc.dart';
-import 'package:hydroflow/features/auth/presentation/bloc/auth_event.dart';
-import 'package:hydroflow/features/stock/presentation/bloc/stock_bloc.dart';
-import 'package:hydroflow/features/bottles/presentation/bloc/bottle_bloc.dart';
-import 'package:hydroflow/features/customers/presentation/bloc/customer_bloc.dart';
-import 'package:hydroflow/features/transactions/presentation/bloc/delivery_bloc.dart';
-import 'package:hydroflow/features/notifications/presentation/bloc/notification_bloc.dart';
-import 'package:hydroflow/features/dashboard/presentation/bloc/dashboard_bloc.dart';
-import 'package:hydroflow/features/dashboard/presentation/bloc/dashboard_event.dart';
-import 'package:hydroflow/features/auth/presentation/bloc/auth_state.dart';
+import 'package:watermemo/features/auth/presentation/bloc/auth_bloc.dart';
+import 'package:watermemo/features/auth/presentation/bloc/auth_event.dart';
+import 'package:watermemo/features/stock/presentation/bloc/stock_bloc.dart';
+import 'package:watermemo/features/bottles/presentation/bloc/bottle_bloc.dart';
+import 'package:watermemo/features/customers/presentation/bloc/customer_bloc.dart';
+import 'package:watermemo/features/transactions/presentation/bloc/delivery_bloc.dart';
+import 'package:watermemo/features/notifications/presentation/bloc/notification_bloc.dart';
+import 'package:watermemo/features/dashboard/presentation/bloc/dashboard_bloc.dart';
+import 'package:watermemo/features/dashboard/presentation/bloc/dashboard_event.dart';
+import 'package:watermemo/features/auth/presentation/bloc/auth_state.dart';
 import 'package:flutter_native_splash/flutter_native_splash.dart';
-import 'package:hydroflow/features/splash/presentation/widgets/splash_view.dart';
-import 'package:hydroflow/core/utils/router_refresh_listenable.dart';
-import 'package:hydroflow/core/bloc/connectivity/connectivity_bloc.dart';
-import 'package:hydroflow/core/widgets/connectivity_wrapper.dart';
-import 'package:hydroflow/features/auth/presentation/bloc/agency_bloc.dart';
-import 'package:hydroflow/features/auth/presentation/bloc/agency_event.dart';
+import 'package:watermemo/features/splash/presentation/widgets/splash_view.dart';
+import 'package:watermemo/core/utils/router_refresh_listenable.dart';
+import 'package:watermemo/core/bloc/connectivity/connectivity_bloc.dart';
+import 'package:watermemo/core/widgets/connectivity_wrapper.dart';
+import 'package:watermemo/features/auth/presentation/bloc/agency_bloc.dart';
+import 'package:watermemo/features/auth/presentation/bloc/agency_event.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 
@@ -118,18 +118,18 @@ class _BootstrapAppState extends State<BootstrapApp> {
 
     if (!_initialized) {
       return const MaterialApp(
-        title: 'HydroFlow',
+        title: 'WaterMemo',
         debugShowCheckedModeBanner: false,
         home: SplashView(), // Show pure splash UI while initializing
       );
     }
 
-    return const HydroFlowApp();
+    return const WaterMemoApp();
   }
 }
 
-class HydroFlowApp extends StatelessWidget {
-  const HydroFlowApp({super.key});
+class WaterMemoApp extends StatelessWidget {
+  const WaterMemoApp({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -175,7 +175,7 @@ class HydroFlowApp extends StatelessWidget {
           splitScreenMode: true,
           builder: (context, child) {
             return MaterialApp.router(
-              title: 'HydroFlow',
+              title: 'WaterMemo',
               debugShowCheckedModeBanner: false,
               theme: CodeTheme.lightTheme,
               routerConfig: router,

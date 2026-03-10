@@ -1,6 +1,6 @@
 import 'dart:async';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:hydroflow/features/dashboard/domain/usecases/get_dashboard_summary_usecase.dart';
+import 'package:watermemo/features/dashboard/domain/usecases/get_dashboard_summary_usecase.dart';
 import 'dashboard_event.dart';
 import 'dashboard_state.dart';
 

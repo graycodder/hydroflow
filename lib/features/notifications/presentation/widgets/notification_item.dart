@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import 'package:hydroflow/features/notifications/domain/entities/notification_entity.dart';
+import 'package:watermemo/features/notifications/domain/entities/notification_entity.dart';
 import 'package:intl/intl.dart';
 
 class NotificationItem extends StatelessWidget {

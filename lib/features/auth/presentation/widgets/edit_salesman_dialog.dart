@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:hydroflow/features/auth/domain/entities/salesman.dart';
-import 'package:hydroflow/features/auth/domain/repositories/agency_repository.dart';
-import 'package:hydroflow/core/service_locator.dart' as di;
-import 'package:hydroflow/core/widgets/hydro_flow_loader.dart';
+import 'package:watermemo/features/auth/domain/entities/salesman.dart';
+import 'package:watermemo/features/auth/domain/repositories/agency_repository.dart';
+import 'package:watermemo/core/service_locator.dart' as di;
+import 'package:watermemo/core/widgets/hydro_flow_loader.dart';
 
 class EditSalesmanDialog extends StatefulWidget {
   final Salesman salesman;
@@ -74,7 +74,7 @@ class _EditSalesmanDialogState extends State<EditSalesmanDialog> {
       if (!mounted) return;
 
       setState(() => _isChecking = true);
-      HydroFlowLoader.show(context, message: 'Checking phone number...');
+      WaterMemoLoader.show(context, message: 'Checking phone number...');
 
       try {
         final repo = di.sl<AgencyRepository>();
@@ -82,7 +82,7 @@ class _EditSalesmanDialogState extends State<EditSalesmanDialog> {
         final isUnique = await repo.isPhoneNumberUnique(phone, excludeSalesmanId: widget.salesman.id);
 
         if (!mounted) return;
-        HydroFlowLoader.hide(context);
+        WaterMemoLoader.hide(context);
 
         if (!isUnique) {
           setState(() {
@@ -107,7 +107,7 @@ class _EditSalesmanDialogState extends State<EditSalesmanDialog> {
         Navigator.pop(context, updatedSalesman);
       } catch (e) {
         if (mounted) {
-          HydroFlowLoader.hide(context);
+          WaterMemoLoader.hide(context);
           setState(() => _isChecking = false);
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text('Error validating phone number: $e')),

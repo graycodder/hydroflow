@@ -1,11 +1,11 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 
-class HydroFlowLoader extends StatelessWidget {
+class WaterMemoLoader extends StatelessWidget {
   final String? message;
   final bool isOverlay;
 
-  const HydroFlowLoader({
+  const WaterMemoLoader({
     super.key,
     this.message,
     this.isOverlay = true,
@@ -85,7 +85,7 @@ class HydroFlowLoader extends StatelessWidget {
       builder: (dialogContext) {
         // Capture the route to allow reliable removal
         _currentRoute = ModalRoute.of(dialogContext);
-        return HydroFlowLoader(message: message);
+        return WaterMemoLoader(message: message);
       },
     ).then((_) {
       _isShowing = false;
@@ -122,7 +122,7 @@ class HydroFlowLoader extends StatelessWidget {
         });
       }
     } catch (e) {
-      debugPrint('HydroFlowLoader.hide error: $e');
+      debugPrint('WaterMemoLoader.hide error: $e');
       _isShowing = false;
     }
   }

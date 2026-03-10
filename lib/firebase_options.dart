@@ -8,7 +8,7 @@ import 'package:flutter/foundation.dart'
 ///
 /// Example:
 /// ```dart
-/// import 'package:hydroflow/firebase_options.dart';
+/// import 'package:watermemo/firebase_options.dart';
 /// // ...
 /// await Firebase.initializeApp(
 ///   options: DefaultFirebaseOptions.currentPlatform,
@@ -47,19 +47,19 @@ class DefaultFirebaseOptions {
     apiKey: 'AIzaSyCaNiCN7XGcc7O0kYUKDB3ABAAlsvkJc6k',
     appId: '1:641167599347:web:mockid',
     messagingSenderId: '641167599347',
-    projectId: 'hydroflow-45d4c',
-    authDomain: 'hydroflow-45d4c.firebaseapp.com',
-    storageBucket: 'hydroflow-45d4c.firebasestorage.app',
-    databaseURL: 'https://hydroflow-45d4c-default-rtdb.firebaseio.com',
+    projectId: 'watermemo-45d4c',
+    authDomain: 'watermemo-45d4c.firebaseapp.com',
+    storageBucket: 'watermemo-45d4c.firebasestorage.app',
+    databaseURL: 'https://watermemo-45d4c-default-rtdb.firebaseio.com',
   );
 
   static const FirebaseOptions android = FirebaseOptions(
     apiKey: 'AIzaSyCaNiCN7XGcc7O0kYUKDB3ABAAlsvkJc6k',
     appId: '1:641167599347:android:4548feedf758d04b2ef986',
     messagingSenderId: '641167599347',
-    projectId: 'hydroflow-45d4c',
-    storageBucket: 'hydroflow-45d4c.firebasestorage.app',
-    databaseURL: 'https://hydroflow-45d4c-default-rtdb.firebaseio.com',
+    projectId: 'watermemo-45d4c',
+    storageBucket: 'watermemo-45d4c.firebasestorage.app',
+    databaseURL: 'https://watermemo-45d4c-default-rtdb.firebaseio.com',
   );
 
   static const FirebaseOptions ios = FirebaseOptions(

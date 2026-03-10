@@ -1,10 +1,10 @@
 import 'dart:async';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:hydroflow/features/stock/domain/repositories/inventory_repository.dart';
-import 'package:hydroflow/features/customers/domain/repositories/customer_repository.dart';
-import 'package:hydroflow/features/stock/domain/entities/stock_log.dart';
-import 'package:hydroflow/features/stock/presentation/bloc/stock_event.dart';
-import 'package:hydroflow/features/stock/presentation/bloc/stock_state.dart';
+import 'package:watermemo/features/stock/domain/repositories/inventory_repository.dart';
+import 'package:watermemo/features/customers/domain/repositories/customer_repository.dart';
+import 'package:watermemo/features/stock/domain/entities/stock_log.dart';
+import 'package:watermemo/features/stock/presentation/bloc/stock_event.dart';
+import 'package:watermemo/features/stock/presentation/bloc/stock_state.dart';
 
 class StockBloc extends Bloc<StockEvent, StockState> {
   final InventoryRepository _inventoryRepository;

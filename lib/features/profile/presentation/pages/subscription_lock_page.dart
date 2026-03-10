@@ -1,10 +1,10 @@
-import 'package:hydroflow/features/auth/domain/entities/agency.dart';
+import 'package:watermemo/features/auth/domain/entities/agency.dart';
 import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import 'package:flutter/material.dart';
-import 'package:hydroflow/features/auth/domain/entities/salesman.dart';
-import 'package:hydroflow/features/auth/domain/entities/agency.dart';
+import 'package:watermemo/features/auth/domain/entities/salesman.dart';
+import 'package:watermemo/features/auth/domain/entities/agency.dart';
 
 class SubscriptionLockPage extends StatelessWidget {
   final Salesman salesman;
@@ -75,8 +75,8 @@ class SubscriptionLockPage extends StatelessWidget {
         : (isUserDeactivated 
             ? 'Your access has been disabled by the administrator'
             : (isAgencyExpired 
-                ? 'Your agency\'s HydroFlow access has been suspended'
-                : 'Your HydroFlow access has been suspended'));
+                ? 'Your agency\'s WaterMemo access has been suspended'
+                : 'Your WaterMemo access has been suspended'));
 
     final String holderName = (isAgencyDeactivated || isAgencyExpired) && agency != null
         ? agency!.name
@@ -355,7 +355,7 @@ class SubscriptionLockPage extends StatelessWidget {
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        'HydroFlow • Subscription-based SaaS',
+                        'WaterMemo • Subscription-based SaaS',
                         style: TextStyle(color: Colors.grey[400], fontSize: 10, fontWeight: FontWeight.bold),
                       ),
                     ],

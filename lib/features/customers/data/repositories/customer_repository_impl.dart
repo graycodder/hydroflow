@@ -1,7 +1,7 @@
 import 'package:firebase_database/firebase_database.dart';
-import 'package:hydroflow/features/customers/domain/entities/customer.dart';
-import 'package:hydroflow/features/customers/domain/repositories/customer_repository.dart';
-import 'package:hydroflow/features/customers/data/models/customer_model.dart';
+import 'package:watermemo/features/customers/domain/entities/customer.dart';
+import 'package:watermemo/features/customers/domain/repositories/customer_repository.dart';
+import 'package:watermemo/features/customers/data/models/customer_model.dart';
 import 'package:intl/intl.dart';
 
 class CustomerRepositoryImpl implements CustomerRepository {

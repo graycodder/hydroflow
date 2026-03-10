@@ -2,11 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
-import 'package:hydroflow/features/auth/presentation/bloc/auth_bloc.dart';
-import 'package:hydroflow/features/auth/presentation/bloc/auth_event.dart';
-import 'package:hydroflow/features/auth/presentation/bloc/auth_state.dart';
+import 'package:watermemo/features/auth/presentation/bloc/auth_bloc.dart';
+import 'package:watermemo/features/auth/presentation/bloc/auth_event.dart';
+import 'package:watermemo/features/auth/presentation/bloc/auth_state.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:hydroflow/core/service_locator.dart';
+import 'package:watermemo/core/service_locator.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});

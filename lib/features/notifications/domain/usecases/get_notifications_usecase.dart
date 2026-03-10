@@ -1,5 +1,5 @@
-import 'package:hydroflow/features/notifications/domain/entities/notification_entity.dart';
-import 'package:hydroflow/features/notifications/domain/repositories/notification_repository.dart';
+import 'package:watermemo/features/notifications/domain/entities/notification_entity.dart';
+import 'package:watermemo/features/notifications/domain/repositories/notification_repository.dart';
 
 class GetNotificationsUseCase {
   final NotificationRepository _repository;

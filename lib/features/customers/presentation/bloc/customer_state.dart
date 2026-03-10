@@ -1,5 +1,5 @@
 import 'package:equatable/equatable.dart';
-import 'package:hydroflow/features/customers/domain/entities/customer.dart';
+import 'package:watermemo/features/customers/domain/entities/customer.dart';
 
 enum CustomerStatus { initial, loading, submitting, success, failure }
 

@@ -1,8 +1,8 @@
-import 'package:hydroflow/features/profile/data/datasources/profile_remote_data_source.dart';
-import 'package:hydroflow/features/profile/domain/entities/profile_entity.dart';
-import 'package:hydroflow/features/profile/domain/entities/subscription_record.dart';
-import 'package:hydroflow/features/profile/domain/repositories/profile_repository.dart';
-import 'package:hydroflow/features/auth/domain/entities/agency.dart';
+import 'package:watermemo/features/profile/data/datasources/profile_remote_data_source.dart';
+import 'package:watermemo/features/profile/domain/entities/profile_entity.dart';
+import 'package:watermemo/features/profile/domain/entities/subscription_record.dart';
+import 'package:watermemo/features/profile/domain/repositories/profile_repository.dart';
+import 'package:watermemo/features/auth/domain/entities/agency.dart';
 
 class ProfileRepositoryImpl implements ProfileRepository {
   final ProfileRemoteDataSource _remoteDataSource;

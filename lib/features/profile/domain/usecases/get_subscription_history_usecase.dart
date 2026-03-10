@@ -1,5 +1,5 @@
-import 'package:hydroflow/features/profile/domain/entities/subscription_record.dart';
-import 'package:hydroflow/features/profile/domain/repositories/profile_repository.dart';
+import 'package:watermemo/features/profile/domain/entities/subscription_record.dart';
+import 'package:watermemo/features/profile/domain/repositories/profile_repository.dart';
 
 class GetSubscriptionHistoryUseCase {
   final ProfileRepository repository;

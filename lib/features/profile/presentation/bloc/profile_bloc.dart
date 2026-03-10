@@ -1,13 +1,13 @@
 import 'dart:async';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:equatable/equatable.dart';
-import 'package:hydroflow/features/profile/domain/entities/profile_entity.dart';
-import 'package:hydroflow/features/profile/domain/entities/subscription_record.dart';
-import 'package:hydroflow/features/profile/domain/usecases/get_profile_usecase.dart';
-import 'package:hydroflow/features/profile/domain/usecases/get_subscription_history_usecase.dart';
-import 'package:hydroflow/features/profile/domain/usecases/get_agency_profile_usecase.dart';
-import 'package:hydroflow/features/auth/domain/repositories/agency_repository.dart';
-import 'package:hydroflow/features/auth/domain/entities/agency.dart';
+import 'package:watermemo/features/profile/domain/entities/profile_entity.dart';
+import 'package:watermemo/features/profile/domain/entities/subscription_record.dart';
+import 'package:watermemo/features/profile/domain/usecases/get_profile_usecase.dart';
+import 'package:watermemo/features/profile/domain/usecases/get_subscription_history_usecase.dart';
+import 'package:watermemo/features/profile/domain/usecases/get_agency_profile_usecase.dart';
+import 'package:watermemo/features/auth/domain/repositories/agency_repository.dart';
+import 'package:watermemo/features/auth/domain/entities/agency.dart';
 
 part 'profile_event.dart';
 part 'profile_state.dart';

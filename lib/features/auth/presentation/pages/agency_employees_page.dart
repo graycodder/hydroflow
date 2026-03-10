@@ -1,23 +1,23 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:hydroflow/core/service_locator.dart';
-import 'package:hydroflow/core/widgets/hydro_flow_app_bar.dart';
-import 'package:hydroflow/core/widgets/hydro_flow_loader.dart';
-import 'package:hydroflow/features/auth/domain/entities/agency.dart';
-import 'package:hydroflow/features/auth/domain/entities/salesman.dart';
-import 'package:hydroflow/features/auth/presentation/bloc/agency_bloc.dart';
-import 'package:hydroflow/features/auth/presentation/bloc/agency_event.dart';
-import 'package:hydroflow/features/auth/presentation/bloc/agency_state.dart';
-import 'package:hydroflow/features/auth/presentation/bloc/auth_bloc.dart';
-import 'package:hydroflow/features/auth/presentation/bloc/auth_state.dart';
-import 'package:hydroflow/features/auth/presentation/widgets/add_salesman_dialog.dart';
-import 'package:hydroflow/features/auth/presentation/widgets/edit_salesman_dialog.dart';
-import 'package:hydroflow/features/reports/domain/entities/report_entity.dart';
-import 'package:hydroflow/features/reports/presentation/bloc/reports_bloc.dart';
-import 'package:hydroflow/features/stock/presentation/bloc/stock_bloc.dart';
-import 'package:hydroflow/features/stock/presentation/bloc/stock_event.dart';
-import 'package:hydroflow/features/stock/presentation/bloc/stock_state.dart';
+import 'package:watermemo/core/service_locator.dart';
+import 'package:watermemo/core/widgets/hydro_flow_app_bar.dart';
+import 'package:watermemo/core/widgets/hydro_flow_loader.dart';
+import 'package:watermemo/features/auth/domain/entities/agency.dart';
+import 'package:watermemo/features/auth/domain/entities/salesman.dart';
+import 'package:watermemo/features/auth/presentation/bloc/agency_bloc.dart';
+import 'package:watermemo/features/auth/presentation/bloc/agency_event.dart';
+import 'package:watermemo/features/auth/presentation/bloc/agency_state.dart';
+import 'package:watermemo/features/auth/presentation/bloc/auth_bloc.dart';
+import 'package:watermemo/features/auth/presentation/bloc/auth_state.dart';
+import 'package:watermemo/features/auth/presentation/widgets/add_salesman_dialog.dart';
+import 'package:watermemo/features/auth/presentation/widgets/edit_salesman_dialog.dart';
+import 'package:watermemo/features/reports/domain/entities/report_entity.dart';
+import 'package:watermemo/features/reports/presentation/bloc/reports_bloc.dart';
+import 'package:watermemo/features/stock/presentation/bloc/stock_bloc.dart';
+import 'package:watermemo/features/stock/presentation/bloc/stock_event.dart';
+import 'package:watermemo/features/stock/presentation/bloc/stock_state.dart';
 import 'package:intl/intl.dart';
 
 // ─── Colour palette ────────────────────────────────────────────────────────
@@ -60,7 +60,7 @@ class AgencyEmployeesPage extends StatelessWidget {
       ],
       child: Scaffold(
         backgroundColor: _kBg,
-        appBar: const HydroFlowAppBar(
+        appBar: const WaterMemoAppBar(
           showProfile: false,
           showNotifications: false,
         ),
@@ -79,7 +79,7 @@ class AgencyEmployeesPage extends StatelessWidget {
           },
           builder: (context, state) {
             if (state is AgencyLoading) {
-              return const HydroFlowLoader(
+              return const WaterMemoLoader(
                   message: 'Loading Staff...', isOverlay: false);
             }
 
@@ -222,9 +222,9 @@ class AgencyEmployeesPage extends StatelessWidget {
           child: BlocConsumer<StockBloc, StockState>(
             listener: (ctx, state) {
               if (state is StockActionLoading) {
-                HydroFlowLoader.show(ctx, message: 'Processing...');
+                WaterMemoLoader.show(ctx, message: 'Processing...');
               } else if (state is StockActionSuccess) {
-                HydroFlowLoader.hide(ctx);
+                WaterMemoLoader.hide(ctx);
                 ctx
                     .read<AgencyBloc>()
                     .add(LoadAgencySalesmen(salesman.agencyId));
@@ -232,7 +232,7 @@ class AgencyEmployeesPage extends StatelessWidget {
                 ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(content: Text(state.message)));
               } else if (state is StockFailure) {
-                HydroFlowLoader.hide(ctx);
+                WaterMemoLoader.hide(ctx);
                 ScaffoldMessenger.of(context).showSnackBar(SnackBar(
                     content: Text(state.error),
                     backgroundColor: Colors.red));

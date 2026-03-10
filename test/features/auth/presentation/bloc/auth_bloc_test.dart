@@ -2,13 +2,13 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:bloc_test/bloc_test.dart';
 import 'package:mockito/mockito.dart';
 import 'package:mockito/annotations.dart';
-import 'package:hydroflow/features/auth/presentation/bloc/auth_bloc.dart';
-import 'package:hydroflow/features/auth/presentation/bloc/auth_event.dart';
-import 'package:hydroflow/features/auth/presentation/bloc/auth_state.dart';
-import 'package:hydroflow/features/auth/domain/repositories/auth_repository.dart';
-import 'package:hydroflow/features/auth/domain/repositories/agency_repository.dart';
-import 'package:hydroflow/features/auth/domain/entities/salesman.dart';
-import 'package:hydroflow/features/auth/domain/entities/agency.dart';
+import 'package:watermemo/features/auth/presentation/bloc/auth_bloc.dart';
+import 'package:watermemo/features/auth/presentation/bloc/auth_event.dart';
+import 'package:watermemo/features/auth/presentation/bloc/auth_state.dart';
+import 'package:watermemo/features/auth/domain/repositories/auth_repository.dart';
+import 'package:watermemo/features/auth/domain/repositories/agency_repository.dart';
+import 'package:watermemo/features/auth/domain/entities/salesman.dart';
+import 'package:watermemo/features/auth/domain/entities/agency.dart';
 
 @GenerateMocks([AuthRepository, AgencyRepository])
 import 'auth_bloc_test.mocks.dart';

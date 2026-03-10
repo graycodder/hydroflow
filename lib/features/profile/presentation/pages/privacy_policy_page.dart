@@ -41,7 +41,7 @@ class PrivacyPolicyPage extends StatelessWidget {
             ),
             _buildSection(
               '2. Data Usage',
-              'The collected data is used exclusively for functional purposes: generating bills, tracking inventory, managing customer records, and facilitating distribution workflow within the HydroFlow app.',
+              'The collected data is used exclusively for functional purposes: generating bills, tracking inventory, managing customer records, and facilitating distribution workflow within the WaterMemo app.',
             ),
             _buildSection(
               '3. Third-Party Services (Security)',
@@ -66,7 +66,7 @@ class PrivacyPolicyPage extends StatelessWidget {
             const SizedBox(height: 40),
             Center(
               child: Text(
-                '© 2026 HydroFlow. All rights reserved.',
+                '© 2026 WaterMemo. All rights reserved.',
                 style: TextStyle(color: Colors.grey[600], fontSize: 12),
               ),
             ),

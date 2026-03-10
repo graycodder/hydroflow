@@ -1,9 +1,9 @@
 import 'dart:async';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:hydroflow/features/transactions/domain/entities/transaction_entity.dart';
-import 'package:hydroflow/features/transactions/domain/usecases/get_customer_transactions_usecase.dart';
-import 'package:hydroflow/features/transactions/presentation/bloc/customer_transactions_event.dart';
-import 'package:hydroflow/features/transactions/presentation/bloc/customer_transactions_state.dart';
+import 'package:watermemo/features/transactions/domain/entities/transaction_entity.dart';
+import 'package:watermemo/features/transactions/domain/usecases/get_customer_transactions_usecase.dart';
+import 'package:watermemo/features/transactions/presentation/bloc/customer_transactions_event.dart';
+import 'package:watermemo/features/transactions/presentation/bloc/customer_transactions_state.dart';
 
 class CustomerTransactionsBloc extends Bloc<CustomerTransactionsEvent, CustomerTransactionsState> {
   final GetCustomerTransactionsUseCase _getCustomerTransactionsUseCase;

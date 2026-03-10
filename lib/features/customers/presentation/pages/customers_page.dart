@@ -1,24 +1,24 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:hydroflow/core/service_locator.dart';
-import 'package:hydroflow/core/widgets/app_bottom_bar.dart';
-import 'package:hydroflow/features/auth/presentation/bloc/auth_bloc.dart';
-import 'package:hydroflow/features/auth/presentation/bloc/auth_state.dart';
-import 'package:hydroflow/features/customers/presentation/bloc/customer_bloc.dart';
-import 'package:hydroflow/features/customers/presentation/bloc/customer_event.dart';
-import 'package:hydroflow/features/customers/presentation/bloc/customer_state.dart';
-import 'package:hydroflow/features/auth/presentation/bloc/agency_bloc.dart';
-import 'package:hydroflow/features/auth/presentation/bloc/agency_state.dart';
-import 'package:hydroflow/features/auth/presentation/bloc/agency_event.dart';
-import 'package:hydroflow/features/customers/presentation/widgets/customer_details_dialog.dart';
-import 'package:hydroflow/features/customers/presentation/widgets/add_customer_dialog.dart';
-import 'package:hydroflow/core/widgets/hydro_flow_app_bar.dart';
-import 'package:hydroflow/features/customers/presentation/widgets/pending_balance_adjustment_dialog.dart';
-import 'package:hydroflow/features/customers/presentation/widgets/bottle_balance_adjustment_dialog.dart';
-import 'package:hydroflow/core/widgets/hydro_flow_loader.dart';
+import 'package:watermemo/core/service_locator.dart';
+import 'package:watermemo/core/widgets/app_bottom_bar.dart';
+import 'package:watermemo/features/auth/presentation/bloc/auth_bloc.dart';
+import 'package:watermemo/features/auth/presentation/bloc/auth_state.dart';
+import 'package:watermemo/features/customers/presentation/bloc/customer_bloc.dart';
+import 'package:watermemo/features/customers/presentation/bloc/customer_event.dart';
+import 'package:watermemo/features/customers/presentation/bloc/customer_state.dart';
+import 'package:watermemo/features/auth/presentation/bloc/agency_bloc.dart';
+import 'package:watermemo/features/auth/presentation/bloc/agency_state.dart';
+import 'package:watermemo/features/auth/presentation/bloc/agency_event.dart';
+import 'package:watermemo/features/customers/presentation/widgets/customer_details_dialog.dart';
+import 'package:watermemo/features/customers/presentation/widgets/add_customer_dialog.dart';
+import 'package:watermemo/core/widgets/hydro_flow_app_bar.dart';
+import 'package:watermemo/features/customers/presentation/widgets/pending_balance_adjustment_dialog.dart';
+import 'package:watermemo/features/customers/presentation/widgets/bottle_balance_adjustment_dialog.dart';
+import 'package:watermemo/core/widgets/hydro_flow_loader.dart';
 import 'package:dropdown_search/dropdown_search.dart';
-import 'package:hydroflow/features/auth/domain/entities/salesman.dart';
+import 'package:watermemo/features/auth/domain/entities/salesman.dart';
 
 
 class CustomersPage extends StatefulWidget {
@@ -76,13 +76,13 @@ class _CustomersPageState extends State<CustomersPage> {
           
           return Scaffold(
               backgroundColor: Colors.grey[50], 
-              appBar: const HydroFlowAppBar(),
+              appBar: const WaterMemoAppBar(),
               body: isSwitchingView 
-                ? const HydroFlowLoader(message: 'Switching View...', isOverlay: false)
+                ? const WaterMemoLoader(message: 'Switching View...', isOverlay: false)
                 : BlocBuilder<CustomerBloc, CustomerState>(
                   builder: (context, state) {
                     if (state.status == CustomerStatus.loading) {
-                      return const HydroFlowLoader(message: 'Loading Customers...', isOverlay: false);
+                      return const WaterMemoLoader(message: 'Loading Customers...', isOverlay: false);
                     }
                     
                     final isAgency = state.isAgencyView;
@@ -327,7 +327,7 @@ class _CustomersPageState extends State<CustomersPage> {
                 bottomNavigationBar: const AppBottomBar(currentIndex: 3),
               );
         }
-        return const Scaffold(body: HydroFlowLoader(message: 'Authenticating...', isOverlay: false));
+        return const Scaffold(body: WaterMemoLoader(message: 'Authenticating...', isOverlay: false));
       },
     );
   }

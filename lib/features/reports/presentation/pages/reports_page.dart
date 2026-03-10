@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:hydroflow/core/service_locator.dart';
-import 'package:hydroflow/features/auth/presentation/bloc/auth_bloc.dart';
-import 'package:hydroflow/features/auth/presentation/bloc/auth_state.dart';
-import 'package:hydroflow/features/reports/presentation/bloc/reports_bloc.dart';
-import 'package:hydroflow/core/widgets/app_bottom_bar.dart';
-import 'package:hydroflow/core/widgets/hydro_flow_app_bar.dart';
-import 'package:hydroflow/core/widgets/hydro_flow_loader.dart';
+import 'package:watermemo/core/service_locator.dart';
+import 'package:watermemo/features/auth/presentation/bloc/auth_bloc.dart';
+import 'package:watermemo/features/auth/presentation/bloc/auth_state.dart';
+import 'package:watermemo/features/reports/presentation/bloc/reports_bloc.dart';
+import 'package:watermemo/core/widgets/app_bottom_bar.dart';
+import 'package:watermemo/core/widgets/hydro_flow_app_bar.dart';
+import 'package:watermemo/core/widgets/hydro_flow_loader.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../widgets/daily_report_view.dart';
 import '../widgets/monthly_report_view.dart';
@@ -70,9 +70,9 @@ class _ReportsPageState extends State<ReportsPage> {
 
           return Scaffold(
             backgroundColor: Colors.white,
-            appBar: const HydroFlowAppBar(),
+            appBar: const WaterMemoAppBar(),
             body: isSwitchingView 
-              ? const Center(child: HydroFlowLoader(message: 'Switching View...', isOverlay: false))
+              ? const Center(child: WaterMemoLoader(message: 'Switching View...', isOverlay: false))
               : Column(
                   children: [
                     _buildTopTabs(context, id, isAgency),
@@ -80,7 +80,7 @@ class _ReportsPageState extends State<ReportsPage> {
                       child: BlocBuilder<ReportsBloc, ReportsState>(
                         builder: (context, state) {
                           if (state is ReportsLoading) {
-                            return const HydroFlowLoader(isOverlay: false);
+                            return const WaterMemoLoader(isOverlay: false);
                           } else if (state is ReportsFailure) {
                             return Center(child: Text('Error: ${state.message}'));
                           } else if (state is ReportsLoaded) {

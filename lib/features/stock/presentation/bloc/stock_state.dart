@@ -1,5 +1,5 @@
 import 'package:equatable/equatable.dart';
-import 'package:hydroflow/features/stock/domain/entities/stock_log.dart';
+import 'package:watermemo/features/stock/domain/entities/stock_log.dart';
 
 abstract class StockState extends Equatable {
   final StockLog? todayLog;

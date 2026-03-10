@@ -1,7 +1,7 @@
 import 'package:firebase_database/firebase_database.dart';
-import 'package:hydroflow/features/stock/domain/repositories/inventory_repository.dart';
-import 'package:hydroflow/features/stock/domain/entities/stock_log.dart';
-import 'package:hydroflow/features/stock/data/models/stock_log_model.dart';
+import 'package:watermemo/features/stock/domain/repositories/inventory_repository.dart';
+import 'package:watermemo/features/stock/domain/entities/stock_log.dart';
+import 'package:watermemo/features/stock/data/models/stock_log_model.dart';
 
 class InventoryRepositoryImpl implements InventoryRepository {
   final FirebaseDatabase _database;

@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:hydroflow/features/customers/domain/entities/customer.dart';
-import 'package:hydroflow/features/customers/presentation/bloc/customer_bloc.dart';
-import 'package:hydroflow/core/widgets/hydro_flow_loader.dart';
-import 'package:hydroflow/features/transactions/domain/entities/transaction_entity.dart';
-import 'package:hydroflow/features/transactions/domain/repositories/transaction_repository.dart';
-import 'package:hydroflow/core/service_locator.dart' as di;
+import 'package:watermemo/features/customers/domain/entities/customer.dart';
+import 'package:watermemo/features/customers/presentation/bloc/customer_bloc.dart';
+import 'package:watermemo/core/widgets/hydro_flow_loader.dart';
+import 'package:watermemo/features/transactions/domain/entities/transaction_entity.dart';
+import 'package:watermemo/features/transactions/domain/repositories/transaction_repository.dart';
+import 'package:watermemo/core/service_locator.dart' as di;
 
 class PendingBalanceAdjustmentDialog extends StatefulWidget {
   final Customer customer;
@@ -276,7 +276,7 @@ class _PendingBalanceAdjustmentDialogState
                   });
 
                   try {
-                    HydroFlowLoader.show(
+                    WaterMemoLoader.show(
                       context,
                       message: 'Processing Payment...',
                     );
@@ -298,12 +298,12 @@ class _PendingBalanceAdjustmentDialogState
                     await di.sl<TransactionRepository>().recordTransaction(tx);
 
                     if (mounted) {
-                      HydroFlowLoader.hide(context);
+                      WaterMemoLoader.hide(context);
                       Navigator.of(context).pop(); // Close dialog
                     }
                   } catch (e) {
                     if (mounted) {
-                      HydroFlowLoader.hide(context);
+                      WaterMemoLoader.hide(context);
                       setState(() {
                         _isSubmitting = false;
                       });

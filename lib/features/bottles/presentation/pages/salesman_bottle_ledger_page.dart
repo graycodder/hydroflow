@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:hydroflow/core/widgets/app_bottom_bar.dart';
-import 'package:hydroflow/features/auth/presentation/bloc/auth_bloc.dart';
-import 'package:hydroflow/features/auth/presentation/bloc/auth_state.dart';
-import 'package:hydroflow/features/bottles/presentation/bloc/bottle_bloc.dart';
-import 'package:hydroflow/features/bottles/presentation/bloc/bottle_event.dart';
-import 'package:hydroflow/features/bottles/presentation/bloc/bottle_state.dart';
-import 'package:hydroflow/core/widgets/hydro_flow_app_bar.dart';
-import 'package:hydroflow/core/widgets/hydro_flow_loader.dart';
-import 'package:hydroflow/features/bottles/domain/entities/salesman_bottle_ledger_stats.dart';
+import 'package:watermemo/core/widgets/app_bottom_bar.dart';
+import 'package:watermemo/features/auth/presentation/bloc/auth_bloc.dart';
+import 'package:watermemo/features/auth/presentation/bloc/auth_state.dart';
+import 'package:watermemo/features/bottles/presentation/bloc/bottle_bloc.dart';
+import 'package:watermemo/features/bottles/presentation/bloc/bottle_event.dart';
+import 'package:watermemo/features/bottles/presentation/bloc/bottle_state.dart';
+import 'package:watermemo/core/widgets/hydro_flow_app_bar.dart';
+import 'package:watermemo/core/widgets/hydro_flow_loader.dart';
+import 'package:watermemo/features/bottles/domain/entities/salesman_bottle_ledger_stats.dart';
 
 class SalesmanBottleLedgerPage extends StatefulWidget {
   const SalesmanBottleLedgerPage({super.key});
@@ -43,16 +43,16 @@ class _SalesmanBottleLedgerPageState extends State<SalesmanBottleLedgerPage> wit
     return BlocBuilder<AuthBloc, AuthState>(
       builder: (context, authState) {
         if (authState is! AuthAuthenticated) {
-          return const Scaffold(body: HydroFlowLoader(isOverlay: false));
+          return const Scaffold(body: WaterMemoLoader(isOverlay: false));
         }
 
         return Scaffold(
           backgroundColor: Colors.grey[50],
-          appBar: const HydroFlowAppBar(),
+          appBar: const WaterMemoAppBar(),
           body: BlocBuilder<BottleBloc, BottleState>(
             builder: (context, state) {
               if (state is BottleLoading || state is BottleInitial) {
-                return const HydroFlowLoader(isOverlay: false);
+                return const WaterMemoLoader(isOverlay: false);
               } else if (state is BottleFailure) {
                 return Center(child: Text('Error: ${state.error}'));
               } else if (state is SalesmanBottleLoaded) {

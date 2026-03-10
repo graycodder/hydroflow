@@ -1,4 +1,4 @@
-import 'package:hydroflow/features/notifications/domain/repositories/notification_repository.dart';
+import 'package:watermemo/features/notifications/domain/repositories/notification_repository.dart';
 
 class MarkNotificationReadUseCase {
   final NotificationRepository _repository;

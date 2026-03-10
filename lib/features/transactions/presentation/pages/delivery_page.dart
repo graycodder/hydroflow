@@ -3,23 +3,23 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:uuid/uuid.dart';
-import 'package:hydroflow/core/widgets/app_bottom_bar.dart';
-import 'package:hydroflow/core/widgets/hydro_flow_app_bar.dart';
+import 'package:watermemo/core/widgets/app_bottom_bar.dart';
+import 'package:watermemo/core/widgets/hydro_flow_app_bar.dart';
 import 'package:dropdown_search/dropdown_search.dart';
-import 'package:hydroflow/features/auth/presentation/bloc/auth_bloc.dart';
-import 'package:hydroflow/features/auth/presentation/bloc/auth_state.dart';
-import 'package:hydroflow/features/customers/domain/entities/customer.dart';
-import 'package:hydroflow/features/transactions/domain/entities/transaction_entity.dart';
-import 'package:hydroflow/features/transactions/presentation/bloc/delivery_bloc.dart';
-import 'package:hydroflow/features/transactions/presentation/bloc/delivery_event.dart';
-import 'package:hydroflow/features/transactions/presentation/bloc/delivery_state.dart';
-import 'package:hydroflow/core/widgets/hydro_flow_loader.dart';
-import 'package:hydroflow/features/transactions/presentation/widgets/transaction_receipt_dialog.dart';
-import 'package:hydroflow/features/auth/presentation/bloc/agency_bloc.dart';
-import 'package:hydroflow/features/auth/presentation/bloc/agency_state.dart';
-import 'package:hydroflow/features/auth/presentation/bloc/agency_event.dart';
-import 'package:hydroflow/features/auth/domain/entities/salesman.dart';
-import 'package:hydroflow/core/service_locator.dart';
+import 'package:watermemo/features/auth/presentation/bloc/auth_bloc.dart';
+import 'package:watermemo/features/auth/presentation/bloc/auth_state.dart';
+import 'package:watermemo/features/customers/domain/entities/customer.dart';
+import 'package:watermemo/features/transactions/domain/entities/transaction_entity.dart';
+import 'package:watermemo/features/transactions/presentation/bloc/delivery_bloc.dart';
+import 'package:watermemo/features/transactions/presentation/bloc/delivery_event.dart';
+import 'package:watermemo/features/transactions/presentation/bloc/delivery_state.dart';
+import 'package:watermemo/core/widgets/hydro_flow_loader.dart';
+import 'package:watermemo/features/transactions/presentation/widgets/transaction_receipt_dialog.dart';
+import 'package:watermemo/features/auth/presentation/bloc/agency_bloc.dart';
+import 'package:watermemo/features/auth/presentation/bloc/agency_state.dart';
+import 'package:watermemo/features/auth/presentation/bloc/agency_event.dart';
+import 'package:watermemo/features/auth/domain/entities/salesman.dart';
+import 'package:watermemo/core/service_locator.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class DeliveryPage extends StatelessWidget {
@@ -37,7 +37,7 @@ class DeliveryPage extends StatelessWidget {
     }
     return const Scaffold(
       body: Center(
-        child: HydroFlowLoader(message: 'Authenticating...', isOverlay: false),
+        child: WaterMemoLoader(message: 'Authenticating...', isOverlay: false),
       ),
     );
   }
@@ -137,9 +137,9 @@ class _DeliveryViewState extends State<DeliveryView> {
           if (state.status == DeliveryStatus.submitting) {
             FocusScope.of(context).unfocus();
             FocusManager.instance.primaryFocus?.unfocus();
-            HydroFlowLoader.show(context, message: 'Submitting Transaction...');
+            WaterMemoLoader.show(context, message: 'Submitting Transaction...');
           } else if (state.status == DeliveryStatus.submissionSuccess) {
-            HydroFlowLoader.hide(context);
+            WaterMemoLoader.hide(context);
             _amountReceivedController.clear();
             FocusScope.of(context).unfocus();
             
@@ -170,7 +170,7 @@ class _DeliveryViewState extends State<DeliveryView> {
                     transaction: tx,
                     customer: customer,
                     salesmanName: (context.read<AuthBloc>().state as AuthAuthenticated).salesman.displayName,
-                    agencyName: (context.read<AuthBloc>().state as AuthAuthenticated).salesman.agencyName ?? 'HydroFlow Agency',
+                    agencyName: (context.read<AuthBloc>().state as AuthAuthenticated).salesman.agencyName ?? 'WaterMemo Agency',
                   ),
                 );
               }
@@ -178,7 +178,7 @@ class _DeliveryViewState extends State<DeliveryView> {
               context.read<DeliveryBloc>().add(ResetDeliveryStatus());
             });
           } else if (state.status == DeliveryStatus.failure) {
-            HydroFlowLoader.hide(context);
+            WaterMemoLoader.hide(context);
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(content: Text(state.errorMessage ?? 'An error occurred')),
             );
@@ -209,9 +209,9 @@ class _DeliveryViewState extends State<DeliveryView> {
           Widget content;
 
           if (isSwitchingView) {
-            content = const Center(child: HydroFlowLoader(message: 'Switching View...', isOverlay: false));
+            content = const Center(child: WaterMemoLoader(message: 'Switching View...', isOverlay: false));
           } else if (state.status == DeliveryStatus.loading) {
-            content = const Center(child: HydroFlowLoader(message: 'Syncing Delivery Data...', isOverlay: false));
+            content = const Center(child: WaterMemoLoader(message: 'Syncing Delivery Data...', isOverlay: false));
           } else {
             content = SingleChildScrollView(
               padding: const EdgeInsets.all(16.0),
@@ -327,7 +327,7 @@ class _DeliveryViewState extends State<DeliveryView> {
 
           return Scaffold(
             backgroundColor: Colors.grey[50],
-            appBar: const HydroFlowAppBar(),
+            appBar: const WaterMemoAppBar(),
             body: content,
             bottomNavigationBar: const AppBottomBar(currentIndex: 4),
           );

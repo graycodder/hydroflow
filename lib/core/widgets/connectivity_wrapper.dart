@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:hydroflow/core/bloc/connectivity/connectivity_bloc.dart';
-import 'package:hydroflow/core/bloc/connectivity/connectivity_state.dart';
+import 'package:watermemo/core/bloc/connectivity/connectivity_bloc.dart';
+import 'package:watermemo/core/bloc/connectivity/connectivity_state.dart';
 
 class ConnectivityWrapper extends StatelessWidget {
   final Widget child;

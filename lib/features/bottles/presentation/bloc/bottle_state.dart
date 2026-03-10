@@ -1,6 +1,6 @@
 import 'package:equatable/equatable.dart';
-import 'package:hydroflow/features/customers/domain/entities/customer.dart';
-import 'package:hydroflow/features/auth/domain/entities/salesman.dart';
+import 'package:watermemo/features/customers/domain/entities/customer.dart';
+import 'package:watermemo/features/auth/domain/entities/salesman.dart';
 
 class BottleState extends Equatable {
   final bool isAgencyView;

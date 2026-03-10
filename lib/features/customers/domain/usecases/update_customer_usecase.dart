@@ -1,5 +1,5 @@
-import 'package:hydroflow/features/customers/domain/entities/customer.dart';
-import 'package:hydroflow/features/customers/domain/repositories/customer_repository.dart';
+import 'package:watermemo/features/customers/domain/entities/customer.dart';
+import 'package:watermemo/features/customers/domain/repositories/customer_repository.dart';
 
 class UpdateCustomerUseCase {
   final CustomerRepository repository;

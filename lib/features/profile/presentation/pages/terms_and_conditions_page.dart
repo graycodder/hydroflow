@@ -37,11 +37,11 @@ class TermsAndConditionsPage extends StatelessWidget {
             const SizedBox(height: 24),
             _buildSection(
               '1. Scope of Service',
-              'HydroFlow is a Software-as-a-Service (SaaS) management platform designed to facilitate business operations for water distribution agencies. The Service provides digital tools for record-keeping, billing, inventory monitoring, and customer management.\n\nHydroFlow is strictly a technology provider and does not function as a water utility, supplier, or distributor. All physical commodities, including water products, containers, and dispensing equipment, are provided and managed solely by independent water distribution agencies ("Distributors") who utilize this platform.',
+              'WaterMemo is a Software-as-a-Service (SaaS) management platform designed to facilitate business operations for water distribution agencies. The Service provides digital tools for record-keeping, billing, inventory monitoring, and customer management.\n\nWaterMemo is strictly a technology provider and does not function as a water utility, supplier, or distributor. All physical commodities, including water products, containers, and dispensing equipment, are provided and managed solely by independent water distribution agencies ("Distributors") who utilize this platform.',
             ),
             _buildSection(
               '2. Limitation of Liability',
-              'Product & Service Quality: The Distributor bears exclusive responsibility for the quality, safety, purity, and regulatory compliance of all water products delivered. Any disputes regarding health concerns, contamination, or delivery discrepancies must be addressed directly with the Distributor.\n\nLegal Protection: By utilizing the Service, Users and Consumers acknowledge and agree that HydroFlow, its developers, and affiliates shall be held harmless from any claims, damages, or legal disputes arising from the physical services or products provided by the independent Distributor.',
+              'Product & Service Quality: The Distributor bears exclusive responsibility for the quality, safety, purity, and regulatory compliance of all water products delivered. Any disputes regarding health concerns, contamination, or delivery discrepancies must be addressed directly with the Distributor.\n\nLegal Protection: By utilizing the Service, Users and Consumers acknowledge and agree that WaterMemo, its developers, and affiliates shall be held harmless from any claims, damages, or legal disputes arising from the physical services or products provided by the independent Distributor.',
             ),
             _buildSection(
               '3. Subscription & Usage Policy',
@@ -49,7 +49,7 @@ class TermsAndConditionsPage extends StatelessWidget {
             ),
             _buildSection(
               '4. Privacy & Data Security',
-              'Infrastructure: We utilize secure cloud infrastructure (Firebase by Google Cloud) for data storage.\n\nTechnical Responsibility: HydroFlow is not responsible for data loss due to user negligence, such as clearing local app cache or uninstalling the application before a successful cloud synchronization has occurred in offline mode.',
+              'Infrastructure: We utilize secure cloud infrastructure (Firebase by Google Cloud) for data storage.\n\nTechnical Responsibility: WaterMemo is not responsible for data loss due to user negligence, such as clearing local app cache or uninstalling the application before a successful cloud synchronization has occurred in offline mode.',
             ),
             _buildSection(
               '5. Fees, Refund & Cancellation',
@@ -66,7 +66,7 @@ class TermsAndConditionsPage extends StatelessWidget {
             const SizedBox(height: 40),
             Center(
               child: Text(
-                '© 2026 HydroFlow. All rights reserved.',
+                '© 2026 WaterMemo. All rights reserved.',
                 style: TextStyle(color: Colors.grey[600], fontSize: 12),
               ),
             ),

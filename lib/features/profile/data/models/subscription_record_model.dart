@@ -1,4 +1,4 @@
-import 'package:hydroflow/features/profile/domain/entities/subscription_record.dart';
+import 'package:watermemo/features/profile/domain/entities/subscription_record.dart';
 
 class SubscriptionRecordModel extends SubscriptionRecord {
   const SubscriptionRecordModel({

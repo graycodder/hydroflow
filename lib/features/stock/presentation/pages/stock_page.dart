@@ -3,16 +3,16 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:shared_preferences/shared_preferences.dart'; // Added import
 import 'package:go_router/go_router.dart';
-import 'package:hydroflow/features/auth/presentation/bloc/auth_bloc.dart';
-import 'package:hydroflow/features/auth/presentation/bloc/auth_state.dart';
-import 'package:hydroflow/core/widgets/app_bottom_bar.dart';
-import 'package:hydroflow/core/service_locator.dart';
-import 'package:hydroflow/features/stock/presentation/bloc/stock_bloc.dart';
-import 'package:hydroflow/features/stock/presentation/bloc/stock_event.dart';
-import 'package:hydroflow/features/stock/presentation/bloc/stock_state.dart';
-import 'package:hydroflow/core/widgets/hydro_flow_app_bar.dart';
-import 'package:hydroflow/core/widgets/hydro_flow_loader.dart';
-import 'package:hydroflow/features/auth/domain/entities/salesman.dart';
+import 'package:watermemo/features/auth/presentation/bloc/auth_bloc.dart';
+import 'package:watermemo/features/auth/presentation/bloc/auth_state.dart';
+import 'package:watermemo/core/widgets/app_bottom_bar.dart';
+import 'package:watermemo/core/service_locator.dart';
+import 'package:watermemo/features/stock/presentation/bloc/stock_bloc.dart';
+import 'package:watermemo/features/stock/presentation/bloc/stock_event.dart';
+import 'package:watermemo/features/stock/presentation/bloc/stock_state.dart';
+import 'package:watermemo/core/widgets/hydro_flow_app_bar.dart';
+import 'package:watermemo/core/widgets/hydro_flow_loader.dart';
+import 'package:watermemo/features/auth/domain/entities/salesman.dart';
 
 class StockPage extends StatefulWidget {
   const StockPage({super.key});
@@ -64,9 +64,9 @@ class _StockPageState extends State<StockPage> {
         listener: (context, state) {
           if (state is StockActionLoading) {
             FocusManager.instance.primaryFocus?.unfocus();
-            HydroFlowLoader.show(context, message: 'Updating Stock...');
+            WaterMemoLoader.show(context, message: 'Updating Stock...');
           } else if (state is StockActionSuccess) {
-            HydroFlowLoader.hide(context);
+            WaterMemoLoader.hide(context);
             FocusManager.instance.primaryFocus?.unfocus();
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(content: Text(state.message), backgroundColor: Colors.green),
@@ -79,7 +79,7 @@ class _StockPageState extends State<StockPage> {
               _isRefillExpanded = false;
             });
           } else if (state is StockFailure) {
-            HydroFlowLoader.hide(context);
+            WaterMemoLoader.hide(context);
             FocusManager.instance.primaryFocus?.unfocus();
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(content: Text(state.error), backgroundColor: Colors.red),
@@ -123,13 +123,13 @@ class _StockPageState extends State<StockPage> {
 
               return Scaffold(
                 backgroundColor: Colors.grey[50],
-                appBar: const HydroFlowAppBar(),
+                appBar: const WaterMemoAppBar(),
                 body: isSwitchingView 
-                    ? const Center(child: HydroFlowLoader(message: 'Switching View...', isOverlay: false))
+                    ? const Center(child: WaterMemoLoader(message: 'Switching View...', isOverlay: false))
                     : BlocBuilder<StockBloc, StockState>(
                         builder: (context, state) {
                           if (state is StockInitial || state is StockLoading) {
-                             return const Center(child: HydroFlowLoader(message: 'Fetching Stock...', isOverlay: false));
+                             return const Center(child: WaterMemoLoader(message: 'Fetching Stock...', isOverlay: false));
                           }
 
                     // Determine current stock to display
@@ -1002,7 +1002,7 @@ class _StockPageState extends State<StockPage> {
               );
             }
             return const Scaffold(
-              body: Center(child: HydroFlowLoader(message: '', isOverlay: false)),
+              body: Center(child: WaterMemoLoader(message: '', isOverlay: false)),
             );
           },
         ),

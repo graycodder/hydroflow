@@ -1,4 +1,4 @@
-import 'package:hydroflow/features/stock/domain/entities/stock_log.dart';
+import 'package:watermemo/features/stock/domain/entities/stock_log.dart';
 
 class StockLogModel extends StockLog {
   const StockLogModel({

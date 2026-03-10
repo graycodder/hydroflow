@@ -1,4 +1,4 @@
-import 'package:hydroflow/features/reports/domain/entities/report_entity.dart';
+import 'package:watermemo/features/reports/domain/entities/report_entity.dart';
 
 abstract class ReportRepository {
   Stream<ReportEntity> getDailyReport(String salesmanId, DateTime date);

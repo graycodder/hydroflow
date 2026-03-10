@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:hydroflow/features/customers/presentation/bloc/customer_bloc.dart';
-import 'package:hydroflow/features/customers/presentation/bloc/customer_event.dart';
-import 'package:hydroflow/features/customers/presentation/bloc/customer_state.dart';
+import 'package:watermemo/features/customers/presentation/bloc/customer_bloc.dart';
+import 'package:watermemo/features/customers/presentation/bloc/customer_event.dart';
+import 'package:watermemo/features/customers/presentation/bloc/customer_state.dart';
 import 'package:flutter/services.dart';
-import 'package:hydroflow/features/auth/domain/entities/salesman.dart';
-import 'package:hydroflow/features/auth/domain/repositories/agency_repository.dart';
-import 'package:hydroflow/core/service_locator.dart' as di;
-import 'package:hydroflow/core/widgets/hydro_flow_loader.dart';
+import 'package:watermemo/features/auth/domain/entities/salesman.dart';
+import 'package:watermemo/features/auth/domain/repositories/agency_repository.dart';
+import 'package:watermemo/core/service_locator.dart' as di;
+import 'package:watermemo/core/widgets/hydro_flow_loader.dart';
 import 'package:firebase_database/firebase_database.dart';
 
 class AddCustomerDialog extends StatefulWidget {
@@ -120,10 +120,10 @@ class _AddCustomerDialogState extends State<AddCustomerDialog> {
           if (state.status == CustomerStatus.submitting) {
             FocusScope.of(context).unfocus();
             FocusManager.instance.primaryFocus?.unfocus();
-            HydroFlowLoader.show(context, message: 'Adding Customer...');
+            WaterMemoLoader.show(context, message: 'Adding Customer...');
           } else if (state.status == CustomerStatus.failure ||
               (state.status == CustomerStatus.success && state.successMessage != null)) {
-            HydroFlowLoader.hide(context);
+            WaterMemoLoader.hide(context);
             if (state.status == CustomerStatus.success) {
               _isSubmitting = false;
               Navigator.of(context, rootNavigator: true).pop(); // Close add dialog explicitly from root

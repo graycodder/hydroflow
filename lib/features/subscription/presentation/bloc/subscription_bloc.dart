@@ -1,8 +1,8 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:hydroflow/features/subscription/domain/entities/plan.dart';
-import 'package:hydroflow/features/subscription/domain/usecases/get_plans_usecase.dart';
-import 'package:hydroflow/features/subscription/presentation/bloc/subscription_event.dart';
-import 'package:hydroflow/features/subscription/presentation/bloc/subscription_state.dart';
+import 'package:watermemo/features/subscription/domain/entities/plan.dart';
+import 'package:watermemo/features/subscription/domain/usecases/get_plans_usecase.dart';
+import 'package:watermemo/features/subscription/presentation/bloc/subscription_event.dart';
+import 'package:watermemo/features/subscription/presentation/bloc/subscription_state.dart';
 
 class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
   final GetPlansUseCase _getPlans;

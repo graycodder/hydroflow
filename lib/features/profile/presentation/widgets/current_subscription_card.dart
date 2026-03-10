@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:hydroflow/features/profile/domain/entities/subscription_record.dart';
+import 'package:watermemo/features/profile/domain/entities/subscription_record.dart';
 import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
 

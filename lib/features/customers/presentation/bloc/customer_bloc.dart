@@ -1,13 +1,13 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:rxdart/rxdart.dart';
-import 'package:hydroflow/features/customers/domain/entities/customer.dart';
-import 'package:hydroflow/features/customers/domain/usecases/add_customer_usecase.dart';
-import 'package:hydroflow/features/customers/domain/usecases/get_customers_usecase.dart';
-import 'package:hydroflow/features/customers/domain/usecases/update_customer_status_usecase.dart';
-import 'package:hydroflow/features/customers/domain/usecases/update_customer_usecase.dart';
-import 'package:hydroflow/features/customers/domain/usecases/settle_customer_usecase.dart';
-import 'package:hydroflow/features/customers/presentation/bloc/customer_event.dart';
-import 'package:hydroflow/features/customers/presentation/bloc/customer_state.dart';
+import 'package:watermemo/features/customers/domain/entities/customer.dart';
+import 'package:watermemo/features/customers/domain/usecases/add_customer_usecase.dart';
+import 'package:watermemo/features/customers/domain/usecases/get_customers_usecase.dart';
+import 'package:watermemo/features/customers/domain/usecases/update_customer_status_usecase.dart';
+import 'package:watermemo/features/customers/domain/usecases/update_customer_usecase.dart';
+import 'package:watermemo/features/customers/domain/usecases/settle_customer_usecase.dart';
+import 'package:watermemo/features/customers/presentation/bloc/customer_event.dart';
+import 'package:watermemo/features/customers/presentation/bloc/customer_state.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class CustomerBloc extends Bloc<CustomerEvent, CustomerState> {

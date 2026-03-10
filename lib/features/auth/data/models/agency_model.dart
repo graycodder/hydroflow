@@ -1,5 +1,5 @@
 import 'package:firebase_database/firebase_database.dart';
-import 'package:hydroflow/features/auth/domain/entities/agency.dart';
+import 'package:watermemo/features/auth/domain/entities/agency.dart';
 
 class AgencyModel extends Agency {
   const AgencyModel({

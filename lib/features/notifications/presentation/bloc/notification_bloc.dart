@@ -1,10 +1,10 @@
 import 'dart:async';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:equatable/equatable.dart';
-import 'package:hydroflow/features/notifications/domain/entities/notification_entity.dart';
-import 'package:hydroflow/features/notifications/domain/usecases/get_notifications_usecase.dart';
-import 'package:hydroflow/features/notifications/domain/usecases/mark_notification_read_usecase.dart';
-import 'package:hydroflow/features/notifications/domain/usecases/mark_all_read_usecase.dart';
+import 'package:watermemo/features/notifications/domain/entities/notification_entity.dart';
+import 'package:watermemo/features/notifications/domain/usecases/get_notifications_usecase.dart';
+import 'package:watermemo/features/notifications/domain/usecases/mark_notification_read_usecase.dart';
+import 'package:watermemo/features/notifications/domain/usecases/mark_all_read_usecase.dart';
 
 // Events
 abstract class NotificationEvent extends Equatable {

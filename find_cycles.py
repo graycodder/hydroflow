@@ -16,7 +16,7 @@ def extract_imports(file_path):
         content = f.read()
         
         # Match both absolute and relative imports
-        abs_matches = re.finditer(r"import\s+['\"]package:hydroflow/([^'\"]+)['\"]", content)
+        abs_matches = re.finditer(r"import\s+['\"]package:watermemo/([^'\"]+)['\"]", content)
         for match in abs_matches:
             # Convert package path back to relative file path for easier comparison
             imports.append(os.path.join('lib', match.group(1)))
@@ -80,7 +80,7 @@ def find_cycles(graph):
     return cycles
 
 if __name__ == '__main__':
-    project_root = '/Users/vimaldas/Desktop/hydroflow'
+    project_root = '/Users/vimaldas/Desktop/watermemo'
     graph = build_graph(project_root)
     cycles = find_cycles(graph)
     

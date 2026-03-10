@@ -1,4 +1,4 @@
-import 'package:hydroflow/features/transactions/domain/entities/transaction_entity.dart';
+import 'package:watermemo/features/transactions/domain/entities/transaction_entity.dart';
 
 class TransactionModel extends TransactionEntity {
   const TransactionModel({

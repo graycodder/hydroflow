@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
-import 'package:hydroflow/features/auth/presentation/bloc/auth_bloc.dart';
-import 'package:hydroflow/features/auth/presentation/bloc/auth_state.dart';
-import 'package:hydroflow/features/notifications/domain/entities/notification_entity.dart';
-import 'package:hydroflow/features/notifications/presentation/bloc/notification_bloc.dart';
-import 'package:hydroflow/features/notifications/presentation/widgets/notification_item.dart';
-import 'package:hydroflow/core/service_locator.dart';
+import 'package:watermemo/features/auth/presentation/bloc/auth_bloc.dart';
+import 'package:watermemo/features/auth/presentation/bloc/auth_state.dart';
+import 'package:watermemo/features/notifications/domain/entities/notification_entity.dart';
+import 'package:watermemo/features/notifications/presentation/bloc/notification_bloc.dart';
+import 'package:watermemo/features/notifications/presentation/widgets/notification_item.dart';
+import 'package:watermemo/core/service_locator.dart';
 
 class NotificationsPage extends StatelessWidget {
   const NotificationsPage({super.key});

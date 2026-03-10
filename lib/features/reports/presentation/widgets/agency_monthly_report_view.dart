@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:hydroflow/features/reports/domain/entities/report_entity.dart';
+import 'package:watermemo/features/reports/domain/entities/report_entity.dart';
 import 'report_ui_helpers.dart';
 
 class AgencyMonthlyReportView extends StatelessWidget {

@@ -1,4 +1,4 @@
-import 'package:hydroflow/features/subscription/domain/entities/plan.dart';
+import 'package:watermemo/features/subscription/domain/entities/plan.dart';
 
 class PlanModel extends Plan {
   const PlanModel({

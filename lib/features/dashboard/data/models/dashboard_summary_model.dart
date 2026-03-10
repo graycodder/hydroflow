@@ -1,4 +1,4 @@
-import 'package:hydroflow/features/dashboard/domain/entities/dashboard_summary.dart';
+import 'package:watermemo/features/dashboard/domain/entities/dashboard_summary.dart';
 
 class DashboardSummaryModel extends DashboardSummary {
   const DashboardSummaryModel({

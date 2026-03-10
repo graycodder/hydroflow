@@ -1,7 +1,7 @@
 import 'package:firebase_database/firebase_database.dart';
-import 'package:hydroflow/features/notifications/domain/entities/notification_entity.dart';
-import 'package:hydroflow/features/notifications/domain/repositories/notification_repository.dart';
-import 'package:hydroflow/features/notifications/data/models/notification_model.dart';
+import 'package:watermemo/features/notifications/domain/entities/notification_entity.dart';
+import 'package:watermemo/features/notifications/domain/repositories/notification_repository.dart';
+import 'package:watermemo/features/notifications/data/models/notification_model.dart';
 
 class NotificationRepositoryImpl implements NotificationRepository {
   final FirebaseDatabase _database;

@@ -1,12 +1,12 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:rxdart/rxdart.dart';
-import 'package:hydroflow/features/reports/domain/usecases/record_settlement_usecase.dart';
+import 'package:watermemo/features/reports/domain/usecases/record_settlement_usecase.dart';
 import 'package:equatable/equatable.dart';
-import 'package:hydroflow/features/reports/domain/entities/report_entity.dart';
-import 'package:hydroflow/features/reports/domain/usecases/get_daily_report_usecase.dart';
-import 'package:hydroflow/features/reports/domain/usecases/get_monthly_report_usecase.dart';
-import 'package:hydroflow/features/reports/domain/usecases/get_agency_daily_report_usecase.dart';
-import 'package:hydroflow/features/reports/domain/usecases/get_agency_monthly_report_usecase.dart';
+import 'package:watermemo/features/reports/domain/entities/report_entity.dart';
+import 'package:watermemo/features/reports/domain/usecases/get_daily_report_usecase.dart';
+import 'package:watermemo/features/reports/domain/usecases/get_monthly_report_usecase.dart';
+import 'package:watermemo/features/reports/domain/usecases/get_agency_daily_report_usecase.dart';
+import 'package:watermemo/features/reports/domain/usecases/get_agency_monthly_report_usecase.dart';
 
 // Events
 abstract class ReportsEvent extends Equatable {

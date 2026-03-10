@@ -1,7 +1,7 @@
 import 'package:firebase_database/firebase_database.dart';
-import 'package:hydroflow/features/profile/data/models/profile_model.dart';
-import 'package:hydroflow/features/profile/data/models/subscription_record_model.dart';
-import 'package:hydroflow/features/auth/data/models/agency_model.dart';
+import 'package:watermemo/features/profile/data/models/profile_model.dart';
+import 'package:watermemo/features/profile/data/models/subscription_record_model.dart';
+import 'package:watermemo/features/auth/data/models/agency_model.dart';
 
 abstract class ProfileRemoteDataSource {
   Stream<ProfileModel> getProfile(String uid);

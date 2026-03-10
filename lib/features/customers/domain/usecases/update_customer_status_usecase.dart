@@ -1,4 +1,4 @@
-import 'package:hydroflow/features/customers/domain/repositories/customer_repository.dart';
+import 'package:watermemo/features/customers/domain/repositories/customer_repository.dart';
 
 class UpdateCustomerStatusUseCase {
   final CustomerRepository repository;

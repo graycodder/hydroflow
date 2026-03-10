@@ -1,15 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
-import 'package:hydroflow/features/auth/presentation/bloc/auth_bloc.dart';
-import 'package:hydroflow/features/auth/presentation/bloc/auth_state.dart';
-import 'package:hydroflow/features/notifications/presentation/bloc/notification_bloc.dart';
+import 'package:watermemo/features/auth/presentation/bloc/auth_bloc.dart';
+import 'package:watermemo/features/auth/presentation/bloc/auth_state.dart';
+import 'package:watermemo/features/notifications/presentation/bloc/notification_bloc.dart';
 
-class HydroFlowAppBar extends StatelessWidget implements PreferredSizeWidget {
+class WaterMemoAppBar extends StatelessWidget implements PreferredSizeWidget {
   final bool showNotifications;
   final bool showProfile;
 
-  const HydroFlowAppBar({
+  const WaterMemoAppBar({
     super.key,
     this.showNotifications = true,
     this.showProfile = true,
@@ -29,7 +29,7 @@ class HydroFlowAppBar extends StatelessWidget implements PreferredSizeWidget {
           const Icon(Icons.water_drop, color: Color(0xFF2962FF)),
           const SizedBox(width: 8),
           const Text(
-            'HydroFlow',
+            'WaterMemo',
             style: TextStyle(
               color: Colors.black,
               fontWeight: FontWeight.bold,

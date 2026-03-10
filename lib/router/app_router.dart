@@ -1,29 +1,29 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
-import 'package:hydroflow/features/auth/presentation/bloc/auth_bloc.dart';
-import 'package:hydroflow/features/auth/presentation/bloc/auth_state.dart';
-import 'package:hydroflow/features/dashboard/presentation/pages/dashboard_page.dart';
-import 'package:hydroflow/features/stock/presentation/pages/stock_page.dart';
-import 'package:hydroflow/features/auth/presentation/pages/login_page.dart';
-import 'package:hydroflow/features/bottles/presentation/pages/bottles_page.dart';
-import 'package:hydroflow/features/customers/presentation/pages/customers_page.dart';
-import 'package:hydroflow/features/transactions/presentation/pages/delivery_page.dart';
-import 'package:hydroflow/features/reports/presentation/pages/reports_page.dart';
-import 'package:hydroflow/features/splash/presentation/pages/splash_page.dart';
-import 'package:hydroflow/features/notifications/presentation/pages/notifications_page.dart';
-import 'package:hydroflow/features/profile/presentation/pages/subscription_lock_page.dart';
-import 'package:hydroflow/features/profile/presentation/pages/profile_page.dart';
-import 'package:hydroflow/features/profile/presentation/pages/terms_and_conditions_page.dart';
-import 'package:hydroflow/features/profile/presentation/pages/privacy_policy_page.dart';
-import 'package:hydroflow/features/transactions/presentation/pages/transaction_history_page.dart';
-import 'package:hydroflow/features/auth/presentation/pages/force_update_page.dart';
-import 'package:hydroflow/features/auth/domain/entities/salesman.dart';
-import 'package:hydroflow/features/customers/domain/entities/customer.dart';
-import 'package:hydroflow/core/utils/router_refresh_listenable.dart';
+import 'package:watermemo/features/auth/presentation/bloc/auth_bloc.dart';
+import 'package:watermemo/features/auth/presentation/bloc/auth_state.dart';
+import 'package:watermemo/features/dashboard/presentation/pages/dashboard_page.dart';
+import 'package:watermemo/features/stock/presentation/pages/stock_page.dart';
+import 'package:watermemo/features/auth/presentation/pages/login_page.dart';
+import 'package:watermemo/features/bottles/presentation/pages/bottles_page.dart';
+import 'package:watermemo/features/customers/presentation/pages/customers_page.dart';
+import 'package:watermemo/features/transactions/presentation/pages/delivery_page.dart';
+import 'package:watermemo/features/reports/presentation/pages/reports_page.dart';
+import 'package:watermemo/features/splash/presentation/pages/splash_page.dart';
+import 'package:watermemo/features/notifications/presentation/pages/notifications_page.dart';
+import 'package:watermemo/features/profile/presentation/pages/subscription_lock_page.dart';
+import 'package:watermemo/features/profile/presentation/pages/profile_page.dart';
+import 'package:watermemo/features/profile/presentation/pages/terms_and_conditions_page.dart';
+import 'package:watermemo/features/profile/presentation/pages/privacy_policy_page.dart';
+import 'package:watermemo/features/transactions/presentation/pages/transaction_history_page.dart';
+import 'package:watermemo/features/auth/presentation/pages/force_update_page.dart';
+import 'package:watermemo/features/auth/domain/entities/salesman.dart';
+import 'package:watermemo/features/customers/domain/entities/customer.dart';
+import 'package:watermemo/core/utils/router_refresh_listenable.dart';
 
-import 'package:hydroflow/features/auth/presentation/pages/agency_employees_page.dart';
-import 'package:hydroflow/router/route_observer.dart'; // Add this line
+import 'package:watermemo/features/auth/presentation/pages/agency_employees_page.dart';
+import 'package:watermemo/router/route_observer.dart'; // Add this line
 
 final router = GoRouter(
   initialLocation: '/splash',

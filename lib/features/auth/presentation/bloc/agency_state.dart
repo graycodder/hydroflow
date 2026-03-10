@@ -1,6 +1,6 @@
 import 'package:equatable/equatable.dart';
-import 'package:hydroflow/features/auth/domain/entities/salesman.dart';
-import 'package:hydroflow/features/auth/domain/entities/agency.dart';
+import 'package:watermemo/features/auth/domain/entities/salesman.dart';
+import 'package:watermemo/features/auth/domain/entities/agency.dart';
 
 abstract class AgencyState extends Equatable {
   const AgencyState();

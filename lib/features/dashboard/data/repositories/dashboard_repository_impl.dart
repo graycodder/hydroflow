@@ -1,8 +1,8 @@
 import 'package:firebase_database/firebase_database.dart';
-import 'package:hydroflow/features/dashboard/domain/entities/dashboard_summary.dart';
-import 'package:hydroflow/features/dashboard/domain/repositories/dashboard_repository.dart';
-import 'package:hydroflow/features/dashboard/data/models/dashboard_summary_model.dart';
-import 'package:hydroflow/features/reports/domain/repositories/report_repository.dart';
+import 'package:watermemo/features/dashboard/domain/entities/dashboard_summary.dart';
+import 'package:watermemo/features/dashboard/domain/repositories/dashboard_repository.dart';
+import 'package:watermemo/features/dashboard/data/models/dashboard_summary_model.dart';
+import 'package:watermemo/features/reports/domain/repositories/report_repository.dart';
 import 'package:rxdart/rxdart.dart';
 
 class DashboardRepositoryImpl implements DashboardRepository {

@@ -1,6 +1,6 @@
 {
-    "name": "hydroflow",
-    "short_name": "hydroflow",
+    "name": "watermemo",
+    "short_name": "watermemo",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#ffffff",

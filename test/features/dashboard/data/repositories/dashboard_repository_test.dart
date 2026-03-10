@@ -2,9 +2,9 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/mockito.dart';
 import 'package:mockito/annotations.dart';
 import 'package:firebase_database/firebase_database.dart';
-import 'package:hydroflow/features/dashboard/data/repositories/dashboard_repository_impl.dart';
-import 'package:hydroflow/features/reports/domain/repositories/report_repository.dart';
-import 'package:hydroflow/features/reports/domain/entities/report_entity.dart';
+import 'package:watermemo/features/dashboard/data/repositories/dashboard_repository_impl.dart';
+import 'package:watermemo/features/reports/domain/repositories/report_repository.dart';
+import 'package:watermemo/features/reports/domain/entities/report_entity.dart';
 
 @GenerateMocks([FirebaseDatabase, ReportRepository, DatabaseReference, DataSnapshot, DatabaseEvent])
 import 'dashboard_repository_test.mocks.dart';

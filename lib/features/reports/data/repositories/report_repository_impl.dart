@@ -1,11 +1,11 @@
 import 'package:firebase_database/firebase_database.dart';
 import 'package:rxdart/rxdart.dart';
-import 'package:hydroflow/features/reports/domain/entities/report_entity.dart';
-import 'package:hydroflow/features/reports/domain/repositories/report_repository.dart';
-import 'package:hydroflow/features/transactions/domain/repositories/transaction_repository.dart';
-import 'package:hydroflow/features/customers/domain/repositories/customer_repository.dart';
-import 'package:hydroflow/features/transactions/domain/entities/transaction_entity.dart';
-import 'package:hydroflow/features/customers/domain/entities/customer.dart';
+import 'package:watermemo/features/reports/domain/entities/report_entity.dart';
+import 'package:watermemo/features/reports/domain/repositories/report_repository.dart';
+import 'package:watermemo/features/transactions/domain/repositories/transaction_repository.dart';
+import 'package:watermemo/features/customers/domain/repositories/customer_repository.dart';
+import 'package:watermemo/features/transactions/domain/entities/transaction_entity.dart';
+import 'package:watermemo/features/customers/domain/entities/customer.dart';
 
 class ReportRepositoryImpl implements ReportRepository {
   final FirebaseDatabase _database;

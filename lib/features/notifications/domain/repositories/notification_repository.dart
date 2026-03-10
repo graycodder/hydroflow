@@ -1,4 +1,4 @@
-import 'package:hydroflow/features/notifications/domain/entities/notification_entity.dart';
+import 'package:watermemo/features/notifications/domain/entities/notification_entity.dart';
 
 abstract class NotificationRepository {
   Stream<List<NotificationEntity>> getNotifications(String uid);

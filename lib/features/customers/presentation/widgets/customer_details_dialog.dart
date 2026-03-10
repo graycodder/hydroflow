@@ -2,15 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
-import 'package:hydroflow/features/customers/domain/entities/customer.dart';
-import 'package:hydroflow/features/auth/domain/entities/salesman.dart';
-import 'package:hydroflow/features/customers/presentation/bloc/customer_bloc.dart';
-import 'package:hydroflow/features/customers/presentation/bloc/customer_event.dart';
-import 'package:hydroflow/features/customers/presentation/bloc/customer_state.dart';
-import 'package:hydroflow/features/customers/presentation/widgets/edit_customer_dialog.dart';
-import 'package:hydroflow/features/customers/presentation/widgets/pending_balance_adjustment_dialog.dart';
-import 'package:hydroflow/features/customers/presentation/widgets/bottle_balance_adjustment_dialog.dart';
-import 'package:hydroflow/core/widgets/hydro_flow_loader.dart';
+import 'package:watermemo/features/customers/domain/entities/customer.dart';
+import 'package:watermemo/features/auth/domain/entities/salesman.dart';
+import 'package:watermemo/features/customers/presentation/bloc/customer_bloc.dart';
+import 'package:watermemo/features/customers/presentation/bloc/customer_event.dart';
+import 'package:watermemo/features/customers/presentation/bloc/customer_state.dart';
+import 'package:watermemo/features/customers/presentation/widgets/edit_customer_dialog.dart';
+import 'package:watermemo/features/customers/presentation/widgets/pending_balance_adjustment_dialog.dart';
+import 'package:watermemo/features/customers/presentation/widgets/bottle_balance_adjustment_dialog.dart';
+import 'package:watermemo/core/widgets/hydro_flow_loader.dart';
 
 class CustomerDetailsDialog extends StatefulWidget {
   final Customer customer;
@@ -57,10 +57,10 @@ class _CustomerDetailsDialogState extends State<CustomerDetailsDialog> {
       listener: (context, state) {
         if (_isSubmitting) {
           if (state.status == CustomerStatus.submitting) {
-            HydroFlowLoader.show(context, message: 'Processing...');
+            WaterMemoLoader.show(context, message: 'Processing...');
           } else if (state.status == CustomerStatus.failure || 
                    (state.status == CustomerStatus.success && state.successMessage != null)) {
-            HydroFlowLoader.hide(context);
+            WaterMemoLoader.hide(context);
             _isSubmitting = false;
           }
         }

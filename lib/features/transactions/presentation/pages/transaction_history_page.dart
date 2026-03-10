@@ -1,15 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
-import 'package:hydroflow/features/customers/domain/entities/customer.dart';
-import 'package:hydroflow/features/transactions/presentation/bloc/customer_transactions_bloc.dart';
-import 'package:hydroflow/features/transactions/presentation/bloc/customer_transactions_event.dart';
-import 'package:hydroflow/features/transactions/presentation/bloc/customer_transactions_state.dart';
-import 'package:hydroflow/core/service_locator.dart';
-import 'package:hydroflow/core/widgets/hydro_flow_loader.dart';
-import 'package:hydroflow/core/utils/whatsapp_helper.dart';
-import 'package:hydroflow/features/auth/presentation/bloc/auth_bloc.dart';
-import 'package:hydroflow/features/auth/presentation/bloc/auth_state.dart';
+import 'package:watermemo/features/customers/domain/entities/customer.dart';
+import 'package:watermemo/features/transactions/presentation/bloc/customer_transactions_bloc.dart';
+import 'package:watermemo/features/transactions/presentation/bloc/customer_transactions_event.dart';
+import 'package:watermemo/features/transactions/presentation/bloc/customer_transactions_state.dart';
+import 'package:watermemo/core/service_locator.dart';
+import 'package:watermemo/core/widgets/hydro_flow_loader.dart';
+import 'package:watermemo/core/utils/whatsapp_helper.dart';
+import 'package:watermemo/features/auth/presentation/bloc/auth_bloc.dart';
+import 'package:watermemo/features/auth/presentation/bloc/auth_state.dart';
 
 class TransactionHistoryPage extends StatelessWidget {
   final Customer customer;
@@ -149,11 +149,11 @@ class TransactionHistoryPage extends StatelessWidget {
                                     final salesmanName =
                                         (authState is AuthAuthenticated)
                                         ? authState.salesman.displayName
-                                        : 'HydroFlow';
+                                        : 'WaterMemo';
                                     final agencyName =
                                         (authState is AuthAuthenticated)
-                                        ? authState.salesman.agencyName ?? 'HydroFlow Agency'
-                                        : 'HydroFlow Agency';
+                                        ? authState.salesman.agencyName ?? 'WaterMemo Agency'
+                                        : 'WaterMemo Agency';
 
                                     WhatsappHelper.sendReceipt(
                                       phone: customer.phone,

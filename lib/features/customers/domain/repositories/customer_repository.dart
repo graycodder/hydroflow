@@ -1,4 +1,4 @@
-import 'package:hydroflow/features/customers/domain/entities/customer.dart';
+import 'package:watermemo/features/customers/domain/entities/customer.dart';
 
 abstract class CustomerRepository {
   Stream<List<Customer>> getCustomers(String salesmanId);

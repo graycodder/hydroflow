@@ -1,7 +1,7 @@
 import 'package:firebase_database/firebase_database.dart';
-import 'package:hydroflow/features/subscription/domain/entities/plan.dart';
-import 'package:hydroflow/features/subscription/domain/repositories/subscription_repository.dart';
-import 'package:hydroflow/features/subscription/data/models/plan_model.dart';
+import 'package:watermemo/features/subscription/domain/entities/plan.dart';
+import 'package:watermemo/features/subscription/domain/repositories/subscription_repository.dart';
+import 'package:watermemo/features/subscription/data/models/plan_model.dart';
 
 class SubscriptionRepositoryImpl implements SubscriptionRepository {
   final FirebaseDatabase _database;

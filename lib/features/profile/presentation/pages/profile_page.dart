@@ -1,15 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:hydroflow/features/auth/presentation/bloc/auth_bloc.dart';
-import 'package:hydroflow/features/auth/presentation/bloc/auth_state.dart';
-import 'package:hydroflow/features/profile/presentation/bloc/profile_bloc.dart';
-import 'package:hydroflow/core/service_locator.dart';
+import 'package:watermemo/features/auth/presentation/bloc/auth_bloc.dart';
+import 'package:watermemo/features/auth/presentation/bloc/auth_state.dart';
+import 'package:watermemo/features/profile/presentation/bloc/profile_bloc.dart';
+import 'package:watermemo/core/service_locator.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:hydroflow/core/widgets/hydro_flow_loader.dart';
-import 'package:hydroflow/features/auth/domain/entities/agency.dart';
-import 'package:hydroflow/features/profile/domain/entities/subscription_record.dart';
+import 'package:watermemo/core/widgets/hydro_flow_loader.dart';
+import 'package:watermemo/features/auth/domain/entities/agency.dart';
+import 'package:watermemo/features/profile/domain/entities/subscription_record.dart';
 
 class ProfilePage extends StatelessWidget {
   const ProfilePage({super.key});
@@ -52,7 +52,7 @@ class ProfilePage extends StatelessWidget {
                   }
                 });
                 return Center(
-                    child: HydroFlowLoader(message: 'Switching View...', isOverlay: false));
+                    child: WaterMemoLoader(message: 'Switching View...', isOverlay: false));
               }
             }
 

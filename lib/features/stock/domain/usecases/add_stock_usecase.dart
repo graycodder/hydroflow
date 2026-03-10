@@ -1,4 +1,4 @@
-import 'package:hydroflow/features/stock/domain/repositories/inventory_repository.dart';
+import 'package:watermemo/features/stock/domain/repositories/inventory_repository.dart';
 
 class AddStockUseCase {
   final InventoryRepository repository;
