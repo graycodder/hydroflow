@@ -2,11 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:watermemo/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:watermemo/features/auth/presentation/bloc/auth_event.dart';
 import 'package:watermemo/features/auth/presentation/bloc/auth_state.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:watermemo/core/service_locator.dart';
+import 'package:watermemo/core/widgets/hydro_flow_loader.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -162,7 +164,19 @@ class _LoginPageState extends State<LoginPage> {
                                   decoration: TextDecoration.underline,
                                 ),
                                 recognizer: TapGestureRecognizer()
-                                  ..onTap = () => context.push('/terms'),
+                                  ..onTap = () async {
+                                    WaterMemoLoader.show(context, message: 'Opening...');
+                                    try {
+                                      final Uri url = Uri.parse('https://watermemo-web-app.web.app/terms-and-conditions');
+                                      if (!await launchUrl(url, mode: LaunchMode.inAppWebView)) {
+                                        debugPrint('Could not launch \$url');
+                                      }
+                                      // Wait a moment for the native webview to fully render over the app
+                                      await Future.delayed(const Duration(milliseconds: 500));
+                                    } finally {
+                                      if (context.mounted) WaterMemoLoader.hide(context);
+                                    }
+                                  },
                               ),
                               const TextSpan(text: ' and '),
                               TextSpan(
@@ -173,7 +187,19 @@ class _LoginPageState extends State<LoginPage> {
                                   decoration: TextDecoration.underline,
                                 ),
                                 recognizer: TapGestureRecognizer()
-                                  ..onTap = () => context.push('/privacy'),
+                                  ..onTap = () async {
+                                    WaterMemoLoader.show(context, message: 'Opening...');
+                                    try {
+                                      final Uri url = Uri.parse('https://watermemo-web-app.web.app/privacy-policy');
+                                      if (!await launchUrl(url, mode: LaunchMode.inAppWebView)) {
+                                        debugPrint('Could not launch \$url');
+                                      }
+                                      // Wait a moment for the native webview to fully render over the app
+                                      await Future.delayed(const Duration(milliseconds: 500));
+                                    } finally {
+                                      if (context.mounted) WaterMemoLoader.hide(context);
+                                    }
+                                  },
                               ),
                             ],
                           ),

@@ -14,8 +14,7 @@ import 'package:watermemo/features/splash/presentation/pages/splash_page.dart';
 import 'package:watermemo/features/notifications/presentation/pages/notifications_page.dart';
 import 'package:watermemo/features/profile/presentation/pages/subscription_lock_page.dart';
 import 'package:watermemo/features/profile/presentation/pages/profile_page.dart';
-import 'package:watermemo/features/profile/presentation/pages/terms_and_conditions_page.dart';
-import 'package:watermemo/features/profile/presentation/pages/privacy_policy_page.dart';
+
 import 'package:watermemo/features/transactions/presentation/pages/transaction_history_page.dart';
 import 'package:watermemo/features/auth/presentation/pages/force_update_page.dart';
 import 'package:watermemo/features/auth/domain/entities/salesman.dart';
@@ -34,16 +33,11 @@ final router = GoRouter(
     final bool locking = state.matchedLocation == '/lock';
     final bool splashing = state.matchedLocation == '/splash';
     final bool updating = state.matchedLocation == '/update';
-    final bool terming = state.matchedLocation == '/terms';
-    final bool privying = state.matchedLocation == '/privacy';
 
     if (authState is AuthUpdateRequired) {
       if (updating) return null;
       return '/update';
     }
-
-    // Allow terms and privacy to be accessed from any state
-    if (terming || privying) return null;
 
     // Allow splash to stay if AuthInitial or AuthLoading (implied by not matching other states)
     if (authState is AuthInitial || authState is AuthLoading) {
@@ -129,14 +123,6 @@ final router = GoRouter(
     GoRoute(
       path: '/profile',
       builder: (context, state) => const ProfilePage(),
-    ),
-    GoRoute(
-      path: '/terms',
-      builder: (context, state) => const TermsAndConditionsPage(),
-    ),
-    GoRoute(
-      path: '/privacy',
-      builder: (context, state) => const PrivacyPolicyPage(),
     ),
     GoRoute(
       path: '/customer_history',

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:watermemo/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:watermemo/features/auth/presentation/bloc/auth_state.dart';
 import 'package:watermemo/features/profile/presentation/bloc/profile_bloc.dart';
@@ -239,7 +240,18 @@ class ProfilePage extends StatelessWidget {
                                 title: 'Terms of Service',
                                 trailing: const Icon(Icons.chevron_right_rounded,
                                     color: Colors.grey),
-                                onTap: () => context.push('/terms'),
+                                onTap: () async {
+                                  WaterMemoLoader.show(context, message: 'Opening...');
+                                  try {
+                                    final Uri url = Uri.parse('https://watermemo-web-app.web.app/terms-and-conditions');
+                                    if (!await launchUrl(url, mode: LaunchMode.inAppWebView)) {
+                                      debugPrint('Could not launch $url');
+                                    }
+                                    await Future.delayed(const Duration(milliseconds: 500));
+                                  } finally {
+                                    if (context.mounted) WaterMemoLoader.hide(context);
+                                  }
+                                },
                               ),
                               _DrawerDivider(),
                               _DrawerTile(
@@ -249,7 +261,18 @@ class ProfilePage extends StatelessWidget {
                                 title: 'Privacy Policy',
                                 trailing: const Icon(Icons.chevron_right_rounded,
                                     color: Colors.grey),
-                                onTap: () => context.push('/privacy'),
+                                onTap: () async {
+                                  WaterMemoLoader.show(context, message: 'Opening...');
+                                  try {
+                                    final Uri url = Uri.parse('https://watermemo-web-app.web.app/privacy-policy');
+                                    if (!await launchUrl(url, mode: LaunchMode.inAppWebView)) {
+                                      debugPrint('Could not launch $url');
+                                    }
+                                    await Future.delayed(const Duration(milliseconds: 500));
+                                  } finally {
+                                    if (context.mounted) WaterMemoLoader.hide(context);
+                                  }
+                                },
                               ),
                             ],
                           ),
