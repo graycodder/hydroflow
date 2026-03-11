@@ -955,11 +955,14 @@ class ReportRepositoryImpl implements ReportRepository {
         // Logic: Use Warehouse log's 'bottlesReturned' (Manual collections from staff)
         bottlesDelivered = r.deliveredStock;
         bottlesReturned = r.bottlesReturned;
-        manualBottlesCollected = r.manualBottlesCollected;
+        manualBottlesCollected += r.manualBottlesCollected;
       } else {
         // Salesman specific totals for Summary
         totalDeliveries += r.totalDeliveries;
         salesmanDamagedStock += r.damagedStock;
+        
+        // Add salesman damaged stock to manual bottles collected (Returns to agency)
+        manualBottlesCollected += r.damagedStock;
       }
 
       netBottlesOut = bottlesDelivered - bottlesReturned;
