@@ -13,6 +13,7 @@ class ReportEntity extends Equatable {
   final int totalAvailable;
   final int deliveredStock;
   final int damagedStock;
+  final int salesmanDamagedStock; // Separated to preserve warehouse reconciliation math
   final int closingStock;
   final int stockMismatch; // Expected - Actual (if physical count input exists, else 0 or calculated)
   
@@ -80,6 +81,7 @@ class ReportEntity extends Equatable {
     required this.totalAvailable,
     required this.deliveredStock,
     required this.damagedStock,
+    this.salesmanDamagedStock = 0,
     required this.closingStock,
     this.stockMismatch = 0,
     required this.bottlesDelivered,
@@ -130,6 +132,7 @@ class ReportEntity extends Equatable {
         totalAvailable,
         deliveredStock,
         damagedStock,
+        salesmanDamagedStock,
         closingStock,
         stockMismatch,
         bottlesDelivered,

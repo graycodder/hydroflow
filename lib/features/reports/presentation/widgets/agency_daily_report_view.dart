@@ -318,9 +318,14 @@ class AgencyDailyReportView extends StatelessWidget {
             valueColor: Colors.red,
           ),
           buildRow(
-            " - Total Damaged/Return",
+            " - Warehouse Damaged",
             "-${report.damagedStock} cans",
             valueColor: Colors.red,
+          ),
+          buildRow(
+            "   (Salesman Damaged: ${report.salesmanDamagedStock} cans)",
+            "",
+            valueColor: Colors.orange,
           ),
           const Divider(height: 24),
           buildRow(

@@ -892,6 +892,7 @@ class ReportRepositoryImpl implements ReportRepository {
     int totalAvailable = 0;
     int deliveredStock = 0;
     int damagedStock = 0;
+    int salesmanDamagedStock = 0;
     int closingStock = 0;
     int stockMismatch = 0;
     int bottlesDelivered = 0;
@@ -958,6 +959,7 @@ class ReportRepositoryImpl implements ReportRepository {
       } else {
         // Salesman specific totals for Summary
         totalDeliveries += r.totalDeliveries;
+        salesmanDamagedStock += r.damagedStock;
       }
 
       netBottlesOut = bottlesDelivered - bottlesReturned;
@@ -1032,6 +1034,7 @@ class ReportRepositoryImpl implements ReportRepository {
       totalAvailable: totalAvailable,
       deliveredStock: deliveredStock,
       damagedStock: damagedStock,
+      salesmanDamagedStock: salesmanDamagedStock,
       closingStock: closingStock,
       stockMismatch: stockMismatch,
       bottlesDelivered: bottlesDelivered,

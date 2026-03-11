@@ -543,7 +543,16 @@ class AgencyMonthlyReportView extends StatelessWidget {
             "${report.deliveredStock} cans",
             valueColor: const Color(0xFF1976D2),
           ),
-          buildRow("Total Damaged/Return", "${report.damagedStock} cans", valueColor: Colors.red),
+          buildRow(
+            "Warehouse Damaged",
+            "${report.damagedStock} cans",
+            valueColor: Colors.red,
+          ),
+          buildRow(
+            "(Salesman Damaged: ${report.salesmanDamagedStock} cans)",
+            "",
+            valueColor: Colors.orange,
+          ),
           const SizedBox(height: 16),
           Container(
             padding: const EdgeInsets.all(16),
