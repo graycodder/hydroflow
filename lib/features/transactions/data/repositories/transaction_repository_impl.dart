@@ -262,6 +262,35 @@ class TransactionRepositoryImpl implements TransactionRepository {
           .child('Stock_logs')
           .child('LOG_${dateKey}_${transaction.salesmanId}');
 
+      // Robustly fetch previous log's closing stock to handle date gaps natively
+      int carryForwardStock = currentStockInVanBeforeTx;
+      try {
+        final query = _database.ref()
+            .child('Stock_logs')
+            .orderByChild('salesmanId')
+            .equalTo(transaction.salesmanId)
+            .limitToLast(15); 
+        final snapshot = await query.get();
+        if (snapshot.exists) {
+          final data = Map<dynamic, dynamic>.from(snapshot.value as Map);
+          final sortedKeys = data.keys.toList()..sort();
+          for (var i = sortedKeys.length - 1; i >= 0; i--) {
+             final key = sortedKeys[i];
+             final log = Map<String, dynamic>.from(data[key]);
+             if (log['date'] != null && (log['date'] as String).compareTo(dateFormatted) < 0) {
+               final isReconciled = log['isReconciled'] == true;
+               int closingStockVal = isReconciled
+                   ? ((log['actualClosingStock'] as num?)?.toInt() ?? 0)
+                   : ((log['closingStock'] as num?)?.toInt() ?? 0);
+               if (closingStockVal > 0) {
+                 carryForwardStock = closingStockVal;
+               }
+               break;
+             }
+          }
+        }
+      } catch (_) {}
+
       await logRef.runTransaction((Object? post) {
         final logMap = post == null
             ? <String, dynamic>{}
@@ -271,7 +300,7 @@ class TransactionRepositoryImpl implements TransactionRepository {
         if (isNewLog) {
           logMap['salesmanId'] = transaction.salesmanId;
           logMap['date'] = dateFormatted;
-          logMap['openingStock'] = currentStockInVanBeforeTx;
+          logMap['openingStock'] = carryForwardStock;
           logMap['loaded'] = 0;
           logMap['damaged'] = 0;
           logMap['actualClosingStock'] = 0;
@@ -429,6 +458,34 @@ class TransactionRepositoryImpl implements TransactionRepository {
           .child('Stock_logs')
           .child('LOG_${dateKey}_${transaction.salesmanId}');
 
+      int carryForwardStock = 0;
+      try {
+        final query = _database.ref()
+            .child('Stock_logs')
+            .orderByChild('salesmanId')
+            .equalTo(transaction.salesmanId)
+            .limitToLast(15); 
+        final snapshot = await query.get();
+        if (snapshot.exists) {
+          final data = Map<dynamic, dynamic>.from(snapshot.value as Map);
+          final sortedKeys = data.keys.toList()..sort();
+          for (var i = sortedKeys.length - 1; i >= 0; i--) {
+             final key = sortedKeys[i];
+             final log = Map<String, dynamic>.from(data[key]);
+             if (log['date'] != null && (log['date'] as String).compareTo(dateFormatted) < 0) {
+               final isReconciled = log['isReconciled'] == true;
+               int closingStockVal = isReconciled
+                   ? ((log['actualClosingStock'] as num?)?.toInt() ?? 0)
+                   : ((log['closingStock'] as num?)?.toInt() ?? 0);
+               if (closingStockVal > 0) {
+                 carryForwardStock = closingStockVal;
+               }
+               break;
+             }
+          }
+        }
+      } catch (_) {}
+
       await logRef.runTransaction((Object? post) {
         final logMap = post == null
             ? <String, dynamic>{}
@@ -436,12 +493,10 @@ class TransactionRepositoryImpl implements TransactionRepository {
 
         final isNewLog = !logMap.containsKey('date');
         if (isNewLog) {
-          // If log doesn't exist, we might miss opening stock if not careful.
-          // But usually log exists if they have stock. If not, 0 is fine.
+          // If log doesn't exist, use historically secure carry forward.
           logMap['salesmanId'] = transaction.salesmanId;
           logMap['date'] = dateFormatted;
-          logMap['openingStock'] =
-              0; // Assumption or fetch? stick to simple for adjustment.
+          logMap['openingStock'] = carryForwardStock;
           logMap['loaded'] = 0;
           logMap['damaged'] = 0;
           logMap['actualClosingStock'] = 0;
