@@ -934,37 +934,33 @@ class ReportRepositoryImpl implements ReportRepository {
 
       totalRevenue += r.totalRevenue;
 
-      damagedStock += r.damagedStock;
+      // damageStock will be assigned within the isWarehouse block 
+      // to maintain Warehouse reconciliation balance.
 
-      // Consolidated counts:
+      // Consolidated counts (Stock Reconciliation):
+      // We use Warehouse value ONLY for Agency-level Stock Reconciliation 
+      // to reflect Warehouse throughput (Purchases vs. Transfers to fleet)
       if (isWarehouse) {
         openingStock = r.openingStock;
-        // Total Loaded and Delivered will be summed across all sub-reports below
+        stockLoaded = r.stockLoaded;
+        deliveredStock = r.deliveredStock;
+        damagedStock = r.damagedStock;
         closingStock = r.closingStock;
         stockMismatch = r.stockMismatch;
       }
-      
-      // SUM loaded and delivered stock across all reports (salesmen + warehouse)
-      stockLoaded += r.stockLoaded;
-      deliveredStock += r.deliveredStock;
       if (isWarehouse) {
         // AGENCY BOTTLE RECONCILIATION:
         // Logic: Use Warehouse Delivery (to salesman) as 'Delivered'
         // Logic: Use Warehouse log's 'bottlesReturned' (Manual collections from staff)
-        bottlesDelivered += r.deliveredStock;
-        bottlesReturned += r.bottlesReturned;
+        bottlesDelivered = r.deliveredStock;
+        bottlesReturned = r.bottlesReturned;
+        manualBottlesCollected = r.manualBottlesCollected;
       } else {
-        // Salesman specific
+        // Salesman specific totals for Summary
         totalDeliveries += r.totalDeliveries;
-        // ALSO add customer returns to the total agency "Returned" pool if we want
-        // a total view of all empty bottles returning to the system today.
-        bottlesReturned += r.bottlesReturned;
       }
 
-      netBottlesOut += r.netBottlesOut;
-      if (isWarehouse) {
-        manualBottlesCollected += r.manualBottlesCollected;
-      }
+      netBottlesOut = bottlesDelivered - bottlesReturned;
       totalBottlesWithCustomers += r.totalBottlesWithCustomers;
 
       salesRevenue += r.salesRevenue;
