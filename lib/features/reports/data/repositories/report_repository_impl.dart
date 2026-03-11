@@ -526,29 +526,64 @@ class ReportRepositoryImpl implements ReportRepository {
           .replaceAll('-', '_');
 
       if (logsEvent.snapshot.exists) {
-        final data = Map<dynamic, dynamic>.from(
+        final Map<dynamic, dynamic> allLogsMap = Map<dynamic, dynamic>.from(
           logsEvent.snapshot.value as Map,
         );
 
-        // Sort logs by date to find the earliest one for opening stock
-        final sortedKeys = data.keys
+        final allKeys = allLogsMap.keys.toList()..sort();
+        final monthlyKeys = allLogsMap.keys
             .where((k) => k.toString().contains(monthPrefix))
-            .toList();
-        sortedKeys.sort(); // String sort works for 'LOG_YYYY_MM_DD' format
+            .toList()
+          ..sort();
 
-        if (sortedKeys.isNotEmpty) {
-          final firstLog = Map<String, dynamic>.from(
-            data[sortedKeys.first] as Map,
-          );
-          monthlyOpeningStock =
-              (firstLog['openingStock'] as num?)?.toInt() ?? 0;
+        // 1. Calculate TRUE Monthly Opening Stock (Carry-forward from preceding month)
+        if (monthlyKeys.isNotEmpty) {
+          final firstKeyOfMonth = monthlyKeys.first.toString();
+          final firstIdx = allKeys.indexOf(firstKeyOfMonth);
+          
+          if (firstIdx > 0) {
+            final prevLog = Map<String, dynamic>.from(allLogsMap[allKeys[firstIdx - 1]] as Map);
+            final isReconciled = prevLog['isReconciled'] == true;
+            monthlyOpeningStock = isReconciled
+                ? ((prevLog['actualClosingStock'] as num?)?.toInt() ?? 0)
+                : ((prevLog['closingStock'] as num?)?.toInt() ?? 0);
+          } else {
+            // No history before this month? Fallback to the very first opening stock 
+            // (Note: This might include the first load if no better data exists)
+            final firstLog = Map<String, dynamic>.from(allLogsMap[monthlyKeys.first] as Map);
+            monthlyOpeningStock = (firstLog['openingStock'] as num?)?.toInt() ?? 0;
+          }
           hasOpeningStock = true;
         }
 
-        data.forEach((key, value) {
+        // 2. Sum up Daily Loads (including those merged into openingStock)
+        allLogsMap.forEach((key, value) {
           if (key.toString().contains(monthPrefix)) {
             final log = Map<String, dynamic>.from(value as Map);
-            totalLoaded += (log['loaded'] as num?)?.toInt() ?? 0;
+            
+            final int dailyLoadedField = (log['loaded'] as num?)?.toInt() ?? 0;
+            final int logOpening = (log['openingStock'] as num?)?.toInt() ?? 0;
+            
+            int firstLoadOfToday = 0;
+            final currentKey = key.toString();
+            final currentIdx = allKeys.indexOf(currentKey);
+            
+            if (currentIdx > 0) {
+              final prevLog = Map<String, dynamic>.from(allLogsMap[allKeys[currentIdx - 1]] as Map);
+              final isReconciled = prevLog['isReconciled'] == true;
+              final prevDayClosing = isReconciled
+                  ? ((prevLog['actualClosingStock'] as num?)?.toInt() ?? 0)
+                  : ((prevLog['closingStock'] as num?)?.toInt() ?? 0);
+              firstLoadOfToday = logOpening - prevDayClosing;
+            } else {
+              // Very first log ever for this salesman - Opening stock is treated as system start balance
+              // and NOT as a daily load. monthlyOpeningStock is already set in the block above the loop.
+              firstLoadOfToday = 0;
+            }
+            if (firstLoadOfToday < 0) firstLoadOfToday = 0;
+            
+            totalLoaded += (firstLoadOfToday + dailyLoadedField);
+            
             totalLogDelivered += (log['totalDelivered'] as num?)?.toInt() ?? 0;
             totalDamaged += (log['damaged'] as num?)?.toInt() ?? 0;
             totalLogReturned +=
@@ -753,7 +788,7 @@ class ReportRepositoryImpl implements ReportRepository {
         .orderByChild('agencyId')
         .equalTo(agencyId)
         .onValue
-        .map((event) {
+        .map<List<String>>((event) {
           if (event.snapshot.exists) {
             final data = Map<String, dynamic>.from(event.snapshot.value as Map);
             final ids = data.keys.cast<String>().toList();
@@ -763,15 +798,18 @@ class ReportRepositoryImpl implements ReportRepository {
           return <String>[];
         })
         .distinct((prev, curr) {
-          if (prev.length != curr.length) return false;
-          for (int i = 0; i < prev.length; i++) {
-            if (prev[i] != curr[i]) return false;
+          final List<String> p = prev ?? [];
+          final List<String> c = curr ?? [];
+          if (p.length != c.length) return false;
+          for (int i = 0; i < p.length; i++) {
+            if (p[i] != c[i]) return false;
           }
           return true;
         });
 
-    return agencySalesmenStream.switchMap((salesmenIds) {
-      if (salesmenIds.isEmpty) {
+    return agencySalesmenStream.switchMap<ReportEntity>((salesmenIds) {
+      final List<String> ids = salesmenIds ?? [];
+      if (ids.isEmpty) {
         return Stream.value(_emptyReport(date));
       }
 
@@ -800,7 +838,7 @@ class ReportRepositoryImpl implements ReportRepository {
         .orderByChild('agencyId')
         .equalTo(agencyId)
         .onValue
-        .map((event) {
+        .map<List<String>>((event) {
           if (event.snapshot.exists) {
             final data = Map<String, dynamic>.from(event.snapshot.value as Map);
             final ids = data.keys.cast<String>().toList();
@@ -810,15 +848,18 @@ class ReportRepositoryImpl implements ReportRepository {
           return <String>[];
         })
         .distinct((prev, curr) {
-          if (prev.length != curr.length) return false;
-          for (int i = 0; i < prev.length; i++) {
-            if (prev[i] != curr[i]) return false;
+          final List<String> p = prev ?? [];
+          final List<String> c = curr ?? [];
+          if (p.length != c.length) return false;
+          for (int i = 0; i < p.length; i++) {
+            if (p[i] != c[i]) return false;
           }
           return true;
         });
 
-    return agencySalesmenStream.switchMap((salesmenIds) {
-      if (salesmenIds.isEmpty) {
+    return agencySalesmenStream.switchMap<ReportEntity>((salesmenIds) {
+      final List<String> ids = salesmenIds ?? [];
+      if (ids.isEmpty) {
         return Stream.value(_emptyReport(month));
       }
 
@@ -898,11 +939,14 @@ class ReportRepositoryImpl implements ReportRepository {
       // Consolidated counts:
       if (isWarehouse) {
         openingStock = r.openingStock;
-        stockLoaded = r.stockLoaded;
-        deliveredStock = r.deliveredStock;
+        // Total Loaded and Delivered will be summed across all sub-reports below
         closingStock = r.closingStock;
         stockMismatch = r.stockMismatch;
       }
+      
+      // SUM loaded and delivered stock across all reports (salesmen + warehouse)
+      stockLoaded += r.stockLoaded;
+      deliveredStock += r.deliveredStock;
       if (isWarehouse) {
         // AGENCY BOTTLE RECONCILIATION:
         // Logic: Use Warehouse Delivery (to salesman) as 'Delivered'
