@@ -73,15 +73,20 @@ class _DashboardPageState extends State<DashboardPage> with RouteAware {
 
   Future<void> _loadPersistedView() async {
     final prefs = sl<SharedPreferences>();
-    final savedIsAgency = prefs.getBool('dashboard_is_agency_view') ?? false;
+    final savedIsAgency = prefs.getBool('dashboard_is_agency_view');
     
     if (mounted) {
       final authState = context.read<AuthBloc>().state;
-      bool effectiveIsAgency = savedIsAgency;
+      bool effectiveIsAgency = savedIsAgency ?? false;
 
       if (authState is AuthAuthenticated) {
         final isOwner = authState.salesman.role == 'owner' || authState.originalOwner?.role == 'owner';
-        if (!isOwner) {
+        
+        // If owner and no preference saved yet, default to Agency View
+        if (isOwner && savedIsAgency == null) {
+          effectiveIsAgency = true;
+          await prefs.setBool('dashboard_is_agency_view', true);
+        } else if (!isOwner) {
           effectiveIsAgency = false;
         }
       }
@@ -89,7 +94,12 @@ class _DashboardPageState extends State<DashboardPage> with RouteAware {
       setState(() {
         _isAgencyView = effectiveIsAgency;
       });
-      // Removed forced reload to prevent loading screen and unnecessary data fetching on every tab switch
+
+      // After updating the view mode from persistence, ensure dashboard data matches
+      final currentState = context.read<AuthBloc>().state;
+      if (currentState is AuthAuthenticated) {
+        _loadDashboardData(currentState.salesman, currentState.originalOwner);
+      }
     }
   }
 

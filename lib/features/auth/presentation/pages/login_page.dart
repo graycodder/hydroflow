@@ -45,8 +45,8 @@ class _LoginPageState extends State<LoginPage> {
       }
       context.read<AuthBloc>().add(
             AuthLoginRequested(
-              username: _usernameController.text,
-              password: _passwordController.text,
+              username: _usernameController.text.trim(),
+              password: _passwordController.text.trim(),
             ),
           );
     }

@@ -72,9 +72,9 @@ class AuthRepositoryImpl implements AuthRepository {
         final userNode = snapshot.children.first;
         final userData = userNode.value as Map; // safely cast
 
-        final storedPassword = userData['password'];
+        final storedPassword = userData['password']?.toString().trim();
 
-        if (storedPassword == password) {
+        if (storedPassword == password.trim()) {
           final uid = userNode.key!;
           final agencyId = userData['agencyId'] as String? ?? '';
           final role = userData['role'] as String? ?? 'salesman';
