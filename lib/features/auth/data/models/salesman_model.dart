@@ -41,12 +41,12 @@ class SalesmanModel extends Salesman {
 
     return SalesmanModel(
       id: snapshot.key!, // The key of the node (e.g., S001)
-      name: data['name'] as String? ?? '',
-      agencyName: data['agencyName'] as String?,
-      agencyId: data['agencyId'] as String? ?? '', // Fallback empty for migration
-      role: data['role'] as String? ?? 'salesman',
-      username: data['username'] as String? ?? '',
-      password: data['password'] as String? ?? '',
+      name: data['name']?.toString() ?? '',
+      agencyName: data['agencyName']?.toString(),
+      agencyId: data['agencyId']?.toString() ?? '', // Fallback empty for migration
+      role: data['role']?.toString() ?? 'salesman',
+      username: data['username']?.toString() ?? '',
+      password: data['password']?.toString() ?? '',
       currentStock: (data['currentStock'] as num?)?.toInt() ?? 0,
       isActive: data['isActive'] as bool? ?? false,
       subscriptionExpiry: data['subEndDate'] != null
@@ -55,14 +55,14 @@ class SalesmanModel extends Salesman {
                 ? DateTime.tryParse(data['subscriptionExpiry'].toString())
                 : null),
       totalDepositsHeld: (data['totalDepositsHeld'] as num?)?.toDouble() ?? 0.0,
-      planId: data['planId'] as String?,
+      planId: data['planId']?.toString(),
       customerCount: (data['customerCount'] as num?)?.toInt() ?? 0,
       activeCustomers: (data['activeCustomers'] as num?)?.toInt() ?? 0,
       maxCustomers: (data['maxCustomers'] as num?)?.toInt() ?? 0,
-      address: data['address'] as String? ?? '',
-      phoneNumber: data['phoneNumber'] as String? ?? '',
-      zone: data['zone'] as String? ?? '',
-      subId: data['subId'] as String?,
+      address: data['address']?.toString() ?? '',
+      phoneNumber: data['phoneNumber']?.toString() ?? '',
+      zone: data['zone']?.toString() ?? '',
+      subId: data['subId']?.toString(),
       subStartDate: data['subStartDate'] != null
           ? DateTime.tryParse(data['subStartDate'].toString())
           : null,

@@ -1,4 +1,6 @@
 import 'package:get_it/get_it.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:watermemo/core/app_config.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:watermemo/features/auth/data/repositories/auth_repository_impl.dart';
@@ -74,7 +76,10 @@ Future<void> init() async {
   FirebaseDatabase.instance.setPersistenceEnabled(true);
   FirebaseDatabase.instance.setPersistenceCacheSizeBytes(10 * 1024 * 1024); // 10MB cache
 
-  sl.registerLazySingleton<FirebaseDatabase>(() => FirebaseDatabase.instance);
+  sl.registerLazySingleton<FirebaseDatabase>(() => FirebaseDatabase.instanceFor(
+    app: Firebase.app(),
+    databaseURL: AppConfig.instance.firebaseDatabaseUrl,
+  ));
 
   // Repositories
   sl.registerLazySingleton<AuthRepository>(

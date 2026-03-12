@@ -55,6 +55,19 @@ android {
         versionName = flutter.versionName
     }
 
+    flavorDimensions.add("environment")
+    productFlavors {
+        create("staging") {
+            dimension = "environment"
+            applicationId = "com.graycodder.hydroflow.staging"
+            versionNameSuffix = "-staging"
+        }
+        create("production") {
+            dimension = "environment"
+            applicationId = "com.graycodder.hydroflow"
+        }
+    }
+
     buildTypes {
         release {
             signingConfig = signingConfigs.getByName("release")

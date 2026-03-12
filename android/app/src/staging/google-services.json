@@ -1,0 +1,30 @@
+{
+  "project_info": {
+    "project_number": "1032293793727",
+    "firebase_url": "https://hydroflow-stg-app-default-rtdb.asia-southeast1.firebasedatabase.app",
+    "project_id": "hydroflow-stg-app",
+    "storage_bucket": "hydroflow-stg-app.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1032293793727:android:08f805856ab0ce9efeab0a",
+        "android_client_info": {
+          "package_name": "com.graycodder.hydroflow.staging"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC-Vm1V4iV2G97OghPQma6Xpfa7pwb0b6c"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

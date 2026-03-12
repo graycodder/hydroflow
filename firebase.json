@@ -1,0 +1,44 @@
+{
+  "database": {
+    "rules": "firebase_security_rules.json"
+  },
+  "flutter": {
+    "platforms": {
+      "android": {
+        "default": {
+          "projectId": "hydroflow-stg-app",
+          "appId": "1:1032293793727:android:08f805856ab0ce9efeab0a",
+          "fileOutput": "android/app/google-services.json"
+        }
+      },
+      "ios": {
+        "default": {
+          "projectId": "hydroflow-stg-app",
+          "appId": "1:1032293793727:ios:dfa6eea79ef25b11feab0a",
+          "uploadDebugSymbols": true,
+          "fileOutput": "ios/Runner/GoogleService-Info.plist"
+        }
+      },
+      "macos": {
+        "default": {
+          "projectId": "hydroflow-stg-app",
+          "appId": "1:1032293793727:ios:dfa6eea79ef25b11feab0a",
+          "uploadDebugSymbols": true,
+          "fileOutput": "macos/Runner/GoogleService-Info.plist"
+        }
+      },
+      "dart": {
+        "lib/firebase_options_staging.dart": {
+          "projectId": "hydroflow-stg-app",
+          "configurations": {
+            "android": "1:1032293793727:android:08f805856ab0ce9efeab0a",
+            "ios": "1:1032293793727:ios:dfa6eea79ef25b11feab0a",
+            "macos": "1:1032293793727:ios:dfa6eea79ef25b11feab0a",
+            "web": "1:1032293793727:web:53df1c656abae7b4feab0a",
+            "windows": "1:1032293793727:web:1374431ad6407fb8feab0a"
+          }
+        }
+      }
+    }
+  }
+}

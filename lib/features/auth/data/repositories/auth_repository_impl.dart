@@ -102,7 +102,7 @@ class AuthRepositoryImpl implements AuthRepository {
               final matchNode = deviceQuery.children.first;
               // If the device matches someone ELSE — block regardless of role
               if (matchNode.key != uid) {
-                throw Exception('This device is already in use by another account.');
+                 throw Exception('This device is already in use by another account.');
               }
             }
 
@@ -122,13 +122,17 @@ class AuthRepositoryImpl implements AuthRepository {
 
           _authStateController.add(uid);
         } else {
-          throw Exception('Invalid username or password');
+          throw Exception('Password does not match for username: $username');
         }
       } else {
-        throw Exception('Invalid username or password');
+        throw Exception('Username "$username" not found in Staging Data.');
       }
     } catch (e) {
-      rethrow;
+      if (e is Exception && !e.toString().contains('FirebaseException')) {
+          rethrow;
+      } else {
+          throw Exception('Login Error: $e'); // This prints raw DB exceptions too
+      }
     }
   }
 
@@ -193,8 +197,17 @@ class AuthRepositoryImpl implements AuthRepository {
   }
 
   bool _isVersionLower(String current, String target) {
-    final currentParts = current.split('.').map(int.parse).toList();
-    final targetParts = target.split('.').map(int.parse).toList();
+    // Strip any suffixes like -staging or +buildNumber
+    String cleanVersion(String v) {
+      final withoutPlus = v.split('+').first;
+      return withoutPlus.split('-').first;
+    }
+
+    final currentClean = cleanVersion(current);
+    final targetClean = cleanVersion(target);
+
+    final currentParts = currentClean.split('.').map((e) => int.tryParse(e) ?? 0).toList();
+    final targetParts = targetClean.split('.').map((e) => int.tryParse(e) ?? 0).toList();
     
     for (int i = 0; i < 3; i++) {
       final currentVal = i < currentParts.length ? currentParts[i] : 0;

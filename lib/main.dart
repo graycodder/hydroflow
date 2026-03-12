@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:watermemo/core/theme.dart';
+import 'package:watermemo/core/app_config.dart';
 import 'package:watermemo/core/service_locator.dart' as di;
 import 'package:watermemo/router/app_router.dart';
 import 'package:watermemo/firebase_options.dart';
@@ -25,7 +26,6 @@ import 'package:watermemo/core/widgets/connectivity_wrapper.dart';
 import 'package:watermemo/features/auth/presentation/bloc/agency_bloc.dart';
 import 'package:watermemo/features/auth/presentation/bloc/agency_event.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-
 
 void main() {
   WidgetsBinding widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
@@ -58,7 +58,7 @@ class _BootstrapAppState extends State<BootstrapApp> {
       // Initialize Firebase
       try {
         await Firebase.initializeApp(
-          options: DefaultFirebaseOptions.currentPlatform,
+          options: AppConfig.instance.firebaseOptions,
         );
       } catch (e) {
         await Firebase.initializeApp();
@@ -67,8 +67,10 @@ class _BootstrapAppState extends State<BootstrapApp> {
       // Pass all uncaught "fatal" errors from the framework to Crashlytics
       FlutterError.onError = (errorDetails) {
         final errorStr = errorDetails.exceptionAsString();
-        if (errorStr.contains('MissingPluginException') && 
-            errorStr.contains('No implementation found for method cancel on channel')) {
+        if (errorStr.contains('MissingPluginException') &&
+            errorStr.contains(
+              'No implementation found for method cancel on channel',
+            )) {
           // Ignore known teardown exception on stream cancellations
           return;
         }
@@ -78,8 +80,10 @@ class _BootstrapAppState extends State<BootstrapApp> {
       // Pass all uncaught asynchronous errors that aren't handled by the Flutter framework to Crashlytics
       PlatformDispatcher.instance.onError = (error, stack) {
         final errorStr = error.toString();
-        if (errorStr.contains('MissingPluginException') && 
-            errorStr.contains('No implementation found for method cancel on channel')) {
+        if (errorStr.contains('MissingPluginException') &&
+            errorStr.contains(
+              'No implementation found for method cancel on channel',
+            )) {
           // Ignore known teardown exception on stream cancellations
           return true;
         }
@@ -109,18 +113,16 @@ class _BootstrapAppState extends State<BootstrapApp> {
     if (_error != null) {
       return MaterialApp(
         home: Scaffold(
-          body: Center(
-            child: Text('Initialization Error: $_error'),
-          ),
+          body: Center(child: Text('Initialization Error: $_error')),
         ),
       );
     }
 
     if (!_initialized) {
-      return const MaterialApp(
-        title: 'WaterMemo',
+      return MaterialApp(
+        title: AppConfig.instance.appTitle,
         debugShowCheckedModeBanner: false,
-        home: SplashView(), // Show pure splash UI while initializing
+        home: const SplashView(), // Show pure splash UI while initializing
       );
     }
 
@@ -142,9 +144,13 @@ class WaterMemoApp extends StatelessWidget {
         BlocProvider<BottleBloc>(create: (_) => di.sl<BottleBloc>()),
         BlocProvider<CustomerBloc>(create: (_) => di.sl<CustomerBloc>()),
         BlocProvider<DeliveryBloc>(create: (_) => di.sl<DeliveryBloc>()),
-        BlocProvider<NotificationBloc>(create: (_) => di.sl<NotificationBloc>()),
+        BlocProvider<NotificationBloc>(
+          create: (_) => di.sl<NotificationBloc>(),
+        ),
         BlocProvider<DashboardBloc>(create: (_) => di.sl<DashboardBloc>()),
-        BlocProvider<ConnectivityBloc>(create: (_) => di.sl<ConnectivityBloc>()),
+        BlocProvider<ConnectivityBloc>(
+          create: (_) => di.sl<ConnectivityBloc>(),
+        ),
         BlocProvider<AgencyBloc>(create: (_) => di.sl<AgencyBloc>()),
       ],
 
@@ -154,7 +160,9 @@ class WaterMemoApp extends StatelessWidget {
           routerRefreshListenable.notifyListeners();
 
           if (state is AuthAuthenticated) {
-            context.read<NotificationBloc>().add(LoadNotifications(state.salesman.id));
+            context.read<NotificationBloc>().add(
+              LoadNotifications(state.salesman.id),
+            );
             // Navigation handled by SplashPage or Router Redirect?
             // Actually, if we use SplashPage, we should rely on SplashPage to navigate once ready.
             // But if the user is already on a page and re-authenticates/logout, we might need global listener.
@@ -162,11 +170,11 @@ class WaterMemoApp extends StatelessWidget {
           } else if (state is AuthSubscriptionExpired) {
             // router.go('/lock', extra: state.salesman); // Handled by Router or SplashPage
           } else if (state is AuthUnauthenticated) {
-             context.read<DashboardBloc>().add(ResetDashboard());
-             context.read<AgencyBloc>().add(ResetAgency());
-             // router.go('/login'); // Handled by Router or SplashPage
+            context.read<DashboardBloc>().add(ResetDashboard());
+            context.read<AgencyBloc>().add(ResetAgency());
+            // router.go('/login'); // Handled by Router or SplashPage
           } else if (state is AuthUpdateRequired) {
-             // router.go('/update'); // Handled by Router or SplashPage
+            // router.go('/update'); // Handled by Router or SplashPage
           }
         },
         child: ScreenUtilInit(
@@ -175,7 +183,7 @@ class WaterMemoApp extends StatelessWidget {
           splitScreenMode: true,
           builder: (context, child) {
             return MaterialApp.router(
-              title: 'WaterMemo',
+              title: AppConfig.instance.appTitle,
               debugShowCheckedModeBanner: false,
               theme: CodeTheme.lightTheme,
               routerConfig: router,
@@ -184,15 +192,23 @@ class WaterMemoApp extends StatelessWidget {
                 final scaleText = ScreenUtil().scaleText;
                 return MediaQuery(
                   data: media.copyWith(
-                    textScaler: TextScaler.linear(media.textScaler.scale(1) * scaleText),
+                    textScaler: TextScaler.linear(
+                      media.textScaler.scale(1) * scaleText,
+                    ),
                   ),
-                  child: ConnectivityWrapper(child: materialChild!),
+                  child: AppConfig.instance.isStaging
+                      ? Banner(
+                          location: BannerLocation.topEnd,
+                          message: 'STAGING',
+                          color: Colors.orange,
+                          child: ConnectivityWrapper(child: materialChild!),
+                        )
+                      : ConnectivityWrapper(child: materialChild!),
                 );
               },
             );
           },
         ),
-
       ),
     );
   }
