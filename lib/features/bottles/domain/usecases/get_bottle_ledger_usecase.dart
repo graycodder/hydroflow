@@ -10,8 +10,8 @@ class GetBottleLedgerUseCase {
 
   GetBottleLedgerUseCase(this.customerRepository, this.agencyRepository);
 
-  Stream<BottleLedgerStats> call(String salesmanId) {
-    return _mapToStats(customerRepository.getCustomers(salesmanId));
+  Stream<BottleLedgerStats> call(String salesmanId, {String? agencyId, String? zone}) {
+    return _mapToStats(customerRepository.getCustomers(salesmanId, agencyId: agencyId, zone: zone));
   }
 
   Stream<BottleLedgerStats> getAgencyBottleLedger(String agencyId) {

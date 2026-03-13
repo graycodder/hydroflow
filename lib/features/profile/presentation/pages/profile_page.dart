@@ -70,10 +70,7 @@ class ProfilePage extends StatelessWidget {
               final roleDisplay = profile.role.isNotEmpty
                   ? profile.role[0].toUpperCase() + profile.role.substring(1)
                   : '';
-              final zoneDisplay = profile.zone.isNotEmpty
-                  ? ' • ${profile.zone[0].toUpperCase() + profile.zone.substring(1)}'
-                  : '';
-              final displayRole = isAgency ? 'Agency Profile' : '$roleDisplay$zoneDisplay';
+              final displayRole = isAgency ? 'Agency Profile' : roleDisplay;
 
               final agencyPhone = agency?.contactPhone ?? '';
               final displayPhone =
@@ -593,19 +590,23 @@ class _ProfileHeader extends StatelessWidget {
                 const SizedBox(height: 4),
                 Row(
                   children: [
-                    Container(
-                      padding:
-                          const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.2),
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: Text(
-                        displayRole,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 12,
-                          fontWeight: FontWeight.w500,
+                    Flexible(
+                      child: Container(
+                        padding:
+                            const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.2),
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Text(
+                          displayRole,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w500,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
                     ),
@@ -617,9 +618,13 @@ class _ProfileHeader extends StatelessWidget {
                     children: [
                       const Icon(Icons.phone_outlined, size: 13, color: Colors.white70),
                       const SizedBox(width: 4),
-                      Text(
-                        displayPhone,
-                        style: const TextStyle(color: Colors.white70, fontSize: 13),
+                      Expanded(
+                        child: Text(
+                          displayPhone,
+                          style: const TextStyle(color: Colors.white70, fontSize: 13),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
                       ),
                     ],
                   ),

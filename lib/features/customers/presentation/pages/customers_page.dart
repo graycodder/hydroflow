@@ -41,7 +41,7 @@ class _CustomersPageState extends State<CustomersPage> {
       if (salesman.role == 'owner' && isAgencyView) {
         context.read<CustomerBloc>().add(LoadAgencyCustomers(salesman.agencyId, resetFilters: false));
       } else {
-        context.read<CustomerBloc>().add(LoadCustomers(salesman.id, resetFilters: false));
+        context.read<CustomerBloc>().add(LoadCustomers(salesman.id, salesman.agencyId, salesman.zone, resetFilters: false));
       }
     }
   }
@@ -69,7 +69,7 @@ class _CustomersPageState extends State<CustomersPage> {
               if (isAgencyViewPref) {
                 context.read<CustomerBloc>().add(LoadAgencyCustomers(salesman.agencyId, resetFilters: true));
               } else {
-                context.read<CustomerBloc>().add(LoadCustomers(salesman.id, resetFilters: true));
+                context.read<CustomerBloc>().add(LoadCustomers(salesman.id, salesman.agencyId, salesman.zone, resetFilters: true));
               }
             });
           }
@@ -103,6 +103,7 @@ class _CustomersPageState extends State<CustomersPage> {
                         //     ),
                         //   ),
                         // ),
+                          if (isAgency)
                         Container(
                           padding: const EdgeInsets.symmetric(vertical: 16),
                           color: Colors.grey[50],
@@ -116,71 +117,71 @@ class _CustomersPageState extends State<CustomersPage> {
                           ),
                         ),
 
-                                                // Salesman Filter (Only in Agency View)
-                        if (isAgency)
-                          BlocBuilder<AgencyBloc, AgencyState>(
-                            builder: (context, agencyState) {
-                              if (agencyState is AgencySalesmenLoaded) {
-                                final salesmen = agencyState.salesmen;
-                                return Padding(
-                                  padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-                                  child: DropdownSearch<Salesman>(
-                                    items: (filter, loadProps) {
-                                      var filteredSalesmen = salesmen;
-                                      if (state.selectedZone != null) {
-                                        final activeInZone = state.customers
-                                            .where((c) => c.zone == state.selectedZone)
-                                            .map((c) => c.salesmanId)
-                                            .toSet();
-                                        filteredSalesmen = salesmen.where((s) => activeInZone.contains(s.id)).toList();
-                                      }
-                                      return [
-                                        const Salesman(id: 'all', name: 'All Salesmen', agencyId: '', username: '', password: '', phoneNumber: ''),
-                                        ...filteredSalesmen,
-                                      ];
-                                    },
-                                    itemAsString: (Salesman s) => s.id == 'all' ? s.name[0].toUpperCase() + s.name.substring(1) : '${s.name[0].toUpperCase() + s.name.substring(1)} (${s.phoneNumber})',
-                                    decoratorProps: DropDownDecoratorProps(
-                                      decoration: InputDecoration(
-                                        labelText: 'Filter by Salesman',
-                                        hintText: 'Select Salesman',
-                                        prefixIcon: const Icon(Icons.person_outline, color: Colors.blueGrey),
-                                        filled: true,
-                                        fillColor: Colors.white,
-                                        border: OutlineInputBorder(
-                                          borderRadius: BorderRadius.circular(12),
-                                          borderSide: BorderSide(color: Colors.grey.shade300),
-                                        ),
-                                        enabledBorder: OutlineInputBorder(
-                                          borderRadius: BorderRadius.circular(12),
-                                          borderSide: BorderSide(color: Colors.grey.shade300),
-                                        ),
-                                        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                                      ),
-                                    ),
-                                    popupProps: PopupProps.menu(
-                                      showSearchBox: true,
-                                      searchFieldProps: const TextFieldProps(
-                                        decoration: InputDecoration(
-                                          hintText: "Search Salesman...",
-                                          prefixIcon: Icon(Icons.search),
-                                          border: OutlineInputBorder(),
-                                        ),
-                                      ),
-                                    ),
-                                    selectedItem: state.selectedSalesmanId == null 
-                                        ? const Salesman(id: 'all', name: 'All Salesmen', agencyId: '', username: '', password: '', phoneNumber: '')
-                                        : salesmen.firstWhere((s) => s.id == state.selectedSalesmanId, orElse: () => const Salesman(id: 'all', name: 'All Salesmen', agencyId: '', username: '', password: '', phoneNumber: '')),
-                                    onChanged: (Salesman? value) {
-                                      context.read<CustomerBloc>().add(FilterBySalesman(value?.id == 'all' ? null : value?.id));
-                                    },
-                                    compareFn: (s1, s2) => s1.id == s2.id,
-                                  ),
-                                );
-                              }
-                              return const SizedBox.shrink();
-                            },
-                          ),
+                        // Salesman Filter (Only in Agency View)
+                        // if (isAgency)
+                        //   BlocBuilder<AgencyBloc, AgencyState>(
+                        //     builder: (context, agencyState) {
+                        //       if (agencyState is AgencySalesmenLoaded) {
+                        //         final salesmen = agencyState.salesmen;
+                        //         return Padding(
+                        //           padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                        //           child: DropdownSearch<Salesman>(
+                        //             items: (filter, loadProps) {
+                        //               var filteredSalesmen = salesmen;
+                        //               if (state.selectedZone != null) {
+                        //                 final activeInZone = state.customers
+                        //                     .where((c) => c.zone == state.selectedZone)
+                        //                     .map((c) => c.salesmanId)
+                        //                     .toSet();
+                        //                 filteredSalesmen = salesmen.where((s) => activeInZone.contains(s.id)).toList();
+                        //               }
+                        //               return [
+                        //                 const Salesman(id: 'all', name: 'All Salesmen', agencyId: '', username: '', password: '', phoneNumber: ''),
+                        //                 ...filteredSalesmen,
+                        //               ];
+                        //             },
+                        //             itemAsString: (Salesman s) => s.id == 'all' ? s.name[0].toUpperCase() + s.name.substring(1) : '${s.name[0].toUpperCase() + s.name.substring(1)} (${s.phoneNumber})',
+                        //             decoratorProps: DropDownDecoratorProps(
+                        //               decoration: InputDecoration(
+                        //                 labelText: 'Filter by Salesman',
+                        //                 hintText: 'Select Salesman',
+                        //                 prefixIcon: const Icon(Icons.person_outline, color: Colors.blueGrey),
+                        //                 filled: true,
+                        //                 fillColor: Colors.white,
+                        //                 border: OutlineInputBorder(
+                        //                   borderRadius: BorderRadius.circular(12),
+                        //                   borderSide: BorderSide(color: Colors.grey.shade300),
+                        //                 ),
+                        //                 enabledBorder: OutlineInputBorder(
+                        //                   borderRadius: BorderRadius.circular(12),
+                        //                   borderSide: BorderSide(color: Colors.grey.shade300),
+                        //                 ),
+                        //                 contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        //               ),
+                        //             ),
+                        //             popupProps: PopupProps.menu(
+                        //               showSearchBox: true,
+                        //               searchFieldProps: const TextFieldProps(
+                        //                 decoration: InputDecoration(
+                        //                   hintText: "Search Salesman...",
+                        //                   prefixIcon: Icon(Icons.search),
+                        //                   border: OutlineInputBorder(),
+                        //                 ),
+                        //               ),
+                        //             ),
+                        //             selectedItem: state.selectedSalesmanId == null 
+                        //                 ? const Salesman(id: 'all', name: 'All Salesmen', agencyId: '', username: '', password: '', phoneNumber: '')
+                        //                 : salesmen.firstWhere((s) => s.id == state.selectedSalesmanId, orElse: () => const Salesman(id: 'all', name: 'All Salesmen', agencyId: '', username: '', password: '', phoneNumber: '')),
+                        //             onChanged: (Salesman? value) {
+                        //               context.read<CustomerBloc>().add(FilterBySalesman(value?.id == 'all' ? null : value?.id));
+                        //             },
+                        //             compareFn: (s1, s2) => s1.id == s2.id,
+                        //           ),
+                        //         );
+                        //       }
+                        //       return const SizedBox.shrink();
+                        //     },
+                        //   ),
                         
                         // Zone Filters Dropdown
                         Padding(
@@ -291,12 +292,7 @@ class _CustomersPageState extends State<CustomersPage> {
                            width: double.infinity,
                            child: ElevatedButton.icon(
                               onPressed: () {
-                                // 1. Strict Quota Enforcement
-                                if (salesman.maxCustomers > 0 && salesman.customerCount >= salesman.maxCustomers) {
-                                  _showLimitExceededDialog(context, 'You have reached your assigned quota of ${salesman.maxCustomers} customers. Please contact your administrator.');
-                                } else {
-                                  _showAddCustomerDialog(context, salesman, isAgency);
-                                }
+                                _showAddCustomerDialog(context, salesman, isAgency);
                               },
                              icon: const Icon(Icons.add),
                              label: const Text('Add New Customer'),

@@ -6,8 +6,8 @@ class GetCustomersUseCase {
 
   GetCustomersUseCase(this.repository);
 
-  Stream<List<Customer>> call(String salesmanId) {
-    return repository.getCustomers(salesmanId);
+  Stream<List<Customer>> call(String salesmanId, {String? agencyId, String? zone}) {
+    return repository.getCustomers(salesmanId, agencyId: agencyId, zone: zone);
   }
 
   Stream<List<Customer>> byAgency(String agencyId) {

@@ -83,7 +83,7 @@ class CustomerBloc extends Bloc<CustomerEvent, CustomerState> {
     ));
     
     await emit.forEach<List<Customer>>(
-      getCustomers(event.salesmanId),
+      getCustomers(event.salesmanId, agencyId: event.agencyId, zone: event.zone),
       onData: (customers) {
         final activeCount = customers.where((c) => c.status == 'Active').length;
         final inactiveCount = customers.length - activeCount;

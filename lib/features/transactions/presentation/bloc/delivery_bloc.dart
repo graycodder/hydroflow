@@ -102,12 +102,15 @@ class DeliveryBloc extends Bloc<DeliveryEvent, DeliveryState> {
 
     await emit.forEach<Map<String, dynamic>>(
       salesmanStream.switchMap((salesman) {
-        // Create fresh streams for each subscription cycle to avoid "Stream already listened to"
-        final customerStream = _customerRepository.getCustomers(event.salesmanId);
+        // Use agencyId and zone from event to fetch customers for assigned routes
+        final customerStream = _customerRepository.getCustomers(
+          event.salesmanId,
+          agencyId: event.agencyId,
+          zone: event.zone,
+        );
         final transactionStream = _getTodayTransactionsUseCase(event.salesmanId);
         
-        // Use salesman's individual current stock for all roles in delivery view
-      final stockStream = Stream.value(salesman.currentStock);
+        final stockStream = Stream.value(salesman.currentStock);
 
         return CombineLatestStream.combine3<List<Customer>, List<TransactionEntity>, int, Map<String, dynamic>>(
           customerStream,

@@ -14,12 +14,14 @@ abstract class CustomerStreamEvent extends CustomerEvent {
 
 class LoadCustomers extends CustomerStreamEvent {
   final String salesmanId;
+  final String agencyId;
+  final String zone;
   final bool resetFilters;
 
-  const LoadCustomers(this.salesmanId, {this.resetFilters = false});
+  const LoadCustomers(this.salesmanId, this.agencyId, this.zone, {this.resetFilters = false});
 
   @override
-  List<Object> get props => [salesmanId, resetFilters];
+  List<Object> get props => [salesmanId, agencyId, zone, resetFilters];
 }
 
 class LoadAgencyCustomers extends CustomerStreamEvent {

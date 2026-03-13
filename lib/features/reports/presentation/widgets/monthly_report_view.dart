@@ -38,8 +38,8 @@ class MonthlyReportView extends StatelessWidget {
         const SizedBox(height: 16),
         _buildMonthlyBottleTracking(),
         const SizedBox(height: 16),
-        _buildCustomerStatistics(),
-        const SizedBox(height: 16),
+       //_buildCustomerStatistics(),
+       //const SizedBox(height: 16),
         _buildStockSummary(),
         const SizedBox(height: 16),
         _buildMonthlyPerformanceMetrics(),
@@ -355,43 +355,43 @@ class MonthlyReportView extends StatelessWidget {
     );
   }
 
-  Widget _buildCustomerStatistics() {
-    return buildCard(
-      title: "Customer Statistics",
-      icon: Icons.people_outline,
-      subtitle: "",
-      child: Row(
-        children: [
-          Expanded(
-            child: _buildCustomerStatBox(
-              "New",
-              "${report.newCustomers}",
-              const Color(0xFFE8F5E9),
-              const Color(0xFF4CAF50),
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: _buildCustomerStatBox(
-              "Active",
-              "${report.activeCustomers}",
-              const Color(0xFFE8EAF6),
-              const Color(0xFF3F51B5),
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: _buildCustomerStatBox(
-              "Inactive",
-              "${report.inactiveCustomers}",
-              const Color(0xFFF9F9F9),
-              const Color(0xFF9E9E9E),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+  // Widget _buildCustomerStatistics() {
+  //   return buildCard(
+  //     title: "Customer Statistics",
+  //     icon: Icons.people_outline,
+  //     subtitle: "",
+  //     child: Row(
+  //       children: [
+  //         Expanded(
+  //           child: _buildCustomerStatBox(
+  //             "New",
+  //             "${report.newCustomers}",
+  //             const Color(0xFFE8F5E9),
+  //             const Color(0xFF4CAF50),
+  //           ),
+  //         ),
+  //         const SizedBox(width: 12),
+  //         Expanded(
+  //           child: _buildCustomerStatBox(
+  //             "Active",
+  //             "${report.activeCustomers}",
+  //             const Color(0xFFE8EAF6),
+  //             const Color(0xFF3F51B5),
+  //           ),
+  //         ),
+  //         const SizedBox(width: 12),
+  //         Expanded(
+  //           child: _buildCustomerStatBox(
+  //             "Inactive",
+  //             "${report.inactiveCustomers}",
+  //             const Color(0xFFF9F9F9),
+  //             const Color(0xFF9E9E9E),
+  //           ),
+  //         ),
+  //       ],
+  //     ),
+  //   );
+  // }
 
   Widget _buildCustomerStatBox(String label, String value, Color bgColor, Color textColor) {
     return Container(

@@ -45,10 +45,11 @@ class _AddCustomerDialogState extends State<AddCustomerDialog> {
   void initState() {
     super.initState();
     if (widget.isAgencyView) {
-      _selectedSalesmanId = widget.currentUser.id; // Default to current user
+      _selectedSalesmanId = widget.currentUser.id;
       _fetchSalesmen();
     } else {
       _selectedSalesmanId = widget.currentUser.id;
+      // Zone field starts empty — user types or picks from suggestions
     }
     _fetchAgencyZones();
   }
@@ -176,40 +177,43 @@ class _AddCustomerDialogState extends State<AddCustomerDialog> {
                   ),
                   const SizedBox(height: 20),
 
-                  if (widget.isAgencyView) ...[
-                    _buildLabel('Assign To Salesman', isMandatory: true),
-                    if (_isLoadingSalesmen)
-                      const Padding(padding: EdgeInsets.all(8.0), child: Center(child: CircularProgressIndicator()))
-                    else
-                      DropdownButtonFormField<String>(
-                        value: _selectedSalesmanId,
-                        isExpanded: true,
-                        hint: const Text('Select Salesman'),
-                        items: _availableSalesmen.map((s) {
-                          return DropdownMenuItem(
-                            value: s.id,
-                            child: Text('${s.name} (${s.role})'),
-                          );
-                        }).toList(),
-                        onChanged: (val) {
-                          setState(() => _selectedSalesmanId = val);
-                        },
-                         decoration: InputDecoration(
-                          filled: true,
-                          fillColor: Colors.grey[100],
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(8),
-                            borderSide: BorderSide(color: Colors.grey.shade300),
-                          ),
-                          enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(8),
-                            borderSide: BorderSide(color: Colors.grey.shade300),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                  ],
+                  // if (widget.isAgencyView) ...[
+                  //   _buildLabel('Assign To Salesman', isMandatory: true),
+                  //   if (_isLoadingSalesmen)
+                  //     const Padding(padding: EdgeInsets.all(8.0), child: Center(child: CircularProgressIndicator()))
+                  //   else
+                  //     DropdownButtonFormField<String>(
+                  //       value: _selectedSalesmanId,
+                  //       isExpanded: true,
+                  //       hint: const Text('Select Salesman'),
+                  //       items: _availableSalesmen.map((s) {
+                  //         return DropdownMenuItem(
+                  //           value: s.id,
+                  //           child: Text('${s.name} (${s.role})'),
+                  //         );
+                  //       }).toList(),
+                  //       onChanged: (val) {
+                  //         setState(() {
+                  //           _selectedSalesmanId = val;
+                  //           _zoneController.clear();
+                  //         });
+                  //       },
+                  //        decoration: InputDecoration(
+                  //         filled: true,
+                  //         fillColor: Colors.grey[100],
+                  //         contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                  //         border: OutlineInputBorder(
+                  //           borderRadius: BorderRadius.circular(8),
+                  //           borderSide: BorderSide(color: Colors.grey.shade300),
+                  //         ),
+                  //         enabledBorder: OutlineInputBorder(
+                  //           borderRadius: BorderRadius.circular(8),
+                  //           borderSide: BorderSide(color: Colors.grey.shade300),
+                  //         ),
+                  //       ),
+                  //     ),
+                  //     const SizedBox(height: 16),
+                  // ],
 
                   _buildLabel('Customer Name', isMandatory: true),
                   _buildTextFormField(
@@ -267,75 +271,8 @@ class _AddCustomerDialogState extends State<AddCustomerDialog> {
                     },
                   ),
                   const SizedBox(height: 16),
-                  _buildLabel('Zone (Area)', isMandatory: true),
-                  LayoutBuilder(
-                    builder: (context, constraints) => RawAutocomplete<String>(
-                      textEditingController: _zoneController,
-                      focusNode: _zoneFocusNode,
-                      optionsBuilder: (TextEditingValue textEditingValue) {
-                      final Set<String> combinedZones = {..._agencyZones};
-                      for (var c in widget.bloc.state.customers) {
-                        if (c.zone.isNotEmpty) combinedZones.add(c.zone.trim());
-                      }
-                      final suggestions = combinedZones.toList()..sort();
-
-                      if (textEditingValue.text.isEmpty) {
-                        return suggestions;
-                      }
-                        return suggestions.where((String option) {
-                          return option.toLowerCase().contains(textEditingValue.text.toLowerCase());
-                        });
-                      },
-                      onSelected: (String selection) {
-                        _zoneController.text = selection;
-                      },
-                      fieldViewBuilder: (context, controller, focusNode, onFieldSubmitted) {
-                        return _buildTextFormField(
-                          controller,
-                          'Enter zone/area (e.g. Zone A)',
-                          focusNode: focusNode,
-                          inputFormatters: [
-                            FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z0-9 ]')),
-                          ],
-                          validator: (value) {
-                            if (value == null || value.trim().isEmpty) {
-                              return 'Please enter customer zone';
-                            }
-                            return null;
-                          },
-                        );
-                      },
-                      optionsViewBuilder: (context, onSelected, options) {
-                        return Align(
-                          alignment: Alignment.topLeft,
-                          child: Material(
-                            elevation: 4.0,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: ConstrainedBox(
-                              constraints: BoxConstraints(maxHeight: 200, maxWidth: constraints.maxWidth),
-                              child: ListView.builder(
-                                padding: const EdgeInsets.symmetric(vertical: 8),
-                                shrinkWrap: true,
-                                itemCount: options.length,
-                                itemBuilder: (context, index) {
-                                  final option = options.elementAt(index);
-                                  return InkWell(
-                                    onTap: () => onSelected(option),
-                                    child: Padding(
-                                      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-                                      child: Text(option[0].toUpperCase() + option.substring(1)),
-                                    ),
-                                  );
-                                },
-                              ),
-                            ),
-                          ),
-                        );
-                      },
-                    ),
-                  ),
+                  _buildLabel('Route / Zone', isMandatory: true),
+                  _buildZoneField(),
                   const SizedBox(height: 16),
                   _buildLabel('Security Deposit (₹)', isMandatory: true),
                   _buildTextFormField(
@@ -424,48 +361,59 @@ class _AddCustomerDialogState extends State<AddCustomerDialog> {
                           final zone = _zoneController.text.trim();
                           final deposit = double.parse(_depositController.text.trim());
 
-                          // Quota Check
-                          final targetSalesman = widget.isAgencyView
-                              ? _availableSalesmen.firstWhere((s) => s.id == _selectedSalesmanId, orElse: () => widget.currentUser)
-                              : widget.currentUser;
+                          // Agency Quota Check (fetch live from Firebase)
+                          final agencyId = widget.currentUser.agencyId;
+                          final agencySnap = await FirebaseDatabase.instance
+                              .ref()
+                              .child('Agencies')
+                              .child(agencyId)
+                              .get();
 
-                          if (targetSalesman.customerCount >= targetSalesman.maxCustomers) {
-                            showDialog(
-                              context: context,
-                              builder: (context) => AlertDialog(
-                                title: const Text('Limit Reached'),
-                                content: Column(
-                                  mainAxisSize: MainAxisSize.min,
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text('Insufficient customer quota for ${targetSalesman.name}.'),
-                                    const SizedBox(height: 8),
-                                    Text('Current Count: ${targetSalesman.customerCount}'),
-                                    Text('Maximum Allowed: ${targetSalesman.maxCustomers}'),
-                                    const Divider(height: 24),
-                                    const Text(
-                                      'Please contact support to upgrade your quota.',
-                                      style: TextStyle(fontSize: 13, color: Colors.grey),
+                          if (!mounted) return;
+
+                          if (agencySnap.exists) {
+                            final agencyMap = Map<String, dynamic>.from(agencySnap.value as Map);
+                            final totalCount = (agencyMap['totalCustomersCount'] as num?)?.toInt() ?? 0;
+                            final maxAllowed = (agencyMap['maxCustomers'] as num?)?.toInt() ?? 500;
+
+                            if (totalCount >= maxAllowed) {
+                              showDialog(
+                                context: context,
+                                builder: (context) => AlertDialog(
+                                  title: const Text('Agency Limit Reached'),
+                                  content: Column(
+                                    mainAxisSize: MainAxisSize.min,
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text('Your agency has reached the maximum customer limit of $maxAllowed.'),
+                                      const SizedBox(height: 8),
+                                      Text('Current Total: $totalCount'),
+                                      Text('Maximum Allowed: $maxAllowed'),
+                                      const Divider(height: 24),
+                                      const Text(
+                                        'Please contact support to upgrade your plan.',
+                                        style: TextStyle(fontSize: 13, color: Colors.grey),
+                                      ),
+                                    ],
+                                  ),
+                                  actions: [
+                                    TextButton(
+                                      onPressed: () => Navigator.pop(context),
+                                      child: const Text('Close'),
+                                    ),
+                                    ElevatedButton(
+                                      onPressed: () => Navigator.pop(context),
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: const Color(0xFF0D1117),
+                                        foregroundColor: Colors.white,
+                                      ),
+                                      child: const Text('Contact Support'),
                                     ),
                                   ],
                                 ),
-                                actions: [
-                                  TextButton(
-                                    onPressed: () => Navigator.pop(context),
-                                    child: const Text('Close'),
-                                  ),
-                                  ElevatedButton(
-                                    onPressed: () => Navigator.pop(context),
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor: const Color(0xFF0D1117),
-                                      foregroundColor: Colors.white,
-                                    ),
-                                    child: const Text('Contact Support'),
-                                  ),
-                                ],
-                              ),
-                            );
-                            return;
+                              );
+                              return;
+                            }
                           }
 
                           showDialog(
@@ -558,6 +506,8 @@ class _AddCustomerDialogState extends State<AddCustomerDialog> {
     List<TextInputFormatter>? inputFormatters,
     String? Function(String?)? validator,
     FocusNode? focusNode,
+    bool readOnly = false,
+    Color? fillColor,
   }) {
     return TextFormField(
       controller: controller,
@@ -565,10 +515,11 @@ class _AddCustomerDialogState extends State<AddCustomerDialog> {
       keyboardType: keyboardType,
       inputFormatters: inputFormatters,
       validator: validator,
+      readOnly: readOnly,
       decoration: InputDecoration(
         hintText: hint,
         filled: true,
-        fillColor: Colors.grey[100],
+        fillColor: fillColor ?? Colors.grey[100],
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
           borderSide: BorderSide(color: Colors.grey.shade300),
@@ -586,6 +537,67 @@ class _AddCustomerDialogState extends State<AddCustomerDialog> {
           borderSide: const BorderSide(color: Colors.red, width: 2),
         ),
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      ),
+    );
+  }
+
+  // Build zone field — free text with autocomplete suggestions from existing zones
+  Widget _buildZoneField() {
+    return LayoutBuilder(
+      builder: (context, constraints) => RawAutocomplete<String>(
+        textEditingController: _zoneController,
+        focusNode: _zoneFocusNode,
+        optionsBuilder: (TextEditingValue textValue) {
+          // Always suggest from all existing zones in the agency
+          final Set<String> combinedZones = {..._agencyZones};
+          for (var c in widget.bloc.state.customers) {
+            if (c.zone.isNotEmpty) combinedZones.add(c.zone.trim());
+          }
+          final suggestions = combinedZones.toList()..sort();
+
+          if (textValue.text.isEmpty) return suggestions;
+          return suggestions.where((z) => z.toLowerCase().contains(textValue.text.toLowerCase()));
+        },
+        onSelected: (String selection) => _zoneController.text = selection,
+        fieldViewBuilder: (context, controller, focusNode, onFieldSubmitted) {
+          return _buildTextFormField(
+            controller,
+            'Enter zone/area (e.g. Zone A)',
+            focusNode: focusNode,
+            inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z0-9 ]'))],
+            validator: (value) {
+              if (value == null || value.trim().isEmpty) return 'Please enter customer zone';
+              return null;
+            },
+          );
+        },
+        optionsViewBuilder: (context, onSelected, options) {
+          return Align(
+            alignment: Alignment.topLeft,
+            child: Material(
+              elevation: 4.0,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              child: ConstrainedBox(
+                constraints: BoxConstraints(maxHeight: 200, maxWidth: constraints.maxWidth),
+                child: ListView.builder(
+                  padding: const EdgeInsets.symmetric(vertical: 8),
+                  shrinkWrap: true,
+                  itemCount: options.length,
+                  itemBuilder: (context, index) {
+                    final option = options.elementAt(index);
+                    return InkWell(
+                      onTap: () => onSelected(option),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                        child: Text(option),
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ),
+          );
+        },
       ),
     );
   }

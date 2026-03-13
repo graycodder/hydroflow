@@ -15,12 +15,14 @@ abstract class DeliveryStreamEvent extends DeliveryEvent {
 
 class LoadDeliveryPage extends DeliveryStreamEvent {
   final String salesmanId;
+  final String agencyId;
+  final String zone;
   final bool resetFilters;
 
-  const LoadDeliveryPage(this.salesmanId, {this.resetFilters = false});
+  const LoadDeliveryPage(this.salesmanId, this.agencyId, this.zone, {this.resetFilters = false});
 
   @override
-  List<Object?> get props => [salesmanId, resetFilters];
+  List<Object?> get props => [salesmanId, agencyId, zone, resetFilters];
 }
 
 class SelectCustomer extends DeliveryEvent {

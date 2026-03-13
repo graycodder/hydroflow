@@ -11,18 +11,47 @@ class CustomerRepositoryImpl implements CustomerRepository {
       : _database = database ?? FirebaseDatabase.instance;
 
   @override
-  Stream<List<Customer>> getCustomers(String salesmanId) {
+  Stream<List<Customer>> getCustomers(String salesmanId, {String? agencyId, String? zone}) {
     final ref = _database.ref().child('Customers');
-    // Enable synchronization for this node to keep it ready in local cache
     ref.keepSynced(true);
-    // Query customers by salesmanId
+
+    // If we have agency and zone, we query by agency and filter by zone to support route-based management
+    if (agencyId != null && agencyId.isNotEmpty && zone != null && zone.isNotEmpty) {
+      return ref.orderByChild('agencyId').equalTo(agencyId).onValue.map((event) {
+        if (event.snapshot.exists) {
+          final data = event.snapshot.value as Map<dynamic, dynamic>;
+          final lowerZone = zone.trim().toLowerCase();
+
+          return data.entries
+              .where((entry) {
+                if (lowerZone == 'all') return true;
+                
+                final val = entry.value as Map;
+                final customerZone = (val['zone'] as String? ?? '').trim().toLowerCase();
+                
+                // Allow comma-separated lists like "Zone A, Zone B"
+                final assignedZones = zone.split(',').map((e) => e.trim().toLowerCase()).toList();
+                return assignedZones.contains(customerZone);
+              })
+              .map((entry) {
+                final map = Map<String, dynamic>.from(entry.value as Map);
+                map['id'] = entry.key;
+                return CustomerModel.fromMap(map);
+              })
+              .toList();
+        }
+        return [];
+      });
+    }
+
+    // Legacy Fallback: Query customers by salesmanId
     return ref.orderByChild('salesmanId').equalTo(salesmanId).onValue.map((event) {
       if (event.snapshot.exists) {
         final data = event.snapshot.value as Map<dynamic, dynamic>;
         return data.entries.map((entry) {
-             final map = Map<String, dynamic>.from(entry.value as Map);
-             map['id'] = entry.key; // Inject ID
-             return CustomerModel.fromMap(map);
+          final map = Map<String, dynamic>.from(entry.value as Map);
+          map['id'] = entry.key; // Inject ID
+          return CustomerModel.fromMap(map);
         }).toList();
       }
       return [];
@@ -77,31 +106,25 @@ class CustomerRepositoryImpl implements CustomerRepository {
       final salesmanRef = _database.ref().child('Salesmen').child(salesmanId);
       final agencyRef = _database.ref().child('Agencies').child(agencyId);
 
-      // Increment Salesman Count with Limit Check
+      // Increment Salesman Stats (no per-salesman quota limit)
       final salesmanTx = await salesmanRef.runTransaction((Object? data) {
         if (data == null) return Transaction.abort();
         final map = Map<String, dynamic>.from(data as Map);
-        final count = (map['customerCount'] as num?)?.toInt() ?? 0;
-        final max = (map['maxCustomers'] as num?)?.toInt() ?? 0;
-        
-        if (count >= max) {
-          return Transaction.abort(); // Quota reached
-        }
-        
-        map['customerCount'] = count + 1;
+
+        map['customerCount'] = ((map['customerCount'] as num?)?.toInt() ?? 0) + 1;
         map['activeCustomers'] = ((map['activeCustomers'] as num?)?.toInt() ?? 0) + 1;
         map['totalDepositsHeld'] = ((map['totalDepositsHeld'] as num?)?.toDouble() ?? 0.0) + customer.securityDeposit;
-        
+
         if (customer.securityDeposit > 0 && customer.paymentMode == 'Cash') {
           map['pendingCashBalance'] = ((map['pendingCashBalance'] as num?)?.toDouble() ?? 0.0) + customer.securityDeposit;
           map['_lastUpdateBalance'] = map['pendingCashBalance'];
         }
-        
+
         return Transaction.success(map);
       });
 
       if (!salesmanTx.committed) {
-        throw Exception('Customer quota for this salesman has been reached.');
+        throw Exception('Failed to update salesman stats. Please try again.');
       }
 
       // Increment Agency Total Count with Limit Check

@@ -34,7 +34,7 @@ class _BottlesPageState extends State<BottlesPage> {
       if (salesman.role == 'owner' && isAgencyView) {
         context.read<BottleBloc>().add(LoadAgencyBottleLedger(salesman.agencyId));
       } else {
-        context.read<BottleBloc>().add(LoadBottleLedger(salesman.id));
+        context.read<BottleBloc>().add(LoadBottleLedger(salesman.id, agencyId: salesman.agencyId, zone: salesman.zone));
       }
     }
   }
@@ -63,7 +63,7 @@ class _BottlesPageState extends State<BottlesPage> {
                    if (isAgencyViewPref) {
                       context.read<BottleBloc>().add(LoadAgencyBottleLedger(salesman.agencyId));
                    } else {
-                      context.read<BottleBloc>().add(LoadBottleLedger(salesman.id));
+                      context.read<BottleBloc>().add(LoadBottleLedger(salesman.id, agencyId: salesman.agencyId, zone: salesman.zone));
                    }
                 });
                 return const Scaffold(body: Center(child: WaterMemoLoader(message: 'Switching View...', isOverlay: false)));
@@ -400,8 +400,8 @@ class _BottlesPageState extends State<BottlesPage> {
                     const SizedBox(height: 2),
                     Text(
                       salesman.phoneNumber.isNotEmpty
-                          ? '${salesman.phoneNumber}  •  ${salesman.zone}'
-                          : salesman.zone,
+                          ? '${salesman.phoneNumber}'
+                          : "",
                       style:
                           TextStyle(color: Colors.grey[600], fontSize: 12),
                     ),

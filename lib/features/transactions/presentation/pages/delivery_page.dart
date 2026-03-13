@@ -86,7 +86,7 @@ class _DeliveryViewState extends State<DeliveryView> {
       if (salesman.role == 'owner' && isAgencyView) {
         context.read<DeliveryBloc>().add(LoadAgencyDeliveries(salesman.agencyId, resetFilters: false));
       } else {
-        context.read<DeliveryBloc>().add(LoadDeliveryPage(salesman.id, resetFilters: false));
+        context.read<DeliveryBloc>().add(LoadDeliveryPage(salesman.id, salesman.agencyId, salesman.zone, resetFilters: false));
       }
 
       // Always load agency details to get pricing settings
@@ -200,7 +200,7 @@ class _DeliveryViewState extends State<DeliveryView> {
               if (isAgencyViewPref) {
                 context.read<DeliveryBloc>().add(LoadAgencyDeliveries(salesman!.agencyId, resetFilters: true));
               } else {
-                context.read<DeliveryBloc>().add(LoadDeliveryPage(salesman!.id, resetFilters: true));
+                context.read<DeliveryBloc>().add(LoadDeliveryPage(salesman!.id, salesman!.agencyId, salesman!.zone, resetFilters: true));
               }
             });
           }
@@ -276,16 +276,37 @@ class _DeliveryViewState extends State<DeliveryView> {
                     padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 8.0),
                     child: DropdownSearch<String>(
                       items: (filter, loadProps) {
+                        final Set<String> zonesSet = {};
+                        
+                        // 1. Add zones from customers
                         final relevantCustomers = (!isAgency || state.selectedSalesmanId == null)
                             ? state.customers
                             : state.customers.where((c) => c.salesmanId == state.selectedSalesmanId);
-                        final zones = relevantCustomers
-                            .map((c) => c.zone.trim())
-                            .where((z) => z.isNotEmpty)
-                            .map((z) => z[0].toUpperCase() + z.substring(1).toLowerCase())
-                            .toSet()
-                            .toList()
-                          ..sort();
+                        
+                        for (var c in relevantCustomers) {
+                          if (c.zone.trim().isNotEmpty) zonesSet.add(c.zone.trim());
+                        }
+
+                        // 2. Add assigned routes from salesman
+                        if (!isAgency && salesman != null) {
+                          final assigned = salesman.zone.split(',').map((e) => e.trim()).where((e) => e.isNotEmpty);
+                          zonesSet.addAll(assigned);
+                        } else if (isAgency && state.selectedSalesmanId != null) {
+                           // For Agency View, get the assigned zones of the selected salesman
+                           final agencyState = context.read<AgencyBloc>().state;
+                           if (agencyState is AgencySalesmenLoaded) {
+                             final selected = agencyState.salesmen.firstWhere((s) => s.id == state.selectedSalesmanId, orElse: () => salesman!);
+                             final assigned = selected.zone.split(',').map((e) => e.trim()).where((e) => e.isNotEmpty);
+                             zonesSet.addAll(assigned);
+                           }
+                        }
+
+                        final zones = zonesSet.map((z) {
+                          final trimmed = z.trim();
+                          if (trimmed.isEmpty) return '';
+                          return trimmed[0].toUpperCase() + trimmed.substring(1).toLowerCase();
+                        }).where((z) => z.isNotEmpty).toSet().toList()..sort();
+
                         return ['All', ...zones];
                       },
                       decoratorProps: DropDownDecoratorProps(
