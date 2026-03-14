@@ -171,6 +171,8 @@ class CustomerBloc extends Bloc<CustomerEvent, CustomerState> {
         securityDeposit: event.securityDeposit,
         paymentMode: event.paymentMode,
         createdAt: DateTime.now(),
+        updatedId: event.updatedId,
+        updateAt: event.updateAt,
       );
 
       await addCustomer(newCustomer);

@@ -436,7 +436,10 @@ class _CustomerDetailsDialogState extends State<CustomerDetailsDialog> {
                                         isActive = false;
                                         _isSubmitting = true;
                                       });
-                                      widget.customerBloc.add(SettleCustomer(customer));
+                                      widget.customerBloc.add(SettleCustomer(customer.copyWith(
+                                        updatedId: widget.currentUser.id,
+                                        updateAt: DateTime.now(),
+                                      )));
                                       Navigator.pop(context); // Close Alert
                                       // Navigator.pop(context); // Close Details? Maybe keep it open to show updated status?
                                       // Usually better to close details or show updated 'Inactive' state.

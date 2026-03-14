@@ -15,6 +15,8 @@ class Customer extends Equatable {
   final bool isRefunded;
   final String paymentMode;
   final DateTime? createdAt;
+  final String? updatedId;
+  final DateTime? updateAt;
 
   const Customer({
     required this.id,
@@ -31,6 +33,8 @@ class Customer extends Equatable {
     this.isRefunded = false,
     this.paymentMode = 'Cash',
     this.createdAt,
+    this.updatedId,
+    this.updateAt,
   });
 
   Customer copyWith({
@@ -48,6 +52,8 @@ class Customer extends Equatable {
     bool? isRefunded,
     String? paymentMode,
     DateTime? createdAt,
+    String? updatedId,
+    DateTime? updateAt,
   }) {
     return Customer(
       id: id ?? this.id,
@@ -64,6 +70,8 @@ class Customer extends Equatable {
       isRefunded: isRefunded ?? this.isRefunded,
       paymentMode: paymentMode ?? this.paymentMode,
       createdAt: createdAt ?? this.createdAt,
+      updatedId: updatedId ?? this.updatedId,
+      updateAt: updateAt ?? this.updateAt,
     );
   }
 
@@ -83,5 +91,7 @@ class Customer extends Equatable {
     isRefunded,
     paymentMode,
     createdAt,
+    updatedId,
+    updateAt,
   ];
 }

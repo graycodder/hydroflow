@@ -192,43 +192,6 @@ class _EditCustomerDialogState extends State<EditCustomerDialog> {
                   ],
                 ),
                 const SizedBox(height: 20),
-
-                if (widget.isAgencyView) ...[
-                    Align(alignment: Alignment.centerLeft, child: _buildLabel('Assign To Salesman', isMandatory: true)),
-                    if (_isLoadingSalesmen)
-                      const Padding(padding: EdgeInsets.all(8.0), child: Center(child: CircularProgressIndicator()))
-                    else
-                      DropdownButtonFormField<String>(
-                        value: _selectedSalesmanId,
-                        isExpanded: true,
-                        hint: const Text('Select Salesman'),
-                        items: _availableSalesmen.map((s) {
-                          return DropdownMenuItem(
-                            value: s.id,
-                            child: Text('${s.name} (${s.role})'),
-                          );
-                        }).toList(),
-                        onChanged: (val) {
-                          setState(() => _selectedSalesmanId = val);
-                        },
-                         decoration: InputDecoration(
-                          filled: true,
-                          fillColor: Colors.grey[100],
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(8),
-                            borderSide: BorderSide(color: Colors.grey.shade300),
-                          ),
-                          enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(8),
-                            borderSide: BorderSide(color: Colors.grey.shade300),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                  ],
-
-
                 _buildLabel('Customer Name', isMandatory: true),
                 _buildTextFormField(
                   _nameController, 
@@ -460,7 +423,7 @@ class _EditCustomerDialogState extends State<EditCustomerDialog> {
                                       final updatedCustomer = Customer(
                                         id: widget.customer.id,
                                         agencyId: widget.customer.agencyId,
-                                        salesmanId: _selectedSalesmanId ?? widget.customer.salesmanId, // Use new or old
+                                        salesmanId: "",
                                         name: name,
                                         phone: phone,
                                         address: address,
@@ -472,6 +435,8 @@ class _EditCustomerDialogState extends State<EditCustomerDialog> {
                                         pendingBalance:  widget.customer.pendingBalance,
                                         isRefunded: widget.customer.isRefunded,
                                         createdAt: widget.customer.createdAt,
+                                        updatedId: widget.currentUser.id,
+                                        updateAt: DateTime.now(),
                                       );
                                       widget.customerBloc.add(UpdateCustomer(updatedCustomer));
                                     },

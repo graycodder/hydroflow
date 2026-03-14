@@ -106,25 +106,27 @@ class CustomerRepositoryImpl implements CustomerRepository {
       final salesmanRef = _database.ref().child('Salesmen').child(salesmanId);
       final agencyRef = _database.ref().child('Agencies').child(agencyId);
 
-      // Increment Salesman Stats (no per-salesman quota limit)
-      final salesmanTx = await salesmanRef.runTransaction((Object? data) {
-        if (data == null) return Transaction.abort();
-        final map = Map<String, dynamic>.from(data as Map);
+      // Increment Salesman Stats (only if assigned)
+      if (salesmanId.isNotEmpty) {
+        final salesmanTx = await salesmanRef.runTransaction((Object? data) {
+          if (data == null) return Transaction.abort();
+          final map = Map<String, dynamic>.from(data as Map);
 
-        map['customerCount'] = ((map['customerCount'] as num?)?.toInt() ?? 0) + 1;
-        map['activeCustomers'] = ((map['activeCustomers'] as num?)?.toInt() ?? 0) + 1;
-        map['totalDepositsHeld'] = ((map['totalDepositsHeld'] as num?)?.toDouble() ?? 0.0) + customer.securityDeposit;
+          map['customerCount'] = ((map['customerCount'] as num?)?.toInt() ?? 0) + 1;
+          map['activeCustomers'] = ((map['activeCustomers'] as num?)?.toInt() ?? 0) + 1;
+          map['totalDepositsHeld'] = ((map['totalDepositsHeld'] as num?)?.toDouble() ?? 0.0) + customer.securityDeposit;
 
-        if (customer.securityDeposit > 0 && customer.paymentMode == 'Cash') {
-          map['pendingCashBalance'] = ((map['pendingCashBalance'] as num?)?.toDouble() ?? 0.0) + customer.securityDeposit;
-          map['_lastUpdateBalance'] = map['pendingCashBalance'];
+          if (customer.securityDeposit > 0 && customer.paymentMode == 'Cash') {
+            map['pendingCashBalance'] = ((map['pendingCashBalance'] as num?)?.toDouble() ?? 0.0) + customer.securityDeposit;
+            map['_lastUpdateBalance'] = map['pendingCashBalance'];
+          }
+
+          return Transaction.success(map);
+        });
+
+        if (!salesmanTx.committed) {
+          throw Exception('Failed to update salesman stats. Please try again.');
         }
-
-        return Transaction.success(map);
-      });
-
-      if (!salesmanTx.committed) {
-        throw Exception('Failed to update salesman stats. Please try again.');
       }
 
       // Increment Agency Total Count with Limit Check
@@ -145,15 +147,17 @@ class CustomerRepositoryImpl implements CustomerRepository {
 
         if (!agencyTx.committed) {
           // Rollback Salesman increment if Agency limit fails
-          final updates = <String, Object?>{
-            'customerCount': ServerValue.increment(-1),
-            'activeCustomers': ServerValue.increment(-1),
-            'totalDepositsHeld': ServerValue.increment(-customer.securityDeposit),
-          };
-          if (customer.securityDeposit > 0 && customer.paymentMode == 'Cash') {
-            updates['pendingCashBalance'] = ServerValue.increment(-customer.securityDeposit);
+          if (salesmanId.isNotEmpty) {
+            final updates = <String, Object?>{
+              'customerCount': ServerValue.increment(-1),
+              'activeCustomers': ServerValue.increment(-1),
+              'totalDepositsHeld': ServerValue.increment(-customer.securityDeposit),
+            };
+            if (customer.securityDeposit > 0 && customer.paymentMode == 'Cash') {
+              updates['pendingCashBalance'] = ServerValue.increment(-customer.securityDeposit);
+            }
+            await salesmanRef.update(updates);
           }
-          await salesmanRef.update(updates);
           throw Exception('Agency-wide customer limit (Subscription) has been reached.');
         }
       }
@@ -170,7 +174,7 @@ class CustomerRepositoryImpl implements CustomerRepository {
       final customerModel = CustomerModel(
         id: customCustomerId,
         agencyId: agencyId,
-        salesmanId: '',
+        salesmanId: salesmanId,
         name: customer.name,
         phone: customer.phone,
         address: customer.address,
@@ -181,6 +185,8 @@ class CustomerRepositoryImpl implements CustomerRepository {
         isRefunded: customer.isRefunded,
         paymentMode: customer.paymentMode,
         createdAt: now,
+        updatedId: customer.updatedId,
+        updateAt: customer.updateAt,
         zone: customer.zone,
       );
       
@@ -236,44 +242,46 @@ class CustomerRepositoryImpl implements CustomerRepository {
           'currentBalance': customer.pendingBalance, // Deposit doesn't affect pending money
         });
 
-        // Update Stock Log Collection
-        final dateKey = txTime.toIso8601String().substring(0, 10).replaceAll('-', '_');
-        final logRef = _database.ref().child('Stock_logs').child('LOG_${dateKey}_${customer.salesmanId}');
-        await logRef.runTransaction((Object? post) {
-          final logMap = post == null ? <String, dynamic>{} : Map<String, dynamic>.from(post as Map);
-          
-          // Robust Initialization
-          if (!logMap.containsKey('date')) {
-            logMap['date'] = txTime.toIso8601String().substring(0, 10);
-            logMap['salesmanId'] = customer.salesmanId;
-          }
-          
-          logMap['openingStock'] ??= 0;
-          logMap['loaded'] ??= 0;
-          logMap['totalDelivered'] ??= 0;
-          logMap['totalEmptyCollected'] ??= 0;
-          logMap['damaged'] ??= 0;
-          logMap['closingStock'] ??= 0;
-          logMap['actualClosingStock'] ??= 0;
-          logMap['mismatchCount'] ??= 0;
-          logMap['isReconciled'] ??= false;
-          logMap['todayCollection'] ??= 0.0;
-          logMap['cashCollected'] ??= 0.0;
-          logMap['onlineCollected'] ??= 0.0;
+        // Update Stock Log Collection (only if assigned)
+        if (customer.salesmanId.isNotEmpty) {
+          final dateKey = txTime.toIso8601String().substring(0, 10).replaceAll('-', '_');
+          final logRef = _database.ref().child('Stock_logs').child('LOG_${dateKey}_${customer.salesmanId}');
+          await logRef.runTransaction((Object? post) {
+            final logMap = post == null ? <String, dynamic>{} : Map<String, dynamic>.from(post as Map);
+            
+            // Robust Initialization
+            if (!logMap.containsKey('date')) {
+              logMap['date'] = txTime.toIso8601String().substring(0, 10);
+              logMap['salesmanId'] = customer.salesmanId;
+            }
+            
+            logMap['openingStock'] ??= 0;
+            logMap['loaded'] ??= 0;
+            logMap['totalDelivered'] ??= 0;
+            logMap['totalEmptyCollected'] ??= 0;
+            logMap['damaged'] ??= 0;
+            logMap['closingStock'] ??= 0;
+            logMap['actualClosingStock'] ??= 0;
+            logMap['mismatchCount'] ??= 0;
+            logMap['isReconciled'] ??= false;
+            logMap['todayCollection'] ??= 0.0;
+            logMap['cashCollected'] ??= 0.0;
+            logMap['onlineCollected'] ??= 0.0;
 
-          final currentColl = (logMap['todayCollection'] as num?)?.toDouble() ?? 0.0;
-          logMap['todayCollection'] = currentColl + customer.securityDeposit;
-          
-          if (customer.paymentMode == 'Cash') {
-            final currentCash = (logMap['cashCollected'] as num?)?.toDouble() ?? 0.0;
-            logMap['cashCollected'] = currentCash + customer.securityDeposit;
-          } else if (customer.paymentMode == 'Online' || customer.paymentMode == 'UPI') {
-            final currentOnline = (logMap['onlineCollected'] as num?)?.toDouble() ?? 0.0;
-            logMap['onlineCollected'] = currentOnline + customer.securityDeposit;
-          }
-          
-          return Transaction.success(logMap);
-        });
+            final currentColl = (logMap['todayCollection'] as num?)?.toDouble() ?? 0.0;
+            logMap['todayCollection'] = currentColl + customer.securityDeposit;
+            
+            if (customer.paymentMode == 'Cash') {
+              final currentCash = (logMap['cashCollected'] as num?)?.toDouble() ?? 0.0;
+              logMap['cashCollected'] = currentCash + customer.securityDeposit;
+            } else if (customer.paymentMode == 'Online' || customer.paymentMode == 'UPI') {
+              final currentOnline = (logMap['onlineCollected'] as num?)?.toDouble() ?? 0.0;
+              logMap['onlineCollected'] = currentOnline + customer.securityDeposit;
+            }
+            
+            return Transaction.success(logMap);
+          });
+        }
 
       }
     } catch (e) {
@@ -289,7 +297,11 @@ class CustomerRepositoryImpl implements CustomerRepository {
       final oldStatus = snapshot.value as String?;
 
       if (oldStatus != status) {
-        await customerRef.update({'status': status});
+        await customerRef.update({
+          'status': status,
+          'updatedId': salesmanId,
+          'updateAt': DateTime.now().toIso8601String(),
+        });
 
         final salesmanRef = _database.ref().child('Salesmen').child(salesmanId);
         if (status == 'Active') {
@@ -334,6 +346,8 @@ class CustomerRepositoryImpl implements CustomerRepository {
         isRefunded: customer.isRefunded,
         paymentMode: customer.paymentMode,
         createdAt: customer.createdAt,
+        updatedId: customer.updatedId,
+        updateAt: customer.updateAt,
         zone: customer.zone,
       );
       await ref.update(customerModel.toMap());
@@ -467,6 +481,8 @@ class CustomerRepositoryImpl implements CustomerRepository {
         'pendingBalance': adjustedPending,
         'isRefunded': true, // Flag to indicate settlement
         'lastSettledDate': DateTime.now().toIso8601String(),
+        'updatedId': customer.updatedId ?? customer.salesmanId,
+        'updateAt': (customer.updateAt ?? DateTime.now()).toIso8601String(),
       });
 
       // 2. Update Salesman (Reduce Total Deposits Held, Count, and Pending Cash)

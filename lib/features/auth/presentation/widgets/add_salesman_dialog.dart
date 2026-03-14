@@ -28,52 +28,17 @@ class _AddSalesmanDialogState extends State<AddSalesmanDialog> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
   final _phoneController = TextEditingController();
- // final _usernameController = TextEditingController();
   final _passwordController = TextEditingController();
-  // final _quotaController = TextEditingController();
   bool _isChecking = false;
   bool _isPasswordVisible = false;
   String? _phoneError;
-  List<String> _availableZones = [];
-  List<String> _selectedZones = [];
-  bool _isLoadingZones = false;
 
   @override
   void initState() {
     super.initState();
     _phoneController.addListener(_onPhoneChanged);
-    _fetchAgencyZones();
   }
 
-  Future<void> _fetchAgencyZones() async {
-    setState(() => _isLoadingZones = true);
-    try {
-      final ref = FirebaseDatabase.instance.ref().child('Customers');
-      final snapshot = await ref.orderByChild('agencyId').equalTo(widget.agencyId).get();
-      if (snapshot.exists) {
-        final data = snapshot.value as Map<dynamic, dynamic>;
-        final Set<String> zones = {};
-        for (final value in data.values) {
-          final customer = Map<String, dynamic>.from(value as Map);
-          final zone = customer['zone'] as String?;
-          if (zone != null && zone.trim().isNotEmpty) {
-            zones.add(zone.trim());
-          }
-        }
-        if (mounted) {
-          setState(() {
-            _availableZones = zones.toList()..sort();
-            _isLoadingZones = false;
-          });
-        }
-      } else {
-        if (mounted) setState(() => _isLoadingZones = false);
-      }
-    } catch (e) {
-      if (mounted) setState(() => _isLoadingZones = false);
-      print('Error fetching zones: $e');
-    }
-  }
 
 
   void _onPhoneChanged() {
@@ -88,9 +53,7 @@ class _AddSalesmanDialogState extends State<AddSalesmanDialog> {
   void dispose() {
     _nameController.dispose();
     _phoneController.dispose();
-    // _usernameController.dispose();
     _passwordController.dispose();
-   // _quotaController.dispose();
     super.dispose();
   }
 
@@ -132,7 +95,7 @@ class _AddSalesmanDialogState extends State<AddSalesmanDialog> {
           agencyName: widget.agencyName,
           phoneNumber: phone,
           address: '', // Optional or add field
-          zone: _selectedZones.isEmpty ? 'all' : _selectedZones.join(', '),
+          zone: 'all',
           maxCustomers: 0,
           createdAt: DateTime.now(), 
         );
@@ -201,27 +164,7 @@ class _AddSalesmanDialogState extends State<AddSalesmanDialog> {
                   return null;
                 },
               ),
-              //  const SizedBox(height: 12),
-              // TextFormField(
-              //   controller: _usernameController,
-              //   decoration: const InputDecoration(labelText: 'Username (for Login)'),
-              //   inputFormatters: [
-              //     FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z0-9_]')),
-              //   ],
-              //   validator: (value) {
-              //     if (value == null || value.trim().isEmpty) {
-              //       return 'Please enter username';
-              //     }
-              //     if (value.trim().length > 15) {
-              //       return 'Username must be at most 15 characters';
-              //     }
-              //     if (value.contains(' ')) {
-              //       return 'Spaces are not allowed';
-              //     }
-              //     return null;
-              //   },
-              // ),
-               const SizedBox(height: 12),
+              const SizedBox(height: 12),
               TextFormField(
                 controller: _passwordController,
                 decoration: InputDecoration(
@@ -250,48 +193,6 @@ class _AddSalesmanDialogState extends State<AddSalesmanDialog> {
                 },
               ),
               const SizedBox(height: 12),
-              _buildZonePicker(),
-              const SizedBox(height: 12),
-              // const SizedBox(height: 12),
-              // Builder(
-              //   builder: (context) {
-              //     final alreadyAllocated = widget.existingSalesmen.fold<int>(0, (sum, s) => sum + s.maxCustomers);
-              //     final remaining = (widget.maxAgencyCustomers - alreadyAllocated).clamp(0, widget.maxAgencyCustomers);
-                  
-              //     return TextFormField(
-              //       controller: _quotaController,
-              //       decoration: InputDecoration(
-              //         labelText: 'Customer Quota',
-              //         helperText: 'Agency Limit: ${widget.maxAgencyCustomers}. Already Allocated: $alreadyAllocated. Available to Assign: $remaining',
-              //         helperMaxLines: 3,
-              //       ),
-              //       keyboardType: TextInputType.number,
-              //       inputFormatters: [
-              //         FilteringTextInputFormatter.digitsOnly,
-              //       ],
-              //       onChanged: (value) {
-              //         if (value.length > 1 && value.startsWith('0')) {
-              //           String newText = value.replaceFirst(RegExp(r'^0+'), '');
-              //           if (newText.isEmpty) newText = '0';
-              //           _quotaController.value = TextEditingValue(
-              //             text: newText,
-              //             selection: TextSelection.collapsed(offset: newText.length),
-              //           );
-              //         }
-              //       },
-              //       validator: (value) {
-              //         if (value == null || value.isEmpty) return 'Please enter quota';
-              //         final qty = int.tryParse(value);
-              //         if (qty == null || qty < 0) return 'Enter a valid number';
-                      
-              //         if (qty > remaining) {
-              //           return 'Exceeds Agency Limit ($remaining remaining)';
-              //         }
-              //         return null;
-              //       },
-              //     );
-              //   },
-              // ),
             ],
           ),
         ),
@@ -311,137 +212,4 @@ class _AddSalesmanDialogState extends State<AddSalesmanDialog> {
     );
   }
 
-  // ----- Custom Zone Picker -----
-  Widget _buildZonePicker() {
-    if (_isLoadingZones) {
-      return const Center(child: CircularProgressIndicator());
-    }
-
-    final actualRoutes = _availableZones.where((z) => z != 'All').toList();
-    final allSelected = actualRoutes.isNotEmpty &&
-        actualRoutes.every((z) => _selectedZones.contains(z));
-    final displayText = _selectedZones.isEmpty
-        ? 'Tap to assign routes'
-        : (allSelected ? 'All Routes' : _selectedZones.join(', '));
-
-    return FormField<List<String>>(
-      builder: (state) {
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            InkWell(
-              borderRadius: BorderRadius.circular(8),
-              onTap: () async {
-                await _openZonePicker(actualRoutes);
-                state.didChange(_selectedZones);
-              },
-              child: InputDecorator(
-                decoration: InputDecoration(
-                  labelText: 'Assign Route / Zone',
-                  prefixIcon: const Icon(Icons.map_outlined),
-                  suffixIcon: const Icon(Icons.arrow_drop_down),
-                  errorText: state.errorText,
-                ),
-                child: Text(
-                  displayText,
-                  style: TextStyle(
-                    color: _selectedZones.isEmpty ? Theme.of(context).hintColor : null,
-                  ),
-                ),
-              ),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  Future<void> _openZonePicker(List<String> actualRoutes) async {
-    final tempSelected = List<String>.from(_selectedZones);
-
-    await showDialog(
-      context: context,
-      builder: (ctx) {
-        return StatefulBuilder(
-          builder: (ctx, setDialogState) {
-            final isAllSelected = actualRoutes.isNotEmpty &&
-                actualRoutes.every((z) => tempSelected.contains(z));
-
-            void toggleAll() {
-              setDialogState(() {
-                if (isAllSelected) {
-                  tempSelected.clear();
-                } else {
-                  tempSelected.clear();
-                  tempSelected.addAll(actualRoutes);
-                }
-              });
-            }
-
-            void toggleRoute(String route) {
-              setDialogState(() {
-                if (tempSelected.contains(route)) {
-                  tempSelected.remove(route);
-                } else {
-                  tempSelected.add(route);
-                }
-              });
-            }
-
-            return AlertDialog(
-              title: const Text('Select Routes / Zones'),
-              content: SizedBox(
-                width: double.maxFinite,
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    CheckboxListTile(
-                      value: isAllSelected,
-                      title: const Text('All Routes', style: TextStyle(fontWeight: FontWeight.bold)),
-                      secondary: const Icon(Icons.select_all),
-                      onChanged: (_) => toggleAll(),
-                    ),
-                    const Divider(height: 1),
-                    if (actualRoutes.isEmpty)
-                      const Padding(
-                        padding: EdgeInsets.all(8.0),
-                        child: Text('No routes found. Add customers with zones first.'),
-                      )
-                    else
-                      ConstrainedBox(
-                        constraints: const BoxConstraints(maxHeight: 300),
-                        child: ListView(
-                          shrinkWrap: true,
-                          children: actualRoutes.map((route) => CheckboxListTile(
-                            value: tempSelected.contains(route),
-                            title: Text(route),
-                            onChanged: (_) => toggleRoute(route),
-                          )).toList(),
-                        ),
-                      ),
-                  ],
-                ),
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.pop(ctx),
-                  child: const Text('Cancel'),
-                ),
-                ElevatedButton(
-                  onPressed: () {
-                    setState(() {
-                      _selectedZones.clear();
-                      _selectedZones.addAll(tempSelected);
-                    });
-                    Navigator.pop(ctx);
-                  },
-                  child: const Text('Done'),
-                ),
-              ],
-            );
-          },
-        );
-      },
-    );
-  }
 }

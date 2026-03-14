@@ -365,13 +365,15 @@ class _AddCustomerDialogState extends State<AddCustomerDialog> {
                                     Navigator.pop(confirmContext);
                                     widget.bloc.add(AddCustomer(
                                       agencyId: widget.currentUser.agencyId,
-                                      salesmanId: "",
+                                      salesmanId: widget.isAgencyView ? "" : widget.currentUser.id,
                                       name: name,
                                       phone: phone,
                                       address: address,
                                       zone: zone,
                                       securityDeposit: deposit,
                                       paymentMode: _paymentMode!,
+                                      updatedId: widget.currentUser.id,
+                                      updateAt: DateTime.now(),
                                     ));
                                   },
                                   style: ElevatedButton.styleFrom(
