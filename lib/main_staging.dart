@@ -9,7 +9,7 @@ void main() {
       appTitle: 'WaterMemo STG',
       baseUrl: '', // Add staging API if needed
       firebaseDatabaseUrl:
-          'https://hydroflow-stg-app-default-rtdb.asia-southeast1.firebasedatabase.app',
+          'https://hydroflow-stg-app-53d5b-default-rtdb.asia-southeast1.firebasedatabase.app',
       firebaseOptions: stg.DefaultFirebaseOptions.currentPlatform,
     ),
   );

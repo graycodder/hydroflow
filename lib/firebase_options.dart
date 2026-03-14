@@ -54,29 +54,31 @@ class DefaultFirebaseOptions {
   );
 
   static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'AIzaSyCaNiCN7XGcc7O0kYUKDB3ABAAlsvkJc6k',
-    appId: '1:641167599347:android:4548feedf758d04b2ef986',
-    messagingSenderId: '641167599347',
-    projectId: 'watermemo-45d4c',
-    storageBucket: 'watermemo-45d4c.firebasestorage.app',
-    databaseURL: 'https://watermemo-45d4c-default-rtdb.firebaseio.com',
+    apiKey: 'AIzaSyAgbwqsK-h1iLz764XOeAifKH8RIazLQto',
+    appId: '1:429560210914:android:27da5885808d0b5fbb45bb',
+    messagingSenderId: '429560210914',
+    projectId: 'hydroflow-1f649',
+    storageBucket: 'hydroflow-1f649.firebasestorage.app',
+    databaseURL: 'https://hydroflow-1f649-default-rtdb.asia-southeast1.firebasedatabase.app',
   );
 
   static const FirebaseOptions ios = FirebaseOptions(
-    apiKey: 'mock-ios-api-key',
-    appId: '1:123456789:ios:mock',
-    messagingSenderId: '123456789',
-    projectId: 'mock-project-id',
-    storageBucket: 'mock-project-id.appspot.com',
+    apiKey: 'AIzaSyAgbwqsK-h1iLz764XOeAifKH8RIazLQto',
+    appId: '1:429560210914:ios:mock', // Replace with actual iOS App ID if available
+    messagingSenderId: '429560210914',
+    projectId: 'hydroflow-1f649',
+    storageBucket: 'hydroflow-1f649.firebasestorage.app',
+    databaseURL: 'https://hydroflow-1f649-default-rtdb.asia-southeast1.firebasedatabase.app/',
     iosBundleId: 'com.graycodder.hydroflow',
   );
 
   static const FirebaseOptions macos = FirebaseOptions(
-    apiKey: 'mock-macos-api-key',
-    appId: '1:123456789:macos:mock',
-    messagingSenderId: '123456789',
-    projectId: 'mock-project-id',
-    storageBucket: 'mock-project-id.appspot.com',
+    apiKey: 'AIzaSyAgbwqsK-h1iLz764XOeAifKH8RIazLQto',
+    appId: '1:429560210914:ios:mock', // Replace with actual iOS App ID if available
+    messagingSenderId: '429560210914',
+    projectId: 'hydroflow-1f649',
+    storageBucket: 'hydroflow-1f649.firebasestorage.app',
+    databaseURL: 'https://hydroflow-1f649-default-rtdb.asia-southeast1.firebasedatabase.app/',
     iosBundleId: 'com.graycodder.hydroflow',
   );
 }

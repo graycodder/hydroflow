@@ -41,41 +41,41 @@ class DefaultFirebaseOptions {
   }
 
   static const FirebaseOptions web = FirebaseOptions(
-    apiKey: 'AIzaSyCFS-8rmI0zLPKNYtGlb02J2jumxCYgQRQ',
-    appId: '1:1032293793727:web:53df1c656abae7b4feab0a',
-    messagingSenderId: '1032293793727',
-    projectId: 'hydroflow-stg-app',
-    authDomain: 'hydroflow-stg-app.firebaseapp.com',
-    databaseURL: 'https://hydroflow-stg-app-default-rtdb.asia-southeast1.firebasedatabase.app',
-    storageBucket: 'hydroflow-stg-app.firebasestorage.app',
+    apiKey: 'AIzaSyAwGeGjnKiHxJUV7oTZDQzjRc8IyQ7NV88',
+    appId: '1:848753673763:web:mockid_stg',
+    messagingSenderId: '848753673763',
+    projectId: 'hydroflow-stg-app-53d5b',
+    authDomain: 'hydroflow-stg-app-53d5b.firebaseapp.com',
+    databaseURL: 'https://hydroflow-stg-app-53d5b-default-rtdb.asia-southeast1.firebasedatabase.app',
+    storageBucket: 'hydroflow-stg-app-53d5b.firebasestorage.app',
   );
 
   static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'AIzaSyC-Vm1V4iV2G97OghPQma6Xpfa7pwb0b6c',
-    appId: '1:1032293793727:android:08f805856ab0ce9efeab0a',
-    messagingSenderId: '1032293793727',
-    projectId: 'hydroflow-stg-app',
-    databaseURL: 'https://hydroflow-stg-app-default-rtdb.asia-southeast1.firebasedatabase.app',
-    storageBucket: 'hydroflow-stg-app.firebasestorage.app',
+    apiKey: 'AIzaSyAwGeGjnKiHxJUV7oTZDQzjRc8IyQ7NV88',
+    appId: '1:848753673763:android:71ef2954ab0c8a34529396',
+    messagingSenderId: '848753673763',
+    projectId: 'hydroflow-stg-app-53d5b',
+    databaseURL: 'https://hydroflow-stg-app-53d5b-default-rtdb.asia-southeast1.firebasedatabase.app',
+    storageBucket: 'hydroflow-stg-app-53d5b.firebasestorage.app',
   );
 
   static const FirebaseOptions ios = FirebaseOptions(
-    apiKey: 'AIzaSyAN1pbKHsL4U9_DOoYBxj2TJlAVzwa1Y04',
-    appId: '1:1032293793727:ios:dfa6eea79ef25b11feab0a',
-    messagingSenderId: '1032293793727',
-    projectId: 'hydroflow-stg-app',
-    databaseURL: 'https://hydroflow-stg-app-default-rtdb.asia-southeast1.firebasedatabase.app',
-    storageBucket: 'hydroflow-stg-app.firebasestorage.app',
+    apiKey: 'AIzaSyAwGeGjnKiHxJUV7oTZDQzjRc8IyQ7NV88',
+    appId: '1:848753673763:ios:dfa6eea79ef25b11feab0a',
+    messagingSenderId: '848753673763',
+    projectId: 'hydroflow-stg-app-53d5b',
+    databaseURL: 'https://hydroflow-stg-app-53d5b-default-rtdb.asia-southeast1.firebasedatabase.app',
+    storageBucket: 'hydroflow-stg-app-53d5b.firebasestorage.app',
     iosBundleId: 'com.graycodder.hydroflow',
   );
 
   static const FirebaseOptions macos = FirebaseOptions(
-    apiKey: 'AIzaSyAN1pbKHsL4U9_DOoYBxj2TJlAVzwa1Y04',
-    appId: '1:1032293793727:ios:dfa6eea79ef25b11feab0a',
-    messagingSenderId: '1032293793727',
-    projectId: 'hydroflow-stg-app',
-    databaseURL: 'https://hydroflow-stg-app-default-rtdb.asia-southeast1.firebasedatabase.app',
-    storageBucket: 'hydroflow-stg-app.firebasestorage.app',
+    apiKey: 'AIzaSyAwGeGjnKiHxJUV7oTZDQzjRc8IyQ7NV88',
+    appId: '1:848753673763:ios:dfa6eea79ef25b11feab0a',
+    messagingSenderId: '848753673763',
+    projectId: 'hydroflow-stg-app-53d5b',
+    databaseURL: 'https://hydroflow-stg-app-53d5b-default-rtdb.asia-southeast1.firebasedatabase.app',
+    storageBucket: 'hydroflow-stg-app-53d5b.firebasestorage.app',
     iosBundleId: 'com.graycodder.hydroflow',
   );
 

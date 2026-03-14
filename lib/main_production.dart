@@ -9,7 +9,7 @@ void main() {
       appTitle: 'WaterMemo',
       baseUrl: '', // Add prod API if needed
       firebaseDatabaseUrl:
-          'https://watermemo-45d4c-default-rtdb.firebaseio.com',
+          'https://hydroflow-1f649-default-rtdb.asia-southeast1.firebasedatabase.app',
       firebaseOptions: DefaultFirebaseOptions.currentPlatform,
     ),
   );

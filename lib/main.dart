@@ -56,12 +56,15 @@ class _BootstrapAppState extends State<BootstrapApp> {
       FlutterNativeSplash.remove();
 
       // Initialize Firebase
-      try {
-        await Firebase.initializeApp(
-          options: AppConfig.instance.firebaseOptions,
-        );
-      } catch (e) {
-        await Firebase.initializeApp();
+      if (Firebase.apps.isEmpty) {
+        try {
+          await Firebase.initializeApp(
+            options: AppConfig.instance.firebaseOptions,
+          );
+        } catch (e) {
+          // If options initialization fails, try default
+          await Firebase.initializeApp();
+        }
       }
 
       // Pass all uncaught "fatal" errors from the framework to Crashlytics

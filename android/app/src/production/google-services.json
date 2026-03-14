@@ -1,14 +1,13 @@
 {
   "project_info": {
-    "project_number": "641167599347",
-    "firebase_url": "https://hydroflow-45d4c-default-rtdb.firebaseio.com",
-    "project_id": "hydroflow-45d4c",
-    "storage_bucket": "hydroflow-45d4c.firebasestorage.app"
+    "project_number": "429560210914",
+    "project_id": "hydroflow-1f649",
+    "storage_bucket": "hydroflow-1f649.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:641167599347:android:4548feedf758d04b2ef986",
+        "mobilesdk_app_id": "1:429560210914:android:27da5885808d0b5fbb45bb",
         "android_client_info": {
           "package_name": "com.graycodder.hydroflow"
         }
@@ -16,7 +15,7 @@
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyCaNiCN7XGcc7O0kYUKDB3ABAAlsvkJc6k"
+          "current_key": "AIzaSyAgbwqsK-h1iLz764XOeAifKH8RIazLQto"
         }
       ],
       "services": {
