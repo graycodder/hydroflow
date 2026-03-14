@@ -244,6 +244,7 @@ class AgencyEmployeesPage extends StatelessWidget {
               return StatefulBuilder(
                 builder: (context, setState) {
                   return AlertDialog(
+                    scrollable: true,
                     titlePadding: EdgeInsets.zero,
                 shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(20)),
@@ -288,7 +289,7 @@ class AgencyEmployeesPage extends StatelessWidget {
                 ),
                 content: SizedBox(
                   width: double.maxFinite,
-                  height: 220,
+                  height: 230,
                   child: TabBarView(
                     children: [
                       _StockTabContent(
@@ -1499,55 +1500,57 @@ class _StockTabContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const SizedBox(height: 16),
-        Container(
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-              color: bgColor, borderRadius: BorderRadius.circular(10)),
-          child: Row(
-            children: [
-              Icon(icon, color: iconColor, size: 20),
-              const SizedBox(width: 8),
-              Text(infoText,
-                  style: TextStyle(
-                      fontWeight: FontWeight.bold, color: iconColor)),
-            ],
+    return SingleChildScrollView(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const SizedBox(height: 12),
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+                color: bgColor, borderRadius: BorderRadius.circular(10)),
+            child: Row(
+              children: [
+                Icon(icon, color: iconColor, size: 20),
+                const SizedBox(width: 8),
+                Text(infoText,
+                    style: TextStyle(
+                        fontWeight: FontWeight.bold, color: iconColor)),
+              ],
+            ),
           ),
-        ),
-        const SizedBox(height: 16),
-        Text(label,
-            style: const TextStyle(fontSize: 13, color: Colors.grey)),
-        const SizedBox(height: 8),
-        TextField(
-          controller: controller,
-          keyboardType: TextInputType.number,
-          inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-          onChanged: (value) {
-            if (value.length > 1 && value.startsWith('0')) {
-              String newText = value.replaceFirst(RegExp(r'^0+'), '');
-              if (newText.isEmpty) newText = '0';
-              controller.value = TextEditingValue(
-                text: newText,
-                selection: TextSelection.collapsed(offset: newText.length),
-              );
-            }
-            if (onChanged != null) {
-              onChanged!(value);
-            }
-          },
-          decoration: InputDecoration(
-            labelText: fieldLabel,
-            errorText: errorText,
-            border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(10)),
-            prefixIcon: Icon(fieldIcon, color: fieldColor),
+          const SizedBox(height: 12),
+          Text(label,
+              style: const TextStyle(fontSize: 13, color: Colors.grey)),
+          const SizedBox(height: 6),
+          TextField(
+            controller: controller,
+            keyboardType: TextInputType.number,
+            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+            onChanged: (value) {
+              if (value.length > 1 && value.startsWith('0')) {
+                String newText = value.replaceFirst(RegExp(r'^0+'), '');
+                if (newText.isEmpty) newText = '0';
+                controller.value = TextEditingValue(
+                  text: newText,
+                  selection: TextSelection.collapsed(offset: newText.length),
+                );
+              }
+              if (onChanged != null) {
+                onChanged!(value);
+              }
+            },
+            decoration: InputDecoration(
+              labelText: fieldLabel,
+              errorText: errorText,
+              border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10)),
+              prefixIcon: Icon(fieldIcon, color: fieldColor),
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }

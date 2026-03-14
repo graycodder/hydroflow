@@ -289,7 +289,7 @@ class ProfilePage extends StatelessWidget {
                                   return Padding(
                                     padding: const EdgeInsets.only(bottom: 20),
                                     child: Text(
-                                      'Version $version ($buildNumber)',
+                                      'Version $version',
                                       style: const TextStyle(
                                         color: Colors.grey,
                                         fontSize: 12,
