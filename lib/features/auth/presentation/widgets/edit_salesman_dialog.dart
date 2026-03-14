@@ -49,7 +49,10 @@ class _EditSalesmanDialogState extends State<EditSalesmanDialog> {
   //  _quotaController = TextEditingController(text: widget.salesman.maxCustomers.toString());
     // Pre-populate selected zones from existing salesman data
     if (widget.salesman.zone.isNotEmpty) {
-      _selectedZones = widget.salesman.zone.split(',').map((e) => e.trim()).where((e) => e.isNotEmpty).toList();
+      _selectedZones = widget.salesman.zone.split(',')
+          .map((e) => e.trim())
+          .where((e) => e.isNotEmpty && e.toLowerCase() != 'all')
+          .toList();
     }
     _fetchAgencyZones();
   }
@@ -61,7 +64,7 @@ class _EditSalesmanDialogState extends State<EditSalesmanDialog> {
       final snapshot = await ref.orderByChild('agencyId').equalTo(widget.salesman.agencyId).get();
       if (snapshot.exists) {
         final data = snapshot.value as Map<dynamic, dynamic>;
-        final Set<String> zones = {'All'};
+        final Set<String> zones = {};
         for (final value in data.values) {
           final customer = Map<String, dynamic>.from(value as Map);
           final zone = customer['zone'] as String?;
@@ -134,7 +137,7 @@ class _EditSalesmanDialogState extends State<EditSalesmanDialog> {
         final updatedSalesman = widget.salesman.copyWith(
           name: _nameController.text.trim(),
           phoneNumber: phone,
-          zone: _selectedZones.where((e) => e != 'All').join(', '),
+          zone: _selectedZones.isEmpty ? 'all' : _selectedZones.join(', '),
           maxCustomers: widget.salesman.maxCustomers,
           password: _passwordController.text.trim().isNotEmpty 
               ? _passwordController.text.trim() 
