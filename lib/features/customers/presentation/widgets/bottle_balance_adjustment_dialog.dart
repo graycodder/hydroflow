@@ -5,6 +5,7 @@ import 'package:watermemo/features/customers/domain/entities/customer.dart';
 import 'package:watermemo/features/customers/presentation/bloc/customer_bloc.dart';
 import 'package:watermemo/features/customers/presentation/bloc/customer_event.dart';
 import 'package:watermemo/features/customers/presentation/bloc/customer_state.dart';
+import 'package:watermemo/features/auth/domain/entities/salesman.dart';
 import 'package:watermemo/core/widgets/hydro_flow_loader.dart';
 import 'package:watermemo/features/transactions/domain/entities/transaction_entity.dart';
 import 'package:watermemo/features/transactions/domain/repositories/transaction_repository.dart';
@@ -13,11 +14,13 @@ import 'package:watermemo/core/service_locator.dart' as di;
 class BottleBalanceAdjustmentDialog extends StatefulWidget {
   final Customer customer;
   final CustomerBloc customerBloc;
+  final Salesman currentUser;
 
   const BottleBalanceAdjustmentDialog({
     super.key,
     required this.customer,
     required this.customerBloc,
+    required this.currentUser,
   });
 
   @override
@@ -251,7 +254,7 @@ class _BottleBalanceAdjustmentDialogState extends State<BottleBalanceAdjustmentD
                     // 4. Record Transaction
                     final tx = TransactionEntity(
                       id: 'adj_bot_${DateTime.now().millisecondsSinceEpoch}',
-                      salesmanId: widget.customer.salesmanId,
+                      salesmanId: widget.currentUser.id,
                       customerId: widget.customer.id,
                       timestamp: DateTime.now(),
                       type: 'Bottle Adjustment',

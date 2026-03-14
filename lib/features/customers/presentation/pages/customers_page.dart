@@ -464,6 +464,7 @@ class _CustomersPageState extends State<CustomersPage> {
                   builder: (_) => PendingBalanceAdjustmentDialog(
                     customer: customer,
                     customerBloc: context.read<CustomerBloc>(),
+                    currentUser: salesman,
                   ),
                 );
               },
@@ -489,6 +490,7 @@ class _CustomersPageState extends State<CustomersPage> {
                   builder: (_) => BottleBalanceAdjustmentDialog(
                     customer: customer,
                     customerBloc: context.read<CustomerBloc>(),
+                    currentUser: salesman,
                   ),
                 );
               },

@@ -15,22 +15,21 @@ class CustomerRepositoryImpl implements CustomerRepository {
     final ref = _database.ref().child('Customers');
     ref.keepSynced(true);
 
-    // If we have agency and zone, we query by agency and filter by zone to support route-based management
-    if (agencyId != null && agencyId.isNotEmpty && zone != null && zone.isNotEmpty) {
+    // Use agencyId for querying if provided, supporting agency-wide access
+    if (agencyId != null && agencyId.isNotEmpty) {
       return ref.orderByChild('agencyId').equalTo(agencyId).onValue.map((event) {
         if (event.snapshot.exists) {
           final data = event.snapshot.value as Map<dynamic, dynamic>;
-          final lowerZone = zone.trim().toLowerCase();
+          final lowerZone = zone?.trim().toLowerCase();
+          final bool shouldFilterByZone = lowerZone != null && lowerZone.isNotEmpty && lowerZone != 'all';
+          final assignedZones = shouldFilterByZone ? lowerZone.split(',').map((e) => e.trim()).toList() : [];
 
           return data.entries
               .where((entry) {
-                if (lowerZone == 'all') return true;
+                if (!shouldFilterByZone) return true;
                 
                 final val = entry.value as Map;
                 final customerZone = (val['zone'] as String? ?? '').trim().toLowerCase();
-                
-                // Allow comma-separated lists like "Zone A, Zone B"
-                final assignedZones = zone.split(',').map((e) => e.trim().toLowerCase()).toList();
                 return assignedZones.contains(customerZone);
               })
               .map((entry) {
@@ -44,13 +43,14 @@ class CustomerRepositoryImpl implements CustomerRepository {
       });
     }
 
-    // Legacy Fallback: Query customers by salesmanId
+    // Legacy Fallback (for older accounts without agencyId mapping transition): 
+    // Query customers strictly by salesmanId
     return ref.orderByChild('salesmanId').equalTo(salesmanId).onValue.map((event) {
       if (event.snapshot.exists) {
         final data = event.snapshot.value as Map<dynamic, dynamic>;
         return data.entries.map((entry) {
           final map = Map<String, dynamic>.from(entry.value as Map);
-          map['id'] = entry.key; // Inject ID
+          map['id'] = entry.key; 
           return CustomerModel.fromMap(map);
         }).toList();
       }
@@ -170,7 +170,7 @@ class CustomerRepositoryImpl implements CustomerRepository {
       final customerModel = CustomerModel(
         id: customCustomerId,
         agencyId: agencyId,
-        salesmanId: salesmanId,
+        salesmanId: '',
         name: customer.name,
         phone: customer.phone,
         address: customer.address,

@@ -35,8 +35,6 @@ class _AddCustomerDialogState extends State<AddCustomerDialog> {
   final _depositController = TextEditingController();
   final _zoneFocusNode = FocusNode();
   String? _paymentMode;
-  String? _selectedSalesmanId;
-  List<Salesman> _availableSalesmen = [];
   bool _isLoadingSalesmen = false;
   bool _isSubmitting = false;
   List<String> _agencyZones = [];
@@ -44,13 +42,6 @@ class _AddCustomerDialogState extends State<AddCustomerDialog> {
   @override
   void initState() {
     super.initState();
-    if (widget.isAgencyView) {
-      _selectedSalesmanId = widget.currentUser.id;
-      _fetchSalesmen();
-    } else {
-      _selectedSalesmanId = widget.currentUser.id;
-      // Zone field starts empty — user types or picks from suggestions
-    }
     _fetchAgencyZones();
   }
 
@@ -79,27 +70,6 @@ class _AddCustomerDialogState extends State<AddCustomerDialog> {
     }
   }
 
-  Future<void> _fetchSalesmen() async {
-    setState(() => _isLoadingSalesmen = true);
-    try {
-      final repo = di.sl<AgencyRepository>();
-      final salesmen = await repo.getSalesmenByAgency(widget.currentUser.agencyId);
-      if (mounted) {
-        setState(() {
-          _availableSalesmen = salesmen;
-          // Ensure selected ID is valid (it should be since owner is in the list usually, 
-          // or we pick the first one if owner not found for some reason)
-           if (!_availableSalesmen.any((s) => s.id == _selectedSalesmanId) && _availableSalesmen.isNotEmpty) {
-             _selectedSalesmanId = _availableSalesmen.first.id;
-           }
-          _isLoadingSalesmen = false;
-        });
-      }
-    } catch (e) {
-      if (mounted) setState(() => _isLoadingSalesmen = false);
-      print('Error fetching salesmen: $e');
-    }
-  }
 
   @override
   void dispose() {
@@ -177,43 +147,6 @@ class _AddCustomerDialogState extends State<AddCustomerDialog> {
                   ),
                   const SizedBox(height: 20),
 
-                  // if (widget.isAgencyView) ...[
-                  //   _buildLabel('Assign To Salesman', isMandatory: true),
-                  //   if (_isLoadingSalesmen)
-                  //     const Padding(padding: EdgeInsets.all(8.0), child: Center(child: CircularProgressIndicator()))
-                  //   else
-                  //     DropdownButtonFormField<String>(
-                  //       value: _selectedSalesmanId,
-                  //       isExpanded: true,
-                  //       hint: const Text('Select Salesman'),
-                  //       items: _availableSalesmen.map((s) {
-                  //         return DropdownMenuItem(
-                  //           value: s.id,
-                  //           child: Text('${s.name} (${s.role})'),
-                  //         );
-                  //       }).toList(),
-                  //       onChanged: (val) {
-                  //         setState(() {
-                  //           _selectedSalesmanId = val;
-                  //           _zoneController.clear();
-                  //         });
-                  //       },
-                  //        decoration: InputDecoration(
-                  //         filled: true,
-                  //         fillColor: Colors.grey[100],
-                  //         contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                  //         border: OutlineInputBorder(
-                  //           borderRadius: BorderRadius.circular(8),
-                  //           borderSide: BorderSide(color: Colors.grey.shade300),
-                  //         ),
-                  //         enabledBorder: OutlineInputBorder(
-                  //           borderRadius: BorderRadius.circular(8),
-                  //           borderSide: BorderSide(color: Colors.grey.shade300),
-                  //         ),
-                  //       ),
-                  //     ),
-                  //     const SizedBox(height: 16),
-                  // ],
 
                   _buildLabel('Customer Name', isMandatory: true),
                   _buildTextFormField(
@@ -349,10 +282,6 @@ class _AddCustomerDialogState extends State<AddCustomerDialog> {
 
                           if (!mounted) return;
 
-                          if (_selectedSalesmanId == null) {
-                             ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please select a salesman')));
-                            return;
-                          }
 
                           // Data collection
                           final name = _nameController.text.trim();
@@ -436,7 +365,7 @@ class _AddCustomerDialogState extends State<AddCustomerDialog> {
                                     Navigator.pop(confirmContext);
                                     widget.bloc.add(AddCustomer(
                                       agencyId: widget.currentUser.agencyId,
-                                      salesmanId: _selectedSalesmanId!,
+                                      salesmanId: widget.currentUser.id,
                                       name: name,
                                       phone: phone,
                                       address: address,

@@ -215,6 +215,7 @@ class _CustomerDetailsDialogState extends State<CustomerDetailsDialog> {
                           builder: (_) => PendingBalanceAdjustmentDialog(
                             customer: customer,
                             customerBloc: widget.customerBloc,
+                            currentUser: widget.currentUser,
                           ),
                         );
                       },
@@ -243,6 +244,7 @@ class _CustomerDetailsDialogState extends State<CustomerDetailsDialog> {
                     builder: (_) => BottleBalanceAdjustmentDialog(
                       customer: customer,
                       customerBloc: widget.customerBloc,
+                      currentUser: widget.currentUser,
                     ),
                   );
                 },
@@ -471,7 +473,7 @@ class _CustomerDetailsDialogState extends State<CustomerDetailsDialog> {
                                      widget.customerBloc.add(UpdateCustomerStatus(
                                        customer.id, 
                                        'Active',
-                                       customer.salesmanId
+                                       widget.currentUser.id
                                      ));
                                      Navigator.pop(context);
                                    },
