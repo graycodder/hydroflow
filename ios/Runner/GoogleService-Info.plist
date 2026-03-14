@@ -3,17 +3,17 @@
 <plist version="1.0">
 <dict>
 	<key>API_KEY</key>
-	<string>AIzaSyAN1pbKHsL4U9_DOoYBxj2TJlAVzwa1Y04</string>
+	<string>AIzaSyB_BcDJlM_QL5COTqCs-8_7XghWOQU8uv8</string>
 	<key>GCM_SENDER_ID</key>
-	<string>1032293793727</string>
+	<string>429560210914</string>
 	<key>PLIST_VERSION</key>
 	<string>1</string>
 	<key>BUNDLE_ID</key>
 	<string>com.graycodder.hydroflow</string>
 	<key>PROJECT_ID</key>
-	<string>hydroflow-stg-app</string>
+	<string>hydroflow-1f649</string>
 	<key>STORAGE_BUCKET</key>
-	<string>hydroflow-stg-app.firebasestorage.app</string>
+	<string>hydroflow-1f649.firebasestorage.app</string>
 	<key>IS_ADS_ENABLED</key>
 	<false></false>
 	<key>IS_ANALYTICS_ENABLED</key>
@@ -25,8 +25,8 @@
 	<key>IS_SIGNIN_ENABLED</key>
 	<true></true>
 	<key>GOOGLE_APP_ID</key>
-	<string>1:1032293793727:ios:dfa6eea79ef25b11feab0a</string>
+	<string>1:429560210914:ios:555a5ab9633aec7cbb45bb</string>
 	<key>DATABASE_URL</key>
-	<string>https://hydroflow-stg-app-default-rtdb.asia-southeast1.firebasedatabase.app</string>
+	<string>https://hydroflow-1f649-default-rtdb.asia-southeast1.firebasedatabase.app</string>
 </dict>
 </plist>

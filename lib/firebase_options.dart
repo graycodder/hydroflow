@@ -58,17 +58,17 @@ class DefaultFirebaseOptions {
     appId: '1:429560210914:android:27da5885808d0b5fbb45bb',
     messagingSenderId: '429560210914',
     projectId: 'hydroflow-1f649',
-    storageBucket: 'hydroflow-1f649.firebasestorage.app',
     databaseURL: 'https://hydroflow-1f649-default-rtdb.asia-southeast1.firebasedatabase.app',
+    storageBucket: 'hydroflow-1f649.firebasestorage.app',
   );
 
   static const FirebaseOptions ios = FirebaseOptions(
-    apiKey: 'AIzaSyAgbwqsK-h1iLz764XOeAifKH8RIazLQto',
-    appId: '1:429560210914:ios:mock', // Replace with actual iOS App ID if available
+    apiKey: 'AIzaSyB_BcDJlM_QL5COTqCs-8_7XghWOQU8uv8',
+    appId: '1:429560210914:ios:555a5ab9633aec7cbb45bb',
     messagingSenderId: '429560210914',
     projectId: 'hydroflow-1f649',
+    databaseURL: 'https://hydroflow-1f649-default-rtdb.asia-southeast1.firebasedatabase.app',
     storageBucket: 'hydroflow-1f649.firebasestorage.app',
-    databaseURL: 'https://hydroflow-1f649-default-rtdb.asia-southeast1.firebasedatabase.app/',
     iosBundleId: 'com.graycodder.hydroflow',
   );
 

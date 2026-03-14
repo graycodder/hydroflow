@@ -52,7 +52,7 @@ class DefaultFirebaseOptions {
 
   static const FirebaseOptions android = FirebaseOptions(
     apiKey: 'AIzaSyAwGeGjnKiHxJUV7oTZDQzjRc8IyQ7NV88',
-    appId: '1:848753673763:android:71ef2954ab0c8a34529396',
+    appId: '1:848753673763:android:007391b4df4db222529396',
     messagingSenderId: '848753673763',
     projectId: 'hydroflow-stg-app-53d5b',
     databaseURL: 'https://hydroflow-stg-app-53d5b-default-rtdb.asia-southeast1.firebasedatabase.app',
@@ -60,8 +60,8 @@ class DefaultFirebaseOptions {
   );
 
   static const FirebaseOptions ios = FirebaseOptions(
-    apiKey: 'AIzaSyAwGeGjnKiHxJUV7oTZDQzjRc8IyQ7NV88',
-    appId: '1:848753673763:ios:dfa6eea79ef25b11feab0a',
+    apiKey: 'AIzaSyAUCazkW2hztO96Yn7o9sTXmyeMcUq8dIk',
+    appId: '1:848753673763:ios:272d18d9bccadeb7529396',
     messagingSenderId: '848753673763',
     projectId: 'hydroflow-stg-app-53d5b',
     databaseURL: 'https://hydroflow-stg-app-53d5b-default-rtdb.asia-southeast1.firebasedatabase.app',
