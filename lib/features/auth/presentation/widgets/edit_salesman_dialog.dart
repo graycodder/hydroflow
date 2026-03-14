@@ -314,10 +314,6 @@ class _EditSalesmanDialogState extends State<EditSalesmanDialog> {
         : (allSelected ? 'All Routes' : _selectedZones.join(', '));
 
     return FormField<List<String>>(
-      validator: (_) {
-        if (_selectedZones.isEmpty) return 'Please assign at least one route/zone';
-        return null;
-      },
       builder: (state) {
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
