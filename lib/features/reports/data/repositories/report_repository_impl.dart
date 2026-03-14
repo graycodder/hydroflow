@@ -807,27 +807,43 @@ class ReportRepositoryImpl implements ReportRepository {
           return true;
         });
 
-    return agencySalesmenStream.switchMap<ReportEntity>((salesmenIds) {
-      final List<String> ids = salesmenIds ?? [];
-      if (ids.isEmpty) {
-        return Stream.value(_emptyReport(date));
-      }
+    final agencyCustomersStream = _customerRepository.getCustomersByAgency(agencyId);
 
-      // 2. Create a stream of reports for EACH salesman + Warehouse
-      final reportStreams = [
-        getDailyReport(agencyId, date), // Warehouse Report
-        ...salesmenIds
-            .where((id) => id != agencyId)
-            .map((id) => getDailyReport(id, date)), // Salesmen Reports
-      ];
+    return CombineLatestStream.combine2<List<ReportEntity>, List<Customer>, ReportEntity>(
+      agencySalesmenStream.switchMap<List<ReportEntity>>((salesmenIds) {
+        final List<String> ids = salesmenIds ?? [];
+        if (ids.isEmpty) return Stream.value([_emptyReport(date)]);
 
-      // 3. Combine and Aggregate
-      return CombineLatestStream.list<ReportEntity>(reportStreams).map((
-        reports,
-      ) {
-        return _aggregateReports(reports, date, agencyId: agencyId);
-      });
-    });
+        final reportStreams = [
+          getDailyReport(agencyId, date), // Warehouse Report
+          ...salesmenIds
+              .where((id) => id != agencyId)
+              .map((id) => getDailyReport(id, date)),
+        ];
+        return CombineLatestStream.list<ReportEntity>(reportStreams);
+      }),
+      agencyCustomersStream,
+      (reports, customers) {
+        final baseReport = _aggregateReports(reports, date, agencyId: agencyId);
+        
+        // Exact same logic as monthly for consistency
+        final activeCount = customers.where((c) => c.status == 'Active').length;
+        final inactiveCount = customers.length - activeCount;
+        final newCount = customers.where((c) {
+          if (c.createdAt == null) return false;
+          return c.createdAt!.year == date.year && 
+                 c.createdAt!.month == date.month && 
+                 c.createdAt!.day == date.day;
+        }).length;
+
+        return baseReport.copyWith(
+          totalCustomers: customers.length,
+          activeCustomers: activeCount,
+          inactiveCustomers: inactiveCount,
+          newCustomers: newCount,
+        );
+      },
+    );
   }
 
   @override
@@ -870,11 +886,36 @@ class ReportRepositoryImpl implements ReportRepository {
             .map((id) => getMonthlyReport(id, month)), // Salesmen Reports
       ];
 
-      return CombineLatestStream.list<ReportEntity>(reportStreams).map((
-        reports,
-      ) {
-        return _aggregateReports(reports, month, agencyId: agencyId);
-      });
+      final agencyCustomersStream = _customerRepository.getCustomersByAgency(agencyId);
+
+      return CombineLatestStream.combine2<List<ReportEntity>, List<Customer>, ReportEntity>(
+        CombineLatestStream.list<ReportEntity>(reportStreams),
+        agencyCustomersStream,
+        (reports, customers) {
+          final baseReport = _aggregateReports(reports, month, agencyId: agencyId);
+          
+          // Overwrite customer stats with accurate agency-wide data
+          final monthEnd = DateTime(month.year, month.month + 1, 0, 23, 59, 59);
+          final relevantCustomers = customers.where((c) {
+            if (c.createdAt == null) return true;
+            return c.createdAt!.isBefore(monthEnd);
+          }).toList();
+
+          final activeCount = relevantCustomers.where((c) => c.status == 'Active').length;
+          final inactiveCount = relevantCustomers.length - activeCount;
+          final newCount = relevantCustomers.where((c) {
+            if (c.createdAt == null) return false;
+            return c.createdAt!.year == month.year && c.createdAt!.month == month.month;
+          }).length;
+
+          return baseReport.copyWith(
+            totalCustomers: relevantCustomers.length,
+            activeCustomers: activeCount,
+            inactiveCustomers: inactiveCount,
+            newCustomers: newCount,
+          );
+        },
+      );
     });
   }
 

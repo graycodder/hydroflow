@@ -3,32 +3,50 @@ import 'package:watermemo/features/dashboard/domain/entities/dashboard_summary.d
 import 'package:watermemo/features/dashboard/domain/repositories/dashboard_repository.dart';
 import 'package:watermemo/features/dashboard/data/models/dashboard_summary_model.dart';
 import 'package:watermemo/features/reports/domain/repositories/report_repository.dart';
+import 'package:watermemo/features/customers/domain/repositories/customer_repository.dart';
 import 'package:rxdart/rxdart.dart';
 
 class DashboardRepositoryImpl implements DashboardRepository {
   final FirebaseDatabase _database;
   final ReportRepository? _reportRepository;
+  final CustomerRepository? _customerRepository;
 
   DashboardRepositoryImpl({
     required FirebaseDatabase database,
     ReportRepository? reportRepository,
+    CustomerRepository? customerRepository,
   }) : _database = database,
-       _reportRepository = reportRepository;
+       _reportRepository = reportRepository,
+       _customerRepository = customerRepository;
 
   @override
   Stream<DashboardSummary> getDashboardSummary({required String salesmanId, String? agencyId}) {
-    if (agencyId != null && agencyId.isNotEmpty && _reportRepository != null) {
+    if (agencyId != null && agencyId.isNotEmpty && _reportRepository != null && _customerRepository != null) {
       // --- AGENCY VIEW (OWNER) ---
-      // We leverage the existing, highly accurate getAgencyDailyReport to aggregate stats cleanly.
-      return _reportRepository!.getAgencyDailyReport(agencyId, DateTime.now()).map((report) {
-         // Use the live pendingCashBalance which naturally carries forward across days
+      // We leverage getAgencyDailyReport for financial/stock stats,
+      // and getCustomersByAgency for high-precision, real-time customer counts (matching CustomersPage).
+      final reportStream = _reportRepository!.getAgencyDailyReport(agencyId, DateTime.now());
+      final customersStream = _customerRepository!.getCustomersByAgency(agencyId);
+
+      return Rx.combineLatest2(reportStream, customersStream, (report, customers) {
+         final activeCount = customers.where((c) => c.status == 'Active').length;
+         final inactiveCount = customers.length - activeCount;
+         
+         final now = DateTime.now();
+         final newCount = customers.where((c) {
+            if (c.createdAt == null) return false;
+            return c.createdAt!.year == now.year && c.createdAt!.month == now.month && c.createdAt!.day == now.day;
+         }).length;
+         
          double pending = report.pendingCashBalance;
          if (pending < 0) pending = 0;
 
          return DashboardSummaryModel.fromValues(
-            currentStock: report.closingStock, // Warehouse closing stock
-            activeCustomers: report.activeCustomers,
-            inactiveCustomers: report.inactiveCustomers,
+            currentStock: report.closingStock,
+            activeCustomers: activeCount,
+            inactiveCustomers: inactiveCount,
+            totalCustomers: customers.length,
+            newCustomers: newCount,
             todaySales: report.salesRevenue,
             todayCollection: report.totalCollected,
             todayDeliveries: report.totalDeliveries,
@@ -77,6 +95,8 @@ class DashboardRepositoryImpl implements DashboardRepository {
             currentStock: currentStock,
             activeCustomers: activeCount,
             inactiveCustomers: customerCount - activeCount,
+            totalCustomers: customerCount,
+            newCustomers: 0, // Individual view doesn't track daily new customers directly in salesman node yet, could be added later
             todaySales: todaySales,
             todayCollection: todayCollection,
             todayDeliveries: todayDeliveries,
