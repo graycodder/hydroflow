@@ -423,7 +423,7 @@ class _EditCustomerDialogState extends State<EditCustomerDialog> {
                                       final updatedCustomer = Customer(
                                         id: widget.customer.id,
                                         agencyId: widget.customer.agencyId,
-                                        salesmanId: "",
+                                        salesmanId: widget.currentUser.id,
                                         name: name,
                                         phone: phone,
                                         address: address,

@@ -365,7 +365,7 @@ class _AddCustomerDialogState extends State<AddCustomerDialog> {
                                     Navigator.pop(confirmContext);
                                     widget.bloc.add(AddCustomer(
                                       agencyId: widget.currentUser.agencyId,
-                                      salesmanId: widget.isAgencyView ? "" : widget.currentUser.id,
+                                      salesmanId: widget.currentUser.id,
                                       name: name,
                                       phone: phone,
                                       address: address,
