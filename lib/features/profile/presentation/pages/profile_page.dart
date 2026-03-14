@@ -11,6 +11,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:watermemo/core/widgets/hydro_flow_loader.dart';
 import 'package:watermemo/features/auth/domain/entities/agency.dart';
 import 'package:watermemo/features/profile/domain/entities/subscription_record.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 
 class ProfilePage extends StatelessWidget {
   const ProfilePage({super.key});
@@ -66,7 +67,10 @@ class ProfilePage extends StatelessWidget {
               final isAgency = state.isAgencyView;
               final agency = state.agency;
 
-              final displayName = isAgency ? (agency?.name ?? 'Agency Name') : profile.name;
+              final rawName = isAgency ? (agency?.name ?? 'Agency Name') : profile.name;
+              final displayName = rawName.isEmpty
+                  ? rawName
+                  : rawName[0].toUpperCase() + rawName.substring(1);
               final roleDisplay = profile.role.isNotEmpty
                   ? profile.role[0].toUpperCase() + profile.role.substring(1)
                   : '';
@@ -274,6 +278,30 @@ class ProfilePage extends StatelessWidget {
                             ],
                           ),
                           const SizedBox(height: 32),
+                          // ── Version Info ──
+                          Center(
+                            child: FutureBuilder<PackageInfo>(
+                              future: PackageInfo.fromPlatform(),
+                              builder: (context, snapshot) {
+                                if (snapshot.hasData) {
+                                  final version = snapshot.data!.version;
+                                  final buildNumber = snapshot.data!.buildNumber;
+                                  return Padding(
+                                    padding: const EdgeInsets.only(bottom: 20),
+                                    child: Text(
+                                      'Version $version ($buildNumber)',
+                                      style: const TextStyle(
+                                        color: Colors.grey,
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                                  );
+                                }
+                                return const SizedBox.shrink();
+                              },
+                            ),
+                          ),
                         ],
                       ),
                     ),
