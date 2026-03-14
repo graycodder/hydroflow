@@ -305,7 +305,7 @@ class _DeliveryViewState extends State<DeliveryView> {
                           final trimmed = z.trim();
                           if (trimmed.isEmpty) return '';
                           return trimmed[0].toUpperCase() + trimmed.substring(1).toLowerCase();
-                        }).where((z) => z.isNotEmpty).toSet().toList()..sort();
+                        }).where((z) => z.isNotEmpty && z.toLowerCase() != 'all').toSet().toList()..sort();
 
                         return ['All', ...zones];
                       },

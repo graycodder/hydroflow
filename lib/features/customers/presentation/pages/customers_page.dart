@@ -200,7 +200,7 @@ class _CustomersPageState extends State<CustomersPage> {
                               final normalizedZones = zones.map((z) {
                                 final trimmed = z.trim();
                                 return trimmed[0].toUpperCase() + trimmed.substring(1).toLowerCase();
-                              }).toSet().toList()..sort();
+                              }).where((z) => z.toLowerCase() != 'all').toSet().toList()..sort();
 
                               return ['All', ...normalizedZones];
                             },
