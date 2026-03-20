@@ -650,4 +650,52 @@ class CustomerRepositoryImpl implements CustomerRepository {
       throw Exception('Failed to settle and deactivate customer: $e');
     }
   }
+
+  @override
+  Future<List<Customer>> searchCustomers(String query, {String? salesmanId, String? agencyId, String? zone, int limit = 20}) async {
+    final ref = _database.ref().child('Customers');
+    
+    // Normalize query for case-insensitivity if your data is stored lowercase, 
+    // OR use the query as is if stored properly. 
+    // Since RTDB prefix match is case-sensitive, we'll try to match name as stored.
+    // If we want robust case-insensitive search, we should store a 'searchName' field in lowercase.
+    // For now, we assume names are stored in a consistent format (e.g. capitalized).
+
+    // 1. First attempt: Simple prefix match on 'name'
+    // Since Firebase RTDB doesn't allow multiple orderBy, we have to choose: 
+    // Usually name is better for user lookup.
+    
+    Query dbQuery = ref.orderByChild('name')
+        .startAt(query)
+        .endAt(query + '\uf8ff')
+        .limitToFirst(limit * 2); // Fetch more to allow for manual filtering of salesman/zone
+
+    final snapshot = await dbQuery.get();
+    if (!snapshot.exists) return [];
+
+    final data = snapshot.value as Map<dynamic, dynamic>;
+    final lowerZone = zone?.trim().toLowerCase();
+    final bool shouldFilterByZone = lowerZone != null && lowerZone.isNotEmpty && lowerZone != 'all';
+    final assignedZones = shouldFilterByZone ? lowerZone.split(',').map((e) => e.trim()).toList() : [];
+
+    return data.entries
+        .map((entry) {
+          final map = Map<String, dynamic>.from(entry.value as Map);
+          map['id'] = entry.key;
+          return CustomerModel.fromMap(map);
+        })
+        .where((c) {
+          // Manual filtering for scale: we fetch by name first, then check salesman/agency/zone
+          final matchesAgency = agencyId == null || c.agencyId == agencyId;
+          final matchesSalesman = salesmanId == null || c.salesmanId == salesmanId;
+          
+          if (!matchesAgency || !matchesSalesman) return false;
+          if (!shouldFilterByZone) return true;
+          
+          return assignedZones.contains(c.zone.trim().toLowerCase());
+        })
+        .take(limit)
+        .toList()
+      ..sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
+  }
 }

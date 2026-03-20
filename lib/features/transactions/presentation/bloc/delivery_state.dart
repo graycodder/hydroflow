@@ -22,6 +22,7 @@ class DeliveryState extends Equatable {
   final String? selectedSalesmanId;
   final List<Customer> filteredCustomers;
   final bool isAgencyView;
+  final String? agencyId;
 
   const DeliveryState({
     this.status = DeliveryStatus.initial,
@@ -41,6 +42,7 @@ class DeliveryState extends Equatable {
     this.selectedSalesmanId,
     this.filteredCustomers = const [],
     this.isAgencyView = false,
+    this.agencyId,
   });
 
   DeliveryState copyWith({
@@ -64,6 +66,7 @@ class DeliveryState extends Equatable {
     bool clearSelectedSalesman = false,
     List<Customer>? filteredCustomers,
     bool? isAgencyView,
+    String? agencyId,
   }) {
     return DeliveryState(
       status: status ?? this.status,
@@ -83,6 +86,7 @@ class DeliveryState extends Equatable {
       selectedSalesmanId: clearSelectedSalesman ? null : (selectedSalesmanId ?? this.selectedSalesmanId),
       filteredCustomers: filteredCustomers ?? this.filteredCustomers,
       isAgencyView: isAgencyView ?? this.isAgencyView,
+      agencyId: agencyId ?? this.agencyId,
     );
   }
 
@@ -105,5 +109,6 @@ class DeliveryState extends Equatable {
         selectedSalesmanId,
         filteredCustomers,
         isAgencyView,
+        agencyId,
       ];
 }

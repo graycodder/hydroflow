@@ -6,6 +6,7 @@ import 'package:watermemo/features/transactions/presentation/bloc/delivery_event
 import 'package:watermemo/features/transactions/presentation/bloc/delivery_state.dart';
 import 'package:watermemo/features/transactions/domain/usecases/add_transaction_usecase.dart';
 import 'package:watermemo/features/transactions/domain/usecases/get_today_transactions_usecase.dart';
+import 'package:watermemo/features/customers/domain/usecases/search_customers_usecase.dart';
 import 'package:watermemo/features/transactions/domain/entities/transaction_entity.dart';
 import 'package:watermemo/features/customers/domain/repositories/customer_repository.dart';
 import 'package:watermemo/features/customers/domain/entities/customer.dart';
@@ -22,6 +23,7 @@ class DeliveryBloc extends Bloc<DeliveryEvent, DeliveryState> {
   final AuthRepository _authRepository;
   final AgencyRepository _agencyRepository;
   final InventoryRepository _inventoryRepository;
+  final SearchCustomersUseCase _searchCustomersUseCase;
   final SharedPreferences _prefs;
 
   static const String prefZoneKey = 'PREF_SELECTED_ZONE_DELIVERY';
@@ -30,6 +32,7 @@ class DeliveryBloc extends Bloc<DeliveryEvent, DeliveryState> {
   DeliveryBloc({
     required AddTransactionUseCase addTransactionUseCase,
     required GetTodayTransactionsUseCase getTodayTransactionsUseCase,
+    required SearchCustomersUseCase searchCustomersUseCase,
     required CustomerRepository customerRepository,
     required AuthRepository authRepository,
     required AgencyRepository agencyRepository,
@@ -37,6 +40,7 @@ class DeliveryBloc extends Bloc<DeliveryEvent, DeliveryState> {
     required SharedPreferences prefs,
   })  : _addTransactionUseCase = addTransactionUseCase,
         _getTodayTransactionsUseCase = getTodayTransactionsUseCase,
+        _searchCustomersUseCase = searchCustomersUseCase,
         _customerRepository = customerRepository,
         _authRepository = authRepository,
         _agencyRepository = agencyRepository,
@@ -93,23 +97,22 @@ class DeliveryBloc extends Bloc<DeliveryEvent, DeliveryState> {
       clearSelectedCustomer: true,
       selectedZone: savedZone,
       clearSelectedZone: savedZone == null,
-      selectedSalesmanId: savedSalesman,
-      clearSelectedSalesman: savedSalesman == null,
+      selectedSalesmanId: event.salesmanId, // Ensure state has the current salesman ID
+      clearSelectedSalesman: false,
       isAgencyView: false,
+      agencyId: event.agencyId,
     ));
     
     final salesmanStream = _authRepository.getSalesmanStream(event.salesmanId);
 
     await emit.forEach<Map<String, dynamic>>(
       salesmanStream.switchMap((salesman) {
-        // Use agencyId and zone from event to fetch customers for assigned routes
+        // Only load customers for THIS specific salesman to keep it fast
         final customerStream = _customerRepository.getCustomers(
           event.salesmanId,
           agencyId: event.agencyId,
-          zone: event.zone,
         );
         final transactionStream = _getTodayTransactionsUseCase(event.salesmanId);
-        
         final stockStream = Stream.value(salesman.currentStock);
 
         return CombineLatestStream.combine3<List<Customer>, List<TransactionEntity>, int, Map<String, dynamic>>(
@@ -128,16 +131,10 @@ class DeliveryBloc extends Bloc<DeliveryEvent, DeliveryState> {
         final transactions = data['transactions'] as List<TransactionEntity>;
         final currentStock = data['currentStock'] as int;
 
-        // Handle Dropdown Sync: If customers updated, sync selectedCustomer reference
-        Customer? updatedSelectedCustomer = state.selectedCustomer;
-        if (updatedSelectedCustomer != null) {
-          updatedSelectedCustomer = customers.cast<Customer?>().firstWhere(
-            (c) => c?.id == updatedSelectedCustomer?.id,
-            orElse: () => updatedSelectedCustomer,
-          );
-        }
-
-        return _calculateUpdatedState(transactions, customers, currentStock, updatedSelectedCustomer: updatedSelectedCustomer).copyWith(isAgencyView: false);
+        return _calculateUpdatedState(transactions, customers, currentStock).copyWith(
+          isAgencyView: false,
+          agencyId: event.agencyId,
+        );
       },
       onError: (e, stackTrace) => state.copyWith(
         status: DeliveryStatus.failure,
@@ -175,27 +172,27 @@ class DeliveryBloc extends Bloc<DeliveryEvent, DeliveryState> {
       salesmenStream.switchMap((salesmen) {
         final ids = salesmen.map((s) => s.id).toList();
         
-        final customerStream = _customerRepository.getCustomersByAgency(event.agencyId);
         final transactionStream = _getTodayTransactionsUseCase.byAgency(ids);
         final stockStream = _inventoryRepository.getAgencyWarehouseStock(event.agencyId).map((s) => s['fullBottles'] ?? 0);
 
-        return CombineLatestStream.combine3<List<Customer>, List<TransactionEntity>, int, Map<String, dynamic>>(
-          customerStream,
+        return CombineLatestStream.combine2<List<TransactionEntity>, int, Map<String, dynamic>>(
           transactionStream,
           stockStream,
-          (customers, transactions, currentStock) => {
-            'customers': customers,
+          (transactions, currentStock) => {
             'transactions': transactions,
             'currentStock': currentStock,
           },
         );
       }),
       onData: (data) {
-        final customers = data['customers'] as List<Customer>;
+        final customers = <Customer>[]; 
         final transactions = data['transactions'] as List<TransactionEntity>;
         final currentStock = data['currentStock'] as int;
 
-        return _calculateUpdatedState(transactions, customers, currentStock).copyWith(isAgencyView: true);
+        return _calculateUpdatedState(transactions, customers, currentStock).copyWith(
+          isAgencyView: true,
+          agencyId: event.agencyId,
+        );
       },
       onError: (e, stackTrace) => state.copyWith(
         status: DeliveryStatus.failure,
@@ -329,14 +326,7 @@ class DeliveryBloc extends Bloc<DeliveryEvent, DeliveryState> {
     String? validatedZone = state.selectedZone;
     String? validatedSalesmanId = state.selectedSalesmanId;
 
-    final filtered = _applyFilters(
-      customers,
-      transactions,
-      validatedZone,
-      state.isAgencyView ? validatedSalesmanId : null,
-    );
-    final filteredTransactions = filtered['transactions'] as List<TransactionEntity>;
-
+    // stats now based on UNFILTERED transactions
     double sales = 0;
     double cash = 0;
     double upi = 0;
@@ -345,13 +335,8 @@ class DeliveryBloc extends Bloc<DeliveryEvent, DeliveryState> {
     int deliveryCount = 0;
 
     for (var tx in transactions) {
-       // stats now based on UNFILTERED transactions
-
        if (tx.type != 'Deposit' && tx.type != 'Refund') {
-         // Total Sales should be the invoiced amount, not the collected amount
          sales += tx.amount;
-
-         // Cash and UPI should not include Deposit or Refund amounts
          if (tx.paymentMode == 'Cash') cash += tx.amountReceived;
          if (tx.paymentMode == 'UPI' || tx.paymentMode == 'Online') upi += tx.amountReceived;
        }
@@ -359,18 +344,34 @@ class DeliveryBloc extends Bloc<DeliveryEvent, DeliveryState> {
        delivered += tx.cansDelivered;
        returned += tx.emptyCollected;
        
-       // Only count as a "delivery" if bottles were actually delivered
        if (tx.cansDelivered > 0) {
          deliveryCount++;
        }
     }
 
+    // Filters for transactions list (today's work)
+    final filteredTransactions = transactions.where((tx) {
+      final matchesSalesman = validatedSalesmanId == null || tx.salesmanId == validatedSalesmanId;
+      
+      bool matchesZone = true;
+      if (validatedZone != null) {
+        final customer = customers.cast<Customer?>().firstWhere(
+          (c) => c?.id == tx.customerId,
+          orElse: () => null,
+        );
+        matchesZone = customer?.zone.toLowerCase() == validatedZone.toLowerCase();
+      }
+      
+      return matchesSalesman && matchesZone;
+    }).toList();
+
     return state.copyWith(
       status: state.status == DeliveryStatus.submitting ? DeliveryStatus.submitting : DeliveryStatus.success,
-      customers: customers,
       allTodayTransactions: transactions,
       todayTransactions: filteredTransactions,
-      selectedCustomer: updatedSelectedCustomer, // Sync the reference
+      customers: customers,
+      filteredCustomers: customers, // Base for search
+      selectedCustomer: updatedSelectedCustomer,
       totalSales: sales,
       totalCash: cash,
       totalUpi: upi,
@@ -378,11 +379,50 @@ class DeliveryBloc extends Bloc<DeliveryEvent, DeliveryState> {
       totalReturned: returned,
       totalDeliveriesCount: deliveryCount,
       currentStock: currentStock,
-      filteredCustomers: filtered['customers'] as List<Customer>,
       selectedZone: validatedZone,
       clearSelectedZone: validatedZone == null,
       selectedSalesmanId: validatedSalesmanId,
       clearSelectedSalesman: validatedSalesmanId == null,
+    );
+  }
+
+  Future<List<Customer>> searchCustomers(String query) async {
+    final activeCustomers = state.customers.where((c) {
+      final isActive = c.status == 'Active';
+      final matchesZone = state.selectedZone == null || 
+                         c.zone.toLowerCase() == state.selectedZone!.toLowerCase();
+      return isActive && matchesZone;
+    }).toList();
+    
+    // If we have customers in memory, use the smarter in-memory search
+    if (activeCustomers.isNotEmpty) {
+      if (query.isEmpty) return activeCustomers;
+        
+      final lowerQuery = query.toLowerCase();
+      final results = activeCustomers.where((c) {
+        return c.name.toLowerCase().contains(lowerQuery) ||
+               c.phone.contains(lowerQuery);
+      }).toList();
+
+      results.sort((a, b) {
+        final aLower = a.name.toLowerCase();
+        final bLower = b.name.toLowerCase();
+        final aStart = aLower.startsWith(lowerQuery);
+        final bStart = bLower.startsWith(lowerQuery);
+        if (aStart && !bStart) return -1;
+        if (!aStart && bStart) return 1;
+        return aLower.compareTo(bLower);
+      });
+      return results;
+    }
+
+    // Otherwise (Scale or Agency View), use server-side search
+    return _searchCustomersUseCase(
+      query,
+      salesmanId: !state.isAgencyView ? (state.selectedSalesmanId ?? '') : state.selectedSalesmanId, 
+      agencyId: state.agencyId,
+      zone: state.selectedZone,
+      limit: 50,
     );
   }
 }

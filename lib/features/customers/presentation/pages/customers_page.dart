@@ -29,9 +29,11 @@ class CustomersPage extends StatefulWidget {
 }
 
 class _CustomersPageState extends State<CustomersPage> {
+  final ScrollController _scrollController = ScrollController();
   @override
   void initState() {
     super.initState();
+    _scrollController.addListener(_onScroll);
     final authState = context.read<AuthBloc>().state;
     if (authState is AuthAuthenticated) {
       final salesman = authState.salesman;
@@ -44,6 +46,33 @@ class _CustomersPageState extends State<CustomersPage> {
         context.read<CustomerBloc>().add(LoadCustomers(salesman.id, salesman.agencyId, salesman.zone, resetFilters: false));
       }
     }
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _onScroll() {
+    if (_isBottom) {
+      final state = context.read<CustomerBloc>().state;
+      final authState = context.read<AuthBloc>().state;
+      if (authState is AuthAuthenticated) {
+         context.read<CustomerBloc>().add(LoadMoreCustomers(
+           authState.salesman.id,
+           agencyId: authState.salesman.agencyId,
+           zone: authState.salesman.zone,
+         ));
+      }
+    }
+  }
+
+  bool get _isBottom {
+    if (!_scrollController.hasClients) return false;
+    final maxScroll = _scrollController.position.maxScrollExtent;
+    final currentScroll = _scrollController.offset;
+    return currentScroll >= (maxScroll * 0.9);
   }
 
   @override
@@ -197,12 +226,22 @@ class _CustomersPageState extends State<CustomersPage> {
                         // Customer List
                         Expanded(
                           child: ListView.separated(
+                            controller: _scrollController,
                             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                            itemCount: state.filteredCustomers.length,
+                            itemCount: state.filteredCustomers.length + (state.isFetchingMore ? 1 : 0),
                             separatorBuilder: (_, __) => const SizedBox(height: 12),
                             itemBuilder: (context, index) {
-                              final customer = state.filteredCustomers[index];
-                              return _buildCustomerCard(customer, salesman, isAgency);
+                              if (index < state.filteredCustomers.length) {
+                                final customer = state.filteredCustomers[index];
+                                return _buildCustomerCard(customer, salesman, isAgency);
+                              } else {
+                                return const Center(
+                                  child: Padding(
+                                    padding: EdgeInsets.symmetric(vertical: 20),
+                                    child: CircularProgressIndicator(),
+                                  ),
+                                );
+                              }
                             },
                           ),
                         ),

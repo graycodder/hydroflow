@@ -24,6 +24,17 @@ class LoadCustomers extends CustomerStreamEvent {
   List<Object> get props => [salesmanId, agencyId, zone, resetFilters];
 }
 
+class LoadMoreCustomers extends CustomerEvent {
+  final String salesmanId;
+  final String? agencyId;
+  final String? zone;
+
+  const LoadMoreCustomers(this.salesmanId, {this.agencyId, this.zone});
+
+  @override
+  List<Object> get props => [salesmanId, agencyId ?? '', zone ?? ''];
+}
+
 class LoadAgencyCustomers extends CustomerStreamEvent {
   final String agencyId;
   final bool resetFilters;

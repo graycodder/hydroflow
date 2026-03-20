@@ -49,6 +49,7 @@ class CustomerBloc extends Bloc<CustomerEvent, CustomerState> {
     on<FilterByZone>(_onFilterByZone);
     on<FilterBySalesman>(_onFilterBySalesman);
     on<ClearCustomerFilters>(_onClearFilters);
+    on<LoadMoreCustomers>(_onLoadMoreCustomers);
   }
 
   void _onClearFilters(
@@ -85,18 +86,27 @@ class CustomerBloc extends Bloc<CustomerEvent, CustomerState> {
     await emit.forEach<List<Customer>>(
       getCustomers(event.salesmanId, agencyId: event.agencyId, zone: event.zone),
       onData: (customers) {
+        final sortedCustomers = _applyFilters(customers, state.searchQuery, state.selectedZone, state.selectedSalesmanId);
+        
+        final isSearching = state.searchQuery.isNotEmpty || state.selectedZone != null;
+        final initialCustomers = (isSearching || sortedCustomers.length <= 20) 
+            ? sortedCustomers 
+            : sortedCustomers.sublist(0, 20);
+        
         final activeCount = customers.where((c) => c.status == 'Active').length;
         final inactiveCount = customers.length - activeCount;
 
         return state.copyWith(
           status: CustomerStatus.success,
-          customers: customers,
-          filteredCustomers: _applyFilters(customers, state.searchQuery, state.selectedZone, state.selectedSalesmanId), 
+          customers: customers, 
+          filteredCustomers: initialCustomers, 
           totalCustomers: customers.length,
           activeCustomers: activeCount,
           inactiveCustomers: inactiveCount,
-          successMessage: null, // Clear message on routine update
+          successMessage: null,
           isAgencyView: false,
+          hasReachedMax: isSearching || sortedCustomers.length <= 20,
+          isFetchingMore: false,
         );
       },
       onError: (error, stackTrace) => state.copyWith(
@@ -131,18 +141,27 @@ class CustomerBloc extends Bloc<CustomerEvent, CustomerState> {
     await emit.forEach<List<Customer>>(
       getCustomers.byAgency(event.agencyId),
       onData: (customers) {
+        final sortedCustomers = _applyFilters(customers, state.searchQuery, state.selectedZone, state.selectedSalesmanId);
+        
+        final isSearching = state.searchQuery.isNotEmpty || state.selectedZone != null || state.selectedSalesmanId != null;
+        final initialCustomers = (isSearching || sortedCustomers.length <= 20) 
+            ? sortedCustomers 
+            : sortedCustomers.sublist(0, 20);
+
         final activeCount = customers.where((c) => c.status == 'Active').length;
         final inactiveCount = customers.length - activeCount;
 
         return state.copyWith(
           status: CustomerStatus.success,
           customers: customers,
-          filteredCustomers: _applyFilters(customers, state.searchQuery, state.selectedZone, state.selectedSalesmanId), 
+          filteredCustomers: initialCustomers, 
           totalCustomers: customers.length,
           activeCustomers: activeCount,
           inactiveCustomers: inactiveCount,
           successMessage: null,
           isAgencyView: true,
+          hasReachedMax: isSearching || sortedCustomers.length <= 20,
+          isFetchingMore: false,
         );
       },
       onError: (error, stackTrace) => state.copyWith(
@@ -194,10 +213,17 @@ class CustomerBloc extends Bloc<CustomerEvent, CustomerState> {
     Emitter<CustomerState> emit,
   ) {
     final filtered = _applyFilters(state.customers, event.query, state.selectedZone, state.selectedSalesmanId);
+    
+    final isSearching = event.query.isNotEmpty || state.selectedZone != null || state.selectedSalesmanId != null;
+    final displayCustomers = (isSearching || filtered.length <= 20) 
+        ? filtered 
+        : filtered.sublist(0, 20);
+
     emit(state.copyWith(
-      filteredCustomers: filtered, 
+      filteredCustomers: displayCustomers, 
       searchQuery: event.query,
       successMessage: null,
+      hasReachedMax: isSearching || filtered.length <= 20,
     ));
   }
 
@@ -216,11 +242,18 @@ class CustomerBloc extends Bloc<CustomerEvent, CustomerState> {
     }
 
     final filtered = _applyFilters(state.customers, state.searchQuery, newZone, state.selectedSalesmanId);
+    
+    final isSearching = state.searchQuery.isNotEmpty || newZone != null || state.selectedSalesmanId != null;
+    final displayCustomers = (isSearching || filtered.length <= 20) 
+        ? filtered 
+        : filtered.sublist(0, 20);
+
     emit(state.copyWith(
       selectedZone: newZone,
       clearSelectedZone: newZone == null,
-      filteredCustomers: filtered,
+      filteredCustomers: displayCustomers,
       successMessage: null,
+      hasReachedMax: isSearching || filtered.length <= 20,
     ));
   }
 
@@ -238,11 +271,18 @@ class CustomerBloc extends Bloc<CustomerEvent, CustomerState> {
     }
 
     final filtered = _applyFilters(state.customers, state.searchQuery, state.selectedZone, newId);
+    
+    final isSearching = state.searchQuery.isNotEmpty || state.selectedZone != null || newId != null;
+    final displayCustomers = (isSearching || filtered.length <= 20) 
+        ? filtered 
+        : filtered.sublist(0, 20);
+
     emit(state.copyWith(
       selectedSalesmanId: newId,
       clearSelectedSalesman: newId == null,
-      filteredCustomers: filtered,
+      filteredCustomers: displayCustomers,
       successMessage: null,
+      hasReachedMax: isSearching || filtered.length <= 20,
     ));
   }
 
@@ -319,6 +359,36 @@ class CustomerBloc extends Bloc<CustomerEvent, CustomerState> {
         errorMessage: 'Failed to settle customer: $e',
         successMessage: null,
       ));
+    }
+  }
+
+  Future<void> _onLoadMoreCustomers(
+    LoadMoreCustomers event,
+    Emitter<CustomerState> emit,
+  ) async {
+    // Only load more if not searching and not filtering by zone (since we load all in those cases for now)
+    final isSearching = state.searchQuery.isNotEmpty || state.selectedZone != null;
+    
+    if (state.status == CustomerStatus.success && !state.hasReachedMax && !state.isFetchingMore && !isSearching) {
+      emit(state.copyWith(isFetchingMore: true));
+      try {
+        final lastCustomer = state.filteredCustomers.isNotEmpty ? state.filteredCustomers.last : null;
+        final newCustomers = await getCustomers.getCustomersPaginated(
+          event.salesmanId,
+          agencyId: event.agencyId,
+          zone: event.zone,
+          lastCustomerId: lastCustomer?.id,
+          limit: 20,
+        );
+
+        emit(state.copyWith(
+          filteredCustomers: List.of(state.filteredCustomers)..addAll(newCustomers),
+          hasReachedMax: newCustomers.length < 20,
+          isFetchingMore: false,
+        ));
+      } catch (e) {
+        emit(state.copyWith(isFetchingMore: false));
+      }
     }
   }
 }

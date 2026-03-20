@@ -645,25 +645,7 @@ class _DeliveryViewState extends State<DeliveryView> {
 
             // ── Customer Dropdown ────────────────────────────────────────
             DropdownSearch<Customer>(
-              items: (filter, loadProps) {
-                final activeCustomers = state.filteredCustomers
-                    .where((c) => c.status == 'Active')
-                    .toList();
-                if (filter.isEmpty) return activeCustomers;
-                final query = filter.toLowerCase();
-                final filtered = activeCustomers.where((c) {
-                  return c.name.toLowerCase().contains(query) ||
-                      c.phone.contains(query);
-                }).toList();
-                filtered.sort((a, b) {
-                  final aNameMatch = a.name.toLowerCase().startsWith(query);
-                  final bNameMatch = b.name.toLowerCase().startsWith(query);
-                  if (aNameMatch && !bNameMatch) return -1;
-                  if (!aNameMatch && bNameMatch) return 1;
-                  return a.name.compareTo(b.name);
-                });
-                return filtered;
-              },
+              items: (filter, loadProps) => context.read<DeliveryBloc>().searchCustomers(filter),
               itemAsString: (Customer c) => c.name[0].toUpperCase()+c.name.substring(1),
               compareFn: (i, s) => i.id == s.id,
               decoratorProps: DropDownDecoratorProps(

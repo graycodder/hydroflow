@@ -19,6 +19,7 @@ import 'package:watermemo/features/customers/domain/usecases/add_customer_usecas
 import 'package:watermemo/features/customers/domain/usecases/update_customer_status_usecase.dart';
 import 'package:watermemo/features/customers/domain/usecases/update_customer_usecase.dart';
 import 'package:watermemo/features/customers/domain/usecases/settle_customer_usecase.dart';
+import 'package:watermemo/features/customers/domain/usecases/search_customers_usecase.dart';
 import 'package:watermemo/features/customers/presentation/bloc/customer_bloc.dart';
 import 'package:watermemo/features/transactions/data/repositories/transaction_repository_impl.dart';
 import 'package:watermemo/features/transactions/domain/repositories/transaction_repository.dart';
@@ -156,10 +157,12 @@ Future<void> init() async {
     ),
   );
 
+  sl.registerLazySingleton(() => SearchCustomersUseCase(sl()));
   sl.registerFactory(
     () => DeliveryBloc(
       addTransactionUseCase: sl(),
       getTodayTransactionsUseCase: sl(),
+      searchCustomersUseCase: sl(),
       customerRepository: sl(),
       authRepository: sl(),
       agencyRepository: sl(),

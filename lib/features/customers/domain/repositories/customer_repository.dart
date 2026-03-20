@@ -9,4 +9,5 @@ abstract class CustomerRepository {
   Future<void> updateCustomerStatus(String id, String status, String salesmanId);
   Future<void> updateCustomer(Customer customer);
   Future<void> settleAndDeactivate(Customer customer);
+  Future<List<Customer>> searchCustomers(String query, {String? salesmanId, String? agencyId, String? zone, int limit = 20});
 }

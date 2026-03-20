@@ -13,4 +13,8 @@ class GetCustomersUseCase {
   Stream<List<Customer>> byAgency(String agencyId) {
     return repository.getCustomersByAgency(agencyId);
   }
+
+  Future<List<Customer>> getCustomersPaginated(String salesmanId, {String? agencyId, String? zone, int limit = 20, String? lastCustomerId}) {
+    return repository.getCustomersPaginated(salesmanId, agencyId: agencyId, zone: zone, limit: limit, lastCustomerId: lastCustomerId);
+  }
 }
