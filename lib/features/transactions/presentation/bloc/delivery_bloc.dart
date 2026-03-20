@@ -172,20 +172,23 @@ class DeliveryBloc extends Bloc<DeliveryEvent, DeliveryState> {
       salesmenStream.switchMap((salesmen) {
         final ids = salesmen.map((s) => s.id).toList();
         
+        final customerStream = _customerRepository.getCustomersByAgency(event.agencyId);
         final transactionStream = _getTodayTransactionsUseCase.byAgency(ids);
         final stockStream = _inventoryRepository.getAgencyWarehouseStock(event.agencyId).map((s) => s['fullBottles'] ?? 0);
 
-        return CombineLatestStream.combine2<List<TransactionEntity>, int, Map<String, dynamic>>(
+        return CombineLatestStream.combine3<List<Customer>, List<TransactionEntity>, int, Map<String, dynamic>>(
+          customerStream,
           transactionStream,
           stockStream,
-          (transactions, currentStock) => {
+          (customers, transactions, currentStock) => {
+            'customers': customers,
             'transactions': transactions,
             'currentStock': currentStock,
           },
         );
       }),
       onData: (data) {
-        final customers = <Customer>[]; 
+        final customers = data['customers'] as List<Customer>; 
         final transactions = data['transactions'] as List<TransactionEntity>;
         final currentStock = data['currentStock'] as int;
 
