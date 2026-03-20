@@ -25,17 +25,44 @@ class BottleLoaded extends BottleState {
   final int highBalanceCount;
   final double avgBalance;
 
+  final bool hasReachedMax;
+  final bool isFetchingMore;
+
   const BottleLoaded({
     required this.customers,
     this.salesmen = const [],
     required this.totalBottles,
     required this.highBalanceCount,
     required this.avgBalance,
+    this.hasReachedMax = false,
+    this.isFetchingMore = false,
     super.isAgencyView,
   });
 
   @override
-  List<Object?> get props => [customers, salesmen, totalBottles, highBalanceCount, avgBalance, isAgencyView];
+  List<Object?> get props => [customers, salesmen, totalBottles, highBalanceCount, avgBalance, hasReachedMax, isFetchingMore, isAgencyView];
+
+  BottleLoaded copyWith({
+    List<Customer>? customers,
+    List<Salesman>? salesmen,
+    int? totalBottles,
+    int? highBalanceCount,
+    double? avgBalance,
+    bool? hasReachedMax,
+    bool? isFetchingMore,
+    bool? isAgencyView,
+  }) {
+    return BottleLoaded(
+      customers: customers ?? this.customers,
+      salesmen: salesmen ?? this.salesmen,
+      totalBottles: totalBottles ?? this.totalBottles,
+      highBalanceCount: highBalanceCount ?? this.highBalanceCount,
+      avgBalance: avgBalance ?? this.avgBalance,
+      hasReachedMax: hasReachedMax ?? this.hasReachedMax,
+      isFetchingMore: isFetchingMore ?? this.isFetchingMore,
+      isAgencyView: isAgencyView ?? this.isAgencyView,
+    );
+  }
 }
 
 class BottleFailure extends BottleState {

@@ -18,6 +18,33 @@ class GetBottleLedgerUseCase {
     return _mapToStats(customerRepository.getCustomersByAgency(agencyId));
   }
 
+  Future<BottleLedgerStats> getPaginatedLedger(String salesmanId, {String? agencyId, String? zone, int limit = 20, String? lastCustomerId}) async {
+    final customers = await customerRepository.getCustomersPaginated(salesmanId, agencyId: agencyId, zone: zone, limit: limit, lastCustomerId: lastCustomerId);
+    
+    int totalBottles = 0;
+    int highBalanceCount = 0;
+
+    // Note: Stats here are only for the PAGED customers.
+    // If the user wants TOTAL stats, we might need a separate total stats fetch.
+    // However, the current UI shows "Total Bottles In Circulation" which usually means the whole set.
+    // Since we're doing pagination, we should probably fetch the totals once and keep them.
+    
+    for (var customer in customers) {
+      totalBottles += customer.bottleBalance;
+      if (customer.bottleBalance > 5) {
+        highBalanceCount++;
+      }
+    }
+
+    return BottleLedgerStats(
+      customers: customers,
+      salesmen: null,
+      totalBottles: totalBottles, // This will be per-page if we don't adjust
+      highBalanceCount: highBalanceCount,
+      avgBalance: customers.isEmpty ? 0.0 : totalBottles / customers.length,
+    );
+  }
+
   Stream<BottleLedgerStats> getAgencySalesmanLedger(String agencyId) {
     return Stream.fromFuture(
       agencyRepository.getSalesmenByAgency(agencyId),

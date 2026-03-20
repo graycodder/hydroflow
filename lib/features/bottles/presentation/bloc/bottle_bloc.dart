@@ -30,7 +30,39 @@ class BottleBloc extends Bloc<BottleEvent, BottleState> {
       },
       transformer: (events, mapper) => events.switchMap(mapper),
     );
+
+    on<LoadMoreBottleLedger>(_onLoadMoreBottleLedger);
   }
+
+  Future<void> _onLoadMoreBottleLedger(
+    LoadMoreBottleLedger event,
+    Emitter<BottleState> emit,
+  ) async {
+    final currentState = state;
+    if (currentState is BottleLoaded && !currentState.hasReachedMax && !currentState.isFetchingMore) {
+      try {
+        emit(currentState.copyWith(isFetchingMore: true));
+        
+        final lastCustomer = currentState.customers.isNotEmpty ? currentState.customers.last : null;
+        final stats = await _getBottleLedger.getPaginatedLedger(
+          event.salesmanId,
+          agencyId: event.agencyId,
+          zone: event.zone,
+          lastCustomerId: lastCustomer?.id,
+          limit: 20,
+        );
+
+        emit(currentState.copyWith(
+          customers: List.of(currentState.customers)..addAll(stats.customers),
+          hasReachedMax: stats.customers.length < 20,
+          isFetchingMore: false,
+        ));
+      } catch (e) {
+        emit(currentState.copyWith(isFetchingMore: false));
+      }
+    }
+  }
+
 
   Future<void> _onLoadBottleLedger(
     LoadBottleLedger event,
@@ -40,11 +72,12 @@ class BottleBloc extends Bloc<BottleEvent, BottleState> {
     await emit.forEach<BottleLedgerStats>(
       _getBottleLedger(event.salesmanId, agencyId: event.agencyId, zone: event.zone),
       onData: (stats) => BottleLoaded(
-        customers: stats.customers,
+        customers: stats.customers.length > 20 ? stats.customers.sublist(0, 20) : stats.customers,
         totalBottles: stats.totalBottles,
         highBalanceCount: stats.highBalanceCount,
         avgBalance: stats.avgBalance,
         isAgencyView: false,
+        hasReachedMax: stats.customers.length <= 20,
       ),
       onError: (e, stackTrace) => BottleFailure('Failed to load bottle ledger: $e', isAgencyView: false),
     );
@@ -58,12 +91,13 @@ class BottleBloc extends Bloc<BottleEvent, BottleState> {
     await emit.forEach<BottleLedgerStats>(
       _getBottleLedger.getAgencySalesmanLedger(event.agencyId),
       onData: (stats) => BottleLoaded(
-        customers: stats.customers,
+        customers: stats.customers.length > 20 ? stats.customers.sublist(0, 20) : stats.customers,
         salesmen: stats.salesmen ?? [],
         totalBottles: stats.totalBottles,
         highBalanceCount: stats.highBalanceCount,
         avgBalance: stats.avgBalance,
         isAgencyView: true,
+        hasReachedMax: stats.customers.length <= 20,
       ),
       onError: (e, stackTrace) => BottleFailure('Failed to load agency bottle ledger: $e', isAgencyView: true),
     );

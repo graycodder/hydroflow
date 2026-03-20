@@ -37,7 +37,8 @@ class CustomerRepositoryImpl implements CustomerRepository {
                 map['id'] = entry.key;
                 return CustomerModel.fromMap(map);
               })
-              .toList();
+              .toList()
+            ..sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
         }
         return [];
       });
@@ -52,7 +53,8 @@ class CustomerRepositoryImpl implements CustomerRepository {
           final map = Map<String, dynamic>.from(entry.value as Map);
           map['id'] = entry.key; 
           return CustomerModel.fromMap(map);
-        }).toList();
+        }).toList()
+          ..sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
       }
       return [];
     });
@@ -70,11 +72,64 @@ class CustomerRepositoryImpl implements CustomerRepository {
              final map = Map<String, dynamic>.from(entry.value as Map);
              map['id'] = entry.key; // Inject ID
              return CustomerModel.fromMap(map);
-        }).toList();
+        }).toList()
+          ..sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
       }
       return [];
     });
   }
+
+  @override
+  Future<List<Customer>> getCustomersPaginated(String salesmanId, {String? agencyId, String? zone, int limit = 20, String? lastCustomerId}) async {
+    final ref = _database.ref().child('Customers');
+    
+    Query query;
+    if (agencyId != null && agencyId.isNotEmpty) {
+      query = ref.orderByChild('agencyId').equalTo(agencyId);
+    } else {
+      query = ref.orderByChild('salesmanId').equalTo(salesmanId);
+    }
+
+    final snapshot = await query.get();
+    if (!snapshot.exists) return [];
+
+    final data = snapshot.value as Map<dynamic, dynamic>;
+    final lowerZone = zone?.trim().toLowerCase();
+    final bool shouldFilterByZone = lowerZone != null && lowerZone.isNotEmpty && lowerZone != 'all';
+    final assignedZones = shouldFilterByZone ? lowerZone.split(',').map((e) => e.trim()).toList() : [];
+
+    List<Customer> customers = data.entries
+        .where((entry) {
+          if (!shouldFilterByZone) return true;
+          final val = entry.value as Map;
+          final customerZone = (val['zone'] as String? ?? '').trim().toLowerCase();
+          return assignedZones.contains(customerZone);
+        })
+        .map((entry) {
+          final map = Map<String, dynamic>.from(entry.value as Map);
+          map['id'] = entry.key;
+          return CustomerModel.fromMap(map);
+        })
+        .toList();
+
+    // Sort by name for consistent pagination (case-insensitive)
+    customers.sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
+
+    if (lastCustomerId != null) {
+      final index = customers.indexWhere((c) => c.id == lastCustomerId);
+      if (index != -1 && index < customers.length - 1) {
+        customers = customers.sublist(index + 1);
+      } else if (index != -1) {
+        return [];
+      }
+    }
+
+    if (customers.length > limit) {
+      return customers.sublist(0, limit);
+    }
+    return customers;
+  }
+
   @override
   Future<int> getTotalBottleBalance(String salesmanId) async {
     try {

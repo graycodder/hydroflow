@@ -22,9 +22,12 @@ class BottlesPage extends StatefulWidget {
 }
 
 class _BottlesPageState extends State<BottlesPage> {
+  final ScrollController _scrollController = ScrollController();
+
   @override
   void initState() {
     super.initState();
+    _scrollController.addListener(_onScroll);
     final authState = context.read<AuthBloc>().state;
     if (authState is AuthAuthenticated) {
       final salesman = authState.salesman;
@@ -37,6 +40,39 @@ class _BottlesPageState extends State<BottlesPage> {
         context.read<BottleBloc>().add(LoadBottleLedger(salesman.id, agencyId: salesman.agencyId, zone: salesman.zone));
       }
     }
+  }
+
+  @override
+  void dispose() {
+    _scrollController.removeListener(_onScroll);
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _onScroll() {
+    if (_isBottom) {
+      final authState = context.read<AuthBloc>().state;
+      if (authState is AuthAuthenticated) {
+        final salesman = authState.salesman;
+        final prefs = sl<SharedPreferences>();
+        final isAgencyView = prefs.getBool('dashboard_is_agency_view') ?? false;
+        
+        if (!isAgencyView) {
+           context.read<BottleBloc>().add(LoadMoreBottleLedger(
+            salesman.id,
+            agencyId: salesman.agencyId,
+            zone: salesman.zone,
+          ));
+        }
+      }
+    }
+  }
+
+  bool get _isBottom {
+    if (!_scrollController.hasClients) return false;
+    final maxScroll = _scrollController.position.maxScrollExtent;
+    final currentScroll = _scrollController.offset;
+    return currentScroll >= (maxScroll * 0.9);
   }
 
   @override
@@ -87,6 +123,7 @@ class _BottlesPageState extends State<BottlesPage> {
                       final isAgency = salesman.role == 'owner' && isAgencyView;
 
                       return SingleChildScrollView(
+                        controller: _scrollController,
                         padding: const EdgeInsets.all(16.0),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -110,7 +147,7 @@ class _BottlesPageState extends State<BottlesPage> {
                                 color: Colors.grey[600],
                               ),
                             ),
-                             if(!isAgency)
+                            if(!isAgency)
                             const SizedBox(height: 20),
 
                             // Top Stats Row
@@ -136,7 +173,6 @@ class _BottlesPageState extends State<BottlesPage> {
                                 ],
                               ),
                             if(!isAgency)
-                            
                             const SizedBox(height: 24),
 
                             // Alert Card (High Balance)
@@ -182,7 +218,8 @@ class _BottlesPageState extends State<BottlesPage> {
                                   ],
                                 ),
                               ),
-                            if (state.highBalanceCount > 0) const SizedBox(height: 0),
+
+                            if (state.highBalanceCount > 0) const SizedBox(height: 10),
 
                             // Customer/Salesman List Header
                             if(isAgency ? state.salesmen.isNotEmpty : state.customers.isNotEmpty)
@@ -219,15 +256,24 @@ class _BottlesPageState extends State<BottlesPage> {
                                 },
                               )
                             else
-                              ListView.separated(
-                                shrinkWrap: true,
-                                physics: const NeverScrollableScrollPhysics(),
-                                itemCount: state.customers.length,
-                                separatorBuilder: (context, index) => const SizedBox(height: 16),
-                                itemBuilder: (context, index) {
-                                  final customer = state.customers[index];
-                                  return _buildCustomerCard(customer);
-                                },
+                              Column(
+                                children: [
+                                  ListView.separated(
+                                    shrinkWrap: true,
+                                    physics: const NeverScrollableScrollPhysics(),
+                                    itemCount: state.customers.length,
+                                    separatorBuilder: (context, index) => const SizedBox(height: 16),
+                                    itemBuilder: (context, index) {
+                                      final customer = state.customers[index];
+                                      return _buildCustomerCard(customer);
+                                    },
+                                  ),
+                                  if (state.isFetchingMore)
+                                    const Padding(
+                                      padding: EdgeInsets.symmetric(vertical: 20),
+                                      child: CircularProgressIndicator(),
+                                    ),
+                                ],
                               ),
                             
                             const SizedBox(height: 24),

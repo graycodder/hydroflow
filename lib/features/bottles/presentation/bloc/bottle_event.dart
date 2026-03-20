@@ -22,6 +22,17 @@ class LoadBottleLedger extends BottleStreamEvent {
   List<Object?> get props => [salesmanId, agencyId, zone];
 }
 
+class LoadMoreBottleLedger extends BottleEvent {
+  final String salesmanId;
+  final String? agencyId;
+  final String? zone;
+
+  const LoadMoreBottleLedger(this.salesmanId, {this.agencyId, this.zone});
+
+  @override
+  List<Object?> get props => [salesmanId, agencyId, zone];
+}
+
 class LoadAgencyBottleLedger extends BottleStreamEvent {
   final String agencyId;
 
